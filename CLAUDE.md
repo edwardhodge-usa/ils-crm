@@ -72,6 +72,11 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-02-27** - Pull sync deletes locally-created records that haven't been pushed yet → Check `_pending_push` flag before deleting records not found in Airtable
 **2026-02-27** - Hardcoded Airtable base ID fallback (`|| 'appYXbUdcmSwBoPFU'`) means forks silently hit wrong base → Never hardcode base IDs; require explicit configuration and return error if missing
 **2026-02-27** - `unknown` type in `Record<string, unknown>` isn't assignable to `ReactNode` for conditional rendering → Use `{Boolean(obj.prop) && <jsx>}` instead of `{obj.prop && <jsx>}`
+**2026-02-27** - Tech debt: utility functions copy-pasted across query files (`resultToObjects` 3x, `linkedIds`/`multiSelect` identical) → Extract shared utils into dedicated module (`database/utils.ts`); merge identical functions
+**2026-02-27** - Tech debt: 9 list pages and 6 form pages had identical load/save boilerplate → Extract `useEntityList` and `useEntityForm` hooks to eliminate repeated useState/useEffect/error patterns
+**2026-02-27** - Tech debt: preload.ts had 6 identical CRUD bridge blocks differing only by channel prefix → Use `makeCrudBridge(entity)` factory function; spread for special cases (importedContacts)
+**2026-02-27** - Tech debt: route config duplicated in Sidebar, TopBar, and Layout → Consolidate into `src/config/routes.ts` with `NAV_ITEMS`, `ROUTE_TITLES`, `NEW_ROUTES`
+**2026-02-27** - Tech debt: dead code accumulated during rapid MVP build (7 unused functions, unused EmptyState component, unused SELECT_OPTIONS, pending_changes table) → Run /techdebt scan after MVP completion to identify and remove
 
 ## Key Commands
 
