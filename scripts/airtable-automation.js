@@ -191,9 +191,7 @@ const companiesTable = base.getTable(TABLES.COMPANIES);
 const specialtiesTable = base.getTable(TABLES.SPECIALTIES);
 
 // 1. Fetch the triggering Imported Contact
-const icRecord = await icTable.selectRecordAsync(recordId, {
-    fields: Object.values(IC),
-});
+const icRecord = await icTable.selectRecordAsync(recordId);
 
 if (!icRecord) {
     throw new Error(`Imported Contact not found: ${recordId}`);
@@ -296,10 +294,16 @@ if (existingLink && existingLink.length > 0) {
     }
 
     // 3. Resolve Specialties
-    const specialtyField = getField(icRecord, IC.SPECIALITY_MULTISELECT);
-    const specialtyNames = specialtyField
-        ? (Array.isArray(specialtyField) ? specialtyField.map(s => s.name || s) : [])
-        : [];
+    let specialtyNames = [];
+    try {
+        const specialtyField = getField(icRecord, IC.SPECIALITY_MULTISELECT);
+        if (specialtyField) {
+            specialtyNames = Array.isArray(specialtyField) ? specialtyField.map(s => s.name || s) : [];
+        }
+    } catch (e) {
+        // Field may not exist — skip specialty resolution
+        console.log('Speciality field not found, skipping specialty resolution');
+    }
 
     let specialtyIds = [];
 
