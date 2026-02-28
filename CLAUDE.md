@@ -24,22 +24,25 @@ Base ID: `appYXbUdcmSwBoPFU`
 |-------|-----|--------|---------|
 | Contacts | tbl9Q8m06ivkTYyvR | 55 | People — 59 records, all linked to Companies |
 | Companies | tblEauAm0ZYuMbHUa | 24 | Organizations — 70 records (deduped from 60) |
-| Opportunities | tblsalt5lmHlh4s7z | 25+ | Sales pipeline — 53 records, views: Active Pipeline, Future Roadmap, Kanban |
+| Opportunities | tblsalt5lmHlh4s7z | 23 | Sales pipeline — 53 records, views: Active Pipeline, Future Roadmap, Kanban |
 | Projects | tbll416ZwFACYQSm4 | 18 | Active project tracking |
 | Proposals | tblODEy2pLlfrz0lz | 13 | Client proposals — inline task fields removed, uses linked Tasks |
 | Tasks | tblwEt5YsYDP22qrr | 13 | Action items — has Overdue formula field |
 | Interactions | tblTUNClZpfFjhFVm | 9 | Communication log — ready to use, 0 records |
 | Imported Contacts | tblribgEf5RENNDQW | 48 | Staging area — all 46 records processed/approved |
 | Specialties | tblysTixdxGQQntHO | 3 | Lookup table — 70 canonical entries, linked from Contacts |
-| Portal Access | tblN1jruT8VeucPKa | 37 | Client portal access records |
+| Portal Access | tblN1jruT8VeucPKa | 36 | Client portal access records |
 | Portal Logs | tblj70XPHI7wnUmxO | 12 | Portal activity logging |
 
 ## Schema Changes Log (2026-02-27)
 
 **Fields removed:** AI Categorization Suggestion (Contacts + Imported Contacts), Speciality multi-select (Contacts + Imported Contacts), 25 inline Task fields from Proposals
 **Fields added:** Days Since Last Contact (Contacts), Weighted Value + Days in Stage (Opportunities), Overdue (Tasks)
-**Formula fixed:** Probability Value — uses FIND() to match '01 High', '02 Medium' prefixed values
+**Formula fixed:** Probability Value — uses FIND() to match '01 High', '02 Medium' prefixed values (confirmed working)
+**Table renamed:** Opportunites → Opportunities (typo fix)
+**Fields removed (Portal Access):** Contact Speciality lookup (invalid, source field deleted)
 **Views added:** Active Pipeline, Future Roadmap, Kanban (Opportunities)
+**Schema decision:** Categorization is primary classification field; Client Type to be deprecated
 **Key relationship:** Contacts → Companies (linked via "Companies" field fldYXDUc9YKKsGTBt), Contacts → Specialties (linked via "Specialties" field fldPgiO2nKgcujeXz)
 
 ## Related Projects

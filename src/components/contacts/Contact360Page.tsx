@@ -1,0 +1,312 @@
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import StatusBadge from '../shared/StatusBadge'
+import ConfirmDialog from '../shared/ConfirmDialog'
+
+type Tab = 'overview' | 'opportunities' | 'tasks' | 'proposals'
+
+export default function Contact360Page() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [contact, setContact] = useState<Record<string, unknown> | null>(null)
+  const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [linkedData, setLinkedData] = useState<Record<string, Record<string, unknown>[]>>({})
+  const [showDelete, setShowDelete] = useState(false)
+
+  useEffect(() => {
+    async function load() {
+      if (!id) return
+      const result = await window.electronAPI.contacts.getById(id)
+      if (result.success && result.data) {
+        setContact(result.data as Record<string, unknown>)
+      }
+
+      // Load linked records for tabs
+      const [opps, tasks, proposals] = await Promise.all([
+        window.electronAPI.opportunities.getAll(),
+        window.electronAPI.tasks.getAll(),
+        window.electronAPI.proposals.getAll(),
+      ])
+
+      const linked: Record<string, Record<string, unknown>[]> = {}
+
+      if (opps.success && opps.data) {
+        linked.opportunities = (opps.data as Record<string, unknown>[]).filter(o => {
+          const ids = o.associated_contact_ids as string
+          return ids && ids.includes(id)
+        })
+      }
+
+      if (tasks.success && tasks.data) {
+        linked.tasks = (tasks.data as Record<string, unknown>[]).filter(t => {
+          const ids = t.contacts_ids as string
+          return ids && ids.includes(id)
+        })
+      }
+
+      if (proposals.success && proposals.data) {
+        linked.proposals = (proposals.data as Record<string, unknown>[]).filter(p => {
+          const ids = p.client_ids as string
+          return ids && ids.includes(id)
+        })
+      }
+
+      setLinkedData(linked)
+    }
+    load()
+  }, [id])
+
+  if (!contact) {
+    return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
+  }
+
+  const tabs: { key: Tab; label: string; count: number }[] = [
+    { key: 'overview', label: 'Overview', count: 0 },
+    { key: 'opportunities', label: 'Opportunities', count: linkedData.opportunities?.length ?? 0 },
+    { key: 'tasks', label: 'Tasks', count: linkedData.tasks?.length ?? 0 },
+    { key: 'proposals', label: 'Proposals', count: linkedData.proposals?.length ?? 0 },
+  ]
+
+  return (
+    <div className="space-y-6">
+      {/* Back button */}
+      <button
+        onClick={() => navigate('/contacts')}
+        className="flex items-center gap-1 text-[13px] text-[#0A84FF] hover:text-[#0077ED] transition-colors"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+        Contacts
+      </button>
+
+      {/* Header Card */}
+      <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-white">
+              {contact.contact_name as string || 'Unnamed Contact'}
+            </h2>
+            <div className="flex items-center gap-3 mt-1.5 text-[13px] text-[#98989D]">
+              {Boolean(contact.job_title) && <span>{contact.job_title as string}</span>}
+              {Boolean(contact.job_title) && Boolean(contact.company) && <span>at</span>}
+              {Boolean(contact.company) && <span className="text-white">{contact.company as string}</span>}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <StatusBadge value={contact.categorization as string} />
+            <button
+              onClick={() => navigate(`/contacts/${id}/edit`)}
+              className="px-2.5 py-1 text-[12px] text-[#0A84FF] bg-[#0A84FF]/10 rounded-md hover:bg-[#0A84FF]/20 transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => setShowDelete(true)}
+              className="px-2.5 py-1 text-[12px] text-[#FF453A] bg-[#FF453A]/10 rounded-md hover:bg-[#FF453A]/20 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-[#3A3A3C]">
+          {Boolean(contact.email) && (
+            <div>
+              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Email</p>
+              <p className="text-[13px] text-[#0A84FF]">{contact.email as string}</p>
+            </div>
+          )}
+          {Boolean(contact.phone) && (
+            <div>
+              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Phone</p>
+              <p className="text-[13px] text-white">{contact.phone as string}</p>
+            </div>
+          )}
+          {Boolean(contact.linkedin_url) && (
+            <div>
+              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">LinkedIn</p>
+              <p className="text-[13px] text-[#0A84FF] truncate">{contact.linkedin_url as string}</p>
+            </div>
+          )}
+          {Boolean(contact.industry) && (
+            <div>
+              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Industry</p>
+              <p className="text-[13px] text-white">{contact.industry as string}</p>
+            </div>
+          )}
+          {Boolean(contact.lead_source) && (
+            <div>
+              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Lead Source</p>
+              <p className="text-[13px] text-white">{contact.lead_source as string}</p>
+            </div>
+          )}
+          {Boolean(contact.last_contact_date) && (
+            <div>
+              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Last Contact</p>
+              <p className="text-[13px] text-white">{contact.last_contact_date as string}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-[#3A3A3C] flex gap-0">
+        {tabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2 text-[13px] font-medium border-b-2 transition-colors ${
+              activeTab === tab.key
+                ? 'border-[#0A84FF] text-[#0A84FF]'
+                : 'border-transparent text-[#98989D] hover:text-white'
+            }`}
+          >
+            {tab.label}
+            {tab.count > 0 && (
+              <span className="ml-1.5 px-1.5 py-0.5 bg-[#3A3A3C] rounded-full text-[10px]">{tab.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-2 gap-6">
+          {/* Address */}
+          {(Boolean(contact.address_line) || Boolean(contact.city)) && (
+            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
+              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Address</h3>
+              <p className="text-[13px] text-white">
+                {[contact.address_line, contact.city, contact.state, contact.country]
+                  .filter(Boolean)
+                  .join(', ')}
+              </p>
+            </div>
+          )}
+
+          {/* Notes */}
+          {Boolean(contact.notes) && (
+            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
+              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Notes</h3>
+              <p className="text-[13px] text-white whitespace-pre-wrap">{contact.notes as string}</p>
+            </div>
+          )}
+
+          {/* Rate Info */}
+          {Boolean(contact.rate_info) && (
+            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
+              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Rate Info</h3>
+              <p className="text-[13px] text-white whitespace-pre-wrap">{contact.rate_info as string}</p>
+            </div>
+          )}
+
+          {/* Partner Info */}
+          {(Boolean(contact.partner_status) || Boolean(contact.partner_type)) && (
+            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
+              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Partner/Vendor</h3>
+              <div className="space-y-1 text-[13px]">
+                {Boolean(contact.partner_type) && <p className="text-white">Type: {contact.partner_type as string}</p>}
+                {Boolean(contact.partner_status) && <p className="text-white">Status: {contact.partner_status as string}</p>}
+                {Boolean(contact.quality_rating) && <p className="text-white">Quality: {contact.quality_rating as string}</p>}
+                {Boolean(contact.reliability_rating) && <p className="text-white">Reliability: {contact.reliability_rating as string}</p>}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'opportunities' && (
+        <LinkedList
+          items={linkedData.opportunities || []}
+          nameKey="opportunity_name"
+          statusKey="sales_stage"
+          extraKey="deal_value"
+          extraLabel="Deal Value"
+          extraRender={(v) => v ? `$${Number(v).toLocaleString()}` : null}
+          onItemClick={() => navigate(`/pipeline`)}
+          emptyMessage="No linked opportunities"
+        />
+      )}
+
+      {activeTab === 'tasks' && (
+        <LinkedList
+          items={linkedData.tasks || []}
+          nameKey="task"
+          statusKey="status"
+          extraKey="due_date"
+          extraLabel="Due"
+          onItemClick={() => navigate('/tasks')}
+          emptyMessage="No linked tasks"
+        />
+      )}
+
+      {activeTab === 'proposals' && (
+        <LinkedList
+          items={linkedData.proposals || []}
+          nameKey="proposal_name"
+          statusKey="status"
+          onItemClick={() => navigate('/proposals')}
+          emptyMessage="No linked proposals"
+        />
+      )}
+
+      <ConfirmDialog
+        open={showDelete}
+        title="Delete Contact"
+        message={`Are you sure you want to delete "${contact.contact_name as string}"? This cannot be undone.`}
+        onConfirm={async () => {
+          await window.electronAPI.contacts.delete(id!)
+          navigate('/contacts')
+        }}
+        onCancel={() => setShowDelete(false)}
+      />
+    </div>
+  )
+}
+
+function LinkedList({
+  items,
+  nameKey,
+  statusKey,
+  extraKey,
+  extraLabel,
+  extraRender,
+  onItemClick,
+  emptyMessage,
+}: {
+  items: Record<string, unknown>[]
+  nameKey: string
+  statusKey: string
+  extraKey?: string
+  extraLabel?: string
+  extraRender?: (v: unknown) => string | null
+  onItemClick?: (item: Record<string, unknown>) => void
+  emptyMessage: string
+}) {
+  if (items.length === 0) {
+    return <p className="text-[13px] text-[#636366] py-8 text-center">{emptyMessage}</p>
+  }
+
+  return (
+    <div className="space-y-2">
+      {items.map((item, i) => (
+        <div
+          key={(item.id as string) || i}
+          className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-3 flex items-center justify-between cursor-pointer hover:bg-[#3A3A3C] transition-colors"
+          onClick={() => onItemClick?.(item)}
+        >
+          <div>
+            <p className="text-[13px] text-white font-medium">{item[nameKey] as string || 'Unnamed'}</p>
+            {extraKey && extraLabel && (
+              <p className="text-[11px] text-[#636366] mt-0.5">
+                {extraLabel}: {extraRender ? extraRender(item[extraKey]) : (item[extraKey] as string) || '—'}
+              </p>
+            )}
+          </div>
+          <StatusBadge value={item[statusKey] as string} />
+        </div>
+      ))}
+    </div>
+  )
+}

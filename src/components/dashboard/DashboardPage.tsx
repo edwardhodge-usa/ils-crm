@@ -1,0 +1,137 @@
+import { useState, useEffect } from 'react'
+import StatusBadge from '../shared/StatusBadge'
+
+interface DashboardStats {
+  contactCount: number
+  companyCount: number
+  activeOpportunities: number
+  activeTasks: number
+  totalPipelineValue: number
+  wonValue: number
+}
+
+interface PipelineStage {
+  sales_stage: string
+  count: number
+  total_value: number
+}
+
+export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [tasksDue, setTasksDue] = useState<Record<string, unknown>[]>([])
+  const [followUps, setFollowUps] = useState<Record<string, unknown>[]>([])
+  const [pipeline, setPipeline] = useState<PipelineStage[]>([])
+
+  useEffect(() => {
+    async function load() {
+      const [statsRes, tasksRes, alertsRes, pipelineRes] = await Promise.all([
+        window.electronAPI.dashboard.getStats(),
+        window.electronAPI.dashboard.getTasksDueToday(),
+        window.electronAPI.dashboard.getFollowUpAlerts(),
+        window.electronAPI.dashboard.getPipelineSnapshot(),
+      ])
+
+      if (statsRes.success && statsRes.data) setStats(statsRes.data as DashboardStats)
+      if (tasksRes.success && tasksRes.data) setTasksDue(tasksRes.data as Record<string, unknown>[])
+      if (alertsRes.success && alertsRes.data) setFollowUps(alertsRes.data as Record<string, unknown>[])
+      if (pipelineRes.success && pipelineRes.data) setPipeline(pipelineRes.data as PipelineStage[])
+    }
+    load()
+  }, [])
+
+  const formatCurrency = (v: number) => `$${v.toLocaleString(undefined, { minimumFractionDigits: 0 })}`
+
+  return (
+    <div className="space-y-6">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-4 gap-4">
+        <StatCard label="Contacts" value={stats?.contactCount ?? 0} />
+        <StatCard label="Companies" value={stats?.companyCount ?? 0} />
+        <StatCard label="Active Pipeline" value={stats?.activeOpportunities ?? 0} subtitle={stats ? formatCurrency(stats.totalPipelineValue) : undefined} />
+        <StatCard label="Active Tasks" value={stats?.activeTasks ?? 0} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        {/* Pipeline Snapshot */}
+        <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
+          <h3 className="text-[13px] font-semibold text-white mb-3">Pipeline by Stage</h3>
+          {pipeline.length > 0 ? (
+            <div className="space-y-2">
+              {pipeline.map(stage => (
+                <div key={stage.sales_stage} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <StatusBadge value={stage.sales_stage} />
+                    <span className="text-[12px] text-[#636366]">{stage.count} deals</span>
+                  </div>
+                  <span className="text-[13px] text-white font-medium">
+                    {formatCurrency(stage.total_value)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13px] text-[#636366]">No active pipeline data</p>
+          )}
+          {stats && stats.wonValue > 0 && (
+            <div className="mt-3 pt-3 border-t border-[#3A3A3C] flex justify-between">
+              <span className="text-[12px] text-[#636366]">Total Won</span>
+              <span className="text-[13px] text-[#34C759] font-medium">{formatCurrency(stats.wonValue)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Tasks Due Today */}
+        <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
+          <h3 className="text-[13px] font-semibold text-white mb-3">Tasks Due Today</h3>
+          {tasksDue.length > 0 ? (
+            <div className="space-y-2">
+              {tasksDue.map((t, i) => (
+                <div key={(t.id as string) || i} className="flex items-center justify-between">
+                  <span className="text-[13px] text-white">{t.task as string}</span>
+                  <StatusBadge value={t.priority as string} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13px] text-[#636366]">No tasks due today</p>
+          )}
+        </div>
+      </div>
+
+      {/* Follow-Up Alerts */}
+      <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
+        <h3 className="text-[13px] font-semibold text-white mb-3">
+          Follow-Up Alerts
+          <span className="ml-2 text-[11px] text-[#636366] font-normal">30+ days since last contact</span>
+        </h3>
+        {followUps.length > 0 ? (
+          <div className="space-y-2">
+            {followUps.slice(0, 10).map((c, i) => (
+              <div key={(c.id as string) || i} className="flex items-center justify-between text-[13px]">
+                <div>
+                  <span className="text-white">{c.contact_name as string}</span>
+                  {Boolean(c.company) && <span className="text-[#636366] ml-2">{c.company as string}</span>}
+                </div>
+                <span className="text-[#FF9F0A] text-[12px]">
+                  Last: {c.last_contact_date as string}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[13px] text-[#636366]">All contacts recently reached</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function StatCard({ label, value, subtitle }: { label: string; value: number; subtitle?: string }) {
+  return (
+    <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
+      <p className="text-[11px] text-[#636366] uppercase tracking-wider">{label}</p>
+      <p className="text-2xl font-semibold text-white mt-1">{value}</p>
+      {subtitle && <p className="text-[12px] text-[#98989D] mt-0.5">{subtitle}</p>}
+    </div>
+  )
+}

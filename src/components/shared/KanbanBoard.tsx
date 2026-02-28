@@ -1,0 +1,147 @@
+import { useState } from 'react'
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  type DragStartEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+
+export interface KanbanColumn<T> {
+  id: string
+  label: string
+  items: T[]
+}
+
+interface KanbanBoardProps<T extends { id: string }> {
+  columns: KanbanColumn<T>[]
+  renderCard: (item: T) => React.ReactNode
+  onMove: (itemId: string, fromColumn: string, toColumn: string) => void
+}
+
+function DroppableColumn<T extends { id: string }>({
+  column,
+  renderCard,
+}: {
+  column: KanbanColumn<T>
+  renderCard: (item: T) => React.ReactNode
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: column.id })
+
+  return (
+    <div className="flex flex-col min-w-[260px] w-[260px] flex-shrink-0">
+      <div className="flex items-center justify-between px-2 pb-2">
+        <h3 className="text-[12px] font-semibold text-[#98989D] uppercase tracking-wider">
+          {column.label}
+        </h3>
+        <span className="text-[11px] text-[#636366] bg-[#3A3A3C] px-1.5 py-0.5 rounded-full">
+          {column.items.length}
+        </span>
+      </div>
+      <div
+        ref={setNodeRef}
+        className={`flex-1 space-y-2 p-1.5 rounded-lg min-h-[200px] transition-colors ${
+          isOver ? 'bg-[#0A84FF]/10' : 'bg-[#1C1C1E]'
+        }`}
+      >
+        {column.items.map(item => (
+          <DraggableCard key={item.id} id={item.id}>
+            {renderCard(item)}
+          </DraggableCard>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function DraggableCard({ id, children }: { id: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
+
+  const style = transform
+    ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
+    : undefined
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`transition-shadow ${isDragging ? 'opacity-30' : ''}`}
+      {...listeners}
+      {...attributes}
+    >
+      {children}
+    </div>
+  )
+}
+
+export default function KanbanBoard<T extends { id: string }>({
+  columns,
+  renderCard,
+  onMove,
+}: KanbanBoardProps<T>) {
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
+
+  const allItems = columns.flatMap(c => c.items)
+  const activeItem = activeId ? allItems.find(i => i.id === activeId) : null
+
+  function findColumn(itemId: string): string | undefined {
+    return columns.find(c => c.items.some(i => i.id === itemId))?.id
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as string)
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    setActiveId(null)
+
+    if (!over) return
+
+    const activeColId = findColumn(active.id as string)
+    // over.id could be a column or another card
+    let overColId = columns.find(c => c.id === over.id)?.id
+    if (!overColId) {
+      overColId = findColumn(over.id as string)
+    }
+
+    if (activeColId && overColId && activeColId !== overColId) {
+      onMove(active.id as string, activeColId, overColId)
+    }
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="flex gap-3 overflow-x-auto pb-4 h-full">
+        {columns.map(column => (
+          <DroppableColumn
+            key={column.id}
+            column={column}
+            renderCard={renderCard}
+          />
+        ))}
+      </div>
+      <DragOverlay>
+        {activeItem ? (
+          <div className="opacity-90 shadow-xl">
+            {renderCard(activeItem)}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  )
+}

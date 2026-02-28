@@ -1,0 +1,58 @@
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import EntityForm, { type FormFieldDef } from '../shared/EntityForm'
+
+const FIELDS: FormFieldDef[] = [
+  { key: 'proposal_name', label: 'Proposal Name', type: 'text', required: true, section: 'Details' },
+  { key: 'status', label: 'Status', type: 'singleSelect', section: 'Details',
+    options: ['Draft', 'Pending Approval', 'Approved', 'Sent to Client', 'Closed Won', 'Closed Lost', 'Submitted', 'In Review', 'Rejected'] },
+  { key: 'template_used', label: 'Template Used', type: 'singleSelect', section: 'Details',
+    options: ['Basic', 'Detailed', 'Custom', 'Standard Template', 'Custom Template', 'Marketing Template', 'IT Template', 'Service Template', 'Design Template', 'Security Template', 'Strategy Template', 'HR Template', 'Event Template'] },
+  { key: 'approval_status', label: 'Approval Status', type: 'singleSelect', section: 'Details',
+    options: ['Not Submitted', 'Submitted', 'Approved', 'Rejected', 'Pending', 'Under Review'] },
+
+  { key: 'proposed_value', label: 'Proposed Value', type: 'currency', section: 'Financials' },
+  { key: 'date_sent', label: 'Date Sent', type: 'date', section: 'Financials' },
+  { key: 'valid_until', label: 'Valid Until', type: 'date', section: 'Financials' },
+
+  { key: 'notes', label: 'Notes', type: 'textarea', section: 'Notes' },
+  { key: 'scope_summary', label: 'Scope Summary', type: 'textarea', section: 'Notes' },
+]
+
+export default function ProposalForm() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [initialValues, setInitialValues] = useState<Record<string, unknown> | null>(id ? null : { status: 'Draft' })
+
+  useEffect(() => {
+    if (id) {
+      window.electronAPI.proposals.getById(id).then(result => {
+        if (result.success && result.data) setInitialValues(result.data as Record<string, unknown>)
+      })
+    }
+  }, [id])
+
+  if (initialValues === null) {
+    return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
+  }
+
+  async function handleSave(values: Record<string, unknown>) {
+    if (id) {
+      await window.electronAPI.proposals.update(id, values)
+    } else {
+      await window.electronAPI.proposals.create(values)
+    }
+    navigate('/proposals')
+  }
+
+  return (
+    <EntityForm
+      fields={FIELDS}
+      initialValues={initialValues}
+      onSave={handleSave}
+      onCancel={() => navigate('/proposals')}
+      title="Proposal"
+      isNew={!id}
+    />
+  )
+}

@@ -1,0 +1,80 @@
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import Layout from './components/layout/Layout'
+import SettingsPage from './components/settings/SettingsPage'
+import DashboardPage from './components/dashboard/DashboardPage'
+import ContactListPage from './components/contacts/ContactListPage'
+import Contact360Page from './components/contacts/Contact360Page'
+import ContactForm from './components/contacts/ContactForm'
+import CompanyListPage from './components/companies/CompanyListPage'
+import Company360Page from './components/companies/Company360Page'
+import CompanyForm from './components/companies/CompanyForm'
+import TaskListPage from './components/tasks/TaskListPage'
+import TaskForm from './components/tasks/TaskForm'
+import PipelinePage from './components/pipeline/PipelinePage'
+import OpportunityForm from './components/pipeline/OpportunityForm'
+import ProposalListPage from './components/proposals/ProposalListPage'
+import ProposalForm from './components/proposals/ProposalForm'
+import ProjectListPage from './components/projects/ProjectListPage'
+import ProjectForm from './components/projects/ProjectForm'
+import ImportedContactsPage from './components/imported-contacts/ImportedContactsPage'
+import InteractionsPage from './components/interactions/InteractionsPage'
+import PortalAccessPage from './components/portal/PortalAccessPage'
+import PortalLogsPage from './components/portal/PortalLogsPage'
+import CommandPalette from './components/layout/CommandPalette'
+
+export default function App() {
+  return (
+    <MemoryRouter>
+      <CommandPalette />
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<DashboardPage />} />
+
+          {/* Contacts */}
+          <Route path="/contacts" element={<ContactListPage />} />
+          <Route path="/contacts/new" element={<ContactForm />} />
+          <Route path="/contacts/:id" element={<Contact360Page />} />
+          <Route path="/contacts/:id/edit" element={<ContactForm />} />
+
+          {/* Companies */}
+          <Route path="/companies" element={<CompanyListPage />} />
+          <Route path="/companies/new" element={<CompanyForm />} />
+          <Route path="/companies/:id" element={<Company360Page />} />
+          <Route path="/companies/:id/edit" element={<CompanyForm />} />
+
+          {/* Pipeline */}
+          <Route path="/pipeline" element={<PipelinePage />} />
+          <Route path="/pipeline/new" element={<OpportunityForm />} />
+          <Route path="/pipeline/:id/edit" element={<OpportunityForm />} />
+
+          {/* Tasks */}
+          <Route path="/tasks" element={<TaskListPage />} />
+          <Route path="/tasks/new" element={<TaskForm />} />
+          <Route path="/tasks/:id/edit" element={<TaskForm />} />
+
+          {/* Proposals */}
+          <Route path="/proposals" element={<ProposalListPage />} />
+          <Route path="/proposals/new" element={<ProposalForm />} />
+          <Route path="/proposals/:id/edit" element={<ProposalForm />} />
+
+          {/* Projects */}
+          <Route path="/projects" element={<ProjectListPage />} />
+          <Route path="/projects/new" element={<ProjectForm />} />
+          <Route path="/projects/:id/edit" element={<ProjectForm />} />
+
+          {/* Imported Contacts */}
+          <Route path="/imported-contacts" element={<ImportedContactsPage />} />
+
+          {/* Interactions (read-only, future Gmail/GCal) */}
+          <Route path="/interactions" element={<InteractionsPage />} />
+
+          {/* Portal */}
+          <Route path="/portal" element={<PortalAccessPage />} />
+          <Route path="/portal-logs" element={<PortalLogsPage />} />
+
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
+      </Routes>
+    </MemoryRouter>
+  )
+}
