@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM project — Airtable schema management, API integrations, and eventually a full Electron desktop CRM app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Airtable API (backend/data), Anthropic Claude API (AI features)
-- **Status**: MVP complete — All 7 phases built, /grill review fixes applied, ready for testing
+- **Status**: MVP QA tested 2026-02-28 — 18 issues found (8 bugs, 4 UX, 4 features, 2 minor)
 - **Repo**: edwardhodge-usa/ils-crm
 - **Airtable Base**: ILS CRM (appYXbUdcmSwBoPFU)
 
@@ -77,6 +77,12 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-02-27** - Tech debt: preload.ts had 6 identical CRUD bridge blocks differing only by channel prefix → Use `makeCrudBridge(entity)` factory function; spread for special cases (importedContacts)
 **2026-02-27** - Tech debt: route config duplicated in Sidebar, TopBar, and Layout → Consolidate into `src/config/routes.ts` with `NAV_ITEMS`, `ROUTE_TITLES`, `NEW_ROUTES`
 **2026-02-27** - Tech debt: dead code accumulated during rapid MVP build (7 unused functions, unused EmptyState component, unused SELECT_OPTIONS, pending_changes table) → Run /techdebt scan after MVP completion to identify and remove
+**2026-02-28** - QA: Multi-select fields stored as JSON in sql.js render as raw `["value1","value2"]` in list views → Parse JSON and join with commas before display; fix globally not per-entity
+**2026-02-28** - QA: Linked record lookup fields (Portal Access name/email/company, Imported Contacts names) show "—" → Sync engine doesn't resolve linked record lookups; need to either store resolved values or do client-side joins
+**2026-02-28** - QA: Airtable 422 INVALID_MULTIPLE_CHOICE_OPTIONS on save → Root cause was form dropdown options didn't match exact Airtable option names (e.g. `High` vs `🔴 High`). Always fetch field schema from Airtable metadata API to get exact option names including emoji prefixes. Applied to Tasks priority, Contacts ratings, and fixed Engagement Type field type (singleSelect→multiSelect) in Opportunities and Projects
+**2026-02-28** - QA: `dragEvent is not defined` fires repeatedly in console from @dnd-kit Kanban → Investigate source; doesn't break drag functionality but spams console
+**2026-02-28** - QA: Clicking Pipeline cards only drags, can't navigate to detail → Need to differentiate click vs drag gesture in @dnd-kit event handlers
+**2026-02-28** - GLOBAL RULE: Airtable is the single source of truth. Every app field MUST map to an Airtable field — no local-only data fields. When adding new fields: (1) check if it exists in Airtable, (2) create it if not, (3) add to field-maps.ts + converters.ts, (4) determine if it's a primary field or lookup from a linked record
 
 ## Key Commands
 

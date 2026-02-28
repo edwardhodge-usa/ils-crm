@@ -60,3 +60,8 @@ body {
 .spinner {
   animation: spin 1s linear infinite;
 }
+
+/* Make native date picker icon visible in dark mode */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}

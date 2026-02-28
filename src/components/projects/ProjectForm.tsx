@@ -5,7 +5,7 @@ const FIELDS: FormFieldDef[] = [
   { key: 'project_name', label: 'Project Name', type: 'text', required: true, section: 'Details' },
   { key: 'status', label: 'Status', type: 'singleSelect', section: 'Details',
     options: ['Kickoff', 'Discovery', 'Concept Development', 'Design Development', 'Production', 'Installation', 'Opening/Launch', 'Closeout', 'Complete', 'On Hold', 'Cancelled', 'Strategy'] },
-  { key: 'engagement_type', label: 'Engagement Type', type: 'singleSelect', section: 'Details',
+  { key: 'engagement_type', label: 'Engagement Type', type: 'multiSelect', section: 'Details',
     options: ['Strategy/Consulting', 'Design/Concept Development', 'Production/Fabrication Oversight', 'Opening/Operations Support'] },
 
   { key: 'project_value', label: 'Project Value', type: 'currency', section: 'Financials' },

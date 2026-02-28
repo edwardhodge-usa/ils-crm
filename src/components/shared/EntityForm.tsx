@@ -69,7 +69,9 @@ export default function EntityForm({
     try {
       await onSave(values)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save')
+      const msg = err instanceof Error ? err.message : 'Failed to save'
+      console.error('[EntityForm] Save error:', msg)
+      setError(msg)
     } finally {
       setSaving(false)
     }

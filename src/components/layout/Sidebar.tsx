@@ -85,7 +85,7 @@ export default function Sidebar() {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
+              className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[14px] font-medium transition-colors ${
                 isActive
                   ? 'bg-[#0A84FF]/15 text-[#0A84FF]'
                   : 'text-[#98989D] hover:bg-[#3A3A3C] hover:text-white'
@@ -102,7 +102,7 @@ export default function Sidebar() {
       <div className="px-2 py-2 border-t border-[#3A3A3C]">
         <button
           onClick={() => navigate(SETTINGS_ROUTE.path)}
-          className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
+          className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[14px] font-medium transition-colors ${
             location.pathname === SETTINGS_ROUTE.path
               ? 'bg-[#0A84FF]/15 text-[#0A84FF]'
               : 'text-[#98989D] hover:bg-[#3A3A3C] hover:text-white'

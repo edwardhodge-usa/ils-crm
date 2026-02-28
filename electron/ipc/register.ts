@@ -5,7 +5,7 @@ import { app, ipcMain, BrowserWindow } from 'electron'
 import { getAll, getById, getSetting, setSetting, getAllSyncStatuses } from '../database/queries/entities'
 import { getDashboardStats, getTasksDueToday, getFollowUpAlerts, getPipelineSnapshot } from '../database/queries/dashboard'
 import { searchAll } from '../database/queries/search'
-import { fullSync, createRecord, updateRecord, deleteRemoteRecord, startPolling, stopPolling } from '../airtable/sync-engine'
+import { fullSync, createRecord, updateRecord, deleteRemoteRecord, refreshRecord, startPolling, stopPolling } from '../airtable/sync-engine'
 
 // ─── Helper: register CRUD for an entity ─────────────────────
 
@@ -15,6 +15,7 @@ function registerEntityCrud(entityName: string, tableName: string) {
       const data = getAll(tableName)
       return { success: true, data }
     } catch (error) {
+      console.error(`[IPC] ${entityName}:getAll failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -24,6 +25,17 @@ function registerEntityCrud(entityName: string, tableName: string) {
       const data = getById(tableName, id)
       return { success: true, data }
     } catch (error) {
+      console.error(`[IPC] ${entityName}:getById(${id}) failed:`, String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle(`${entityName}:refresh`, async (_e, id: string) => {
+    try {
+      const result = await refreshRecord(tableName, id)
+      return result
+    } catch (error) {
+      console.error(`[IPC] ${entityName}:refresh(${id}) failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -33,6 +45,7 @@ function registerEntityCrud(entityName: string, tableName: string) {
       const result = await createRecord(tableName, fields)
       return result
     } catch (error) {
+      console.error(`[IPC] ${entityName}:create failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -42,6 +55,7 @@ function registerEntityCrud(entityName: string, tableName: string) {
       const result = await updateRecord(tableName, id, fields)
       return result
     } catch (error) {
+      console.error(`[IPC] ${entityName}:update(${id}) failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -51,6 +65,7 @@ function registerEntityCrud(entityName: string, tableName: string) {
       const result = await deleteRemoteRecord(tableName, id)
       return result
     } catch (error) {
+      console.error(`[IPC] ${entityName}:delete(${id}) failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -64,6 +79,7 @@ function registerReadOnly(entityName: string, tableName: string) {
       const data = getAll(tableName)
       return { success: true, data }
     } catch (error) {
+      console.error(`[IPC] ${entityName}:getAll failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -73,6 +89,7 @@ function registerReadOnly(entityName: string, tableName: string) {
       const data = getById(tableName, id)
       return { success: true, data }
     } catch (error) {
+      console.error(`[IPC] ${entityName}:getById(${id}) failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -104,6 +121,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       })
       return result
     } catch (error) {
+      console.error(`[IPC] importedContacts:approve(${id}) failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -116,6 +134,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       })
       return result
     } catch (error) {
+      console.error(`[IPC] importedContacts:reject(${id}) failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -127,6 +146,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       const data = getSetting(key)
       return { success: true, data }
     } catch (error) {
+      console.error(`[IPC] settings:get(${key}) failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -136,6 +156,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       setSetting(key, value)
       return { success: true }
     } catch (error) {
+      console.error(`[IPC] settings:set(${key}) failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -148,6 +169,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       startPolling(win)
       return { success: true }
     } catch (error) {
+      console.error('[IPC] sync:start failed:', String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -163,6 +185,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       const result = await fullSync(win)
       return result
     } catch (error) {
+      console.error('[IPC] sync:forceSync failed:', String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -172,6 +195,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       const data = getAllSyncStatuses()
       return { success: true, data }
     } catch (error) {
+      console.error('[IPC] sync:getStatus failed:', String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -183,6 +207,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       const data = getDashboardStats()
       return { success: true, data }
     } catch (error) {
+      console.error('[IPC] dashboard:getStats failed:', String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -192,6 +217,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       const data = getTasksDueToday()
       return { success: true, data }
     } catch (error) {
+      console.error('[IPC] dashboard:getTasksDueToday failed:', String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -201,6 +227,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       const data = getFollowUpAlerts()
       return { success: true, data }
     } catch (error) {
+      console.error('[IPC] dashboard:getFollowUpAlerts failed:', String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -210,6 +237,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       const data = getPipelineSnapshot()
       return { success: true, data }
     } catch (error) {
+      console.error('[IPC] dashboard:getPipelineSnapshot failed:', String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -221,6 +249,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       const data = searchAll(term)
       return { success: true, data }
     } catch (error) {
+      console.error(`[IPC] search:query("${term}") failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -231,6 +260,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
     try {
       return { success: true, data: app.getVersion() }
     } catch (error) {
+      console.error('[IPC] app:getVersion failed:', String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -245,6 +275,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
         },
       }
     } catch (error) {
+      console.error('[IPC] app:getPaths failed:', String(error))
       return { success: false, error: String(error) }
     }
   })

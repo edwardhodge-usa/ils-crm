@@ -4,6 +4,7 @@ function makeCrudBridge(entity: string) {
   return {
     getAll: () => ipcRenderer.invoke(`${entity}:getAll`),
     getById: (id: string) => ipcRenderer.invoke(`${entity}:getById`, id),
+    refresh: (id: string) => ipcRenderer.invoke(`${entity}:refresh`, id),
     create: (fields: Record<string, unknown>) => ipcRenderer.invoke(`${entity}:create`, fields),
     update: (id: string, fields: Record<string, unknown>) => ipcRenderer.invoke(`${entity}:update`, id, fields),
     delete: (id: string) => ipcRenderer.invoke(`${entity}:delete`, id),

@@ -2,7 +2,7 @@
 // "Airtable wins" conflict resolution — remote overwrites local on pull
 
 import { BrowserWindow } from 'electron'
-import { fetchAllRecords, batchCreate, batchUpdate, batchDelete } from './client'
+import { fetchAllRecords, fetchRecord, batchCreate, batchUpdate, batchDelete } from './client'
 import { TABLES, PRIMARY_FIELDS } from './field-maps'
 import { TABLE_CONVERTERS } from './converters'
 import { getDatabase, saveDatabase } from '../database/init'
@@ -10,6 +10,8 @@ import {
   upsert, getAll, deleteRecord, getById,
   getSetting, setSetting, updateSyncStatus, getPendingRecords, markPushed,
 } from '../database/queries/entities'
+
+const isDev = !!process.env.VITE_DEV_SERVER_URL
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -263,6 +265,38 @@ export async function fullSync(
   }
 }
 
+// ─── Refresh single record (pull latest from Airtable) ──────
+
+export async function refreshRecord(
+  tableName: string,
+  id: string
+): Promise<{ success: boolean; data?: Record<string, unknown>; error?: string }> {
+  const config = getApiConfig()
+  if (!config) {
+    // Offline — fall back to local cache
+    const local = getById(tableName, id)
+    return local ? { success: true, data: local } : { success: false, error: 'Not found' }
+  }
+
+  const tableId = TABLE_NAME_TO_ID[tableName]
+  const converter = TABLE_CONVERTERS[tableName]
+  if (!tableId || !converter) return { success: false, error: `Unknown table: ${tableName}` }
+
+  try {
+    const record = await fetchRecord(tableId, id, { apiKey: config.apiKey, baseId: config.baseId })
+    const local = converter.fromAirtable(record)
+    local._airtable_modified_at = new Date().toISOString()
+    upsert(tableName, id, local)
+    const fresh = getById(tableName, id)
+    return { success: true, data: fresh ?? local }
+  } catch (error) {
+    console.error(`[Sync] refreshRecord failed ${tableName}/${id}:`, String(error))
+    // Fall back to local cache on error
+    const local = getById(tableName, id)
+    return local ? { success: true, data: local } : { success: false, error: String(error) }
+  }
+}
+
 // ─── Single record operations ────────────────────────────────
 
 export async function createRecord(
@@ -307,6 +341,7 @@ export async function updateRecord(
 
   try {
     const airtableFields = converter.toAirtable(fields)
+    if (isDev) console.log(`[Sync] updateRecord ${tableName}/${id} → sending fields:`, JSON.stringify(airtableFields, null, 2))
     await batchUpdate(tableId, [{ id, fields: airtableFields }], { apiKey: config.apiKey, baseId: config.baseId })
 
     // Update local cache
@@ -318,6 +353,7 @@ export async function updateRecord(
 
     return { success: true }
   } catch (error) {
+    console.error(`[Sync] updateRecord FAILED ${tableName}/${id}:`, String(error))
     return { success: false, error: String(error) }
   }
 }
@@ -349,7 +385,7 @@ export function startPolling(win: BrowserWindow | null): void {
   if (pollInterval) return
 
   const intervalMs = parseInt(getSetting('sync_interval_ms') || '60000', 10)
-  console.log(`[Sync] Starting polling every ${intervalMs / 1000}s`)
+  if (isDev) console.log(`[Sync] Starting polling every ${intervalMs / 1000}s`)
 
   pollInterval = setInterval(async () => {
     try {
@@ -371,6 +407,6 @@ export function stopPolling(): void {
   if (pollInterval) {
     clearInterval(pollInterval)
     pollInterval = null
-    console.log('[Sync] Polling stopped')
+    if (isDev) console.log('[Sync] Polling stopped')
   }
 }

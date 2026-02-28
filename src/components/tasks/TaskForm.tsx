@@ -6,7 +6,7 @@ const FIELDS: FormFieldDef[] = [
   { key: 'status', label: 'Status', type: 'singleSelect', section: 'Details',
     options: ['To Do', 'In Progress', 'Waiting', 'Completed', 'Cancelled'] },
   { key: 'priority', label: 'Priority', type: 'singleSelect', section: 'Details',
-    options: ['High', 'Medium', 'Low'] },
+    options: ['🔴 High', '🟡 Medium', '🟢 Low'] },
   { key: 'type', label: 'Type', type: 'singleSelect', section: 'Details',
     options: ['Administrative', 'Follow-up Call', 'Follow-up Email', 'Internal Review', 'Other', 'Presentation Deck', 'Research', 'Schedule Meeting', 'Send Proposal', 'Send Qualifications'] },
 

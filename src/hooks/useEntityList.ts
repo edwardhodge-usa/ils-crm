@@ -22,10 +22,14 @@ export default function useEntityList(
       if (result.success && result.data) {
         setData(result.data as Record<string, unknown>[])
       } else {
-        setError(result.error || 'Failed to load data')
+        const msg = result.error || 'Failed to load data'
+        console.error('[List] Failed to load data:', msg)
+        setError(msg)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      const msg = err instanceof Error ? err.message : 'An error occurred'
+      console.error('[List] Failed to load data:', msg)
+      setError(msg)
     } finally {
       setLoading(false)
     }

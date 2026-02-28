@@ -7,6 +7,8 @@ import fs from 'fs'
 import { app } from 'electron'
 import { createSchema } from './schema'
 
+const isDev = !app.isPackaged
+
 let db: SqlJsDatabase | null = null
 let dbPath = ''
 
@@ -34,10 +36,9 @@ export async function initDatabase(): Promise<void> {
     const userDataPath = app.getPath('userData')
     dbPath = path.join(userDataPath, 'ils-crm.db')
 
-    console.log('[DB] Initializing database at:', dbPath)
+    if (isDev) console.log('[DB] Initializing database at:', dbPath)
 
     // Load sql.js WASM binary
-    const isDev = !app.isPackaged
     let wasmBinary: Buffer | undefined
 
     if (isDev) {
@@ -62,10 +63,10 @@ export async function initDatabase(): Promise<void> {
     if (fs.existsSync(dbPath)) {
       const fileBuffer = fs.readFileSync(dbPath)
       db = new SQL.Database(fileBuffer)
-      console.log('[DB] Loaded existing database')
+      if (isDev) console.log('[DB] Loaded existing database')
     } else {
       db = new SQL.Database()
-      console.log('[DB] Created new database')
+      if (isDev) console.log('[DB] Created new database')
     }
 
     // Create schema (tables, indexes, defaults)
@@ -74,7 +75,7 @@ export async function initDatabase(): Promise<void> {
     saveDatabase()
     startAutoSave()
 
-    console.log('[DB] Database initialized successfully')
+    if (isDev) console.log('[DB] Database initialized successfully')
   } catch (error) {
     console.error('[DB] FATAL: Database initialization failed:', error)
     throw error

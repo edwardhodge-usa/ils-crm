@@ -5,6 +5,8 @@ import { registerAllHandlers } from './ipc/register'
 import { getSetting } from './database/queries/entities'
 import { fullSync, startPolling } from './airtable/sync-engine'
 
+const isDev = !!process.env.VITE_DEV_SERVER_URL
+
 let mainWindow: BrowserWindow | null = null
 
 function createWindow() {
@@ -24,13 +26,19 @@ function createWindow() {
     },
   })
 
-  const isDev = !!process.env.VITE_DEV_SERVER_URL
+  if (isDev) console.log(`[App] isDev=true, VITE_DEV_SERVER_URL=${process.env.VITE_DEV_SERVER_URL}`)
   if (isDev) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL!)
-    mainWindow.webContents.openDevTools({ mode: 'detach' })
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
   }
+
+  // Always open DevTools in dev mode (detached window)
+  mainWindow.webContents.once('did-finish-load', () => {
+    if (isDev) {
+      mainWindow?.webContents.openDevTools({ mode: 'detach' })
+    }
+  })
 
   mainWindow.on('closed', () => {
     mainWindow = null
@@ -40,7 +48,7 @@ function createWindow() {
 app.whenReady().then(async () => {
   // Initialize database before creating window
   await initDatabase()
-  console.log('[App] Database initialized')
+  if (isDev) console.log('[App] Database initialized')
 
   // Register all entity/sync/dashboard/search IPC handlers (after DB init)
   registerAllHandlers(() => mainWindow)
@@ -50,17 +58,17 @@ app.whenReady().then(async () => {
   // Auto-start sync if API key is configured
   const apiKey = getSetting('airtable_api_key')
   if (apiKey) {
-    console.log('[App] API key found, starting initial sync...')
+    if (isDev) console.log('[App] API key found, starting initial sync...')
     fullSync(mainWindow).then((result) => {
       if (result.success) {
-        console.log('[App] Initial sync complete')
+        if (isDev) console.log('[App] Initial sync complete')
         startPolling(mainWindow)
       } else {
         console.error('[App] Initial sync failed:', result.error)
       }
     })
   } else {
-    console.log('[App] No API key configured, skipping sync')
+    if (isDev) console.log('[App] No API key configured, skipping sync')
   }
 })
 

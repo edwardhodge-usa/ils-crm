@@ -1,6 +1,6 @@
 // Convert between Airtable records and local SQLite format
 // Handles: linked records → JSON ID arrays, multi-select → JSON arrays,
-// checkbox → 0/1, formula/rollup/lookup → read-only, attachments → skip
+// single-select → plain strings, checkbox → 0/1, formula/rollup/lookup → read-only, attachments → skip
 
 import {
   CONTACTS, OPPORTUNITIES, TASKS, PROPOSALS, PROJECTS,
@@ -48,12 +48,27 @@ function safeParseArray(value: unknown): unknown[] {
   return []
 }
 
+/** Strip wrapping double-quotes from a string value (fixes double-serialization) */
+function cleanSelectValue(value: unknown): string | null {
+  if (value == null || value === '') return null
+  // Handle object format from API (e.g., { id: "...", name: "Medium" })
+  if (typeof value === 'object' && value !== null && 'name' in value) {
+    return (value as { name: string }).name || null
+  }
+  let s = String(value)
+  // Strip wrapping quotes if the value was double-stringified (e.g. '"Medium"' → 'Medium')
+  if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
+    s = s.slice(1, -1)
+  }
+  return s || null
+}
+
 // ─── Generic converter builder ───────────────────────────────
 
 interface FieldMapping {
   local: string
   airtable: string
-  type: 'text' | 'number' | 'linked' | 'multiSelect' | 'checkbox' | 'readonly'
+  type: 'text' | 'number' | 'linked' | 'multiSelect' | 'singleSelect' | 'checkbox' | 'readonly'
 }
 
 function airtableToLocal(
@@ -77,6 +92,9 @@ function airtableToLocal(
         break
       case 'multiSelect':
         result[m.local] = jsonArray(val)
+        break
+      case 'singleSelect':
+        result[m.local] = cleanSelectValue(val)
         break
       case 'checkbox':
         result[m.local] = checkbox(val)
@@ -113,6 +131,9 @@ function localToAirtable(
         break
       case 'multiSelect':
         fields[m.airtable] = safeParseArray(val)
+        break
+      case 'singleSelect':
+        fields[m.airtable] = cleanSelectValue(val)
         break
       case 'checkbox':
         fields[m.airtable] = val === 1 || val === true
@@ -153,17 +174,17 @@ const CONTACT_MAPPINGS: FieldMapping[] = [
   { local: 'last_contact_date', airtable: CONTACTS.lastContactDate, type: 'text' },
   { local: 'import_date', airtable: CONTACTS.importDate, type: 'text' },
   { local: 'review_completion_date', airtable: CONTACTS.reviewCompletionDate, type: 'text' },
-  { local: 'qualification_status', airtable: CONTACTS.qualificationStatus, type: 'text' },
-  { local: 'lead_source', airtable: CONTACTS.leadSource, type: 'text' },
-  { local: 'client_type', airtable: CONTACTS.clientType, type: 'text' },
-  { local: 'industry', airtable: CONTACTS.industry, type: 'text' },
-  { local: 'import_source', airtable: CONTACTS.importSource, type: 'text' },
-  { local: 'onboarding_status', airtable: CONTACTS.onboardingStatus, type: 'text' },
-  { local: 'categorization', airtable: CONTACTS.categorization, type: 'text' },
-  { local: 'quality_rating', airtable: CONTACTS.qualityRating, type: 'text' },
-  { local: 'reliability_rating', airtable: CONTACTS.reliabilityRating, type: 'text' },
-  { local: 'partner_status', airtable: CONTACTS.partnerStatus, type: 'text' },
-  { local: 'partner_type', airtable: CONTACTS.partnerType, type: 'text' },
+  { local: 'qualification_status', airtable: CONTACTS.qualificationStatus, type: 'singleSelect' },
+  { local: 'lead_source', airtable: CONTACTS.leadSource, type: 'singleSelect' },
+  { local: 'client_type', airtable: CONTACTS.clientType, type: 'singleSelect' },
+  { local: 'industry', airtable: CONTACTS.industry, type: 'singleSelect' },
+  { local: 'import_source', airtable: CONTACTS.importSource, type: 'singleSelect' },
+  { local: 'onboarding_status', airtable: CONTACTS.onboardingStatus, type: 'singleSelect' },
+  { local: 'categorization', airtable: CONTACTS.categorization, type: 'singleSelect' },
+  { local: 'quality_rating', airtable: CONTACTS.qualityRating, type: 'singleSelect' },
+  { local: 'reliability_rating', airtable: CONTACTS.reliabilityRating, type: 'singleSelect' },
+  { local: 'partner_status', airtable: CONTACTS.partnerStatus, type: 'singleSelect' },
+  { local: 'partner_type', airtable: CONTACTS.partnerType, type: 'singleSelect' },
   { local: 'tags', airtable: CONTACTS.tags, type: 'multiSelect' },
   { local: 'sync_to_contacts', airtable: CONTACTS.syncToContacts, type: 'checkbox' },
   { local: 'specialties_ids', airtable: CONTACTS.specialties, type: 'linked' },
@@ -189,8 +210,8 @@ const COMPANY_MAPPINGS: FieldMapping[] = [
   { local: 'country', airtable: COMPANIES.country, type: 'text' },
   { local: 'referred_by', airtable: COMPANIES.referredBy, type: 'text' },
   { local: 'naics_code', airtable: COMPANIES.naicsCode, type: 'text' },
-  { local: 'company_type', airtable: COMPANIES.companyType, type: 'text' },
-  { local: 'company_size', airtable: COMPANIES.companySize, type: 'text' },
+  { local: 'company_type', airtable: COMPANIES.companyType, type: 'singleSelect' },
+  { local: 'company_size', airtable: COMPANIES.companySize, type: 'singleSelect' },
   { local: 'annual_revenue', airtable: COMPANIES.annualRevenue, type: 'text' },
   { local: 'postal_code', airtable: COMPANIES.postalCode, type: 'text' },
   { local: 'notes', airtable: COMPANIES.notes, type: 'text' },
@@ -198,9 +219,9 @@ const COMPANY_MAPPINGS: FieldMapping[] = [
   { local: 'website', airtable: COMPANIES.website, type: 'text' },
   { local: 'founding_year', airtable: COMPANIES.foundingYear, type: 'number' },
   { local: 'created_date', airtable: COMPANIES.createdDate, type: 'text' },
-  { local: 'type', airtable: COMPANIES.type, type: 'text' },
-  { local: 'industry', airtable: COMPANIES.industry, type: 'text' },
-  { local: 'lead_source', airtable: COMPANIES.leadSource, type: 'text' },
+  { local: 'type', airtable: COMPANIES.type, type: 'singleSelect' },
+  { local: 'industry', airtable: COMPANIES.industry, type: 'singleSelect' },
+  { local: 'lead_source', airtable: COMPANIES.leadSource, type: 'singleSelect' },
   { local: 'sales_opportunities_ids', airtable: COMPANIES.salesOpportunities, type: 'linked' },
   { local: 'projects_ids', airtable: COMPANIES.projects, type: 'linked' },
   { local: 'contacts_ids', airtable: COMPANIES.contacts, type: 'linked' },
@@ -218,11 +239,11 @@ const OPPORTUNITY_MAPPINGS: FieldMapping[] = [
   { local: 'deal_value', airtable: OPPORTUNITIES.dealValue, type: 'number' },
   { local: 'expected_close_date', airtable: OPPORTUNITIES.expectedCloseDate, type: 'text' },
   { local: 'next_meeting_date', airtable: OPPORTUNITIES.nextMeetingDate, type: 'text' },
-  { local: 'sales_stage', airtable: OPPORTUNITIES.salesStage, type: 'text' },
-  { local: 'probability', airtable: OPPORTUNITIES.probability, type: 'text' },
-  { local: 'quals_type', airtable: OPPORTUNITIES.qualsType, type: 'text' },
-  { local: 'lead_source', airtable: OPPORTUNITIES.leadSource, type: 'text' },
-  { local: 'win_loss_reason', airtable: OPPORTUNITIES.winLossReason, type: 'text' },
+  { local: 'sales_stage', airtable: OPPORTUNITIES.salesStage, type: 'singleSelect' },
+  { local: 'probability', airtable: OPPORTUNITIES.probability, type: 'singleSelect' },
+  { local: 'quals_type', airtable: OPPORTUNITIES.qualsType, type: 'singleSelect' },
+  { local: 'lead_source', airtable: OPPORTUNITIES.leadSource, type: 'singleSelect' },
+  { local: 'win_loss_reason', airtable: OPPORTUNITIES.winLossReason, type: 'singleSelect' },
   { local: 'engagement_type', airtable: OPPORTUNITIES.engagementType, type: 'multiSelect' },
   { local: 'qualifications_sent', airtable: OPPORTUNITIES.qualificationsSent, type: 'checkbox' },
   { local: 'company_ids', airtable: OPPORTUNITIES.company, type: 'linked' },
@@ -241,9 +262,9 @@ const TASK_MAPPINGS: FieldMapping[] = [
   { local: 'notes', airtable: TASKS.notes, type: 'text' },
   { local: 'due_date', airtable: TASKS.dueDate, type: 'text' },
   { local: 'completed_date', airtable: TASKS.completedDate, type: 'text' },
-  { local: 'status', airtable: TASKS.status, type: 'text' },
-  { local: 'type', airtable: TASKS.type, type: 'text' },
-  { local: 'priority', airtable: TASKS.priority, type: 'text' },
+  { local: 'status', airtable: TASKS.status, type: 'singleSelect' },
+  { local: 'type', airtable: TASKS.type, type: 'singleSelect' },
+  { local: 'priority', airtable: TASKS.priority, type: 'singleSelect' },
   { local: 'sales_opportunities_ids', airtable: TASKS.salesOpportunities, type: 'linked' },
   { local: 'contacts_ids', airtable: TASKS.contacts, type: 'linked' },
   { local: 'projects_ids', airtable: TASKS.projects, type: 'linked' },
@@ -258,9 +279,9 @@ const PROPOSAL_MAPPINGS: FieldMapping[] = [
   { local: 'client_feedback', airtable: PROPOSALS.clientFeedback, type: 'text' },
   { local: 'performance_metrics', airtable: PROPOSALS.performanceMetrics, type: 'text' },
   { local: 'notes', airtable: PROPOSALS.notes, type: 'text' },
-  { local: 'status', airtable: PROPOSALS.status, type: 'text' },
-  { local: 'template_used', airtable: PROPOSALS.templateUsed, type: 'text' },
-  { local: 'approval_status', airtable: PROPOSALS.approvalStatus, type: 'text' },
+  { local: 'status', airtable: PROPOSALS.status, type: 'singleSelect' },
+  { local: 'template_used', airtable: PROPOSALS.templateUsed, type: 'singleSelect' },
+  { local: 'approval_status', airtable: PROPOSALS.approvalStatus, type: 'singleSelect' },
   { local: 'client_ids', airtable: PROPOSALS.client, type: 'linked' },
   { local: 'company_ids', airtable: PROPOSALS.company, type: 'linked' },
   { local: 'related_opportunity_ids', airtable: PROPOSALS.relatedOpportunity, type: 'linked' },
@@ -279,7 +300,7 @@ const PROJECT_MAPPINGS: FieldMapping[] = [
   { local: 'start_date', airtable: PROJECTS.startDate, type: 'text' },
   { local: 'target_completion', airtable: PROJECTS.targetCompletion, type: 'text' },
   { local: 'actual_completion', airtable: PROJECTS.actualCompletion, type: 'text' },
-  { local: 'status', airtable: PROJECTS.status, type: 'text' },
+  { local: 'status', airtable: PROJECTS.status, type: 'singleSelect' },
   { local: 'engagement_type', airtable: PROJECTS.engagementType, type: 'multiSelect' },
   { local: 'sales_opportunities_ids', airtable: PROJECTS.salesOpportunities, type: 'linked' },
   { local: 'client_ids', airtable: PROJECTS.client, type: 'linked' },
@@ -295,8 +316,8 @@ const INTERACTION_MAPPINGS: FieldMapping[] = [
   { local: 'summary', airtable: INTERACTIONS.summary, type: 'text' },
   { local: 'next_steps', airtable: INTERACTIONS.nextSteps, type: 'text' },
   { local: 'date', airtable: INTERACTIONS.date, type: 'text' },
-  { local: 'type', airtable: INTERACTIONS.type, type: 'text' },
-  { local: 'direction', airtable: INTERACTIONS.direction, type: 'text' },
+  { local: 'type', airtable: INTERACTIONS.type, type: 'singleSelect' },
+  { local: 'direction', airtable: INTERACTIONS.direction, type: 'singleSelect' },
   { local: 'contacts_ids', airtable: INTERACTIONS.contacts, type: 'linked' },
   { local: 'sales_opportunities_ids', airtable: INTERACTIONS.salesOpportunities, type: 'linked' },
 ]
@@ -343,9 +364,9 @@ const IMPORTED_CONTACT_MAPPINGS: FieldMapping[] = [
   { local: 'contact_photo_url', airtable: IMPORTED_CONTACTS.contactPhotoUrl, type: 'text' },
   { local: 'business_card_image_url', airtable: IMPORTED_CONTACTS.businessCardImageUrl, type: 'text' },
   { local: 'import_date', airtable: IMPORTED_CONTACTS.importDate, type: 'text' },
-  { local: 'categorization', airtable: IMPORTED_CONTACTS.categorization, type: 'text' },
-  { local: 'onboarding_status', airtable: IMPORTED_CONTACTS.onboardingStatus, type: 'text' },
-  { local: 'import_source', airtable: IMPORTED_CONTACTS.importSource, type: 'text' },
+  { local: 'categorization', airtable: IMPORTED_CONTACTS.categorization, type: 'singleSelect' },
+  { local: 'onboarding_status', airtable: IMPORTED_CONTACTS.onboardingStatus, type: 'singleSelect' },
+  { local: 'import_source', airtable: IMPORTED_CONTACTS.importSource, type: 'singleSelect' },
   { local: 'tags', airtable: IMPORTED_CONTACTS.tags, type: 'multiSelect' },
   { local: 'sync_to_contacts', airtable: IMPORTED_CONTACTS.syncToContacts, type: 'checkbox' },
   { local: 'specialties_ids', airtable: IMPORTED_CONTACTS.specialties, type: 'linked' },
@@ -379,9 +400,9 @@ const PORTAL_ACCESS_MAPPINGS: FieldMapping[] = [
   { local: 'date_added', airtable: PORTAL_ACCESS.dateAdded, type: 'text' },
   { local: 'expected_project_start_date', airtable: PORTAL_ACCESS.expectedProjectStartDate, type: 'text' },
   { local: 'follow_up_date', airtable: PORTAL_ACCESS.followUpDate, type: 'text' },
-  { local: 'status', airtable: PORTAL_ACCESS.status, type: 'text' },
-  { local: 'lead_source', airtable: PORTAL_ACCESS.leadSource, type: 'text' },
-  { local: 'stage', airtable: PORTAL_ACCESS.stage, type: 'text' },
+  { local: 'status', airtable: PORTAL_ACCESS.status, type: 'singleSelect' },
+  { local: 'lead_source', airtable: PORTAL_ACCESS.leadSource, type: 'singleSelect' },
+  { local: 'stage', airtable: PORTAL_ACCESS.stage, type: 'singleSelect' },
   { local: 'services_interested_in', airtable: PORTAL_ACCESS.servicesInterestedIn, type: 'multiSelect' },
   { local: 'contact_ids', airtable: PORTAL_ACCESS.contact, type: 'linked' },
   { local: 'framer_page_url', airtable: PORTAL_ACCESS.framerPageUrl, type: 'readonly' },

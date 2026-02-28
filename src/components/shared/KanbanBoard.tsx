@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -22,14 +22,17 @@ interface KanbanBoardProps<T extends { id: string }> {
   columns: KanbanColumn<T>[]
   renderCard: (item: T) => React.ReactNode
   onMove: (itemId: string, fromColumn: string, toColumn: string) => void
+  onCardClick?: (itemId: string) => void
 }
 
 function DroppableColumn<T extends { id: string }>({
   column,
   renderCard,
+  onCardClick,
 }: {
   column: KanbanColumn<T>
   renderCard: (item: T) => React.ReactNode
+  onCardClick?: (itemId: string) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
 
@@ -50,7 +53,7 @@ function DroppableColumn<T extends { id: string }>({
         }`}
       >
         {column.items.map(item => (
-          <DraggableCard key={item.id} id={item.id}>
+          <DraggableCard key={item.id} id={item.id} onCardClick={onCardClick}>
             {renderCard(item)}
           </DraggableCard>
         ))}
@@ -59,18 +62,33 @@ function DroppableColumn<T extends { id: string }>({
   )
 }
 
-function DraggableCard({ id, children }: { id: string; children: React.ReactNode }) {
+function DraggableCard({ id, children, onCardClick }: { id: string; children: React.ReactNode; onCardClick?: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
+  const didDrag = useRef(false)
 
   const style = transform
     ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
     : undefined
 
+  // Track if pointer moved enough to be a drag
+  useEffect(() => {
+    if (isDragging) didDrag.current = true
+  }, [isDragging])
+
+  function handleClick() {
+    if (didDrag.current) {
+      didDrag.current = false
+      return
+    }
+    onCardClick?.(id)
+  }
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`transition-shadow ${isDragging ? 'opacity-30' : ''}`}
+      className={`transition-shadow cursor-pointer ${isDragging ? 'opacity-30' : ''}`}
+      onClick={handleClick}
       {...listeners}
       {...attributes}
     >
@@ -83,6 +101,7 @@ export default function KanbanBoard<T extends { id: string }>({
   columns,
   renderCard,
   onMove,
+  onCardClick,
 }: KanbanBoardProps<T>) {
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -132,6 +151,7 @@ export default function KanbanBoard<T extends { id: string }>({
             key={column.id}
             column={column}
             renderCard={renderCard}
+            onCardClick={onCardClick}
           />
         ))}
       </div>

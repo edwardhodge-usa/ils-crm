@@ -106,7 +106,7 @@ export default function PipelinePage() {
         <KanbanBoard
           columns={columns}
           renderCard={(opp) => (
-            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-3 cursor-grab active:cursor-grabbing hover:border-[#48484A] transition-colors">
+            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-3 hover:border-[#0A84FF]/50 transition-colors">
               <p className="text-[13px] text-white font-medium mb-1 line-clamp-2">
                 {opp.opportunity_name}
               </p>
@@ -128,6 +128,7 @@ export default function PipelinePage() {
             </div>
           )}
           onMove={handleMove}
+          onCardClick={(id) => navigate(`/pipeline/${id}/edit`)}
         />
       </div>
     </div>

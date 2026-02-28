@@ -2,6 +2,7 @@
 // Extracted from ContactEnricher's sync.ts with pagination + batch write support
 
 const AIRTABLE_API_URL = 'https://api.airtable.com/v0'
+const isDev = !!process.env.VITE_DEV_SERVER_URL
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -40,7 +41,7 @@ export async function withRetry<T>(
       }
 
       const retryDelay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 500
-      console.log(`[Airtable] Retrying after ${Math.round(retryDelay)}ms (attempt ${attempt + 1}/${maxRetries})`)
+      if (isDev) console.log(`[Airtable] Retrying after ${Math.round(retryDelay)}ms (attempt ${attempt + 1}/${maxRetries})`)
       await delay(retryDelay)
     }
   }
@@ -61,17 +62,23 @@ export async function airtableRequest(
       url += (url.includes('?') ? '&' : '?') + 'returnFieldsByFieldId=true'
     }
 
+    const bodyStr = body ? JSON.stringify(body) : undefined
+    if (isDev && (method === 'PATCH' || method === 'POST')) {
+      console.log(`[Airtable] ${method} ${url.split('/').slice(-1)[0].split('?')[0]} body:`, bodyStr?.substring(0, 500))
+    }
+
     const response = await fetch(url, {
       method,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: body ? JSON.stringify(body) : undefined,
+      body: bodyStr,
     })
 
     if (!response.ok) {
       const errorText = await response.text()
+      console.error(`[Airtable] ${method} FAILED ${response.status}:`, errorText)
       throw new Error(`Airtable API error: ${response.status} - ${errorText}`)
     }
 
@@ -122,6 +129,17 @@ export async function fetchAllRecords(
   } while (offset)
 
   return allRecords
+}
+
+// Fetch a single record by ID
+export async function fetchRecord(
+  tableId: string,
+  recordId: string,
+  options: { apiKey: string; baseId: string }
+): Promise<AirtableRecord> {
+  const { apiKey, baseId } = options
+  const response = await airtableRequest(`${tableId}/${recordId}`, { apiKey, baseId }) as AirtableRecord
+  return response
 }
 
 // Batch write records (create or update), respecting Airtable's 10-record limit

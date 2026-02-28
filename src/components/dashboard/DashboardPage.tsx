@@ -70,7 +70,7 @@ export default function DashboardPage() {
                 <div key={stage.sales_stage} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <StatusBadge value={stage.sales_stage} />
-                    <span className="text-[12px] text-[#636366]">{stage.count} deals</span>
+                    <span className="text-[12px] text-[#636366]">{stage.count} {stage.count === 1 ? 'deal' : 'deals'}</span>
                   </div>
                   <span className="text-[13px] text-white font-medium">
                     {formatCurrency(stage.total_value)}

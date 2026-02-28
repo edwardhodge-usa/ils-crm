@@ -1,5 +1,26 @@
 import { useState, useMemo } from 'react'
 
+/**
+ * Format a cell value for display. If the value is a JSON-encoded array
+ * (common for multi-select fields stored in sql.js), parse it and join
+ * the items with commas. Otherwise return the plain string.
+ */
+function formatCellValue(value: unknown): string {
+  if (value == null) return ''
+  const str = String(value)
+  if (str.startsWith('[')) {
+    try {
+      const arr = JSON.parse(str)
+      if (Array.isArray(arr)) {
+        return arr.join(', ')
+      }
+    } catch {
+      // Not valid JSON — fall through to return raw string
+    }
+  }
+  return str
+}
+
 interface Column {
   key: string
   label: string
@@ -114,7 +135,7 @@ export default function DataTable({
                   <td key={col.key} className="px-4 py-2.5 text-white">
                     {col.render
                       ? col.render(row[col.key], row)
-                      : (row[col.key] != null ? String(row[col.key]) : <span className="text-[#48484A]">—</span>)
+                      : (row[col.key] != null ? formatCellValue(row[col.key]) : <span className="text-[#48484A]">—</span>)
                     }
                   </td>
                 ))}

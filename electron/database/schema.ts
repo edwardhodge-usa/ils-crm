@@ -160,6 +160,10 @@ export function createSchema(db: SqlJsDatabase): void {
       client_feedback TEXT,
       performance_metrics TEXT,
       notes TEXT,
+      scope_summary TEXT,
+      proposed_value REAL,
+      date_sent TEXT,
+      valid_until TEXT,
       status TEXT,
       template_used TEXT,
       approval_status TEXT,
@@ -172,6 +176,17 @@ export function createSchema(db: SqlJsDatabase): void {
       _pending_push INTEGER DEFAULT 0
     )
   `)
+
+  // ─── Proposals: migration for existing databases ───────
+  const proposalMigrations = [
+    'ALTER TABLE proposals ADD COLUMN scope_summary TEXT',
+    'ALTER TABLE proposals ADD COLUMN proposed_value REAL',
+    'ALTER TABLE proposals ADD COLUMN date_sent TEXT',
+    'ALTER TABLE proposals ADD COLUMN valid_until TEXT',
+  ]
+  for (const sql of proposalMigrations) {
+    try { db.run(sql) } catch { /* column already exists */ }
+  }
 
   // ─── Projects ──────────────────────────────────────────
   db.run(`

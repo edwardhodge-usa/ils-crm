@@ -38,9 +38,9 @@ const FIELDS: FormFieldDef[] = [
   { key: 'partner_status', label: 'Partner Status', type: 'singleSelect', section: 'Partner/Vendor',
     options: ['Active - Preferred', 'Active', 'Inactive', 'Do Not Use'] },
   { key: 'quality_rating', label: 'Quality Rating', type: 'singleSelect', section: 'Partner/Vendor',
-    options: ['5-star Excellent', '4-star Good', '3-star Average', '2-star Below Average', '1-star Poor'] },
+    options: ['⭐⭐⭐⭐⭐ Excellent', '⭐⭐⭐⭐ Good', '⭐⭐⭐ Average', '⭐⭐ Below Average', '⭐ Poor'] },
   { key: 'reliability_rating', label: 'Reliability Rating', type: 'singleSelect', section: 'Partner/Vendor',
-    options: ['5-star Excellent', '4-star Good', '3-star Average', '2-star Below Average', '1-star Poor'] },
+    options: ['⭐⭐⭐⭐⭐ Excellent', '⭐⭐⭐⭐ Good', '⭐⭐⭐ Average', '⭐⭐ Below Average', '⭐ Poor'] },
 
   // Notes
   { key: 'notes', label: 'Notes', type: 'textarea', section: 'Notes' },

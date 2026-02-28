@@ -11,7 +11,7 @@ const FIELDS: FormFieldDef[] = [
   { key: 'deal_value', label: 'Deal Value', type: 'currency', section: 'Financials' },
   { key: 'expected_close_date', label: 'Expected Close Date', type: 'date', section: 'Financials' },
 
-  { key: 'engagement_type', label: 'Engagement Type', type: 'singleSelect', section: 'Details',
+  { key: 'engagement_type', label: 'Engagement Type', type: 'multiSelect', section: 'Details',
     options: ['Strategy/Consulting', 'Design/Concept Development', 'Production/Fabrication Oversight', 'Opening/Operations Support', 'Executive Producing'] },
   { key: 'quals_type', label: 'Quals Type', type: 'singleSelect', section: 'Details',
     options: ['Standard Capabilities Deck', 'Customized Quals', 'Both'] },

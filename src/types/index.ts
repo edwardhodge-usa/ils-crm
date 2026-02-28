@@ -280,24 +280,6 @@ export interface SyncStatus {
   error: string | null
 }
 
-export interface SyncReport {
-  tables: SyncStatus[]
-  startedAt: string
-  completedAt: string
-  totalRecords: number
-  errors: string[]
-}
-
-export interface PendingChange {
-  id: number
-  table_name: string
-  record_id: string | null
-  action: 'create' | 'update' | 'delete'
-  fields: string | null // JSON
-  created_at: string
-  synced_at: string | null
-}
-
 // ─── UI Types ────────────────────────────────────────────────
 
 export type FieldType =
@@ -328,27 +310,4 @@ export interface FieldDef {
   linkedTable?: string
   readOnly?: boolean
   section?: string
-}
-
-export interface ColumnDef {
-  key: string
-  label: string
-  width?: number
-  sortable?: boolean
-  render?: (value: unknown, record: Record<string, unknown>) => string
-}
-
-// ─── Utility: parse JSON array fields ────────────────────────
-
-export function parseLinkedIds(value: string | null): string[] {
-  if (!value) return []
-  try {
-    return JSON.parse(value)
-  } catch {
-    return []
-  }
-}
-
-export function parseMultiSelect(value: string | null): string[] {
-  return parseLinkedIds(value)
 }
