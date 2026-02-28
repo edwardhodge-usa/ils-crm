@@ -10,7 +10,7 @@ const FUZZY_MATCH_THRESHOLD = 0.8;
 async function fetchAllCompanies() {
   const companies = [];
   await base(TABLES.COMPANIES)
-    .select({ fields: [CO.COMPANY_NAME] })
+    .select({ fields: [CO.COMPANY_NAME], returnFieldsByFieldId: true })
     .eachPage((records, next) => {
       for (const r of records) {
         const name = r.get(CO.COMPANY_NAME);
@@ -49,7 +49,7 @@ async function createCompany(fields) {
 async function fetchAllSpecialties() {
   const specialties = [];
   await base(TABLES.SPECIALTIES)
-    .select({ fields: [S.SPECIALTY_NAME] })
+    .select({ fields: [S.SPECIALTY_NAME], returnFieldsByFieldId: true })
     .eachPage((records, next) => {
       for (const r of records) {
         const name = r.get(S.SPECIALTY_NAME);
@@ -98,7 +98,17 @@ async function updateImportedContact(recordId, fields) {
 }
 
 async function fetchImportedContact(recordId) {
-  return base(TABLES.IMPORTED_CONTACTS).find(recordId);
+  // Use select instead of find so we can pass returnFieldsByFieldId
+  const records = await base(TABLES.IMPORTED_CONTACTS)
+    .select({
+      filterByFormula: `RECORD_ID() = "${recordId}"`,
+      returnFieldsByFieldId: true,
+    })
+    .firstPage();
+  if (!records || records.length === 0) {
+    throw new Error(`Imported Contact not found: ${recordId}`);
+  }
+  return records[0];
 }
 
 module.exports = {

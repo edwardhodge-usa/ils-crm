@@ -25,7 +25,7 @@ const {
   updateImportedContact,
   fetchImportedContact,
 } = require('./airtable-helpers');
-const { TABLES, IC, C, CO } = require('./field-ids');
+const { TABLES, IC, C, CO, S } = require('./field-ids');
 
 const DRY_RUN = process.argv.includes('--dry');
 
@@ -33,9 +33,18 @@ async function processImportedContact(recordId, companies) {
   console.log(`\nProcessing: ${recordId}`);
 
   const ic = await fetchImportedContact(recordId);
-  const firstName = ic.get(IC.FIRST_NAME) || '';
-  const lastName = ic.get(IC.LAST_NAME) || '';
-  const fullName = `${firstName} ${lastName}`.trim() || '(unnamed)';
+  let firstName = ic.get(IC.FIRST_NAME) || '';
+  let lastName = ic.get(IC.LAST_NAME) || '';
+  const combinedName = ic.get(IC.NAME) || '';
+
+  // Fallback: parse combined name if first/last are empty
+  if (!firstName && !lastName && combinedName) {
+    const parts = combinedName.trim().split(/\s+/);
+    firstName = parts[0] || '';
+    lastName = parts.slice(1).join(' ') || '';
+  }
+
+  const fullName = `${firstName} ${lastName}`.trim() || combinedName || '(unnamed)';
   const companyName = ic.get(IC.COMPANY) || '';
 
   console.log(`  Name: ${fullName}`);
@@ -198,7 +207,8 @@ async function processAllApproved() {
   await base(TABLES.IMPORTED_CONTACTS)
     .select({
       filterByFormula: 'AND({Onboarding Status} = "Approved", {Related CRM Contact} = BLANK())',
-      fields: [IC.FIRST_NAME, IC.LAST_NAME, IC.ONBOARDING_STATUS],
+      fields: [IC.NAME, IC.FIRST_NAME, IC.LAST_NAME, IC.ONBOARDING_STATUS],
+      returnFieldsByFieldId: true,
     })
     .eachPage((page, next) => {
       records.push(...page);
