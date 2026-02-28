@@ -26,6 +26,7 @@ export interface SyncProgress {
 // Maps record IDs → display names for all tables (for linked record resolution)
 
 const primaryFieldCache: Record<string, Map<string, string>> = {}
+let isSyncing = false
 
 export function getDisplayName(tableId: string, recordId: string): string {
   return primaryFieldCache[tableId]?.get(recordId) ?? recordId
@@ -127,7 +128,7 @@ async function pullTable(
   // Remove records that no longer exist in Airtable
   const localRecords = getAll(tableName)
   for (const local of localRecords) {
-    if (!seenIds.has(local.id as string)) {
+    if (!seenIds.has(local.id as string) && (local._pending_push as number) !== 1) {
       deleteRecord(tableName, local.id as string)
     }
   }
@@ -182,11 +183,21 @@ export async function fullSync(
   win: BrowserWindow | null,
   onProgress?: (progress: SyncProgress) => void
 ): Promise<{ success: boolean; error?: string }> {
+  if (isSyncing) {
+    return { success: false, error: 'Sync already in progress' }
+  }
+  isSyncing = true
+
   const apiKey = getSetting('airtable_api_key')
-  const baseId = getSetting('airtable_base_id') || 'appYXbUdcmSwBoPFU'
+  const baseId = getSetting('airtable_base_id')
 
   if (!apiKey) {
+    isSyncing = false
     return { success: false, error: 'No API key configured' }
+  }
+  if (!baseId) {
+    isSyncing = false
+    return { success: false, error: 'No base ID configured' }
   }
 
   const progress: SyncProgress = {
@@ -248,6 +259,8 @@ export async function fullSync(
     progress.error = String(error)
     sendProgress(progress)
     return { success: false, error: String(error) }
+  } finally {
+    isSyncing = false
   }
 }
 
@@ -258,9 +271,10 @@ export async function createRecord(
   fields: Record<string, unknown>
 ): Promise<{ success: boolean; data?: string; error?: string }> {
   const apiKey = getSetting('airtable_api_key')
-  const baseId = getSetting('airtable_base_id') || 'appYXbUdcmSwBoPFU'
+  const baseId = getSetting('airtable_base_id')
 
   if (!apiKey) return { success: false, error: 'No API key configured' }
+  if (!baseId) return { success: false, error: 'No base ID configured' }
 
   const tableId = TABLE_NAME_TO_ID[tableName]
   const converter = TABLE_CONVERTERS[tableName]
@@ -289,9 +303,10 @@ export async function updateRecord(
   fields: Record<string, unknown>
 ): Promise<{ success: boolean; error?: string }> {
   const apiKey = getSetting('airtable_api_key')
-  const baseId = getSetting('airtable_base_id') || 'appYXbUdcmSwBoPFU'
+  const baseId = getSetting('airtable_base_id')
 
   if (!apiKey) return { success: false, error: 'No API key configured' }
+  if (!baseId) return { success: false, error: 'No base ID configured' }
 
   const tableId = TABLE_NAME_TO_ID[tableName]
   const converter = TABLE_CONVERTERS[tableName]
@@ -319,9 +334,10 @@ export async function deleteRemoteRecord(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   const apiKey = getSetting('airtable_api_key')
-  const baseId = getSetting('airtable_base_id') || 'appYXbUdcmSwBoPFU'
+  const baseId = getSetting('airtable_base_id')
 
   if (!apiKey) return { success: false, error: 'No API key configured' }
+  if (!baseId) return { success: false, error: 'No base ID configured' }
 
   const tableId = TABLE_NAME_TO_ID[tableName]
   if (!tableId) return { success: false, error: `Unknown table: ${tableName}` }

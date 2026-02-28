@@ -52,13 +52,13 @@ ipcMain.handle('app:getPaths', () => {
   }
 })
 
-// Register all entity/sync/dashboard/search IPC handlers
-registerAllHandlers(() => mainWindow)
-
 app.whenReady().then(async () => {
   // Initialize database before creating window
   await initDatabase()
   console.log('[App] Database initialized')
+
+  // Register all entity/sync/dashboard/search IPC handlers (after DB init)
+  registerAllHandlers(() => mainWindow)
 
   createWindow()
 

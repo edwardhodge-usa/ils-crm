@@ -45,6 +45,20 @@ function num(value: unknown): number | null {
   return isNaN(n) ? null : n
 }
 
+function safeParseArray(value: unknown): unknown[] {
+  if (!value) return []
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
 // ─── Generic converter builder ───────────────────────────────
 
 interface FieldMapping {
@@ -106,10 +120,10 @@ function localToAirtable(
         fields[m.airtable] = val != null ? Number(val) : null
         break
       case 'linked':
-        fields[m.airtable] = val ? JSON.parse(val as string) : []
+        fields[m.airtable] = safeParseArray(val)
         break
       case 'multiSelect':
-        fields[m.airtable] = val ? JSON.parse(val as string) : []
+        fields[m.airtable] = safeParseArray(val)
         break
       case 'checkbox':
         fields[m.airtable] = val === 1 || val === true

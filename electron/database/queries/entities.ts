@@ -3,6 +3,22 @@
 
 import { getDatabase, saveDatabase } from '../init'
 
+// ─── SQL Injection Prevention ────────────────────────────────
+
+const VALID_TABLES = new Set([
+  'contacts', 'companies', 'opportunities', 'tasks', 'proposals',
+  'projects', 'interactions', 'imported_contacts', 'specialties',
+  'portal_access', 'portal_logs', 'pending_changes', 'settings', 'sync_status',
+])
+
+const VALID_COLUMN = /^[a-z_][a-z0-9_]*$/
+
+function validateTable(table: string): void {
+  if (!VALID_TABLES.has(table)) {
+    throw new Error(`Invalid table name: ${table}`)
+  }
+}
+
 interface QueryResult {
   columns: string[]
   values: unknown[][]
@@ -24,12 +40,14 @@ function resultToObjects(result: QueryResult[]): Record<string, unknown>[] {
 // ─── Generic CRUD ────────────────────────────────────────────
 
 export function getAll(table: string): Record<string, unknown>[] {
+  validateTable(table)
   const db = getDatabase()
   const result = db.exec(`SELECT * FROM ${table} ORDER BY rowid DESC`)
   return resultToObjects(result)
 }
 
 export function getById(table: string, id: string): Record<string, unknown> | null {
+  validateTable(table)
   const db = getDatabase()
   const result = db.exec(`SELECT * FROM ${table} WHERE id = ?`, [id])
   const rows = resultToObjects(result)
@@ -41,6 +59,7 @@ export function upsert(
   id: string,
   fields: Record<string, unknown>
 ): void {
+  validateTable(table)
   const db = getDatabase()
   const existing = getById(table, id)
 
@@ -48,31 +67,41 @@ export function upsert(
     // Update
     const keys = Object.keys(fields)
     if (keys.length === 0) return
+    for (const key of keys) {
+      if (!VALID_COLUMN.test(key)) {
+        throw new Error(`Invalid column name: ${key}`)
+      }
+    }
     const setClause = keys.map(k => `${k} = ?`).join(', ')
     const values = keys.map(k => fields[k])
     db.run(`UPDATE ${table} SET ${setClause} WHERE id = ?`, [...values, id])
   } else {
     // Insert
     const allFields = { id, ...fields }
-    const keys = Object.keys(allFields)
-    const placeholders = keys.map(() => '?').join(', ')
-    const values = keys.map(k => allFields[k])
+    const allKeys = Object.keys(allFields)
+    for (const key of allKeys) {
+      if (!VALID_COLUMN.test(key)) {
+        throw new Error(`Invalid column name: ${key}`)
+      }
+    }
+    const placeholders = allKeys.map(() => '?').join(', ')
+    const values = allKeys.map(k => allFields[k])
     db.run(
-      `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`,
+      `INSERT INTO ${table} (${allKeys.join(', ')}) VALUES (${placeholders})`,
       values
     )
   }
 
-  saveDatabase()
 }
 
 export function deleteRecord(table: string, id: string): void {
+  validateTable(table)
   const db = getDatabase()
   db.run(`DELETE FROM ${table} WHERE id = ?`, [id])
-  saveDatabase()
 }
 
 export function getCount(table: string): number {
+  validateTable(table)
   const db = getDatabase()
   const result = db.exec(`SELECT COUNT(*) as count FROM ${table}`)
   if (result.length === 0) return 0
@@ -82,6 +111,7 @@ export function getCount(table: string): number {
 // ─── Pending changes ─────────────────────────────────────────
 
 export function getPendingRecords(table: string): Record<string, unknown>[] {
+  validateTable(table)
   const db = getDatabase()
   const result = db.exec(
     `SELECT * FROM ${table} WHERE _pending_push = 1`
@@ -90,21 +120,21 @@ export function getPendingRecords(table: string): Record<string, unknown>[] {
 }
 
 export function markPushed(table: string, id: string): void {
+  validateTable(table)
   const db = getDatabase()
   db.run(
     `UPDATE ${table} SET _pending_push = 0 WHERE id = ?`,
     [id]
   )
-  saveDatabase()
 }
 
 export function markPendingPush(table: string, id: string): void {
+  validateTable(table)
   const db = getDatabase()
   db.run(
     `UPDATE ${table} SET _pending_push = 1, _local_modified_at = datetime('now') WHERE id = ?`,
     [id]
   )
-  saveDatabase()
 }
 
 // ─── Pending changes queue ───────────────────────────────────
@@ -120,7 +150,6 @@ export function addPendingChange(
     `INSERT INTO pending_changes (table_name, record_id, action, fields) VALUES (?, ?, ?, ?)`,
     [tableName, recordId, action, fields ? JSON.stringify(fields) : null]
   )
-  saveDatabase()
 }
 
 export function getUnsynced(): Record<string, unknown>[] {
@@ -137,7 +166,6 @@ export function markSynced(changeId: number): void {
     `UPDATE pending_changes SET synced_at = datetime('now') WHERE id = ?`,
     [changeId]
   )
-  saveDatabase()
 }
 
 // ─── Settings ────────────────────────────────────────────────
@@ -181,6 +209,11 @@ export function updateSyncStatus(
     `UPDATE sync_status SET status = ?, last_sync_at = datetime('now'), record_count = COALESCE(?, record_count), error = ? WHERE table_name = ?`,
     [status, recordCount ?? null, error ?? null, tableName]
   )
+}
+
+// ─── Manual flush for batch callers ─────────────────────────
+
+export function flushDatabase(): void {
   saveDatabase()
 }
 

@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM project — Airtable schema management, API integrations, and eventually a full Electron desktop CRM app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Airtable API (backend/data), Anthropic Claude API (AI features)
-- **Status**: Phase 1 — Schema cleanup complete (P1-P3), ready for app development
+- **Status**: MVP complete — All 7 phases built, /grill review fixes applied, ready for testing
 - **Repo**: edwardhodge-usa/ils-crm
 - **Airtable Base**: ILS CRM (appYXbUdcmSwBoPFU)
 
@@ -64,6 +64,14 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-02-27** - When merging duplicate company records, check for linked records on BOTH duplicates before deleting → Only 1 of 12 duplicates needed re-pointing, but missing it would break an opportunity link
 **2026-02-27** - Speciality multi-select had 82 options with duplicates/casing issues → Migrated to Specialties lookup table (linked records). Multi-select fields allow duplicates; lookup tables don't
 **2026-02-27** - ContactEnricher was already 95% migrated to linked records — only needed dead field ref cleanup, not a rewrite → Always read the code before assuming a migration is needed
+**2026-02-27** - SQL injection via dynamic column names in sql.js queries (`${key} = ?`) → Always whitelist table names (Set) and validate column names (regex `/^[a-z_][a-z0-9_]*$/`) before interpolating into SQL
+**2026-02-27** - Polling sync with no mutex causes race conditions when sync takes longer than poll interval → Add `isSyncing` guard flag with `finally` cleanup; also guard "Force Sync" button
+**2026-02-27** - IPC handlers registered before `initDatabase()` causes crash if renderer sends early messages → Register IPC handlers AFTER `await initDatabase()` inside `app.whenReady()`
+**2026-02-27** - `JSON.parse()` without try-catch on linked/multiSelect fields kills entire push operation on corrupted data → Use `safeParseArray()` helper that returns `[]` on parse failure
+**2026-02-27** - `saveDatabase()` after every sql.js write = 380+ disk writes during fullSync → Remove per-write saves; rely on 30s auto-save + explicit save at end of sync. Keep saves only for rare user actions (settings)
+**2026-02-27** - Pull sync deletes locally-created records that haven't been pushed yet → Check `_pending_push` flag before deleting records not found in Airtable
+**2026-02-27** - Hardcoded Airtable base ID fallback (`|| 'appYXbUdcmSwBoPFU'`) means forks silently hit wrong base → Never hardcode base IDs; require explicit configuration and return error if missing
+**2026-02-27** - `unknown` type in `Record<string, unknown>` isn't assignable to `ReactNode` for conditional rendering → Use `{Boolean(obj.prop) && <jsx>}` instead of `{obj.prop && <jsx>}`
 
 ## Key Commands
 
