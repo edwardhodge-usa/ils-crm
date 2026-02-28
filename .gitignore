@@ -1,0 +1,14 @@
+node_modules/
+dist/
+out/
+release/
+build/
+.next/
+.vercel/
+.env
+.env.*
+.env.local
+.DS_Store
+*.app
+*.dmg
+*.log
