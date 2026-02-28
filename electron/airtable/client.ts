@@ -3,6 +3,8 @@
 
 const AIRTABLE_API_URL = 'https://api.airtable.com/v0'
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
 interface AirtableRequestOptions {
   method?: string
   body?: unknown
@@ -37,9 +39,9 @@ export async function withRetry<T>(
         throw error
       }
 
-      const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 500
-      console.log(`[Airtable] Retrying after ${Math.round(delay)}ms (attempt ${attempt + 1}/${maxRetries})`)
-      await new Promise(resolve => setTimeout(resolve, delay))
+      const retryDelay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 500
+      console.log(`[Airtable] Retrying after ${Math.round(retryDelay)}ms (attempt ${attempt + 1}/${maxRetries})`)
+      await delay(retryDelay)
     }
   }
 
@@ -55,7 +57,7 @@ export async function airtableRequest(
 
   return withRetry(async () => {
     let url = `${AIRTABLE_API_URL}/${baseId}/${endpoint}`
-    if (!url.includes('returnFieldsByFieldId')) {
+    if (method !== 'DELETE' && !url.includes('returnFieldsByFieldId')) {
       url += (url.includes('?') ? '&' : '?') + 'returnFieldsByFieldId=true'
     }
 
@@ -77,7 +79,7 @@ export async function airtableRequest(
   })
 }
 
-interface AirtableRecord {
+export interface AirtableRecord {
   id: string
   fields: Record<string, unknown>
   createdTime: string
@@ -115,7 +117,7 @@ export async function fetchAllRecords(
 
     // Rate limiting: brief pause between pages
     if (offset) {
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await delay(200)
     }
   } while (offset)
 
@@ -144,7 +146,7 @@ export async function batchCreate(
 
     // Rate limiting between batches
     if (i + 10 < records.length) {
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await delay(200)
     }
   }
 
@@ -171,7 +173,7 @@ export async function batchUpdate(
     updated.push(...response.records)
 
     if (i + 10 < records.length) {
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await delay(200)
     }
   }
 
@@ -196,7 +198,7 @@ export async function batchDelete(
     })
 
     if (i + 10 < recordIds.length) {
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await delay(200)
     }
   }
 }

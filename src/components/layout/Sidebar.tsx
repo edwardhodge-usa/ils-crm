@@ -1,18 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-
-const navItems = [
-  { path: '/', label: 'Dashboard', icon: 'LayoutDashboard' },
-  { path: '/contacts', label: 'Contacts', icon: 'Users' },
-  { path: '/companies', label: 'Companies', icon: 'Building2' },
-  { path: '/pipeline', label: 'Pipeline', icon: 'Kanban' },
-  { path: '/tasks', label: 'Tasks', icon: 'CheckSquare' },
-  { path: '/proposals', label: 'Proposals', icon: 'FileText' },
-  { path: '/projects', label: 'Projects', icon: 'FolderKanban' },
-  { path: '/interactions', label: 'Interactions', icon: 'MessageSquare' },
-  { path: '/imported-contacts', label: 'Imported', icon: 'UserPlus' },
-  { path: '/portal', label: 'Portal Access', icon: 'Shield' },
-  { path: '/portal-logs', label: 'Portal Logs', icon: 'ScrollText' },
-]
+import { NAV_ITEMS, SETTINGS_ROUTE } from '../../config/routes'
 
 const iconMap: Record<string, (props: { className?: string }) => JSX.Element> = {
   LayoutDashboard: ({ className }) => (
@@ -88,11 +75,11 @@ export default function Sidebar() {
 
       {/* Nav items */}
       <nav className="flex-1 px-2 py-1 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
+        {NAV_ITEMS.map((item) => {
           const isActive = item.path === '/'
             ? location.pathname === '/'
             : location.pathname.startsWith(item.path)
-          const Icon = iconMap[item.icon]
+          const Icon = item.icon ? iconMap[item.icon] : undefined
 
           return (
             <button
@@ -114,15 +101,15 @@ export default function Sidebar() {
       {/* Settings at bottom */}
       <div className="px-2 py-2 border-t border-[#3A3A3C]">
         <button
-          onClick={() => navigate('/settings')}
+          onClick={() => navigate(SETTINGS_ROUTE.path)}
           className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
-            location.pathname === '/settings'
+            location.pathname === SETTINGS_ROUTE.path
               ? 'bg-[#0A84FF]/15 text-[#0A84FF]'
               : 'text-[#98989D] hover:bg-[#3A3A3C] hover:text-white'
           }`}
         >
           {iconMap.Settings && <iconMap.Settings className="w-4 h-4 flex-shrink-0" />}
-          Settings
+          {SETTINGS_ROUTE.label}
         </button>
       </div>
     </div>

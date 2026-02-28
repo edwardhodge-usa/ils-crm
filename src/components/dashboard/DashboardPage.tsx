@@ -21,25 +21,34 @@ export default function DashboardPage() {
   const [tasksDue, setTasksDue] = useState<Record<string, unknown>[]>([])
   const [followUps, setFollowUps] = useState<Record<string, unknown>[]>([])
   const [pipeline, setPipeline] = useState<PipelineStage[]>([])
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
-      const [statsRes, tasksRes, alertsRes, pipelineRes] = await Promise.all([
-        window.electronAPI.dashboard.getStats(),
-        window.electronAPI.dashboard.getTasksDueToday(),
-        window.electronAPI.dashboard.getFollowUpAlerts(),
-        window.electronAPI.dashboard.getPipelineSnapshot(),
-      ])
+      try {
+        const [statsRes, tasksRes, alertsRes, pipelineRes] = await Promise.all([
+          window.electronAPI.dashboard.getStats(),
+          window.electronAPI.dashboard.getTasksDueToday(),
+          window.electronAPI.dashboard.getFollowUpAlerts(),
+          window.electronAPI.dashboard.getPipelineSnapshot(),
+        ])
 
-      if (statsRes.success && statsRes.data) setStats(statsRes.data as DashboardStats)
-      if (tasksRes.success && tasksRes.data) setTasksDue(tasksRes.data as Record<string, unknown>[])
-      if (alertsRes.success && alertsRes.data) setFollowUps(alertsRes.data as Record<string, unknown>[])
-      if (pipelineRes.success && pipelineRes.data) setPipeline(pipelineRes.data as PipelineStage[])
+        if (statsRes.success && statsRes.data) setStats(statsRes.data as DashboardStats)
+        if (tasksRes.success && tasksRes.data) setTasksDue(tasksRes.data as Record<string, unknown>[])
+        if (alertsRes.success && alertsRes.data) setFollowUps(alertsRes.data as Record<string, unknown>[])
+        if (pipelineRes.success && pipelineRes.data) setPipeline(pipelineRes.data as PipelineStage[])
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
+      }
     }
     load()
   }, [])
 
   const formatCurrency = (v: number) => `$${v.toLocaleString(undefined, { minimumFractionDigits: 0 })}`
+
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+  }
 
   return (
     <div className="space-y-6">

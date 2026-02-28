@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
 import EntityForm, { type FormFieldDef } from '../shared/EntityForm'
+import useEntityForm from '../../hooks/useEntityForm'
 
 const FIELDS: FormFieldDef[] = [
   { key: 'company_name', label: 'Company Name', type: 'text', required: true, section: 'Basic Info' },
@@ -28,29 +27,17 @@ const FIELDS: FormFieldDef[] = [
 ]
 
 export default function CompanyForm() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [initialValues, setInitialValues] = useState<Record<string, unknown> | null>(id ? null : {})
+  const { isNew, initialValues, loading, error, handleSave, handleCancel } = useEntityForm({
+    entityApi: window.electronAPI.companies,
+    basePath: '/companies',
+  })
 
-  useEffect(() => {
-    if (id) {
-      window.electronAPI.companies.getById(id).then(result => {
-        if (result.success && result.data) setInitialValues(result.data as Record<string, unknown>)
-      })
-    }
-  }, [id])
-
-  if (initialValues === null) {
+  if (loading || initialValues === null) {
     return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
   }
 
-  async function handleSave(values: Record<string, unknown>) {
-    if (id) {
-      await window.electronAPI.companies.update(id, values)
-    } else {
-      await window.electronAPI.companies.create(values)
-    }
-    navigate(id ? `/companies/${id}` : '/companies')
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
   }
 
   return (
@@ -58,9 +45,9 @@ export default function CompanyForm() {
       fields={FIELDS}
       initialValues={initialValues}
       onSave={handleSave}
-      onCancel={() => navigate(id ? `/companies/${id}` : '/companies')}
+      onCancel={handleCancel}
       title="Company"
-      isNew={!id}
+      isNew={isNew}
     />
   )
 }

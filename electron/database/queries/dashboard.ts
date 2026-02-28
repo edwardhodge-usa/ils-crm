@@ -1,23 +1,7 @@
 // Dashboard aggregation queries
 
 import { getDatabase } from '../init'
-
-interface QueryResult {
-  columns: string[]
-  values: unknown[][]
-}
-
-function resultToObjects(result: QueryResult[]): Record<string, unknown>[] {
-  if (!result || result.length === 0) return []
-  const { columns, values } = result[0]
-  return values.map(row => {
-    const obj: Record<string, unknown> = {}
-    columns.forEach((col, i) => {
-      obj[col] = row[i]
-    })
-    return obj
-  })
-}
+import { resultToObjects } from '../utils'
 
 export function getDashboardStats(): Record<string, unknown> {
   const db = getDatabase()

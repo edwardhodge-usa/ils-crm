@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
 import EntityForm, { type FormFieldDef } from '../shared/EntityForm'
+import useEntityForm from '../../hooks/useEntityForm'
 
 const FIELDS: FormFieldDef[] = [
   // Basic Info
@@ -50,31 +49,17 @@ const FIELDS: FormFieldDef[] = [
 ]
 
 export default function ContactForm() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [initialValues, setInitialValues] = useState<Record<string, unknown> | null>(id ? null : {})
+  const { isNew, initialValues, loading, error, handleSave, handleCancel } = useEntityForm({
+    entityApi: window.electronAPI.contacts,
+    basePath: '/contacts',
+  })
 
-  useEffect(() => {
-    if (id) {
-      window.electronAPI.contacts.getById(id).then(result => {
-        if (result.success && result.data) {
-          setInitialValues(result.data as Record<string, unknown>)
-        }
-      })
-    }
-  }, [id])
-
-  if (initialValues === null) {
+  if (loading || initialValues === null) {
     return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
   }
 
-  async function handleSave(values: Record<string, unknown>) {
-    if (id) {
-      await window.electronAPI.contacts.update(id, values)
-    } else {
-      await window.electronAPI.contacts.create(values)
-    }
-    navigate(id ? `/contacts/${id}` : '/contacts')
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
   }
 
   return (
@@ -82,9 +67,9 @@ export default function ContactForm() {
       fields={FIELDS}
       initialValues={initialValues}
       onSave={handleSave}
-      onCancel={() => navigate(id ? `/contacts/${id}` : '/contacts')}
+      onCancel={handleCancel}
       title="Contact"
-      isNew={!id}
+      isNew={isNew}
     />
   )
 }

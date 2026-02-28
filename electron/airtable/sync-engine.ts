@@ -22,18 +22,23 @@ export interface SyncProgress {
   error?: string
 }
 
+// ─── Helpers ─────────────────────────────────────────────────
+
+function getApiConfig(): { apiKey: string; baseId: string } | null {
+  const apiKey = getSetting('airtable_api_key')
+  const baseId = getSetting('airtable_base_id')
+  if (!apiKey || !baseId) return null
+  return { apiKey, baseId }
+}
+
 // ─── PrimaryFieldCache ──────────────────────────────────────
 // Maps record IDs → display names for all tables (for linked record resolution)
 
 const primaryFieldCache: Record<string, Map<string, string>> = {}
 let isSyncing = false
 
-export function getDisplayName(tableId: string, recordId: string): string {
+function getDisplayName(tableId: string, recordId: string): string {
   return primaryFieldCache[tableId]?.get(recordId) ?? recordId
-}
-
-export function getDisplayNames(tableId: string, recordIds: string[]): string[] {
-  return recordIds.map(id => getDisplayName(tableId, id))
 }
 
 function updatePrimaryFieldCache(tableName: string, records: Record<string, unknown>[]): void {
@@ -188,16 +193,10 @@ export async function fullSync(
   }
   isSyncing = true
 
-  const apiKey = getSetting('airtable_api_key')
-  const baseId = getSetting('airtable_base_id')
-
-  if (!apiKey) {
+  const config = getApiConfig()
+  if (!config) {
     isSyncing = false
-    return { success: false, error: 'No API key configured' }
-  }
-  if (!baseId) {
-    isSyncing = false
-    return { success: false, error: 'No base ID configured' }
+    return { success: false, error: 'No API key or base ID configured' }
   }
 
   const progress: SyncProgress = {
@@ -219,7 +218,7 @@ export async function fullSync(
 
     for (const tableName of SYNC_ORDER) {
       try {
-        await pushTable(tableName, apiKey, baseId)
+        await pushTable(tableName, config.apiKey, config.baseId)
       } catch (error) {
         console.error(`[Sync] Push error for ${tableName}:`, error)
       }
@@ -234,7 +233,7 @@ export async function fullSync(
       sendProgress(progress)
 
       try {
-        const count = await pullTable(tableName, apiKey, baseId)
+        const count = await pullTable(tableName, config.apiKey, config.baseId)
         progress.recordsPulled += count
         progress.tablesCompleted++
         sendProgress(progress)
@@ -270,11 +269,8 @@ export async function createRecord(
   tableName: string,
   fields: Record<string, unknown>
 ): Promise<{ success: boolean; data?: string; error?: string }> {
-  const apiKey = getSetting('airtable_api_key')
-  const baseId = getSetting('airtable_base_id')
-
-  if (!apiKey) return { success: false, error: 'No API key configured' }
-  if (!baseId) return { success: false, error: 'No base ID configured' }
+  const config = getApiConfig()
+  if (!config) return { success: false, error: 'No API key or base ID configured' }
 
   const tableId = TABLE_NAME_TO_ID[tableName]
   const converter = TABLE_CONVERTERS[tableName]
@@ -282,7 +278,7 @@ export async function createRecord(
 
   try {
     const airtableFields = converter.toAirtable(fields)
-    const created = await batchCreate(tableId, [{ fields: airtableFields }], { apiKey, baseId })
+    const created = await batchCreate(tableId, [{ fields: airtableFields }], { apiKey: config.apiKey, baseId: config.baseId })
 
     if (created.length > 0) {
       const local = converter.fromAirtable(created[0])
@@ -302,11 +298,8 @@ export async function updateRecord(
   id: string,
   fields: Record<string, unknown>
 ): Promise<{ success: boolean; error?: string }> {
-  const apiKey = getSetting('airtable_api_key')
-  const baseId = getSetting('airtable_base_id')
-
-  if (!apiKey) return { success: false, error: 'No API key configured' }
-  if (!baseId) return { success: false, error: 'No base ID configured' }
+  const config = getApiConfig()
+  if (!config) return { success: false, error: 'No API key or base ID configured' }
 
   const tableId = TABLE_NAME_TO_ID[tableName]
   const converter = TABLE_CONVERTERS[tableName]
@@ -314,7 +307,7 @@ export async function updateRecord(
 
   try {
     const airtableFields = converter.toAirtable(fields)
-    await batchUpdate(tableId, [{ id, fields: airtableFields }], { apiKey, baseId })
+    await batchUpdate(tableId, [{ id, fields: airtableFields }], { apiKey: config.apiKey, baseId: config.baseId })
 
     // Update local cache
     upsert(tableName, id, {
@@ -333,17 +326,14 @@ export async function deleteRemoteRecord(
   tableName: string,
   id: string
 ): Promise<{ success: boolean; error?: string }> {
-  const apiKey = getSetting('airtable_api_key')
-  const baseId = getSetting('airtable_base_id')
-
-  if (!apiKey) return { success: false, error: 'No API key configured' }
-  if (!baseId) return { success: false, error: 'No base ID configured' }
+  const config = getApiConfig()
+  if (!config) return { success: false, error: 'No API key or base ID configured' }
 
   const tableId = TABLE_NAME_TO_ID[tableName]
   if (!tableId) return { success: false, error: `Unknown table: ${tableName}` }
 
   try {
-    await batchDelete(tableId, [id], { apiKey, baseId })
+    await batchDelete(tableId, [id], { apiKey: config.apiKey, baseId: config.baseId })
     deleteRecord(tableName, id)
     return { success: true }
   } catch (error) {
@@ -366,6 +356,13 @@ export function startPolling(win: BrowserWindow | null): void {
       await fullSync(win)
     } catch (error) {
       console.error('[Sync] Poll error:', error)
+      win?.webContents?.send('sync:progress', {
+        phase: 'error',
+        tablesCompleted: 0,
+        tablesTotal: SYNC_ORDER.length,
+        recordsPulled: 0,
+        error: String(error),
+      })
     }
   }, intervalMs)
 }

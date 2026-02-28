@@ -1,20 +1,9 @@
-import { useState, useEffect } from 'react'
 import DataTable from '../shared/DataTable'
+import LoadingSpinner from '../shared/LoadingSpinner'
+import useEntityList from '../../hooks/useEntityList'
 
 export default function PortalLogsPage() {
-  const [logs, setLogs] = useState<Record<string, unknown>[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function load() {
-      const result = await window.electronAPI.portalLogs.getAll()
-      if (result.success && result.data) {
-        setLogs(result.data as Record<string, unknown>[])
-      }
-      setLoading(false)
-    }
-    load()
-  }, [])
+  const { data: logs, loading, error } = useEntityList(() => window.electronAPI.portalLogs.getAll())
 
   const columns = [
     { key: 'timestamp', label: 'Time', width: '15%' },
@@ -35,8 +24,10 @@ export default function PortalLogsPage() {
     },
   ]
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
+  if (loading) return <LoadingSpinner />
+
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
   }
 
   return (

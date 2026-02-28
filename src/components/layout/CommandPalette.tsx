@@ -49,10 +49,14 @@ export default function CommandPalette() {
     }
 
     const timer = setTimeout(async () => {
-      const res = await window.electronAPI.search.query(query.trim())
-      if (res.success && res.data) {
-        setResults(res.data as SearchResult[])
-        setSelectedIndex(0)
+      try {
+        const res = await window.electronAPI.search.query(query.trim())
+        if (res.success && res.data) {
+          setResults(res.data as SearchResult[])
+          setSelectedIndex(0)
+        }
+      } catch {
+        setResults([])
       }
     }, 150)
 

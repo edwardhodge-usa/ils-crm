@@ -2,13 +2,14 @@
 // Uses sql.js in-memory database — results returned as objects
 
 import { getDatabase, saveDatabase } from '../init'
+import { resultToObjects } from '../utils'
 
 // ─── SQL Injection Prevention ────────────────────────────────
 
 const VALID_TABLES = new Set([
   'contacts', 'companies', 'opportunities', 'tasks', 'proposals',
   'projects', 'interactions', 'imported_contacts', 'specialties',
-  'portal_access', 'portal_logs', 'pending_changes', 'settings', 'sync_status',
+  'portal_access', 'portal_logs', 'settings', 'sync_status',
 ])
 
 const VALID_COLUMN = /^[a-z_][a-z0-9_]*$/
@@ -17,24 +18,6 @@ function validateTable(table: string): void {
   if (!VALID_TABLES.has(table)) {
     throw new Error(`Invalid table name: ${table}`)
   }
-}
-
-interface QueryResult {
-  columns: string[]
-  values: unknown[][]
-}
-
-// Convert sql.js result rows to objects
-function resultToObjects(result: QueryResult[]): Record<string, unknown>[] {
-  if (!result || result.length === 0) return []
-  const { columns, values } = result[0]
-  return values.map(row => {
-    const obj: Record<string, unknown> = {}
-    columns.forEach((col, i) => {
-      obj[col] = row[i]
-    })
-    return obj
-  })
 }
 
 // ─── Generic CRUD ────────────────────────────────────────────
@@ -100,14 +83,6 @@ export function deleteRecord(table: string, id: string): void {
   db.run(`DELETE FROM ${table} WHERE id = ?`, [id])
 }
 
-export function getCount(table: string): number {
-  validateTable(table)
-  const db = getDatabase()
-  const result = db.exec(`SELECT COUNT(*) as count FROM ${table}`)
-  if (result.length === 0) return 0
-  return result[0].values[0][0] as number
-}
-
 // ─── Pending changes ─────────────────────────────────────────
 
 export function getPendingRecords(table: string): Record<string, unknown>[] {
@@ -125,46 +100,6 @@ export function markPushed(table: string, id: string): void {
   db.run(
     `UPDATE ${table} SET _pending_push = 0 WHERE id = ?`,
     [id]
-  )
-}
-
-export function markPendingPush(table: string, id: string): void {
-  validateTable(table)
-  const db = getDatabase()
-  db.run(
-    `UPDATE ${table} SET _pending_push = 1, _local_modified_at = datetime('now') WHERE id = ?`,
-    [id]
-  )
-}
-
-// ─── Pending changes queue ───────────────────────────────────
-
-export function addPendingChange(
-  tableName: string,
-  recordId: string | null,
-  action: 'create' | 'update' | 'delete',
-  fields?: Record<string, unknown>
-): void {
-  const db = getDatabase()
-  db.run(
-    `INSERT INTO pending_changes (table_name, record_id, action, fields) VALUES (?, ?, ?, ?)`,
-    [tableName, recordId, action, fields ? JSON.stringify(fields) : null]
-  )
-}
-
-export function getUnsynced(): Record<string, unknown>[] {
-  const db = getDatabase()
-  const result = db.exec(
-    `SELECT * FROM pending_changes WHERE synced_at IS NULL ORDER BY created_at ASC`
-  )
-  return resultToObjects(result)
-}
-
-export function markSynced(changeId: number): void {
-  const db = getDatabase()
-  db.run(
-    `UPDATE pending_changes SET synced_at = datetime('now') WHERE id = ?`,
-    [changeId]
   )
 }
 
@@ -188,16 +123,6 @@ export function setSetting(key: string, value: string): void {
 
 // ─── Sync status ─────────────────────────────────────────────
 
-export function getSyncStatus(tableName: string): Record<string, unknown> | null {
-  const db = getDatabase()
-  const result = db.exec(
-    `SELECT * FROM sync_status WHERE table_name = ?`,
-    [tableName]
-  )
-  const rows = resultToObjects(result)
-  return rows[0] || null
-}
-
 export function updateSyncStatus(
   tableName: string,
   status: string,
@@ -209,12 +134,6 @@ export function updateSyncStatus(
     `UPDATE sync_status SET status = ?, last_sync_at = datetime('now'), record_count = COALESCE(?, record_count), error = ? WHERE table_name = ?`,
     [status, recordCount ?? null, error ?? null, tableName]
   )
-}
-
-// ─── Manual flush for batch callers ─────────────────────────
-
-export function flushDatabase(): void {
-  saveDatabase()
 }
 
 export function getAllSyncStatuses(): Record<string, unknown>[] {

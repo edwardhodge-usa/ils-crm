@@ -1,23 +1,13 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DataTable from '../shared/DataTable'
 import StatusBadge from '../shared/StatusBadge'
+import LoadingSpinner from '../shared/LoadingSpinner'
+import PrimaryButton from '../shared/PrimaryButton'
+import useEntityList from '../../hooks/useEntityList'
 
 export default function ContactListPage() {
-  const [contacts, setContacts] = useState<Record<string, unknown>[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: contacts, loading, error } = useEntityList(() => window.electronAPI.contacts.getAll())
   const navigate = useNavigate()
-
-  useEffect(() => {
-    async function load() {
-      const result = await window.electronAPI.contacts.getAll()
-      if (result.success && result.data) {
-        setContacts(result.data as Record<string, unknown>[])
-      }
-      setLoading(false)
-    }
-    load()
-  }, [])
 
   const columns = [
     { key: 'contact_name', label: 'Name', width: '20%' },
@@ -58,8 +48,10 @@ export default function ContactListPage() {
     },
   ]
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
+  if (loading) return <LoadingSpinner />
+
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
   }
 
   return (
@@ -70,12 +62,9 @@ export default function ContactListPage() {
       searchKeys={['contact_name', 'company', 'email', 'categorization']}
       emptyMessage="No contacts yet. Sync from Airtable in Settings."
       actions={
-        <button
-          onClick={() => navigate('/contacts/new')}
-          className="px-3 py-1.5 text-[13px] text-white bg-[#0A84FF] rounded-md hover:bg-[#0077ED] transition-colors whitespace-nowrap"
-        >
+        <PrimaryButton onClick={() => navigate('/contacts/new')}>
           + New Contact
-        </button>
+        </PrimaryButton>
       }
     />
   )

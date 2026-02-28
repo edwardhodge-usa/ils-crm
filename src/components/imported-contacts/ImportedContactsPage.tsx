@@ -1,26 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import DataTable from '../shared/DataTable'
 import StatusBadge from '../shared/StatusBadge'
 import ConfirmDialog from '../shared/ConfirmDialog'
+import LoadingSpinner from '../shared/LoadingSpinner'
+import FilterTabs from '../shared/FilterTabs'
+import useEntityList from '../../hooks/useEntityList'
 
 const STATUS_TABS = ['All', 'Review', 'Approved', 'Rejected', 'Needs Info', 'Duplicate']
 
 export default function ImportedContactsPage() {
-  const [contacts, setContacts] = useState<Record<string, unknown>[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: contacts, loading, error, reload } = useEntityList(() => window.electronAPI.importedContacts.getAll())
   const [activeTab, setActiveTab] = useState('All')
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null)
   const [action, setAction] = useState<'approve' | 'reject' | null>(null)
-
-  async function load() {
-    const result = await window.electronAPI.importedContacts.getAll()
-    if (result.success && result.data) {
-      setContacts(result.data as Record<string, unknown>[])
-    }
-    setLoading(false)
-  }
-
-  useEffect(() => { load() }, [])
 
   const filtered = activeTab === 'All'
     ? contacts
@@ -56,37 +48,31 @@ export default function ImportedContactsPage() {
     }
     setSelected(null)
     setAction(null)
-    load()
+    reload()
   }
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
+  const tabCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: contacts.length }
+    STATUS_TABS.forEach(tab => {
+      if (tab !== 'All') counts[tab] = contacts.filter(c => c.onboarding_status === tab).length
+    })
+    return counts
+  }, [contacts])
+
+  if (loading) return <LoadingSpinner />
+
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
   }
 
   return (
     <div className="flex flex-col h-full">
-      {/* Status tabs */}
-      <div className="flex gap-1 mb-4">
-        {STATUS_TABS.map(tab => {
-          const count = tab === 'All'
-            ? contacts.length
-            : contacts.filter(c => c.onboarding_status === tab).length
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${
-                activeTab === tab
-                  ? 'bg-[#0A84FF]/15 text-[#0A84FF]'
-                  : 'text-[#98989D] hover:bg-[#3A3A3C]'
-              }`}
-            >
-              {tab}
-              <span className="ml-1 text-[10px] opacity-60">{count}</span>
-            </button>
-          )
-        })}
-      </div>
+      <FilterTabs
+        tabs={STATUS_TABS}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        counts={tabCounts}
+      />
 
       <div className="flex-1 min-h-0">
         <DataTable

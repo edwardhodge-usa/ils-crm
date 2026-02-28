@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import path from 'path'
 import { initDatabase, closeDatabase } from './database/init'
 import { registerAllHandlers } from './ipc/register'
@@ -36,21 +36,6 @@ function createWindow() {
     mainWindow = null
   })
 }
-
-// App info IPC handlers
-ipcMain.handle('app:getVersion', () => {
-  return { success: true, data: app.getVersion() }
-})
-
-ipcMain.handle('app:getPaths', () => {
-  return {
-    success: true,
-    data: {
-      userData: app.getPath('userData'),
-      appPath: app.getAppPath(),
-    }
-  }
-})
 
 app.whenReady().then(async () => {
   // Initialize database before creating window

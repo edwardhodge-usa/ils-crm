@@ -7,24 +7,13 @@ import {
   INTERACTIONS, IMPORTED_CONTACTS, COMPANIES, SPECIALTIES,
   PORTAL_ACCESS, PORTAL_LOGS,
 } from './field-maps'
-
-interface AirtableRecord {
-  id: string
-  fields: Record<string, unknown>
-  createdTime: string
-}
+import type { AirtableRecord } from './client'
 
 type FieldMap = Record<string, string>
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-function linkedIds(value: unknown): string | null {
-  if (!value) return null
-  if (Array.isArray(value)) return JSON.stringify(value)
-  return null
-}
-
-function multiSelect(value: unknown): string | null {
+function jsonArray(value: unknown): string | null {
   if (!value) return null
   if (Array.isArray(value)) return JSON.stringify(value)
   return null
@@ -84,10 +73,10 @@ function airtableToLocal(
         result[m.local] = num(val)
         break
       case 'linked':
-        result[m.local] = linkedIds(val)
+        result[m.local] = jsonArray(val)
         break
       case 'multiSelect':
-        result[m.local] = multiSelect(val)
+        result[m.local] = jsonArray(val)
         break
       case 'checkbox':
         result[m.local] = checkbox(val)

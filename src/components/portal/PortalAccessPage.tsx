@@ -1,21 +1,10 @@
-import { useState, useEffect } from 'react'
 import DataTable from '../shared/DataTable'
 import StatusBadge from '../shared/StatusBadge'
+import LoadingSpinner from '../shared/LoadingSpinner'
+import useEntityList from '../../hooks/useEntityList'
 
 export default function PortalAccessPage() {
-  const [records, setRecords] = useState<Record<string, unknown>[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function load() {
-      const result = await window.electronAPI.portalAccess.getAll()
-      if (result.success && result.data) {
-        setRecords(result.data as Record<string, unknown>[])
-      }
-      setLoading(false)
-    }
-    load()
-  }, [])
+  const { data: records, loading, error } = useEntityList(() => window.electronAPI.portalAccess.getAll())
 
   const columns = [
     { key: 'name', label: 'Name', width: '18%' },
@@ -45,8 +34,10 @@ export default function PortalAccessPage() {
     },
   ]
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
+  if (loading) return <LoadingSpinner />
+
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
   }
 
   return (

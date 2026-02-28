@@ -2,15 +2,7 @@ import { useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
-
-const NEW_ROUTES: Record<string, string> = {
-  '/contacts': '/contacts/new',
-  '/companies': '/companies/new',
-  '/pipeline': '/pipeline/new',
-  '/tasks': '/tasks/new',
-  '/proposals': '/proposals/new',
-  '/projects': '/projects/new',
-}
+import { NEW_ROUTES } from '../../config/routes'
 
 export default function Layout() {
   const navigate = useNavigate()

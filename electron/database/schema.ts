@@ -354,18 +354,6 @@ export function createSchema(db: SqlJsDatabase): void {
     )
   `)
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS pending_changes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      table_name TEXT NOT NULL,
-      record_id TEXT,
-      action TEXT NOT NULL,
-      fields TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      synced_at TEXT
-    )
-  `)
-
   // ─── Indexes ───────────────────────────────────────────
   db.run(`CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts(contact_name)`)
   db.run(`CREATE INDEX IF NOT EXISTS idx_contacts_company ON contacts(company)`)
@@ -387,9 +375,6 @@ export function createSchema(db: SqlJsDatabase): void {
   db.run(`CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)`)
 
   db.run(`CREATE INDEX IF NOT EXISTS idx_imported_status ON imported_contacts(onboarding_status)`)
-
-  db.run(`CREATE INDEX IF NOT EXISTS idx_pending_changes_table ON pending_changes(table_name)`)
-  db.run(`CREATE INDEX IF NOT EXISTS idx_pending_changes_unsynced ON pending_changes(synced_at)`)
 
   // ─── Default Settings ─────────────────────────────────
   const defaults: [string, string][] = [

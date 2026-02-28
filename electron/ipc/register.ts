@@ -1,7 +1,7 @@
 // Central IPC handler registration
 // Wires up all entity CRUD, settings, sync, dashboard, and search handlers
 
-import { ipcMain, BrowserWindow } from 'electron'
+import { app, ipcMain, BrowserWindow } from 'electron'
 import { getAll, getById, getSetting, setSetting, getAllSyncStatuses } from '../database/queries/entities'
 import { getDashboardStats, getTasksDueToday, getFollowUpAlerts, getPipelineSnapshot } from '../database/queries/dashboard'
 import { searchAll } from '../database/queries/search'
@@ -220,6 +220,30 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
     try {
       const data = searchAll(term)
       return { success: true, data }
+    } catch (error) {
+      return { success: false, error: String(error) }
+    }
+  })
+
+  // ─── App Info ─────────────────────────────────────────────
+
+  ipcMain.handle('app:getVersion', async () => {
+    try {
+      return { success: true, data: app.getVersion() }
+    } catch (error) {
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('app:getPaths', async () => {
+    try {
+      return {
+        success: true,
+        data: {
+          userData: app.getPath('userData'),
+          appPath: app.getAppPath(),
+        },
+      }
     } catch (error) {
       return { success: false, error: String(error) }
     }

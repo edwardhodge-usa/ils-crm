@@ -1,23 +1,13 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DataTable from '../shared/DataTable'
 import StatusBadge from '../shared/StatusBadge'
+import LoadingSpinner from '../shared/LoadingSpinner'
+import PrimaryButton from '../shared/PrimaryButton'
+import useEntityList from '../../hooks/useEntityList'
 
 export default function ProposalListPage() {
-  const [proposals, setProposals] = useState<Record<string, unknown>[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: proposals, loading, error } = useEntityList(() => window.electronAPI.proposals.getAll())
   const navigate = useNavigate()
-
-  useEffect(() => {
-    async function load() {
-      const result = await window.electronAPI.proposals.getAll()
-      if (result.success && result.data) {
-        setProposals(result.data as Record<string, unknown>[])
-      }
-      setLoading(false)
-    }
-    load()
-  }, [])
 
   const columns = [
     { key: 'proposal_name', label: 'Proposal', width: '30%' },
@@ -43,8 +33,10 @@ export default function ProposalListPage() {
     },
   ]
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
+  if (loading) return <LoadingSpinner />
+
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
   }
 
   return (
@@ -55,12 +47,9 @@ export default function ProposalListPage() {
       searchKeys={['proposal_name', 'status']}
       emptyMessage="No proposals yet."
       actions={
-        <button
-          onClick={() => navigate('/proposals/new')}
-          className="px-3 py-1.5 text-[13px] text-white bg-[#0A84FF] rounded-md hover:bg-[#0077ED] transition-colors whitespace-nowrap"
-        >
+        <PrimaryButton onClick={() => navigate('/proposals/new')}>
           + New Proposal
-        </button>
+        </PrimaryButton>
       }
     />
   )

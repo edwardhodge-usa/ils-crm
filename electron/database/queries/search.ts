@@ -1,23 +1,7 @@
 // Cross-table search queries
 
 import { getDatabase } from '../init'
-
-interface QueryResult {
-  columns: string[]
-  values: unknown[][]
-}
-
-function resultToObjects(result: QueryResult[]): Record<string, unknown>[] {
-  if (!result || result.length === 0) return []
-  const { columns, values } = result[0]
-  return values.map(row => {
-    const obj: Record<string, unknown> = {}
-    columns.forEach((col, i) => {
-      obj[col] = row[i]
-    })
-    return obj
-  })
-}
+import { resultToObjects } from '../utils'
 
 export interface SearchResult {
   type: string
@@ -26,6 +10,59 @@ export interface SearchResult {
   subtitle: string | null
 }
 
+interface SearchConfig {
+  type: string
+  table: string
+  nameCol: string
+  subtitleCol?: string
+  searchCols: string[]
+}
+
+const SEARCH_CONFIGS: SearchConfig[] = [
+  {
+    type: 'contact',
+    table: 'contacts',
+    nameCol: 'contact_name',
+    subtitleCol: 'company',
+    searchCols: ['contact_name', 'company', 'email'],
+  },
+  {
+    type: 'company',
+    table: 'companies',
+    nameCol: 'company_name',
+    subtitleCol: 'type',
+    searchCols: ['company_name'],
+  },
+  {
+    type: 'opportunity',
+    table: 'opportunities',
+    nameCol: 'opportunity_name',
+    subtitleCol: 'sales_stage',
+    searchCols: ['opportunity_name'],
+  },
+  {
+    type: 'task',
+    table: 'tasks',
+    nameCol: 'task',
+    subtitleCol: 'status',
+    searchCols: ['task'],
+  },
+  {
+    type: 'project',
+    table: 'projects',
+    nameCol: 'project_name',
+    subtitleCol: 'status',
+    searchCols: ['project_name'],
+  },
+  {
+    type: 'proposal',
+    table: 'proposals',
+    nameCol: 'proposal_name',
+    subtitleCol: 'status',
+    searchCols: ['proposal_name'],
+  },
+]
+
 export function searchAll(term: string): SearchResult[] {
   if (!term || term.trim().length < 2) return []
 
@@ -33,100 +70,34 @@ export function searchAll(term: string): SearchResult[] {
   const pattern = `%${term}%`
   const results: SearchResult[] = []
 
-  // Contacts
-  const contacts = db.exec(
-    `SELECT id, contact_name, company FROM contacts
-     WHERE contact_name LIKE ? OR company LIKE ? OR email LIKE ?
-     LIMIT 10`,
-    [pattern, pattern, pattern]
-  )
-  for (const row of resultToObjects(contacts)) {
-    results.push({
-      type: 'contact',
-      id: row.id as string,
-      name: (row.contact_name as string) || 'Unnamed',
-      subtitle: row.company as string | null,
-    })
-  }
+  for (const config of SEARCH_CONFIGS) {
+    const selectCols = [
+      'id',
+      config.nameCol,
+      ...(config.subtitleCol ? [config.subtitleCol] : []),
+    ]
+    const whereClause = config.searchCols
+      .map((col) => `${col} LIKE ?`)
+      .join(' OR ')
+    const params = config.searchCols.map(() => pattern)
 
-  // Companies
-  const companies = db.exec(
-    `SELECT id, company_name, type FROM companies
-     WHERE company_name LIKE ?
-     LIMIT 10`,
-    [pattern]
-  )
-  for (const row of resultToObjects(companies)) {
-    results.push({
-      type: 'company',
-      id: row.id as string,
-      name: (row.company_name as string) || 'Unnamed',
-      subtitle: row.type as string | null,
-    })
-  }
+    const rows = resultToObjects(
+      db.exec(
+        `SELECT ${selectCols.join(', ')} FROM ${config.table} WHERE ${whereClause} LIMIT 10`,
+        params
+      )
+    )
 
-  // Opportunities
-  const opps = db.exec(
-    `SELECT id, opportunity_name, sales_stage FROM opportunities
-     WHERE opportunity_name LIKE ?
-     LIMIT 10`,
-    [pattern]
-  )
-  for (const row of resultToObjects(opps)) {
-    results.push({
-      type: 'opportunity',
-      id: row.id as string,
-      name: (row.opportunity_name as string) || 'Unnamed',
-      subtitle: row.sales_stage as string | null,
-    })
-  }
-
-  // Tasks
-  const tasks = db.exec(
-    `SELECT id, task, status FROM tasks
-     WHERE task LIKE ?
-     LIMIT 10`,
-    [pattern]
-  )
-  for (const row of resultToObjects(tasks)) {
-    results.push({
-      type: 'task',
-      id: row.id as string,
-      name: (row.task as string) || 'Unnamed',
-      subtitle: row.status as string | null,
-    })
-  }
-
-  // Projects
-  const projects = db.exec(
-    `SELECT id, project_name, status FROM projects
-     WHERE project_name LIKE ?
-     LIMIT 10`,
-    [pattern]
-  )
-  for (const row of resultToObjects(projects)) {
-    results.push({
-      type: 'project',
-      id: row.id as string,
-      name: (row.project_name as string) || 'Unnamed',
-      subtitle: row.status as string | null,
-    })
-  }
-
-  // Proposals
-  const proposals = db.exec(
-    `SELECT id, proposal_name, status FROM proposals
-     WHERE proposal_name LIKE ?
-     LIMIT 10`,
-    [pattern]
-  )
-  for (const row of resultToObjects(proposals)) {
-    results.push({
-      type: 'proposal',
-      id: row.id as string,
-      name: (row.proposal_name as string) || 'Unnamed',
-      subtitle: row.status as string | null,
-    })
+    for (const row of rows) {
+      results.push({
+        type: config.type,
+        id: row.id as string,
+        name: (row[config.nameCol] as string) || 'Unnamed',
+        subtitle: config.subtitleCol
+          ? (row[config.subtitleCol] as string | null)
+          : null,
+      })
+    }
   }
 
   return results

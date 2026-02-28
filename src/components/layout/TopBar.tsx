@@ -1,27 +1,13 @@
 import { useLocation } from 'react-router-dom'
 import { useSyncStatus } from '../../hooks/useSyncStatus'
-
-const routeTitles: Record<string, string> = {
-  '/': 'Dashboard',
-  '/contacts': 'Contacts',
-  '/companies': 'Companies',
-  '/pipeline': 'Pipeline',
-  '/tasks': 'Tasks',
-  '/proposals': 'Proposals',
-  '/projects': 'Projects',
-  '/interactions': 'Interactions',
-  '/imported-contacts': 'Imported Contacts',
-  '/portal': 'Portal Access',
-  '/portal-logs': 'Portal Logs',
-  '/settings': 'Settings',
-}
+import { ROUTE_TITLES } from '../../config/routes'
 
 export default function TopBar() {
   const location = useLocation()
   const { isSyncing, progress } = useSyncStatus()
 
-  const title = routeTitles[location.pathname] ??
-    Object.entries(routeTitles).find(([path]) =>
+  const title = ROUTE_TITLES[location.pathname] ??
+    Object.entries(ROUTE_TITLES).find(([path]) =>
       path !== '/' && location.pathname.startsWith(path)
     )?.[1] ?? ''
 

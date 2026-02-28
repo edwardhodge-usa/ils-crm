@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
 import EntityForm, { type FormFieldDef } from '../shared/EntityForm'
+import useEntityForm from '../../hooks/useEntityForm'
 
 const FIELDS: FormFieldDef[] = [
   { key: 'proposal_name', label: 'Proposal Name', type: 'text', required: true, section: 'Details' },
@@ -20,29 +19,18 @@ const FIELDS: FormFieldDef[] = [
 ]
 
 export default function ProposalForm() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [initialValues, setInitialValues] = useState<Record<string, unknown> | null>(id ? null : { status: 'Draft' })
+  const { isNew, initialValues, loading, error, handleSave, handleCancel } = useEntityForm({
+    entityApi: window.electronAPI.proposals,
+    basePath: '/proposals',
+    defaults: { status: 'Draft' },
+  })
 
-  useEffect(() => {
-    if (id) {
-      window.electronAPI.proposals.getById(id).then(result => {
-        if (result.success && result.data) setInitialValues(result.data as Record<string, unknown>)
-      })
-    }
-  }, [id])
-
-  if (initialValues === null) {
+  if (loading || initialValues === null) {
     return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
   }
 
-  async function handleSave(values: Record<string, unknown>) {
-    if (id) {
-      await window.electronAPI.proposals.update(id, values)
-    } else {
-      await window.electronAPI.proposals.create(values)
-    }
-    navigate('/proposals')
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
   }
 
   return (
@@ -50,9 +38,9 @@ export default function ProposalForm() {
       fields={FIELDS}
       initialValues={initialValues}
       onSave={handleSave}
-      onCancel={() => navigate('/proposals')}
+      onCancel={handleCancel}
       title="Proposal"
-      isNew={!id}
+      isNew={isNew}
     />
   )
 }

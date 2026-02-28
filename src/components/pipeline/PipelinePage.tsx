@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import KanbanBoard, { type KanbanColumn } from '../shared/KanbanBoard'
 import StatusBadge from '../shared/StatusBadge'
+import LoadingSpinner from '../shared/LoadingSpinner'
+import PrimaryButton from '../shared/PrimaryButton'
+import useEntityList from '../../hooks/useEntityList'
 
 const STAGES = [
   'Initial Contact',
@@ -25,29 +28,21 @@ interface OpportunityCard {
 }
 
 export default function PipelinePage() {
-  const [opportunities, setOpportunities] = useState<OpportunityCard[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: rawData, loading, error } = useEntityList(() => window.electronAPI.opportunities.getAll())
+  const [overrides, setOverrides] = useState<Record<string, string>>({})
   const navigate = useNavigate()
 
-  useEffect(() => {
-    async function load() {
-      const result = await window.electronAPI.opportunities.getAll()
-      if (result.success && result.data) {
-        setOpportunities(
-          (result.data as Record<string, unknown>[]).map(o => ({
-            id: o.id as string,
-            opportunity_name: (o.opportunity_name as string) || 'Unnamed',
-            deal_value: o.deal_value as number | null,
-            company: o.company as string | null,
-            probability: o.probability as string | null,
-            sales_stage: (o.sales_stage as string) || 'Initial Contact',
-          }))
-        )
-      }
-      setLoading(false)
-    }
-    load()
-  }, [])
+  const opportunities: OpportunityCard[] = useMemo(() =>
+    rawData.map(o => ({
+      id: o.id as string,
+      opportunity_name: (o.opportunity_name as string) || 'Unnamed',
+      deal_value: o.deal_value as number | null,
+      company: o.company as string | null,
+      probability: o.probability as string | null,
+      sales_stage: overrides[o.id as string] || (o.sales_stage as string) || 'Initial Contact',
+    })),
+    [rawData, overrides]
+  )
 
   const columns: KanbanColumn<OpportunityCard>[] = STAGES.map(stage => ({
     id: stage,
@@ -57,23 +52,22 @@ export default function PipelinePage() {
 
   async function handleMove(itemId: string, _fromColumn: string, toColumn: string) {
     // Optimistic update
-    setOpportunities(prev =>
-      prev.map(o => (o.id === itemId ? { ...o, sales_stage: toColumn } : o))
-    )
+    setOverrides(prev => ({ ...prev, [itemId]: toColumn }))
 
     // Push to Airtable
     try {
       await window.electronAPI.opportunities.update(itemId, { sales_stage: toColumn })
-    } catch {
+    } catch (err) {
       // Revert on failure
-      setOpportunities(prev =>
-        prev.map(o => (o.id === itemId ? { ...o, sales_stage: _fromColumn } : o))
-      )
+      console.error('Failed to update pipeline stage:', err)
+      setOverrides(prev => ({ ...prev, [itemId]: _fromColumn }))
     }
   }
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
+  if (loading) return <LoadingSpinner />
+
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
   }
 
   const totalValue = opportunities
@@ -102,12 +96,9 @@ export default function PipelinePage() {
           <span className="text-white font-medium">{opportunities.length}</span>
         </div>
         </div>
-        <button
-          onClick={() => navigate('/pipeline/new')}
-          className="px-3 py-1.5 text-[13px] text-white bg-[#0A84FF] rounded-md hover:bg-[#0077ED] transition-colors whitespace-nowrap"
-        >
+        <PrimaryButton onClick={() => navigate('/pipeline/new')}>
           + New Opportunity
-        </button>
+        </PrimaryButton>
       </div>
 
       {/* Kanban */}

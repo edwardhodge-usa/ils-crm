@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import StatusBadge from '../shared/StatusBadge'
 import ConfirmDialog from '../shared/ConfirmDialog'
+import LinkedList from '../shared/LinkedList'
+import LoadingSpinner from '../shared/LoadingSpinner'
 
 type Tab = 'overview' | 'opportunities' | 'tasks' | 'proposals'
 
@@ -56,9 +58,7 @@ export default function Contact360Page() {
     load()
   }, [id])
 
-  if (!contact) {
-    return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
-  }
+  if (!contact) return <LoadingSpinner />
 
   const tabs: { key: Tab; label: string; count: number }[] = [
     { key: 'overview', label: 'Overview', count: 0 },
@@ -256,57 +256,15 @@ export default function Contact360Page() {
         title="Delete Contact"
         message={`Are you sure you want to delete "${contact.contact_name as string}"? This cannot be undone.`}
         onConfirm={async () => {
-          await window.electronAPI.contacts.delete(id!)
-          navigate('/contacts')
+          try {
+            await window.electronAPI.contacts.delete(id!)
+            navigate('/contacts')
+          } catch {
+            // Don't navigate on failure
+          }
         }}
         onCancel={() => setShowDelete(false)}
       />
-    </div>
-  )
-}
-
-function LinkedList({
-  items,
-  nameKey,
-  statusKey,
-  extraKey,
-  extraLabel,
-  extraRender,
-  onItemClick,
-  emptyMessage,
-}: {
-  items: Record<string, unknown>[]
-  nameKey: string
-  statusKey: string
-  extraKey?: string
-  extraLabel?: string
-  extraRender?: (v: unknown) => string | null
-  onItemClick?: (item: Record<string, unknown>) => void
-  emptyMessage: string
-}) {
-  if (items.length === 0) {
-    return <p className="text-[13px] text-[#636366] py-8 text-center">{emptyMessage}</p>
-  }
-
-  return (
-    <div className="space-y-2">
-      {items.map((item, i) => (
-        <div
-          key={(item.id as string) || i}
-          className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-3 flex items-center justify-between cursor-pointer hover:bg-[#3A3A3C] transition-colors"
-          onClick={() => onItemClick?.(item)}
-        >
-          <div>
-            <p className="text-[13px] text-white font-medium">{item[nameKey] as string || 'Unnamed'}</p>
-            {extraKey && extraLabel && (
-              <p className="text-[11px] text-[#636366] mt-0.5">
-                {extraLabel}: {extraRender ? extraRender(item[extraKey]) : (item[extraKey] as string) || '—'}
-              </p>
-            )}
-          </div>
-          <StatusBadge value={item[statusKey] as string} />
-        </div>
-      ))}
     </div>
   )
 }

@@ -1,8 +1,6 @@
 // All Airtable field IDs for the ILS CRM base (appYXbUdcmSwBoPFU)
 // Source: docs/schema-summary.md — 11 tables, 256+ fields
 
-export const BASE_ID = 'appYXbUdcmSwBoPFU'
-
 // ─── Table IDs ───────────────────────────────────────────────
 
 export const TABLES = {
@@ -405,66 +403,6 @@ export const PORTAL_LOGS = {
   claritySession: 'fldlawC5fpW6SC7YJ',
   pageUrl: 'fldA8GMWwQMthnnta',
   timestamp: 'fldtntKgWXKanYEWZ',
-} as const
-
-// ─── Select Options ──────────────────────────────────────────
-
-export const SELECT_OPTIONS = {
-  contacts: {
-    qualificationStatus: ['New Lead', 'Qualified', 'Contacted', 'Disqualified', 'Converted', 'Unqualified'],
-    leadSource: ['Referral', 'Website', 'Inbound', 'Outbound', 'Event', 'Social Media', 'Other', 'LinkedIn', 'Cold Call'],
-    clientType: ['Prospect', 'Customer', 'Partner', 'Reseller', 'Vendor', 'Other', 'New', 'Returning'],
-    industry: ['Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing', 'Real Estate', 'Consulting', 'Other', 'Hospitality', 'Logistics', 'Fitness', 'Legal', 'Media', 'Design', 'Venture Capital', 'Retail', 'Entertainment'],
-    importSource: ['CSV Upload', 'API Sync', 'Manual Entry', 'Third Party', 'Integration', 'Other', 'Popl'],
-    onboardingStatus: ['Pending Review', 'In Review', 'Approved', 'Rejected', 'Needs Info', 'Duplicate'],
-    categorization: ['Lead', 'Customer', 'Partner', 'Other', 'Unknown', 'Vendor', 'Talent'],
-    qualityRating: ['5-star Excellent', '4-star Good', '3-star Average', '2-star Below Average', '1-star Poor'],
-    reliabilityRating: ['5-star Excellent', '4-star Good', '3-star Average', '2-star Below Average', '1-star Poor'],
-    partnerStatus: ['Active - Preferred', 'Active', 'Inactive', 'Do Not Use'],
-    partnerType: ['Fabricator', 'AV/Lighting', 'Scenic/Set Builder', 'Architect', 'Interior Designer', 'Graphic Designer', 'F&B Consultant', 'Tech/Interactive', 'Operations Consultant', 'Production Company', 'Freelancer/Individual', 'Other', 'Client'],
-  },
-  opportunities: {
-    salesStage: ['Qualification', 'Meeting Scheduled', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost', 'Initial Contact', 'Contract Sent', 'Development', 'Investment', 'Future Client'],
-    probability: ['Cold', 'Low', '02 Medium', '01 High', '04 FUTURE ROADMAP'],
-    qualsType: ['Standard Capabilities Deck', 'Customized Quals', 'Both'],
-    leadSource: ['Referral', 'Inbound - Website', 'Inbound - LinkedIn', 'Inbound - Conference/Event', 'Outbound Prospecting', 'Past Relationship', 'Other', 'Partnership'],
-    winLossReason: ['Won - Best Fit', 'Won - Relationship', 'Won - Price', 'Lost - Budget', 'Lost - Competitor', 'Lost - Timing', 'Lost - No Decision', 'Lost - Scope Mismatch'],
-    engagementType: ['Strategy/Consulting', 'Design/Concept Development', 'Production/Fabrication Oversight', 'Opening/Operations Support', 'Executive Producing'],
-  },
-  tasks: {
-    status: ['To Do', 'In Progress', 'Waiting', 'Completed', 'Cancelled'],
-    type: ['Administrative', 'Follow-up Call', 'Follow-up Email', 'Internal Review', 'Other', 'Presentation Deck', 'Research', 'Schedule Meeting', 'Send Proposal', 'Send Qualifications'],
-    priority: ['High', 'Medium', 'Low'],
-  },
-  proposals: {
-    status: ['Draft', 'Pending Approval', 'Approved', 'Sent to Client', 'Closed Won', 'Closed Lost', 'Submitted', 'In Review', 'Rejected'],
-    templateUsed: ['Basic', 'Detailed', 'Custom', 'Standard Template', 'Custom Template', 'Marketing Template', 'IT Template', 'Service Template', 'Design Template', 'Security Template', 'Strategy Template', 'HR Template', 'Event Template'],
-    approvalStatus: ['Not Submitted', 'Submitted', 'Approved', 'Rejected', 'Pending', 'Under Review'],
-  },
-  projects: {
-    status: ['Kickoff', 'Discovery', 'Concept Development', 'Design Development', 'Production', 'Installation', 'Opening/Launch', 'Closeout', 'Complete', 'On Hold', 'Cancelled', 'Strategy'],
-    engagementType: ['Strategy/Consulting', 'Design/Concept Development', 'Production/Fabrication Oversight', 'Opening/Operations Support'],
-  },
-  interactions: {
-    type: ['Email', 'Phone Call', 'Meeting (In-Person)', 'Meeting (Virtual)', 'Lunch/Dinner', 'Conference/Event', 'Note'],
-    direction: ['Outbound (we initiated)', 'Inbound (they initiated)'],
-  },
-  importedContacts: {
-    categorization: ['Lead', 'Customer', 'Partner', 'Other', 'Unknown', 'Vendor', 'Talent'],
-    onboardingStatus: ['Approved', 'Rejected', 'Needs Info', 'Duplicate', 'Review'],
-    importSource: ['CSV Upload', 'API Sync', 'Manual Entry', 'Third Party', 'Integration', 'Other', 'Popl', 'Google Contacts - Auto Import'],
-  },
-  companies: {
-    type: ['Prospect', 'Active Client', 'Past Client', 'Partner', 'Vendor', 'Other'],
-    industry: ['Hospitality', 'Entertainment/Attractions', 'Corporate/Brand', 'Retail', 'Real Estate/Development', 'F&B', 'Technology', 'Other', 'Culture', 'Sports', 'Cruise', 'Hospitality/Casino', 'Consulting', 'Theme Parks', 'Entertainment', 'Marketing', 'Design', 'Education', 'Real Estate', 'Media'],
-    leadSource: ['Referral', 'Inbound - Website', 'Inbound - LinkedIn', 'Inbound - Conference/Event', 'Outbound Prospecting', 'Past Relationship', 'Other', 'Wynn Entertainment'],
-  },
-  portalAccess: {
-    status: ['ACTIVE', 'IN-ACTIVE'],
-    leadSource: ['Referral', 'Web Search', 'Social Media', 'Event', 'Other'],
-    stage: ['Lead', 'Contacted', 'Qualified', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'],
-    servicesInterestedIn: ['Web Design', 'Branding', 'SEO', 'Social Media', 'Consulting', 'Other'],
-  },
 } as const
 
 // ─── Primary field IDs (for display name resolution) ─────────
