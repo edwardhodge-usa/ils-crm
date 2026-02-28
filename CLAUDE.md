@@ -44,7 +44,7 @@ Base ID: `appYXbUdcmSwBoPFU`
 
 ## Related Projects
 
-- **ContactEnricher** (`03_Custom Apps/ContactEnricher/`) — Syncs Apple Contacts to ILS CRM Contacts table. **NEEDS UPDATE:** `ils-crm-sync.ts` must write Specialties as linked records (not multi-select). `getIlsCrmOptions()` should fetch from Specialties table instead of hardcoded list.
+- **ContactEnricher** (`03_Custom Apps/ContactEnricher/`) — Syncs Apple Contacts to ILS CRM Contacts table. `ils-crm-sync.ts` fully uses linked records for Specialties (commit `2a8ce6a`). Dead `F.speciality` field ref removed, fallback list updated with Broadway Producer + Feasibility.
 - **imaginelab-portal** — Reads Portal Access and Portal Logs tables. Changes to those tables must be validated against portal code
 - **Personal Contact Cleanup** (appQUqpRbUR6e7cUd) — Separate Airtable base, all contacts staging area
 
@@ -60,7 +60,7 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-02-27** - Probability Value formula was broken: checked for 'High' but actual value was '01 High' → Use FIND() instead of exact match when Airtable select options have prefixes
 **2026-02-27** - When merging duplicate company records, check for linked records on BOTH duplicates before deleting → Only 1 of 12 duplicates needed re-pointing, but missing it would break an opportunity link
 **2026-02-27** - Speciality multi-select had 82 options with duplicates/casing issues → Migrated to Specialties lookup table (linked records). Multi-select fields allow duplicates; lookup tables don't
-**2026-02-27** - ContactEnricher `ils-crm-sync.ts` must be updated to write Specialties as linked records instead of multi-select values → The ILS_CRM_OPTIONS.speciality constant should fetch from Specialties table
+**2026-02-27** - ContactEnricher was already 95% migrated to linked records — only needed dead field ref cleanup, not a rewrite → Always read the code before assuming a migration is needed
 
 ## Key Commands
 
