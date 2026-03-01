@@ -5,6 +5,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  button, [role="button"] { cursor: default; }
+  :root { color-scheme: light; }
+  .dark { color-scheme: dark; }
+  select { font-family: inherit; font-size: inherit; }
+}
+
 /* Window drag region for macOS titlebar */
 .window-drag {
   -webkit-app-region: drag;
