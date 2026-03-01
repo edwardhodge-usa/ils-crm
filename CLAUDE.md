@@ -87,6 +87,10 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-02-28** - Specialties in list pages: fetch specialties separately with useEffect, build `id→name` map, assign colors via deterministic hash (`hash % palette.length`) so same specialty always = same color
 **2026-02-28** - QA: Clicking Pipeline cards only drags, can't navigate to detail → Need to differentiate click vs drag gesture in @dnd-kit event handlers
 **2026-02-28** - GLOBAL RULE: Airtable is the single source of truth. Every app field MUST map to an Airtable field — no local-only data fields. When adding new fields: (1) check if it exists in Airtable, (2) create it if not, (3) add to field-maps.ts + converters.ts, (4) determine if it's a primary field or lookup from a linked record
+**2026-02-28** - When promoting a table from read-only to full CRUD, always remove it from `READ_ONLY_TABLES` in sync-engine.ts — interactions was left in the set after CRUD was shipped, silently orphaning all locally-created interactions
+**2026-02-28** - Filtering linked records with `jsonString.includes(recordId)` causes false positives when one ID is a prefix of another → Always `JSON.parse()` the array first, then use `.includes()` on the array
+**2026-02-28** - `shell:openExternal` must validate URL scheme before calling — bad data from Airtable (e.g. `file://` in a LinkedIn URL field) would otherwise open local files → Allowlist `https://`, `http://`, `mailto:`, `tel:` only
+**2026-02-28** - SQLite `due_date = date('now')` fails silently when dates are stored as full ISO strings (`2026-02-28T00:00:00.000Z`) → Use `date(due_date) = date('now')` to strip the time component first
 
 ## Key Commands
 
