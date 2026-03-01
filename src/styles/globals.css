@@ -36,8 +36,6 @@
 }
 
 /* Date picker icon adapts to color scheme */
-@media (prefers-color-scheme: dark) {
-  input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-  }
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }

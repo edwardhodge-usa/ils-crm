@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import SettingsPage from './components/settings/SettingsPage'
@@ -24,6 +25,16 @@ import PortalLogsPage from './components/portal/PortalLogsPage'
 import CommandPalette from './components/layout/CommandPalette'
 
 export default function App() {
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const apply = (e: MediaQueryListEvent | MediaQueryList) => {
+      document.documentElement.classList.toggle('dark', e.matches)
+    }
+    apply(mq)
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
+
   return (
     <MemoryRouter>
       <CommandPalette />
