@@ -63,6 +63,11 @@ const SEARCH_CONFIGS: SearchConfig[] = [
   },
 ]
 
+const VALID_TABLE = new Set([
+  'contacts', 'companies', 'opportunities', 'tasks', 'projects', 'proposals',
+])
+const VALID_COL = /^[a-z_][a-z0-9_]*$/
+
 export function searchAll(term: string): SearchResult[] {
   if (!term || term.trim().length < 2) return []
 
@@ -71,6 +76,11 @@ export function searchAll(term: string): SearchResult[] {
   const results: SearchResult[] = []
 
   for (const config of SEARCH_CONFIGS) {
+    if (!VALID_TABLE.has(config.table)) continue
+
+    const allCols = [...config.searchCols, config.nameCol, ...(config.subtitleCol ? [config.subtitleCol] : [])]
+    if (allCols.some(col => !VALID_COL.test(col))) continue
+
     const selectCols = [
       'id',
       config.nameCol,

@@ -44,37 +44,26 @@ export function upsert(
 ): void {
   validateTable(table)
   const db = getDatabase()
-  const existing = getById(table, id)
+  const allFields = { id, ...fields }
+  const keys = Object.keys(allFields)
+  if (keys.length === 0) return
 
-  if (existing) {
-    // Update
-    const keys = Object.keys(fields)
-    if (keys.length === 0) return
-    for (const key of keys) {
-      if (!VALID_COLUMN.test(key)) {
-        throw new Error(`Invalid column name: ${key}`)
-      }
+  for (const key of keys) {
+    if (!VALID_COLUMN.test(key)) {
+      throw new Error(`Invalid column name: ${key}`)
     }
-    const setClause = keys.map(k => `${k} = ?`).join(', ')
-    const values = keys.map(k => fields[k])
-    db.run(`UPDATE ${table} SET ${setClause} WHERE id = ?`, [...values, id])
-  } else {
-    // Insert
-    const allFields = { id, ...fields }
-    const allKeys = Object.keys(allFields)
-    for (const key of allKeys) {
-      if (!VALID_COLUMN.test(key)) {
-        throw new Error(`Invalid column name: ${key}`)
-      }
-    }
-    const placeholders = allKeys.map(() => '?').join(', ')
-    const values = allKeys.map(k => allFields[k])
-    db.run(
-      `INSERT INTO ${table} (${allKeys.join(', ')}) VALUES (${placeholders})`,
-      values
-    )
   }
 
+  const placeholders = keys.map(() => '?').join(', ')
+  const updateClause = keys.filter(k => k !== 'id').map(k => `${k} = excluded.${k}`).join(', ')
+  const values = keys.map(k => allFields[k])
+
+  // Single-query upsert — eliminates the SELECT round-trip during sync
+  db.run(
+    `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})
+     ON CONFLICT(id) DO UPDATE SET ${updateClause}`,
+    values
+  )
 }
 
 export function deleteRecord(table: string, id: string): void {

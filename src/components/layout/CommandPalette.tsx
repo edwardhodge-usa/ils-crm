@@ -73,16 +73,16 @@ export default function CommandPalette() {
         navigate(`/companies/${result.id}`)
         break
       case 'opportunity':
-        navigate('/pipeline')
+        navigate(`/pipeline/${result.id}/edit`)
         break
       case 'task':
-        navigate('/tasks')
+        navigate(`/tasks/${result.id}/edit`)
         break
       case 'project':
-        navigate('/projects')
+        navigate(`/projects/${result.id}/edit`)
         break
       case 'proposal':
-        navigate('/proposals')
+        navigate(`/proposals/${result.id}/edit`)
         break
       default:
         break

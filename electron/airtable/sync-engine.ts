@@ -224,6 +224,7 @@ export async function fullSync(
         await pushTable(tableName, config.apiKey, config.baseId)
       } catch (error) {
         console.error(`[Sync] Push error for ${tableName}:`, error)
+        updateSyncStatus(tableName, 'push_error', undefined, String(error))
       }
     }
 

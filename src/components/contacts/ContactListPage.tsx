@@ -14,7 +14,7 @@ const SPECIALTY_COLORS = [
   'bg-[#5AC8FA]/20 text-[#5AC8FA]',
   'bg-[#FF453A]/20 text-[#FF453A]',
   'bg-[#FF2D55]/20 text-[#FF2D55]',
-  'bg-[#FFD60A]/20 text-[#30D158]',
+  'bg-[#FFD60A]/20 text-[#FFD60A]',
 ]
 
 function specialtyColor(name: string): string {

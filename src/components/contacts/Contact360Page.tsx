@@ -15,6 +15,7 @@ export default function Contact360Page() {
   const [linkedData, setLinkedData] = useState<Record<string, Record<string, unknown>[]>>({})
   const [specialtyNames, setSpecialtyNames] = useState<string[]>([])
   const [showDelete, setShowDelete] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -339,16 +340,24 @@ export default function Contact360Page() {
         />
       )}
 
+      {deleteError && (
+        <div className="flex items-center justify-between bg-[#FF453A]/10 border border-[#FF453A]/30 rounded-lg px-4 py-3 text-[13px] text-[#FF453A]">
+          <span>{deleteError}</span>
+          <button onClick={() => setDeleteError(null)} className="ml-4 hover:text-white transition-colors">✕</button>
+        </div>
+      )}
+
       <ConfirmDialog
         open={showDelete}
         title="Delete Contact"
         message={`Are you sure you want to delete "${contact.contact_name as string}"? This cannot be undone.`}
         onConfirm={async () => {
-          try {
-            await window.electronAPI.contacts.delete(id!)
+          const result = await window.electronAPI.contacts.delete(id!)
+          if (result.success) {
             navigate('/contacts')
-          } catch {
-            // Don't navigate on failure
+          } else {
+            setShowDelete(false)
+            setDeleteError(result.error || 'Delete failed — please try again')
           }
         }}
         onCancel={() => setShowDelete(false)}

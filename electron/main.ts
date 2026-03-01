@@ -62,10 +62,11 @@ app.whenReady().then(async () => {
     fullSync(mainWindow).then((result) => {
       if (result.success) {
         if (isDev) console.log('[App] Initial sync complete')
-        startPolling(mainWindow)
       } else {
         console.error('[App] Initial sync failed:', result.error)
       }
+      // Always start polling — don't block on initial sync failure
+      startPolling(mainWindow)
     })
   } else {
     if (isDev) console.log('[App] No API key configured, skipping sync')
