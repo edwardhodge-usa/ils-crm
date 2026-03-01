@@ -4,6 +4,7 @@ import LoadingSpinner from '../shared/LoadingSpinner'
 import PrimaryButton from '../shared/PrimaryButton'
 import useEntityList from '../../hooks/useEntityList'
 import { KanbanBoard } from './KanbanBoard'
+import { DealDetail } from './DealDetail'
 import type { DealItem } from '@/types'
 
 type DealStage = DealItem['stage']
@@ -89,7 +90,7 @@ export default function PipelinePage() {
   const wonValue = deals.filter(d => d.stage === 'Closed Won').reduce((sum, d) => sum + (d.value ?? 0), 0)
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="relative flex flex-col h-full overflow-hidden">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--separator)] flex-shrink-0">
         <div className="flex items-center gap-6">
@@ -123,26 +124,8 @@ export default function PipelinePage() {
         />
       </div>
 
-      {/* Deal detail slide-in panel (placeholder — Task 7) */}
-      {selectedDealId && (
-        <div
-          className="absolute right-0 top-0 bottom-0 w-[300px] bg-[var(--bg-sheet)] border-l border-[var(--separator)] shadow-xl z-10 flex flex-col"
-          style={{ top: 0 }}
-        >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--separator)]">
-            <span className="text-[12px] font-semibold text-[var(--text-primary)]">Deal Detail</span>
-            <button
-              onClick={() => setSelectedDealId(null)}
-              className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] text-[16px] leading-none"
-            >
-              ×
-            </button>
-          </div>
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-[11px] text-[var(--text-tertiary)]">Deal detail coming in Task 7</p>
-          </div>
-        </div>
-      )}
+      {/* Deal detail slide-in panel */}
+      <DealDetail dealId={selectedDealId} onClose={() => setSelectedDealId(null)} />
     </div>
   )
 }
