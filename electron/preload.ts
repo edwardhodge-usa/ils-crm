@@ -79,4 +79,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   search: {
     query: (term: string) => ipcRenderer.invoke('search:query', term),
   },
+
+  // Shell utilities
+  shell: {
+    openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
+  },
 })

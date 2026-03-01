@@ -5,7 +5,7 @@ import ConfirmDialog from '../shared/ConfirmDialog'
 import LinkedList from '../shared/LinkedList'
 import LoadingSpinner from '../shared/LoadingSpinner'
 
-type Tab = 'overview' | 'opportunities' | 'tasks' | 'proposals'
+type Tab = 'overview' | 'opportunities' | 'tasks' | 'proposals' | 'interactions'
 
 export default function Contact360Page() {
   const { id } = useParams()
@@ -24,10 +24,11 @@ export default function Contact360Page() {
       }
 
       // Load linked records for tabs
-      const [opps, tasks, proposals] = await Promise.all([
+      const [opps, tasks, proposals, interactions] = await Promise.all([
         window.electronAPI.opportunities.getAll(),
         window.electronAPI.tasks.getAll(),
         window.electronAPI.proposals.getAll(),
+        window.electronAPI.interactions.getAll(),
       ])
 
       const linked: Record<string, Record<string, unknown>[]> = {}
@@ -53,6 +54,13 @@ export default function Contact360Page() {
         })
       }
 
+      if (interactions.success && interactions.data) {
+        linked.interactions = (interactions.data as Record<string, unknown>[]).filter(i => {
+          const ids = i.contacts_ids as string
+          return ids && ids.includes(id)
+        })
+      }
+
       setLinkedData(linked)
     }
     load()
@@ -65,6 +73,7 @@ export default function Contact360Page() {
     { key: 'opportunities', label: 'Opportunities', count: linkedData.opportunities?.length ?? 0 },
     { key: 'tasks', label: 'Tasks', count: linkedData.tasks?.length ?? 0 },
     { key: 'proposals', label: 'Proposals', count: linkedData.proposals?.length ?? 0 },
+    { key: 'interactions', label: 'Interactions', count: linkedData.interactions?.length ?? 0 },
   ]
 
   return (
@@ -130,19 +139,34 @@ export default function Contact360Page() {
           {Boolean(contact.email) && (
             <div>
               <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Email</p>
-              <p className="text-[13px] text-[#0A84FF]">{contact.email as string}</p>
+              <button
+                onClick={() => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`)}
+                className="text-[13px] text-[#0A84FF] hover:text-[#0077ED] transition-colors text-left"
+              >
+                {contact.email as string}
+              </button>
             </div>
           )}
           {Boolean(contact.phone) && (
             <div>
               <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Phone</p>
-              <p className="text-[13px] text-white">{contact.phone as string}</p>
+              <button
+                onClick={() => window.electronAPI.shell.openExternal(`tel:${contact.phone as string}`)}
+                className="text-[13px] text-white hover:text-[#0A84FF] transition-colors text-left"
+              >
+                {contact.phone as string}
+              </button>
             </div>
           )}
           {Boolean(contact.linkedin_url) && (
             <div>
               <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">LinkedIn</p>
-              <p className="text-[13px] text-[#0A84FF] truncate">{contact.linkedin_url as string}</p>
+              <button
+                onClick={() => window.electronAPI.shell.openExternal(contact.linkedin_url as string)}
+                className="text-[13px] text-[#0A84FF] hover:text-[#0077ED] transition-colors truncate block max-w-full text-left"
+              >
+                {contact.linkedin_url as string}
+              </button>
             </div>
           )}
           {Boolean(contact.industry) && (
@@ -264,6 +288,18 @@ export default function Contact360Page() {
           statusKey="status"
           onItemClick={(item) => navigate(`/proposals/${item.id}/edit`)}
           emptyMessage="No linked proposals"
+        />
+      )}
+
+      {activeTab === 'interactions' && (
+        <LinkedList
+          items={linkedData.interactions || []}
+          nameKey="subject"
+          statusKey="type"
+          extraKey="date"
+          extraLabel="Date"
+          onItemClick={(item) => navigate(`/interactions/${item.id}/edit`)}
+          emptyMessage="No interactions logged yet"
         />
       )}
 

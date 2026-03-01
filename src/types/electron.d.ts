@@ -50,6 +50,9 @@ interface ElectronAPI {
   search: {
     query: (term: string) => Promise<{ success: boolean; data?: unknown[] }>
   }
+  shell: {
+    openExternal: (url: string) => Promise<{ success: boolean }>
+  }
 }
 
 declare global {

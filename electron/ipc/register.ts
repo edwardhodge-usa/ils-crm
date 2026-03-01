@@ -1,7 +1,7 @@
 // Central IPC handler registration
 // Wires up all entity CRUD, settings, sync, dashboard, and search handlers
 
-import { app, ipcMain, BrowserWindow } from 'electron'
+import { app, ipcMain, BrowserWindow, shell } from 'electron'
 import { getAll, getById, getSetting, setSetting, getAllSyncStatuses } from '../database/queries/entities'
 import { getDashboardStats, getTasksDueToday, getFollowUpAlerts, getPipelineSnapshot } from '../database/queries/dashboard'
 import { searchAll } from '../database/queries/search'
@@ -250,6 +250,18 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       return { success: true, data }
     } catch (error) {
       console.error(`[IPC] search:query("${term}") failed:`, String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  // ─── Shell ───────────────────────────────────────────────
+
+  ipcMain.handle('shell:openExternal', async (_e, url: string) => {
+    try {
+      await shell.openExternal(url)
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] shell:openExternal failed:', String(error))
       return { success: false, error: String(error) }
     }
   })

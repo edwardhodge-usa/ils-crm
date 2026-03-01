@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import StatusBadge from '../shared/StatusBadge'
 
 interface DashboardStats {
@@ -17,6 +18,7 @@ interface PipelineStage {
 }
 
 export default function DashboardPage() {
+  const navigate = useNavigate()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [tasksDue, setTasksDue] = useState<Record<string, unknown>[]>([])
   const [followUps, setFollowUps] = useState<Record<string, unknown>[]>([])
@@ -106,7 +108,11 @@ export default function DashboardPage() {
           {tasksDue.length > 0 ? (
             <div className="space-y-2">
               {tasksDue.map((t, i) => (
-                <div key={(t.id as string) || i} className="flex items-center justify-between">
+                <div
+                  key={(t.id as string) || i}
+                  className="flex items-center justify-between cursor-pointer hover:bg-[#3A3A3C] -mx-1 px-1 rounded transition-colors"
+                  onClick={() => navigate(`/tasks/${t.id as string}/edit`)}
+                >
                   <span className="text-[13px] text-white">{t.task as string}</span>
                   <StatusBadge value={t.priority as string} />
                 </div>
@@ -127,7 +133,11 @@ export default function DashboardPage() {
         {followUps.length > 0 ? (
           <div className="space-y-2">
             {followUps.slice(0, 10).map((c, i) => (
-              <div key={(c.id as string) || i} className="flex items-center justify-between text-[13px]">
+              <div
+                key={(c.id as string) || i}
+                className="flex items-center justify-between text-[13px] cursor-pointer hover:bg-[#3A3A3C] -mx-1 px-1 rounded transition-colors"
+                onClick={() => navigate(`/contacts/${c.id as string}`)}
+              >
                 <div>
                   <span className="text-white">{c.contact_name as string}</span>
                   {Boolean(c.company) && <span className="text-[#636366] ml-2">{c.company as string}</span>}
