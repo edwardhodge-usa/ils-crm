@@ -14,6 +14,7 @@ export default function Company360Page() {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [linkedData, setLinkedData] = useState<Record<string, Record<string, unknown>[]>>({})
   const [showDelete, setShowDelete] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -31,18 +32,26 @@ export default function Company360Page() {
 
       const linked: Record<string, Record<string, unknown>[]> = {}
 
+      function containsId(idsJson: unknown, targetId: string): boolean {
+        if (!idsJson) return false
+        try {
+          const arr = JSON.parse(idsJson as string)
+          return Array.isArray(arr) && arr.includes(targetId)
+        } catch {
+          return false
+        }
+      }
+
       if (contacts.success && contacts.data) {
-        linked.contacts = (contacts.data as Record<string, unknown>[]).filter(c => {
-          const ids = c.companies_ids as string
-          return ids && ids.includes(id)
-        })
+        linked.contacts = (contacts.data as Record<string, unknown>[]).filter(c =>
+          containsId(c.companies_ids, id)
+        )
       }
 
       if (opps.success && opps.data) {
-        linked.opportunities = (opps.data as Record<string, unknown>[]).filter(o => {
-          const ids = o.company_ids as string
-          return ids && ids.includes(id)
-        })
+        linked.opportunities = (opps.data as Record<string, unknown>[]).filter(o =>
+          containsId(o.company_ids, id)
+        )
       }
 
       if (projects.success && projects.data) {
@@ -227,16 +236,24 @@ export default function Company360Page() {
         />
       )}
 
+      {deleteError && (
+        <div className="flex items-center justify-between bg-[var(--color-red)]/15 border border-[var(--color-red)]/30 rounded-lg px-4 py-3 text-[var(--color-red)]">
+          <span>{deleteError}</span>
+          <button onClick={() => setDeleteError(null)} className="ml-4 hover:text-[var(--text-primary)] transition-colors">✕</button>
+        </div>
+      )}
+
       <ConfirmDialog
         open={showDelete}
         title="Delete Company"
         message={`Are you sure you want to delete "${company.company_name as string}"? This cannot be undone.`}
         onConfirm={async () => {
-          try {
-            await window.electronAPI.companies.delete(id!)
+          const result = await window.electronAPI.companies.delete(id!)
+          if (result.success) {
             navigate('/companies')
-          } catch {
-            // Don't navigate on failure
+          } else {
+            setShowDelete(false)
+            setDeleteError(result.error || 'Delete failed — please try again')
           }
         }}
         onCancel={() => setShowDelete(false)}
