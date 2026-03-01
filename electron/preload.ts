@@ -85,4 +85,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   shell: {
     openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
   },
+
+  // System appearance
+  onAccentColor: (cb: (color: string) => void) => {
+    ipcRenderer.on('accent-color', (_e, color) => cb(color))
+  },
 })

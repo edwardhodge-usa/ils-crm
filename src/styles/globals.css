@@ -1,3 +1,6 @@
+@import './reset.css';
+@import './tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,41 +15,12 @@
 .window-drag button,
 .window-drag input,
 .window-drag a,
-.window-drag select {
+.window-drag select,
+.window-drag [role="button"] {
   -webkit-app-region: no-drag;
 }
 
-/* macOS-style scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #48484A;
-  border-radius: 4px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #636366;
-}
-
-/* Base styles */
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
-  background-color: #1C1C1E;
-  color: #ffffff;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
+/* App root */
 #root {
   height: 100vh;
   overflow: hidden;
@@ -61,7 +35,9 @@ body {
   animation: spin 1s linear infinite;
 }
 
-/* Make native date picker icon visible in dark mode */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+/* Date picker icon adapts to color scheme */
+@media (prefers-color-scheme: dark) {
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
 }

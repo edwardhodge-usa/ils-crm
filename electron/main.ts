@@ -1,13 +1,20 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, nativeTheme, systemPreferences } from 'electron'
 import path from 'path'
 import { initDatabase, closeDatabase } from './database/init'
 import { registerAllHandlers } from './ipc/register'
 import { getSetting } from './database/queries/entities'
 import { fullSync, startPolling } from './airtable/sync-engine'
+import { buildMenu } from './menu'
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL
 
 let mainWindow: BrowserWindow | null = null
+
+function getSystemAccentColor(): string {
+  if (process.platform !== 'darwin') return '#007AFF'
+  const color = systemPreferences.getAccentColor()
+  return `#${color.slice(0, 6)}`
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -17,7 +24,12 @@ function createWindow() {
     minHeight: 700,
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 20, y: 22 },
-    backgroundColor: '#1C1C1E',
+    vibrancy: 'sidebar',
+    visualEffectState: 'active',
+    backgroundColor: '#00000000',
+    roundedCorners: true,
+    hasShadow: true,
+    tabbingIdentifier: 'main',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -25,6 +37,27 @@ function createWindow() {
       sandbox: false,
     },
   })
+
+  // Build native menu bar
+  buildMenu(mainWindow)
+
+  // Sync vibrancy with system appearance
+  nativeTheme.on('updated', () => {
+    mainWindow?.setVibrancy(nativeTheme.shouldUseDarkColors ? 'dark' : 'sidebar')
+  })
+
+  // Send accent color to renderer
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow?.webContents.send('accent-color', getSystemAccentColor())
+  })
+
+  // Listen for accent color changes
+  if (process.platform === 'darwin') {
+    systemPreferences.subscribeNotification(
+      'AppleColorPreferencesChangedNotification',
+      () => mainWindow?.webContents.send('accent-color', getSystemAccentColor()),
+    )
+  }
 
   if (isDev) console.log(`[App] isDev=true, VITE_DEV_SERVER_URL=${process.env.VITE_DEV_SERVER_URL}`)
   if (isDev) {
