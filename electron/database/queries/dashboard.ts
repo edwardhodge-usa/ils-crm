@@ -32,7 +32,7 @@ export function getDashboardStats(): Record<string, unknown> {
 export function getTasksDueToday(): Record<string, unknown>[] {
   const db = getDatabase()
   const result = db.exec(
-    `SELECT * FROM tasks WHERE due_date = date('now') AND status NOT IN ('Completed', 'Cancelled') ORDER BY priority DESC`
+    `SELECT * FROM tasks WHERE date(due_date) = date('now') AND status NOT IN ('Completed', 'Cancelled') ORDER BY priority DESC`
   )
   return resultToObjects(result)
 }

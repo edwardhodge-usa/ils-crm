@@ -37,7 +37,7 @@ export default function ContactListPage() {
         }
         setSpecialtyMap(map)
       }
-    })
+    }).catch(() => { /* specialtyMap stays empty — specialty cells show "—" */ })
   }, [])
 
   const columns = [

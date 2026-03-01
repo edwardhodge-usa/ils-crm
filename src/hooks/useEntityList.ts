@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface UseEntityListResult {
   data: Record<string, unknown>[]
@@ -13,12 +13,13 @@ export default function useEntityList(
   const [data, setData] = useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const apiFnRef = useRef(apiFn)
 
   async function load() {
     setLoading(true)
     setError(null)
     try {
-      const result = await apiFn()
+      const result = await apiFnRef.current()
       if (result.success && result.data) {
         setData(result.data as Record<string, unknown>[])
       } else {
@@ -35,7 +36,7 @@ export default function useEntityList(
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, []) // load() calls apiFnRef.current — stable by design
 
   return { data, loading, error, reload: load }
 }
