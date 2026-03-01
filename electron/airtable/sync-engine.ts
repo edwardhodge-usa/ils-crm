@@ -88,7 +88,8 @@ const TABLE_NAME_TO_ID: Record<string, string> = {
 }
 
 // Tables that are read-only (no push)
-const READ_ONLY_TABLES = new Set(['interactions', 'specialties', 'portal_logs'])
+// Note: interactions is NOT read-only — the app supports full CRUD
+const READ_ONLY_TABLES = new Set(['specialties', 'portal_logs'])
 
 // Sync order: pull frequently-changing tables first
 const SYNC_ORDER = [

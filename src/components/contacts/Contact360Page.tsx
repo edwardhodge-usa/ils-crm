@@ -35,32 +35,38 @@ export default function Contact360Page() {
 
       const linked: Record<string, Record<string, unknown>[]> = {}
 
+      function containsId(idsJson: unknown, targetId: string): boolean {
+        if (!idsJson) return false
+        try {
+          const arr = JSON.parse(idsJson as string)
+          return Array.isArray(arr) && arr.includes(targetId)
+        } catch {
+          return false
+        }
+      }
+
       if (opps.success && opps.data) {
-        linked.opportunities = (opps.data as Record<string, unknown>[]).filter(o => {
-          const ids = o.associated_contact_ids as string
-          return ids && ids.includes(id)
-        })
+        linked.opportunities = (opps.data as Record<string, unknown>[]).filter(o =>
+          containsId(o.associated_contact_ids, id!)
+        )
       }
 
       if (tasks.success && tasks.data) {
-        linked.tasks = (tasks.data as Record<string, unknown>[]).filter(t => {
-          const ids = t.contacts_ids as string
-          return ids && ids.includes(id)
-        })
+        linked.tasks = (tasks.data as Record<string, unknown>[]).filter(t =>
+          containsId(t.contacts_ids, id!)
+        )
       }
 
       if (proposals.success && proposals.data) {
-        linked.proposals = (proposals.data as Record<string, unknown>[]).filter(p => {
-          const ids = p.client_ids as string
-          return ids && ids.includes(id)
-        })
+        linked.proposals = (proposals.data as Record<string, unknown>[]).filter(p =>
+          containsId(p.client_ids, id!)
+        )
       }
 
       if (interactions.success && interactions.data) {
-        linked.interactions = (interactions.data as Record<string, unknown>[]).filter(i => {
-          const ids = i.contacts_ids as string
-          return ids && ids.includes(id)
-        })
+        linked.interactions = (interactions.data as Record<string, unknown>[]).filter(i =>
+          containsId(i.contacts_ids, id!)
+        )
       }
 
       setLinkedData(linked)

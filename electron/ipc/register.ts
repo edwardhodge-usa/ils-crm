@@ -258,6 +258,11 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
   // ─── Shell ───────────────────────────────────────────────
 
   ipcMain.handle('shell:openExternal', async (_e, url: string) => {
+    const ALLOWED_SCHEMES = ['https://', 'http://', 'mailto:', 'tel:']
+    if (!ALLOWED_SCHEMES.some(scheme => url.startsWith(scheme))) {
+      console.error('[IPC] shell:openExternal blocked unsafe URL:', url)
+      return { success: false, error: 'URL scheme not allowed' }
+    }
     try {
       await shell.openExternal(url)
       return { success: true }
