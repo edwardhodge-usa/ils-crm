@@ -19,7 +19,8 @@
     "paths": {
       "@/*": ["src/*"],
       "@electron/*": ["electron/*"]
-    }
+    },
+    "types": ["vitest/globals"]
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
