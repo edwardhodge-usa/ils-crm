@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM project — Airtable schema management, API integrations, and eventually a full Electron desktop CRM app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Airtable API (backend/data), Anthropic Claude API (AI features)
-- **Status**: MVP QA tested 2026-02-28 — 18 issues found (8 bugs, 4 UX, 4 features, 2 minor)
+- **Status**: Post-QA improvements in progress — bugs fixed, quick wins shipped, specialties added to list + detail views
 - **Repo**: edwardhodge-usa/ils-crm
 - **Airtable Base**: ILS CRM (appYXbUdcmSwBoPFU)
 
@@ -83,6 +83,8 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-02-28** - Tech debt: 5 unused type exports (SyncReport, PendingChange, ColumnDef) and 2 unused utility functions (parseLinkedIds, parseMultiSelect) in types/index.ts → Remove dead exports; keep FieldType (used indirectly by FieldDef) and Specialty (consistent with entity pattern)
 **2026-02-28** - Tech debt: 30+ console.log calls in electron/ run in production, spamming user console → Gate all console.log behind `isDev` check; keep console.error ungated for real errors
 **2026-02-28** - QA: `dragEvent is not defined` fires repeatedly in console from @dnd-kit Kanban → Investigate source; doesn't break drag functionality but spams console
+**2026-02-28** - `npm run build` includes electron-builder packaging which fails with macOS code-signing issues → Use `npx tsc --noEmit` for pre-commit type validation instead
+**2026-02-28** - Specialties in list pages: fetch specialties separately with useEffect, build `id→name` map, assign colors via deterministic hash (`hash % palette.length`) so same specialty always = same color
 **2026-02-28** - QA: Clicking Pipeline cards only drags, can't navigate to detail → Need to differentiate click vs drag gesture in @dnd-kit event handlers
 **2026-02-28** - GLOBAL RULE: Airtable is the single source of truth. Every app field MUST map to an Airtable field — no local-only data fields. When adding new fields: (1) check if it exists in Airtable, (2) create it if not, (3) add to field-maps.ts + converters.ts, (4) determine if it's a primary field or lookup from a linked record
 
