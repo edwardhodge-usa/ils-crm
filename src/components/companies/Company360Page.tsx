@@ -78,7 +78,7 @@ export default function Company360Page() {
       {/* Back button */}
       <button
         onClick={() => navigate('/companies')}
-        className="flex items-center gap-1 text-[13px] text-[#0A84FF] hover:text-[#0077ED] transition-colors"
+        className="flex items-center gap-1 text-[13px] text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m15 18-6-6 6-6" />
@@ -87,13 +87,13 @@ export default function Company360Page() {
       </button>
 
       {/* Header Card */}
-      <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-5">
+      <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-5">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">
               {company.company_name as string || 'Unnamed Company'}
             </h2>
-            <div className="flex items-center gap-3 mt-1.5 text-[13px] text-[#98989D]">
+            <div className="flex items-center gap-3 mt-1.5 text-[13px] text-[var(--text-secondary)]">
               {Boolean(company.industry) && <span>{company.industry as string}</span>}
             </div>
           </div>
@@ -101,62 +101,62 @@ export default function Company360Page() {
             <StatusBadge value={company.type as string} />
             <button
               onClick={() => navigate(`/companies/${id}/edit`)}
-              className="px-2.5 py-1 text-[12px] text-[#0A84FF] bg-[#0A84FF]/10 rounded-md hover:bg-[#0A84FF]/20 transition-colors"
+              className="px-2.5 py-1 text-[12px] text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:bg-[var(--color-accent)]/20 transition-colors"
             >
               Edit
             </button>
             <button
               onClick={() => setShowDelete(true)}
-              className="px-2.5 py-1 text-[12px] text-[#FF453A] bg-[#FF453A]/10 rounded-md hover:bg-[#FF453A]/20 transition-colors"
+              className="px-2.5 py-1 text-[12px] text-[var(--color-red)] bg-[var(--color-red)]/15 rounded-md hover:bg-[var(--color-red)]/20 transition-colors"
             >
               Delete
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-[#3A3A3C]">
+        <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-[var(--separator-opaque)]">
           {Boolean(company.website) && (
             <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Website</p>
-              <p className="text-[13px] text-[#0A84FF] truncate">{company.website as string}</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Website</p>
+              <p className="text-[13px] text-[var(--color-accent)] truncate">{company.website as string}</p>
             </div>
           )}
           {Boolean(company.lead_source) && (
             <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Lead Source</p>
-              <p className="text-[13px] text-white">{company.lead_source as string}</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Lead Source</p>
+              <p className="text-[13px] text-[var(--text-primary)]">{company.lead_source as string}</p>
             </div>
           )}
           {Boolean(company.company_size) && (
             <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Size</p>
-              <p className="text-[13px] text-white">{company.company_size as string}</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Size</p>
+              <p className="text-[13px] text-[var(--text-primary)]">{company.company_size as string}</p>
             </div>
           )}
           {Boolean(company.annual_revenue) && (
             <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Annual Revenue</p>
-              <p className="text-[13px] text-white">{company.annual_revenue as string}</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Annual Revenue</p>
+              <p className="text-[13px] text-[var(--text-primary)]">{company.annual_revenue as string}</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-[#3A3A3C] flex gap-0">
+      <div className="border-b border-[var(--separator-opaque)] flex gap-0">
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 text-[13px] font-medium border-b-2 transition-colors ${
               activeTab === tab.key
-                ? 'border-[#0A84FF] text-[#0A84FF]'
-                : 'border-transparent text-[#98989D] hover:text-white'
+                ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             {tab.label}
             {tab.count > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 bg-[#3A3A3C] rounded-full text-[10px]">{tab.count}</span>
+              <span className="ml-1.5 px-1.5 py-0.5 bg-[var(--separator-opaque)] rounded-full text-[10px]">{tab.count}</span>
             )}
           </button>
         ))}
@@ -166,9 +166,9 @@ export default function Company360Page() {
       {activeTab === 'overview' && (
         <div className="grid grid-cols-2 gap-6">
           {(Boolean(company.address) || Boolean(company.city)) && (
-            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
-              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Address</h3>
-              <p className="text-[13px] text-white">
+            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
+              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Address</h3>
+              <p className="text-[13px] text-[var(--text-primary)]">
                 {[company.address, company.city, company.state_region, company.country]
                   .filter(Boolean)
                   .join(', ')}
@@ -177,16 +177,16 @@ export default function Company360Page() {
           )}
 
           {Boolean(company.notes) && (
-            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
-              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Notes</h3>
-              <p className="text-[13px] text-white whitespace-pre-wrap">{company.notes as string}</p>
+            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
+              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Notes</h3>
+              <p className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap">{company.notes as string}</p>
             </div>
           )}
 
           {Boolean(company.company_description) && (
-            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
-              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Description</h3>
-              <p className="text-[13px] text-white whitespace-pre-wrap">{company.company_description as string}</p>
+            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
+              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Description</h3>
+              <p className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap">{company.company_description as string}</p>
             </div>
           )}
         </div>

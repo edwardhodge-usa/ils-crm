@@ -21,7 +21,7 @@ export default function ProposalListPage() {
       key: 'proposed_value',
       label: 'Value',
       width: '15%',
-      render: (v: unknown) => v ? <span className="text-[#34C759]">${Number(v).toLocaleString()}</span> : <span className="text-[#48484A]">—</span>,
+      render: (v: unknown) => v ? <span className="text-[var(--color-green)]">${Number(v).toLocaleString()}</span> : <span className="text-[var(--text-placeholder)]">—</span>,
     },
     { key: 'date_sent', label: 'Date Sent', width: '15%' },
     { key: 'valid_until', label: 'Valid Until', width: '15%' },
@@ -29,14 +29,14 @@ export default function ProposalListPage() {
       key: 'approval_status',
       label: 'Approval',
       width: '10%',
-      render: (v: unknown) => v ? <StatusBadge value={v as string} /> : <span className="text-[#48484A]">—</span>,
+      render: (v: unknown) => v ? <StatusBadge value={v as string} /> : <span className="text-[var(--text-placeholder)]">—</span>,
     },
   ]
 
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
   }
 
   return (

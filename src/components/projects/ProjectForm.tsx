@@ -27,11 +27,11 @@ export default function ProjectForm() {
   })
 
   if (loading || initialValues === null) {
-    return <div className="flex items-center justify-center h-full text-[#636366] text-[13px]">Loading...</div>
+    return <div className="flex items-center justify-center h-full text-[var(--text-tertiary)] text-[13px]">Loading...</div>
   }
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
   }
 
   return (

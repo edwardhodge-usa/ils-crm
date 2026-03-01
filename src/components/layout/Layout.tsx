@@ -25,7 +25,7 @@ export default function Layout() {
   }, [location.pathname, navigate])
 
   return (
-    <div className="flex h-screen bg-[#1C1C1E] overflow-hidden">
+    <div className="flex h-screen bg-[var(--bg-window)] overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar />

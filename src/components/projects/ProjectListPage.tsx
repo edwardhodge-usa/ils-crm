@@ -22,7 +22,7 @@ export default function ProjectListPage() {
       key: 'project_value',
       label: 'Value',
       width: '15%',
-      render: (v: unknown) => v ? <span className="text-[#34C759]">${Number(v).toLocaleString()}</span> : <span className="text-[#48484A]">—</span>,
+      render: (v: unknown) => v ? <span className="text-[var(--color-green)]">${Number(v).toLocaleString()}</span> : <span className="text-[var(--text-placeholder)]">—</span>,
     },
     { key: 'start_date', label: 'Start', width: '12%' },
     { key: 'location', label: 'Location', width: '13%' },
@@ -31,7 +31,7 @@ export default function ProjectListPage() {
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
   }
 
   return (

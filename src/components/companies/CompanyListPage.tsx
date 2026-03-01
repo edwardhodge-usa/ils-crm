@@ -20,8 +20,8 @@ export default function CompanyListPage() {
     { key: 'industry', label: 'Industry', width: '18%' },
     { key: 'website', label: 'Website', width: '22%',
       render: (v: unknown) => v ? (
-        <span className="text-[#0A84FF] truncate block">{v as string}</span>
-      ) : <span className="text-[#48484A]">—</span>,
+        <span className="text-[var(--color-accent)] truncate block">{v as string}</span>
+      ) : <span className="text-[var(--text-placeholder)]">—</span>,
     },
     { key: 'lead_source', label: 'Lead Source', width: '20%' },
   ]
@@ -29,7 +29,7 @@ export default function CompanyListPage() {
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
   }
 
   return (

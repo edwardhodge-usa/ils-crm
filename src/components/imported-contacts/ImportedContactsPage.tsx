@@ -30,7 +30,7 @@ export default function ImportedContactsPage() {
       key: 'categorization',
       label: 'Category',
       width: '12%',
-      render: (v: unknown) => v ? <StatusBadge value={v as string} /> : <span className="text-[#48484A]">—</span>,
+      render: (v: unknown) => v ? <StatusBadge value={v as string} /> : <span className="text-[var(--text-placeholder)]">—</span>,
     },
     { key: 'email', label: 'Email', width: '18%' },
     { key: 'company', label: 'Company', width: '15%' },
@@ -62,7 +62,7 @@ export default function ImportedContactsPage() {
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
   }
 
   return (
@@ -88,35 +88,35 @@ export default function ImportedContactsPage() {
 
       {/* Review panel */}
       {selected && (
-        <div className="mt-4 bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
+        <div className="mt-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-[15px] font-semibold text-white">{selected.contact_name as string || 'Unnamed'}</h3>
-              <div className="flex gap-4 mt-1 text-[13px] text-[#98989D]">
+              <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">{selected.contact_name as string || 'Unnamed'}</h3>
+              <div className="flex gap-4 mt-1 text-[13px] text-[var(--text-secondary)]">
                 {Boolean(selected.email) && <span>{selected.email as string}</span>}
                 {Boolean(selected.company) && <span>{selected.company as string}</span>}
                 {Boolean(selected.job_title) && <span>{selected.job_title as string}</span>}
               </div>
               {Boolean(selected.notes) && (
-                <p className="mt-2 text-[13px] text-[#636366]">{selected.notes as string}</p>
+                <p className="mt-2 text-[13px] text-[var(--text-tertiary)]">{selected.notes as string}</p>
               )}
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => { setAction('approve') }}
-                className="px-3 py-1.5 text-[13px] text-white bg-[#34C759] rounded-md hover:bg-[#30B350] transition-colors"
+                className="px-3 py-1.5 text-[13px] text-[var(--text-on-accent)] bg-[var(--color-green)] rounded-md hover:brightness-110 transition-colors"
               >
                 Approve
               </button>
               <button
                 onClick={() => { setAction('reject') }}
-                className="px-3 py-1.5 text-[13px] text-white bg-[#FF453A] rounded-md hover:bg-[#FF6961] transition-colors"
+                className="px-3 py-1.5 text-[13px] text-[var(--text-on-accent)] bg-[var(--color-red)] rounded-md hover:brightness-110 transition-colors"
               >
                 Reject
               </button>
               <button
                 onClick={() => setSelected(null)}
-                className="px-3 py-1.5 text-[13px] text-[#98989D] bg-[#3A3A3C] rounded-md hover:bg-[#48484A] transition-colors"
+                className="px-3 py-1.5 text-[13px] text-[var(--text-secondary)] bg-[var(--separator-opaque)] rounded-md hover:bg-[var(--bg-hover)] transition-colors"
               >
                 Close
               </button>

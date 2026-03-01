@@ -39,17 +39,17 @@ function DroppableColumn<T extends { id: string }>({
   return (
     <div className="flex flex-col min-w-[260px] w-[260px] flex-shrink-0">
       <div className="flex items-center justify-between px-2 pb-2">
-        <h3 className="text-[12px] font-semibold text-[#98989D] uppercase tracking-wider">
+        <h3 className="text-[12px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
           {column.label}
         </h3>
-        <span className="text-[11px] text-[#636366] bg-[#3A3A3C] px-1.5 py-0.5 rounded-full">
+        <span className="text-[11px] text-[var(--text-tertiary)] bg-[var(--separator-opaque)] px-1.5 py-0.5 rounded-full">
           {column.items.length}
         </span>
       </div>
       <div
         ref={setNodeRef}
         className={`flex-1 space-y-2 p-1.5 rounded-lg min-h-[200px] transition-colors ${
-          isOver ? 'bg-[#0A84FF]/10' : 'bg-[#1C1C1E]'
+          isOver ? 'bg-[var(--color-accent)]/10' : 'bg-[var(--bg-window)]'
         }`}
       >
         {column.items.map(item => (
@@ -90,7 +90,7 @@ function DraggableCard({ id, children, onCardClick }: { id: string; children: Re
     <div
       ref={setNodeRef}
       style={style}
-      className={`transition-shadow cursor-pointer ${isDragging ? 'opacity-30' : ''}`}
+      className={`transition-shadow cursor-default ${isDragging ? 'opacity-30' : ''}`}
       {...listeners}
       {...attributes}
       onClick={handleClick}

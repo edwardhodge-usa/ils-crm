@@ -37,27 +37,27 @@ export default function SettingsPage() {
     <div className="max-w-2xl space-y-8">
       {/* Airtable Configuration */}
       <section>
-        <h2 className="text-[15px] font-semibold text-white mb-4">Airtable Configuration</h2>
-        <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4 space-y-4">
+        <h2 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">Airtable Configuration</h2>
+        <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4 space-y-4">
           <div>
-            <label className="block text-[13px] text-[#98989D] mb-1.5">API Key</label>
+            <label className="block text-[13px] text-[var(--text-secondary)] mb-1.5">API Key</label>
             <div className="flex gap-2">
               <input
                 type={showKey ? 'text' : 'password'}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="pat..."
-                className="flex-1 bg-[#1C1C1E] border border-[#3A3A3C] rounded-md px-3 py-2 text-[13px] text-white placeholder-[#636366] focus:outline-none focus:border-[#0A84FF] transition-colors"
+                className="flex-1 bg-[var(--bg-window)] border border-[var(--separator-opaque)] rounded-md px-3 py-2 text-[13px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors"
               />
               <button
                 onClick={() => setShowKey(!showKey)}
-                className="px-3 py-2 bg-[#3A3A3C] rounded-md text-[12px] text-[#98989D] hover:bg-[#48484A] transition-colors"
+                className="px-3 py-2 bg-[var(--separator-opaque)] rounded-md text-[12px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
               >
                 {showKey ? 'Hide' : 'Show'}
               </button>
               <button
                 onClick={handleSaveApiKey}
-                className="px-4 py-2 bg-[#0A84FF] rounded-md text-[13px] text-white font-medium hover:bg-[#0077ED] transition-colors"
+                className="px-4 py-2 bg-[var(--color-accent)] rounded-md text-[13px] text-[var(--text-primary)] font-medium hover:bg-[var(--color-accent-hover)] transition-colors"
               >
                 Save
               </button>
@@ -65,17 +65,17 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-[13px] text-[#98989D] mb-1.5">Base ID</label>
+            <label className="block text-[13px] text-[var(--text-secondary)] mb-1.5">Base ID</label>
             <input
               type="text"
               value={baseId}
               readOnly
-              className="w-full bg-[#1C1C1E] border border-[#3A3A3C] rounded-md px-3 py-2 text-[13px] text-[#636366] cursor-not-allowed"
+              className="w-full bg-[var(--bg-window)] border border-[var(--separator-opaque)] rounded-md px-3 py-2 text-[13px] text-[var(--text-tertiary)] cursor-not-allowed"
             />
           </div>
 
           {saveMessage && (
-            <p className={`text-[12px] ${saveMessage.includes('failed') ? 'text-[#FF3B30]' : 'text-[#34C759]'}`}>
+            <p className={`text-[12px] ${saveMessage.includes('failed') ? 'text-[var(--color-red)]' : 'text-[var(--color-green)]'}`}>
               {saveMessage}
             </p>
           )}
@@ -84,33 +84,33 @@ export default function SettingsPage() {
 
       {/* Sync Controls */}
       <section>
-        <h2 className="text-[15px] font-semibold text-white mb-4">Sync</h2>
-        <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4 space-y-4">
+        <h2 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">Sync</h2>
+        <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4 space-y-4">
           <div className="flex gap-2">
             <button
               onClick={handleForceSync}
               disabled={isSyncing || !apiKey}
-              className="px-4 py-2 bg-[#0A84FF] rounded-md text-[13px] text-white font-medium hover:bg-[#0077ED] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-[var(--color-accent)] rounded-md text-[13px] text-[var(--text-primary)] font-medium hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isSyncing ? 'Syncing...' : 'Force Sync Now'}
             </button>
             <button
               onClick={startSync}
               disabled={!apiKey}
-              className="px-4 py-2 bg-[#3A3A3C] rounded-md text-[13px] text-[#98989D] hover:bg-[#48484A] hover:text-white transition-colors disabled:opacity-40"
+              className="px-4 py-2 bg-[var(--separator-opaque)] rounded-md text-[13px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
             >
               Start Auto-Sync
             </button>
             <button
               onClick={stopSync}
-              className="px-4 py-2 bg-[#3A3A3C] rounded-md text-[13px] text-[#98989D] hover:bg-[#48484A] hover:text-white transition-colors"
+              className="px-4 py-2 bg-[var(--separator-opaque)] rounded-md text-[13px] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
             >
               Stop
             </button>
           </div>
 
           {isSyncing && (
-            <div className="flex items-center gap-2 text-[12px] text-[#0A84FF]">
+            <div className="flex items-center gap-2 text-[12px] text-[var(--color-accent)]">
               <svg className="w-3.5 h-3.5 spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
               </svg>
@@ -122,37 +122,37 @@ export default function SettingsPage() {
 
       {/* Sync Status per Table */}
       <section>
-        <h2 className="text-[15px] font-semibold text-white mb-4">Table Status</h2>
-        <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] overflow-hidden">
+        <h2 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">Table Status</h2>
+        <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] overflow-hidden">
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="border-b border-[#3A3A3C]">
-                <th className="text-left px-4 py-2 text-[#98989D] font-medium">Table</th>
-                <th className="text-left px-4 py-2 text-[#98989D] font-medium">Records</th>
-                <th className="text-left px-4 py-2 text-[#98989D] font-medium">Last Sync</th>
-                <th className="text-left px-4 py-2 text-[#98989D] font-medium">Status</th>
+              <tr className="border-b border-[var(--separator-opaque)]">
+                <th className="text-left px-4 py-2 text-[var(--text-secondary)] font-medium">Table</th>
+                <th className="text-left px-4 py-2 text-[var(--text-secondary)] font-medium">Records</th>
+                <th className="text-left px-4 py-2 text-[var(--text-secondary)] font-medium">Last Sync</th>
+                <th className="text-left px-4 py-2 text-[var(--text-secondary)] font-medium">Status</th>
               </tr>
             </thead>
             <tbody>
               {tables.map((t) => (
-                <tr key={t.table_name} className="border-b border-[#3A3A3C] last:border-b-0">
-                  <td className="px-4 py-2 text-white capitalize">{t.table_name.replace(/_/g, ' ')}</td>
-                  <td className="px-4 py-2 text-[#98989D]">{t.record_count}</td>
-                  <td className="px-4 py-2 text-[#98989D]">
+                <tr key={t.table_name} className="border-b border-[var(--separator-opaque)] last:border-b-0">
+                  <td className="px-4 py-2 text-[var(--text-primary)] capitalize">{t.table_name.replace(/_/g, ' ')}</td>
+                  <td className="px-4 py-2 text-[var(--text-secondary)]">{t.record_count}</td>
+                  <td className="px-4 py-2 text-[var(--text-secondary)]">
                     {t.last_sync_at
                       ? new Date(t.last_sync_at).toLocaleTimeString()
                       : 'Never'}
                   </td>
                   <td className="px-4 py-2">
                     <span className={`inline-flex items-center gap-1 ${
-                      t.status === 'error' ? 'text-[#FF3B30]' :
-                      t.status === 'syncing' ? 'text-[#0A84FF]' :
-                      'text-[#34C759]'
+                      t.status === 'error' ? 'text-[var(--color-red)]' :
+                      t.status === 'syncing' ? 'text-[var(--color-accent)]' :
+                      'text-[var(--color-green)]'
                     }`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${
-                        t.status === 'error' ? 'bg-[#FF3B30]' :
-                        t.status === 'syncing' ? 'bg-[#0A84FF]' :
-                        'bg-[#34C759]'
+                        t.status === 'error' ? 'bg-[var(--color-red)]' :
+                        t.status === 'syncing' ? 'bg-[var(--color-accent)]' :
+                        'bg-[var(--color-green)]'
                       }`} />
                       {t.status}
                     </span>
@@ -161,7 +161,7 @@ export default function SettingsPage() {
               ))}
               {tables.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-[#636366]">
+                  <td colSpan={4} className="px-4 py-6 text-center text-[var(--text-tertiary)]">
                     No sync data yet. Configure API key and sync.
                   </td>
                 </tr>
@@ -173,10 +173,10 @@ export default function SettingsPage() {
 
       {/* App Info */}
       <section>
-        <h2 className="text-[15px] font-semibold text-white mb-4">About</h2>
-        <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
-          <p className="text-[13px] text-[#98989D]">ILS CRM Desktop App v0.1.0</p>
-          <p className="text-[12px] text-[#636366] mt-1">ImagineLab Studios</p>
+        <h2 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">About</h2>
+        <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
+          <p className="text-[13px] text-[var(--text-secondary)]">ILS CRM Desktop App v0.1.0</p>
+          <p className="text-[12px] text-[var(--text-tertiary)] mt-1">ImagineLab Studios</p>
         </div>
       </section>
     </div>

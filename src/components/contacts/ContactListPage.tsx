@@ -7,14 +7,14 @@ import PrimaryButton from '../shared/PrimaryButton'
 import useEntityList from '../../hooks/useEntityList'
 
 const SPECIALTY_COLORS = [
-  'bg-[#0A84FF]/20 text-[#0A84FF]',
-  'bg-[#34C759]/20 text-[#34C759]',
-  'bg-[#BF5AF2]/20 text-[#BF5AF2]',
-  'bg-[#FF9F0A]/20 text-[#FF9F0A]',
-  'bg-[#5AC8FA]/20 text-[#5AC8FA]',
-  'bg-[#FF453A]/20 text-[#FF453A]',
-  'bg-[#FF2D55]/20 text-[#FF2D55]',
-  'bg-[#FFD60A]/20 text-[#FFD60A]',
+  'bg-[var(--color-accent)]/20 text-[var(--color-accent)]',
+  'bg-[var(--color-green)]/20 text-[var(--color-green)]',
+  'bg-[var(--color-purple)]/20 text-[var(--color-purple)]',
+  'bg-[var(--color-orange)]/20 text-[var(--color-orange)]',
+  'bg-[var(--color-teal)]/20 text-[var(--color-teal)]',
+  'bg-[var(--color-red)]/20 text-[var(--color-red)]',
+  'bg-[var(--color-pink)]/20 text-[var(--color-pink)]',
+  'bg-[var(--color-yellow)]/20 text-[var(--color-yellow)]',
 ]
 
 function specialtyColor(name: string): string {
@@ -57,11 +57,11 @@ export default function ContactListPage() {
       width: '16%',
       sortable: false,
       render: (v: unknown) => {
-        if (!v) return <span className="text-[#48484A]">—</span>
+        if (!v) return <span className="text-[var(--text-placeholder)]">—</span>
         try {
           const ids = JSON.parse(v as string) as string[]
           const names = ids.map(id => specialtyMap[id]).filter(Boolean)
-          if (names.length === 0) return <span className="text-[#48484A]">—</span>
+          if (names.length === 0) return <span className="text-[var(--text-placeholder)]">—</span>
           return (
             <div className="flex flex-wrap gap-1">
               {names.slice(0, 2).map(name => (
@@ -70,12 +70,12 @@ export default function ContactListPage() {
                 </span>
               ))}
               {names.length > 2 && (
-                <span className="text-[10px] text-[#636366]">+{names.length - 2}</span>
+                <span className="text-[10px] text-[var(--text-tertiary)]">+{names.length - 2}</span>
               )}
             </div>
           )
         } catch {
-          return <span className="text-[#48484A]">—</span>
+          return <span className="text-[var(--text-placeholder)]">—</span>
         }
       },
     },
@@ -85,23 +85,23 @@ export default function ContactListPage() {
       width: '13%',
       sortable: false,
       render: (v: unknown) => {
-        if (!v) return <span className="text-[#48484A]">—</span>
+        if (!v) return <span className="text-[var(--text-placeholder)]">—</span>
         try {
           const tags = JSON.parse(v as string) as string[]
           return (
             <div className="flex flex-wrap gap-1">
               {tags.slice(0, 2).map(t => (
-                <span key={t} className="px-1.5 py-0.5 bg-[#3A3A3C] rounded text-[10px] text-[#98989D]">
+                <span key={t} className="px-1.5 py-0.5 bg-[var(--separator-opaque)] rounded text-[10px] text-[var(--text-secondary)]">
                   {t}
                 </span>
               ))}
               {tags.length > 2 && (
-                <span className="text-[10px] text-[#636366]">+{tags.length - 2}</span>
+                <span className="text-[10px] text-[var(--text-tertiary)]">+{tags.length - 2}</span>
               )}
             </div>
           )
         } catch {
-          return <span className="text-[#48484A]">—</span>
+          return <span className="text-[var(--text-placeholder)]">—</span>
         }
       },
     },
@@ -110,7 +110,7 @@ export default function ContactListPage() {
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
   }
 
   return (

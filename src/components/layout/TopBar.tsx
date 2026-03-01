@@ -12,9 +12,9 @@ export default function TopBar() {
     )?.[1] ?? ''
 
   return (
-    <div className="h-12 bg-[#1C1C1E] border-b border-[#3A3A3C] flex items-center px-4 window-drag">
-      <div className="flex-1 flex items-center">
-        <h1 className="text-[15px] font-semibold text-white">{title}</h1>
+    <div className="h-12 bg-[var(--bg-window)] border-b border-[var(--separator-opaque)] flex items-center px-4 window-drag">
+      <div className="flex-1 flex items-center justify-center">
+        <h1 className="text-[15px] font-semibold text-[var(--text-primary)]">{title}</h1>
       </div>
 
       <div className="flex items-center gap-3">
@@ -22,24 +22,25 @@ export default function TopBar() {
         <div className="flex items-center gap-1.5 text-[12px]">
           {isSyncing ? (
             <>
-              <svg className="w-3 h-3 text-[#0A84FF] spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <svg className="w-3 h-3 text-[var(--color-accent)] spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M21 12a9 9 0 1 1-6.2-8.6" />
               </svg>
-              <span className="text-[#0A84FF]">
+              <span className="text-[var(--color-accent)]">
                 {progress?.table ? `Syncing ${progress.table}...` : 'Syncing...'}
               </span>
             </>
           ) : (
             <>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#34C759]" />
-              <span className="text-[#636366]">Synced</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-green)]" />
+              <span className="text-[var(--text-tertiary)]">Synced</span>
             </>
           )}
         </div>
 
         {/* Search button */}
         <button
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2C2C2E] text-[#98989D] text-[12px] hover:bg-[#3A3A3C] hover:text-white transition-colors"
+          aria-label="Search"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[12px] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
           onClick={() => {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
           }}
@@ -48,7 +49,7 @@ export default function TopBar() {
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
           </svg>
           Search
-          <kbd className="ml-1 text-[10px] text-[#636366] font-mono">⌘K</kbd>
+          <kbd className="ml-1 text-[10px] text-[var(--text-tertiary)] font-mono">⌘K</kbd>
         </button>
       </div>
     </div>

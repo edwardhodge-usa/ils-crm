@@ -91,7 +91,7 @@ export default function DataTable({
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search..."
-              className="w-full max-w-sm bg-[#2C2C2E] border border-[#3A3A3C] rounded-md px-3 py-1.5 text-[13px] text-white placeholder-[#636366] focus:outline-none focus:border-[#0A84FF] transition-colors"
+              className="w-full max-w-sm bg-[var(--bg-secondary)] border border-[var(--separator-opaque)] rounded-md px-3 py-1.5 text-[13px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors"
             />
           ) : <div />}
           {actions}
@@ -99,15 +99,15 @@ export default function DataTable({
       )}
 
       {/* Table */}
-      <div className="flex-1 overflow-auto rounded-lg border border-[#3A3A3C]">
+      <div className="flex-1 overflow-auto rounded-lg border border-[var(--separator-opaque)]">
         <table className="w-full text-[13px]">
-          <thead className="sticky top-0 bg-[#2C2C2E] z-10">
+          <thead className="sticky top-0 bg-[var(--bg-secondary)] z-10">
             <tr>
               {columns.map(col => (
                 <th
                   key={col.key}
-                  className={`text-left px-4 py-2.5 text-[#98989D] font-medium border-b border-[#3A3A3C] ${
-                    col.sortable !== false ? 'cursor-pointer hover:text-white select-none' : ''
+                  className={`text-left px-4 py-2.5 text-[var(--text-secondary)] font-medium border-b border-[var(--separator-opaque)] ${
+                    col.sortable !== false ? 'cursor-default hover:text-[var(--text-primary)] select-none' : ''
                   }`}
                   style={col.width ? { width: col.width } : undefined}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
@@ -126,16 +126,16 @@ export default function DataTable({
             {sorted.map((row, i) => (
               <tr
                 key={(row.id as string) || i}
-                className={`border-b border-[#3A3A3C] last:border-b-0 ${
-                  onRowClick ? 'cursor-pointer hover:bg-[#2C2C2E] transition-colors' : ''
+                className={`border-b border-[var(--separator-opaque)] last:border-b-0 ${
+                  onRowClick ? 'cursor-default hover:bg-[var(--bg-secondary)] transition-colors' : ''
                 }`}
                 onClick={() => onRowClick?.(row)}
               >
                 {columns.map(col => (
-                  <td key={col.key} className="px-4 py-2.5 text-white">
+                  <td key={col.key} className="px-4 py-2.5 text-[var(--text-primary)]">
                     {col.render
                       ? col.render(row[col.key], row)
-                      : (row[col.key] != null ? formatCellValue(row[col.key]) : <span className="text-[#48484A]">—</span>)
+                      : (row[col.key] != null ? formatCellValue(row[col.key]) : <span className="text-[var(--text-placeholder)]">—</span>)
                     }
                   </td>
                 ))}
@@ -143,7 +143,7 @@ export default function DataTable({
             ))}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center text-[#636366]">
+                <td colSpan={columns.length} className="px-4 py-12 text-center text-[var(--text-tertiary)]">
                   {emptyMessage}
                 </td>
               </tr>
@@ -153,7 +153,7 @@ export default function DataTable({
       </div>
 
       {/* Footer */}
-      <div className="mt-2 text-[12px] text-[#636366]">
+      <div className="mt-2 text-[12px] text-[var(--text-tertiary)]">
         {sorted.length} {sorted.length === 1 ? 'record' : 'records'}
         {search && ` (filtered from ${data.length})`}
       </div>
