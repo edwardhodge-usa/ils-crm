@@ -76,7 +76,7 @@ export default function Contact360Page() {
             .map(s => s.specialty as string)
             .filter(Boolean)
           setSpecialtyNames(names)
-        } catch { /* not valid JSON */ }
+        } catch { /* ignore parse errors */ }
       }
     }
     load()
