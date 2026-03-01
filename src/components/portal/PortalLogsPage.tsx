@@ -12,22 +12,22 @@ export default function PortalLogsPage() {
     { key: 'company', label: 'Company', width: '12%' },
     { key: 'page_url', label: 'Page', width: '15%',
       render: (v: unknown) => v ? (
-        <span className="text-[#0A84FF] truncate block">{v as string}</span>
-      ) : <span className="text-[#48484A]">—</span>,
+        <span className="text-[var(--color-accent)] truncate block">{v as string}</span>
+      ) : <span className="text-[var(--text-placeholder)]">—</span>,
     },
     { key: 'city', label: 'City', width: '10%' },
     { key: 'country', label: 'Country', width: '8%' },
     { key: 'clarity_session', label: 'Clarity', width: '7%',
       render: (v: unknown) => v ? (
-        <span className="text-[#0A84FF]" title={v as string}>View</span>
-      ) : <span className="text-[#48484A]">—</span>,
+        <span className="text-[var(--color-accent)]" title={v as string}>View</span>
+      ) : <span className="text-[var(--text-placeholder)]">—</span>,
     },
   ]
 
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
   }
 
   return (

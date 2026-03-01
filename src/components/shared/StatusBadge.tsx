@@ -1,52 +1,52 @@
 const colorMap: Record<string, string> = {
   // Task/Proposal status
-  'To Do': 'bg-[#636366]/20 text-[#98989D]',
-  'In Progress': 'bg-[#0A84FF]/15 text-[#0A84FF]',
-  'Waiting': 'bg-[#FF9F0A]/15 text-[#FF9F0A]',
-  'Completed': 'bg-[#34C759]/15 text-[#34C759]',
-  'Cancelled': 'bg-[#636366]/20 text-[#636366]',
-  'Draft': 'bg-[#636366]/20 text-[#98989D]',
-  'Pending Approval': 'bg-[#FF9F0A]/15 text-[#FF9F0A]',
-  'Approved': 'bg-[#34C759]/15 text-[#34C759]',
-  'Rejected': 'bg-[#FF3B30]/15 text-[#FF3B30]',
-  'Sent to Client': 'bg-[#0A84FF]/15 text-[#0A84FF]',
+  'To Do': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
+  'In Progress': 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]',
+  'Waiting': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
+  'Completed': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
+  'Cancelled': 'bg-[var(--text-tertiary)]/20 text-[var(--text-tertiary)]',
+  'Draft': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
+  'Pending Approval': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
+  'Approved': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
+  'Rejected': 'bg-[var(--color-red)]/15 text-[var(--color-red)]',
+  'Sent to Client': 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]',
 
   // Pipeline stages
-  'Initial Contact': 'bg-[#636366]/20 text-[#98989D]',
-  'Qualification': 'bg-[#0A84FF]/15 text-[#0A84FF]',
-  'Meeting Scheduled': 'bg-[#5E5CE6]/15 text-[#5E5CE6]',
-  'Proposal Sent': 'bg-[#FF9F0A]/15 text-[#FF9F0A]',
-  'Negotiation': 'bg-[#FF9F0A]/15 text-[#FF9F0A]',
-  'Contract Sent': 'bg-[#BF5AF2]/15 text-[#BF5AF2]',
-  'Closed Won': 'bg-[#34C759]/15 text-[#34C759]',
-  'Closed Lost': 'bg-[#FF3B30]/15 text-[#FF3B30]',
-  'Future Client': 'bg-[#5E5CE6]/15 text-[#5E5CE6]',
+  'Initial Contact': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
+  'Qualification': 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]',
+  'Meeting Scheduled': 'bg-[var(--color-indigo)]/15 text-[var(--color-indigo)]',
+  'Proposal Sent': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
+  'Negotiation': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
+  'Contract Sent': 'bg-[var(--color-purple)]/15 text-[var(--color-purple)]',
+  'Closed Won': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
+  'Closed Lost': 'bg-[var(--color-red)]/15 text-[var(--color-red)]',
+  'Future Client': 'bg-[var(--color-indigo)]/15 text-[var(--color-indigo)]',
 
   // Categorization
-  'Lead': 'bg-[#0A84FF]/15 text-[#0A84FF]',
-  'Customer': 'bg-[#34C759]/15 text-[#34C759]',
-  'Partner': 'bg-[#5E5CE6]/15 text-[#5E5CE6]',
-  'Vendor': 'bg-[#FF9F0A]/15 text-[#FF9F0A]',
-  'Talent': 'bg-[#BF5AF2]/15 text-[#BF5AF2]',
-  'Other': 'bg-[#636366]/20 text-[#98989D]',
-  'Unknown': 'bg-[#636366]/20 text-[#636366]',
+  'Lead': 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]',
+  'Customer': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
+  'Partner': 'bg-[var(--color-indigo)]/15 text-[var(--color-indigo)]',
+  'Vendor': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
+  'Talent': 'bg-[var(--color-purple)]/15 text-[var(--color-purple)]',
+  'Other': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
+  'Unknown': 'bg-[var(--text-tertiary)]/20 text-[var(--text-tertiary)]',
 
   // Priority
-  'High': 'bg-[#FF3B30]/15 text-[#FF3B30]',
-  'Medium': 'bg-[#FF9F0A]/15 text-[#FF9F0A]',
-  'Low': 'bg-[#34C759]/15 text-[#34C759]',
+  'High': 'bg-[var(--color-red)]/15 text-[var(--color-red)]',
+  'Medium': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
+  'Low': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
 
   // Company type
-  'Active Client': 'bg-[#34C759]/15 text-[#34C759]',
-  'Prospect': 'bg-[#0A84FF]/15 text-[#0A84FF]',
-  'Past Client': 'bg-[#636366]/20 text-[#98989D]',
+  'Active Client': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
+  'Prospect': 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]',
+  'Past Client': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
 
   // Portal
-  'ACTIVE': 'bg-[#34C759]/15 text-[#34C759]',
-  'IN-ACTIVE': 'bg-[#636366]/20 text-[#636366]',
+  'ACTIVE': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
+  'IN-ACTIVE': 'bg-[var(--text-tertiary)]/20 text-[var(--text-tertiary)]',
 }
 
-const defaultColor = 'bg-[#636366]/20 text-[#98989D]'
+const defaultColor = 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]'
 
 export default function StatusBadge({ value }: { value: string | null | undefined }) {
   if (!value) return null

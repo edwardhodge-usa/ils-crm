@@ -87,7 +87,7 @@ export default function PipelinePage() {
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
   }
 
   const totalValue = opportunities
@@ -104,16 +104,16 @@ export default function PipelinePage() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-6 text-[13px]">
         <div>
-          <span className="text-[#636366]">Active Pipeline: </span>
-          <span className="text-white font-medium">${totalValue.toLocaleString()}</span>
+          <span className="text-[var(--text-tertiary)]">Active Pipeline: </span>
+          <span className="text-[var(--text-primary)] font-medium">${totalValue.toLocaleString()}</span>
         </div>
         <div>
-          <span className="text-[#636366]">Won: </span>
-          <span className="text-[#34C759] font-medium">${wonValue.toLocaleString()}</span>
+          <span className="text-[var(--text-tertiary)]">Won: </span>
+          <span className="text-[var(--color-green)] font-medium">${wonValue.toLocaleString()}</span>
         </div>
         <div>
-          <span className="text-[#636366]">Deals: </span>
-          <span className="text-white font-medium">{opportunities.length}</span>
+          <span className="text-[var(--text-tertiary)]">Deals: </span>
+          <span className="text-[var(--text-primary)] font-medium">{opportunities.length}</span>
         </div>
         </div>
         <PrimaryButton onClick={() => navigate('/pipeline/new')}>
@@ -126,20 +126,20 @@ export default function PipelinePage() {
         <KanbanBoard
           columns={columns}
           renderCard={(opp) => (
-            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-3 hover:border-[#0A84FF]/50 transition-colors">
-              <p className="text-[13px] text-white font-medium mb-1 line-clamp-2">
+            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-3 hover:border-[var(--color-accent)]/50 transition-colors">
+              <p className="text-[13px] text-[var(--text-primary)] font-medium mb-1 line-clamp-2">
                 {opp.opportunity_name}
               </p>
               {Boolean(opp.company) && (
-                <p className="text-[11px] text-[#636366] mb-2">{opp.company}</p>
+                <p className="text-[11px] text-[var(--text-tertiary)] mb-2">{opp.company}</p>
               )}
               <div className="flex items-center justify-between">
                 {opp.deal_value ? (
-                  <span className="text-[12px] text-[#34C759] font-medium">
+                  <span className="text-[12px] text-[var(--color-green)] font-medium">
                     ${opp.deal_value.toLocaleString()}
                   </span>
                 ) : (
-                  <span className="text-[12px] text-[#48484A]">No value</span>
+                  <span className="text-[12px] text-[var(--text-placeholder)]">No value</span>
                 )}
                 {Boolean(opp.probability) && (
                   <StatusBadge value={opp.probability!} />

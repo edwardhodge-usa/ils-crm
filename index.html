@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ILS CRM</title>
     <style>
-      /* Prevent white flash on load */
-      html, body {
-        background-color: #1C1C1E;
-        margin: 0;
-        padding: 0;
+      /* Prevent flash on load — matches token system defaults */
+      html, body { margin: 0; padding: 0; }
+      @media (prefers-color-scheme: dark) {
+        html, body { background-color: #1e1e1e; }
+      }
+      @media (prefers-color-scheme: light) {
+        html, body { background-color: #f6f6f6; }
       }
     </style>
   </head>

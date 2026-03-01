@@ -111,32 +111,34 @@ export default function CommandPalette() {
   }
 
   const typeColors: Record<string, string> = {
-    contact: 'bg-[#0A84FF]/20 text-[#0A84FF]',
-    company: 'bg-[#BF5AF2]/20 text-[#BF5AF2]',
-    opportunity: 'bg-[#34C759]/20 text-[#34C759]',
-    task: 'bg-[#FF9F0A]/20 text-[#FF9F0A]',
-    project: 'bg-[#64D2FF]/20 text-[#64D2FF]',
-    proposal: 'bg-[#FF375F]/20 text-[#FF375F]',
+    contact: 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]',
+    company: 'bg-[var(--color-purple)]/20 text-[var(--color-purple)]',
+    opportunity: 'bg-[var(--color-green)]/20 text-[var(--color-green)]',
+    task: 'bg-[var(--color-orange)]/20 text-[var(--color-orange)]',
+    project: 'bg-[var(--color-teal)]/20 text-[var(--color-teal)]',
+    proposal: 'bg-[var(--color-pink)]/20 text-[var(--color-pink)]',
   }
 
   if (!open) return null
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
       className="fixed inset-0 z-50 flex items-start justify-center pt-[20%]"
       onClick={() => setOpen(false)}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/35" />
 
       {/* Palette */}
       <div
-        className="relative w-[520px] bg-[#2C2C2E] rounded-xl border border-[#3A3A3C] shadow-2xl overflow-hidden"
+        className="relative w-[520px] bg-[var(--bg-secondary)] rounded-xl border border-[var(--separator-opaque)] shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#3A3A3C]">
-          <svg className="w-4 h-4 text-[#636366] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--separator-opaque)]">
+          <svg className="w-4 h-4 text-[var(--text-tertiary)] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
           </svg>
           <input
@@ -146,9 +148,9 @@ export default function CommandPalette() {
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search contacts, companies, deals..."
-            className="flex-1 bg-transparent text-[14px] text-white placeholder-[#636366] outline-none"
+            className="flex-1 bg-transparent text-[14px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none"
           />
-          <kbd className="text-[10px] text-[#636366] bg-[#3A3A3C] px-1.5 py-0.5 rounded">ESC</kbd>
+          <kbd className="text-[10px] text-[var(--text-tertiary)] bg-[var(--separator-opaque)] px-1.5 py-0.5 rounded">ESC</kbd>
         </div>
 
         {/* Results */}
@@ -158,21 +160,21 @@ export default function CommandPalette() {
               <button
                 key={`${result.type}-${result.id}`}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                  i === selectedIndex ? 'bg-[#0A84FF]/15' : 'hover:bg-[#3A3A3C]'
+                  i === selectedIndex ? 'bg-[var(--color-accent-translucent)]' : 'hover:bg-[var(--bg-hover)]'
                 }`}
                 onClick={() => navigateToResult(result)}
                 onMouseEnter={() => setSelectedIndex(i)}
               >
-                <span className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${typeColors[result.type] || 'bg-[#3A3A3C] text-[#98989D]'}`}>
+                <span className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${typeColors[result.type] || 'bg-[var(--separator-opaque)] text-[var(--text-secondary)]'}`}>
                   {typeIcons[result.type] || '?'}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-white truncate">{result.name}</p>
+                  <p className="text-[13px] text-[var(--text-primary)] truncate">{result.name}</p>
                   {result.subtitle && (
-                    <p className="text-[11px] text-[#636366] truncate">{result.subtitle}</p>
+                    <p className="text-[11px] text-[var(--text-tertiary)] truncate">{result.subtitle}</p>
                   )}
                 </div>
-                <span className="text-[10px] text-[#48484A] capitalize flex-shrink-0">{result.type}</span>
+                <span className="text-[10px] text-[var(--text-placeholder)] capitalize flex-shrink-0">{result.type}</span>
               </button>
             ))}
           </div>
@@ -181,14 +183,14 @@ export default function CommandPalette() {
         {/* Empty state */}
         {query.trim() && results.length === 0 && (
           <div className="py-8 text-center">
-            <p className="text-[13px] text-[#636366]">No results for "{query}"</p>
+            <p className="text-[13px] text-[var(--text-tertiary)]">No results for "{query}"</p>
           </div>
         )}
 
         {/* Hint */}
         {!query.trim() && (
           <div className="py-6 text-center">
-            <p className="text-[13px] text-[#636366]">Type to search across all records</p>
+            <p className="text-[13px] text-[var(--text-tertiary)]">Type to search across all records</p>
           </div>
         )}
       </div>

@@ -89,19 +89,19 @@ export default function EntityForm({
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">{isNew ? `New ${title}` : `Edit ${title}`}</h2>
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isNew ? `New ${title}` : `Edit ${title}`}</h2>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="px-3 py-1.5 text-[13px] text-[#98989D] bg-[#3A3A3C] rounded-md hover:bg-[#48484A] transition-colors"
+            className="px-3 py-1.5 text-[13px] text-[var(--text-secondary)] bg-[var(--separator-opaque)] rounded-md hover:bg-[var(--bg-hover)] transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="px-3 py-1.5 text-[13px] text-white bg-[#0A84FF] rounded-md hover:bg-[#0077ED] transition-colors disabled:opacity-50"
+            className="px-3 py-1.5 text-[13px] text-[var(--text-primary)] bg-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
@@ -109,15 +109,15 @@ export default function EntityForm({
       </div>
 
       {error && (
-        <div className="px-3 py-2 bg-[#FF453A]/15 border border-[#FF453A]/30 rounded-md text-[13px] text-[#FF453A]">
+        <div className="px-3 py-2 bg-[var(--color-red)]/15 border border-[var(--color-red)]/30 rounded-md text-[13px] text-[var(--color-red)]">
           {error}
         </div>
       )}
 
       {/* Sections */}
       {Array.from(sections.entries()).map(([sectionName, sectionFields]) => (
-        <div key={sectionName} className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
-          <h3 className="text-[12px] font-semibold text-[#98989D] uppercase tracking-wider mb-4">{sectionName}</h3>
+        <div key={sectionName} className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
+          <h3 className="text-[12px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-4">{sectionName}</h3>
           <div className="grid grid-cols-2 gap-4">
             {sectionFields.map(field => (
               <FieldRenderer
@@ -144,13 +144,13 @@ function FieldRenderer({
   onChange: (v: unknown) => void
 }) {
   const baseInputClass =
-    'w-full bg-[#1C1C1E] border border-[#3A3A3C] rounded-md px-3 py-2 text-[13px] text-white placeholder-[#636366] outline-none focus:border-[#0A84FF] transition-colors'
+    'w-full bg-[var(--bg-window)] border border-[var(--separator-opaque)] rounded-md px-3 py-2 text-[13px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none focus:border-[var(--color-accent)] transition-colors'
 
   if (field.type === 'readonly') {
     return (
       <div className={field.type === 'readonly' ? 'col-span-2' : ''}>
-        <label className="block text-[11px] text-[#636366] uppercase tracking-wider mb-1">{field.label}</label>
-        <p className="text-[13px] text-[#98989D] px-3 py-2">{(value as string) || '—'}</p>
+        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+        <p className="text-[13px] text-[var(--text-secondary)] px-3 py-2">{(value as string) || '—'}</p>
       </div>
     )
   }
@@ -158,7 +158,7 @@ function FieldRenderer({
   if (field.type === 'textarea') {
     return (
       <div className="col-span-2">
-        <label className="block text-[11px] text-[#636366] uppercase tracking-wider mb-1">{field.label}</label>
+        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
         <textarea
           className={`${baseInputClass} min-h-[80px] resize-y`}
           value={(value as string) || ''}
@@ -176,9 +176,9 @@ function FieldRenderer({
           type="checkbox"
           checked={Boolean(value)}
           onChange={e => onChange(e.target.checked)}
-          className="w-4 h-4 rounded border-[#3A3A3C] bg-[#1C1C1E] text-[#0A84FF] focus:ring-[#0A84FF]"
+          className="w-4 h-4 rounded border-[var(--separator-opaque)] bg-[var(--bg-window)] text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
         />
-        <label className="text-[13px] text-white">{field.label}</label>
+        <label className="text-[13px] text-[var(--text-primary)]">{field.label}</label>
       </div>
     )
   }
@@ -186,7 +186,7 @@ function FieldRenderer({
   if (field.type === 'singleSelect') {
     return (
       <div>
-        <label className="block text-[11px] text-[#636366] uppercase tracking-wider mb-1">{field.label}</label>
+        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
         <select
           className={baseInputClass}
           value={(value as string) || ''}
@@ -212,7 +212,7 @@ function FieldRenderer({
 
     return (
       <div className="col-span-2">
-        <label className="block text-[11px] text-[#636366] uppercase tracking-wider mb-1">{field.label}</label>
+        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
         <div className="flex flex-wrap gap-1.5">
           {field.options?.map(opt => {
             const isSelected = selected.includes(opt)
@@ -228,8 +228,8 @@ function FieldRenderer({
                 }}
                 className={`px-2 py-1 rounded-md text-[11px] transition-colors ${
                   isSelected
-                    ? 'bg-[#0A84FF]/20 text-[#0A84FF] border border-[#0A84FF]/40'
-                    : 'bg-[#3A3A3C] text-[#98989D] border border-transparent hover:bg-[#48484A]'
+                    ? 'bg-[var(--color-accent-translucent)] text-[var(--color-accent)] border border-[var(--color-accent)]/40'
+                    : 'bg-[var(--separator-opaque)] text-[var(--text-secondary)] border border-transparent hover:bg-[var(--bg-hover)]'
                 }`}
               >
                 {opt}
@@ -244,9 +244,9 @@ function FieldRenderer({
   if (field.type === 'currency') {
     return (
       <div>
-        <label className="block text-[11px] text-[#636366] uppercase tracking-wider mb-1">{field.label}</label>
+        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[#636366]">$</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[var(--text-tertiary)]">$</span>
           <input
             type="number"
             className={`${baseInputClass} pl-7`}
@@ -262,7 +262,7 @@ function FieldRenderer({
   if (field.type === 'number') {
     return (
       <div>
-        <label className="block text-[11px] text-[#636366] uppercase tracking-wider mb-1">{field.label}</label>
+        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
         <input
           type="number"
           className={baseInputClass}
@@ -284,7 +284,7 @@ function FieldRenderer({
 
   return (
     <div>
-      <label className="block text-[11px] text-[#636366] uppercase tracking-wider mb-1">{field.label}</label>
+      <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
       <input
         type={inputType}
         className={baseInputClass}

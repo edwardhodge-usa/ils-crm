@@ -104,7 +104,7 @@ export default function Contact360Page() {
       {/* Back button */}
       <button
         onClick={() => navigate('/contacts')}
-        className="flex items-center gap-1 text-[13px] text-[#0A84FF] hover:text-[#0077ED] transition-colors"
+        className="flex items-center gap-1 text-[13px] text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m15 18-6-6 6-6" />
@@ -113,13 +113,13 @@ export default function Contact360Page() {
       </button>
 
       {/* Header Card */}
-      <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-5">
+      <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-5">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">
               {contact.contact_name as string || 'Unnamed Contact'}
             </h2>
-            <div className="flex items-center gap-3 mt-1.5 text-[13px] text-[#98989D]">
+            <div className="flex items-center gap-3 mt-1.5 text-[13px] text-[var(--text-secondary)]">
               {Boolean(contact.job_title) && <span>{contact.job_title as string}</span>}
               {Boolean(contact.job_title) && Boolean(contact.company) && <span>at</span>}
               {Boolean(contact.company) && (() => {
@@ -131,12 +131,12 @@ export default function Contact360Page() {
                 return companyId ? (
                   <button
                     onClick={() => navigate(`/companies/${companyId}`)}
-                    className="text-[#0A84FF] hover:text-[#0077ED] transition-colors"
+                    className="text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
                   >
                     {contact.company as string}
                   </button>
                 ) : (
-                  <span className="text-white">{contact.company as string}</span>
+                  <span className="text-[var(--text-primary)]">{contact.company as string}</span>
                 )
               })()}
             </div>
@@ -145,26 +145,26 @@ export default function Contact360Page() {
             <StatusBadge value={contact.categorization as string} />
             <button
               onClick={() => navigate(`/contacts/${id}/edit`)}
-              className="px-2.5 py-1 text-[12px] text-[#0A84FF] bg-[#0A84FF]/10 rounded-md hover:bg-[#0A84FF]/20 transition-colors"
+              className="px-2.5 py-1 text-[12px] text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:bg-[var(--color-accent)]/20 transition-colors"
             >
               Edit
             </button>
             <button
               onClick={() => setShowDelete(true)}
-              className="px-2.5 py-1 text-[12px] text-[#FF453A] bg-[#FF453A]/10 rounded-md hover:bg-[#FF453A]/20 transition-colors"
+              className="px-2.5 py-1 text-[12px] text-[var(--color-red)] bg-[var(--color-red)]/15 rounded-md hover:bg-[var(--color-red)]/20 transition-colors"
             >
               Delete
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-[#3A3A3C]">
+        <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-[var(--separator-opaque)]">
           {Boolean(contact.email) && (
             <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Email</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Email</p>
               <button
                 onClick={() => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`)}
-                className="text-[13px] text-[#0A84FF] hover:text-[#0077ED] transition-colors text-left"
+                className="text-[13px] text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors text-left"
               >
                 {contact.email as string}
               </button>
@@ -172,10 +172,10 @@ export default function Contact360Page() {
           )}
           {Boolean(contact.phone) && (
             <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Phone</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Phone</p>
               <button
                 onClick={() => window.electronAPI.shell.openExternal(`tel:${contact.phone as string}`)}
-                className="text-[13px] text-white hover:text-[#0A84FF] transition-colors text-left"
+                className="text-[13px] text-[var(--text-primary)] hover:text-[var(--color-accent)] transition-colors text-left"
               >
                 {contact.phone as string}
               </button>
@@ -183,10 +183,10 @@ export default function Contact360Page() {
           )}
           {Boolean(contact.linkedin_url) && (
             <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">LinkedIn</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">LinkedIn</p>
               <button
                 onClick={() => window.electronAPI.shell.openExternal(contact.linkedin_url as string)}
-                className="text-[13px] text-[#0A84FF] hover:text-[#0077ED] transition-colors truncate block max-w-full text-left"
+                className="text-[13px] text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors truncate block max-w-full text-left"
               >
                 {contact.linkedin_url as string}
               </button>
@@ -194,40 +194,40 @@ export default function Contact360Page() {
           )}
           {Boolean(contact.industry) && (
             <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Industry</p>
-              <p className="text-[13px] text-white">{contact.industry as string}</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Industry</p>
+              <p className="text-[13px] text-[var(--text-primary)]">{contact.industry as string}</p>
             </div>
           )}
           {Boolean(contact.lead_source) && (
             <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Lead Source</p>
-              <p className="text-[13px] text-white">{contact.lead_source as string}</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Lead Source</p>
+              <p className="text-[13px] text-[var(--text-primary)]">{contact.lead_source as string}</p>
             </div>
           )}
           {Boolean(contact.last_contact_date) && (
             <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Last Contact</p>
-              <p className="text-[13px] text-white">{contact.last_contact_date as string}</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Last Contact</p>
+              <p className="text-[13px] text-[var(--text-primary)]">{contact.last_contact_date as string}</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-[#3A3A3C] flex gap-0">
+      <div className="border-b border-[var(--separator-opaque)] flex gap-0">
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 text-[13px] font-medium border-b-2 transition-colors ${
               activeTab === tab.key
-                ? 'border-[#0A84FF] text-[#0A84FF]'
-                : 'border-transparent text-[#98989D] hover:text-white'
+                ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             {tab.label}
             {tab.count > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 bg-[#3A3A3C] rounded-full text-[10px]">{tab.count}</span>
+              <span className="ml-1.5 px-1.5 py-0.5 bg-[var(--separator-opaque)] rounded-full text-[10px]">{tab.count}</span>
             )}
           </button>
         ))}
@@ -238,9 +238,9 @@ export default function Contact360Page() {
         <div className="grid grid-cols-2 gap-6">
           {/* Address */}
           {(Boolean(contact.address_line) || Boolean(contact.city)) && (
-            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
-              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Address</h3>
-              <p className="text-[13px] text-white">
+            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
+              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Address</h3>
+              <p className="text-[13px] text-[var(--text-primary)]">
                 {[contact.address_line, contact.city, contact.state, contact.country]
                   .filter(Boolean)
                   .join(', ')}
@@ -250,27 +250,27 @@ export default function Contact360Page() {
 
           {/* Notes */}
           {Boolean(contact.notes) && (
-            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
-              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Notes</h3>
-              <p className="text-[13px] text-white whitespace-pre-wrap">{contact.notes as string}</p>
+            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
+              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Notes</h3>
+              <p className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap">{contact.notes as string}</p>
             </div>
           )}
 
           {/* Rate Info */}
           {Boolean(contact.rate_info) && (
-            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
-              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Rate Info</h3>
-              <p className="text-[13px] text-white whitespace-pre-wrap">{contact.rate_info as string}</p>
+            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
+              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Rate Info</h3>
+              <p className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap">{contact.rate_info as string}</p>
             </div>
           )}
 
           {/* Specialties */}
           {specialtyNames.length > 0 && (
-            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4 col-span-2">
-              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Specialties</h3>
+            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4 col-span-2">
+              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Specialties</h3>
               <div className="flex flex-wrap gap-2">
                 {specialtyNames.map(name => (
-                  <span key={name} className="px-2.5 py-1 bg-[#3A3A3C] rounded-full text-[12px] text-white">
+                  <span key={name} className="px-2.5 py-1 bg-[var(--separator-opaque)] rounded-full text-[12px] text-[var(--text-primary)]">
                     {name}
                   </span>
                 ))}
@@ -280,13 +280,13 @@ export default function Contact360Page() {
 
           {/* Partner Info */}
           {(Boolean(contact.partner_status) || Boolean(contact.partner_type)) && (
-            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
-              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Partner/Vendor</h3>
+            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
+              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Partner/Vendor</h3>
               <div className="space-y-1 text-[13px]">
-                {Boolean(contact.partner_type) && <p className="text-white">Type: {contact.partner_type as string}</p>}
-                {Boolean(contact.partner_status) && <p className="text-white">Status: {contact.partner_status as string}</p>}
-                {Boolean(contact.quality_rating) && <p className="text-white">Quality: {contact.quality_rating as string}</p>}
-                {Boolean(contact.reliability_rating) && <p className="text-white">Reliability: {contact.reliability_rating as string}</p>}
+                {Boolean(contact.partner_type) && <p className="text-[var(--text-primary)]">Type: {contact.partner_type as string}</p>}
+                {Boolean(contact.partner_status) && <p className="text-[var(--text-primary)]">Status: {contact.partner_status as string}</p>}
+                {Boolean(contact.quality_rating) && <p className="text-[var(--text-primary)]">Quality: {contact.quality_rating as string}</p>}
+                {Boolean(contact.reliability_rating) && <p className="text-[var(--text-primary)]">Reliability: {contact.reliability_rating as string}</p>}
               </div>
             </div>
           )}
@@ -341,9 +341,9 @@ export default function Contact360Page() {
       )}
 
       {deleteError && (
-        <div className="flex items-center justify-between bg-[#FF453A]/10 border border-[#FF453A]/30 rounded-lg px-4 py-3 text-[13px] text-[#FF453A]">
+        <div className="flex items-center justify-between bg-[var(--color-red)]/15 border border-[var(--color-red)]/30 rounded-lg px-4 py-3 text-[13px] text-[var(--color-red)]">
           <span>{deleteError}</span>
-          <button onClick={() => setDeleteError(null)} className="ml-4 hover:text-white transition-colors">✕</button>
+          <button onClick={() => setDeleteError(null)} className="ml-4 hover:text-[var(--text-primary)] transition-colors">✕</button>
         </div>
       )}
 

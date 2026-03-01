@@ -7,7 +7,7 @@ export default function PrimaryButton({ onClick, children }: PrimaryButtonProps)
   return (
     <button
       onClick={onClick}
-      className="px-3 py-1.5 text-[13px] text-white bg-[#0A84FF] rounded-md hover:bg-[#0077ED] transition-colors whitespace-nowrap"
+      className="px-3 py-1.5 text-[13px] text-[var(--text-primary)] bg-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap"
     >
       {children}
     </button>

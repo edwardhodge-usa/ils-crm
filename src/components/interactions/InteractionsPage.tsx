@@ -30,7 +30,7 @@ export default function InteractionsPage() {
       width: '30%',
       sortable: false,
       render: (v: unknown) => {
-        if (!v) return <span className="text-[#48484A]">—</span>
+        if (!v) return <span className="text-[var(--text-placeholder)]">—</span>
         const text = String(v)
         return <span className="truncate block max-w-[300px]">{text.length > 80 ? text.slice(0, 80) + '…' : text}</span>
       },
@@ -40,7 +40,7 @@ export default function InteractionsPage() {
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
   }
 
   return (

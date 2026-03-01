@@ -12,21 +12,21 @@ export default function PortalAccessPage() {
       label: 'Name',
       width: '18%',
       render: (v: unknown, row: Record<string, unknown>) =>
-        (v as string) || (row.contact_name_lookup as string) || <span className="text-[#48484A]">—</span>,
+        (v as string) || (row.contact_name_lookup as string) || <span className="text-[var(--text-placeholder)]">—</span>,
     },
     {
       key: 'email',
       label: 'Email',
       width: '18%',
       render: (v: unknown, row: Record<string, unknown>) =>
-        (v as string) || (row.contact_email_lookup as string) || <span className="text-[#48484A]">—</span>,
+        (v as string) || (row.contact_email_lookup as string) || <span className="text-[var(--text-placeholder)]">—</span>,
     },
     {
       key: 'company',
       label: 'Company',
       width: '15%',
       render: (v: unknown, row: Record<string, unknown>) =>
-        (v as string) || (row.contact_company_lookup as string) || <span className="text-[#48484A]">—</span>,
+        (v as string) || (row.contact_company_lookup as string) || <span className="text-[var(--text-placeholder)]">—</span>,
     },
     {
       key: 'status',
@@ -38,7 +38,7 @@ export default function PortalAccessPage() {
       key: 'stage',
       label: 'Stage',
       width: '12%',
-      render: (v: unknown) => v ? <StatusBadge value={v as string} /> : <span className="text-[#48484A]">—</span>,
+      render: (v: unknown) => v ? <StatusBadge value={v as string} /> : <span className="text-[var(--text-placeholder)]">—</span>,
     },
     { key: 'lead_source', label: 'Source', width: '12%' },
     { key: 'date_added', label: 'Added', width: '10%' },
@@ -47,15 +47,15 @@ export default function PortalAccessPage() {
       label: 'Portal Page',
       width: '5%',
       render: (v: unknown) => v ? (
-        <span className="text-[#0A84FF]" title={v as string}>Link</span>
-      ) : <span className="text-[#48484A]">—</span>,
+        <span className="text-[var(--color-accent)]" title={v as string}>Link</span>
+      ) : <span className="text-[var(--text-placeholder)]">—</span>,
     },
   ]
 
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
   }
 
   return (

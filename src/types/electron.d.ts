@@ -54,6 +54,7 @@ interface ElectronAPI {
   shell: {
     openExternal: (url: string) => Promise<{ success: boolean }>
   }
+  onAccentColor: (cb: (color: string) => void) => void
 }
 
 declare global {
