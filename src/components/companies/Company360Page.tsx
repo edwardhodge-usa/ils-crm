@@ -46,9 +46,16 @@ export default function Company360Page() {
       }
 
       if (projects.success && projects.data) {
+        // Projects don't link directly to companies — find via company's contacts
+        const companyContactIds = new Set((linked.contacts || []).map(c => c.id as string))
         linked.projects = (projects.data as Record<string, unknown>[]).filter(p => {
-          const ids = p.company_ids as string
-          return ids && ids.includes(id)
+          for (const field of ['client_ids', 'contacts_ids', 'primary_contact_ids']) {
+            try {
+              const ids = JSON.parse((p[field] as string) || '[]') as string[]
+              if (ids.some(cid => companyContactIds.has(cid))) return true
+            } catch { /* not valid JSON */ }
+          }
+          return false
         })
       }
 
@@ -205,7 +212,7 @@ export default function Company360Page() {
           extraKey="deal_value"
           extraLabel="Deal Value"
           extraRender={(v) => v ? `$${Number(v).toLocaleString()}` : null}
-          onItemClick={() => navigate('/pipeline')}
+          onItemClick={(item) => navigate(`/pipeline/${item.id}/edit`)}
           emptyMessage="No linked opportunities"
         />
       )}
@@ -215,7 +222,7 @@ export default function Company360Page() {
           items={linkedData.projects || []}
           nameKey="project_name"
           statusKey="status"
-          onItemClick={() => navigate('/projects')}
+          onItemClick={(item) => navigate(`/projects/${item.id}/edit`)}
           emptyMessage="No linked projects"
         />
       )}

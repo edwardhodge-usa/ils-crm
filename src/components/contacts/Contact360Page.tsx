@@ -240,7 +240,7 @@ export default function Contact360Page() {
           extraKey="deal_value"
           extraLabel="Deal Value"
           extraRender={(v) => v ? `$${Number(v).toLocaleString()}` : null}
-          onItemClick={() => navigate(`/pipeline`)}
+          onItemClick={(item) => navigate(`/pipeline/${item.id}/edit`)}
           emptyMessage="No linked opportunities"
         />
       )}
@@ -252,7 +252,7 @@ export default function Contact360Page() {
           statusKey="status"
           extraKey="due_date"
           extraLabel="Due"
-          onItemClick={() => navigate('/tasks')}
+          onItemClick={(item) => navigate(`/tasks/${item.id}/edit`)}
           emptyMessage="No linked tasks"
         />
       )}
@@ -262,7 +262,7 @@ export default function Contact360Page() {
           items={linkedData.proposals || []}
           nameKey="proposal_name"
           statusKey="status"
-          onItemClick={() => navigate('/proposals')}
+          onItemClick={(item) => navigate(`/proposals/${item.id}/edit`)}
           emptyMessage="No linked proposals"
         />
       )}
