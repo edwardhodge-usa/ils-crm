@@ -331,6 +331,18 @@ export function createSchema(db: SqlJsDatabase): void {
     )
   `)
 
+  // ─── Portal Access: migration for lookup columns ──────
+  const portalAccessMigrations = [
+    'ALTER TABLE portal_access ADD COLUMN contact_name_lookup TEXT',
+    'ALTER TABLE portal_access ADD COLUMN contact_company_lookup TEXT',
+    'ALTER TABLE portal_access ADD COLUMN contact_email_lookup TEXT',
+    'ALTER TABLE portal_access ADD COLUMN contact_phone_lookup TEXT',
+    'ALTER TABLE portal_access ADD COLUMN contact_job_title_lookup TEXT',
+  ]
+  for (const sql of portalAccessMigrations) {
+    try { db.run(sql) } catch { /* column already exists */ }
+  }
+
   // ─── Portal Logs ───────────────────────────────────────
   db.run(`
     CREATE TABLE IF NOT EXISTS portal_logs (

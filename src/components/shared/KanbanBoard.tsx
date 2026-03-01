@@ -64,24 +64,25 @@ function DroppableColumn<T extends { id: string }>({
 
 function DraggableCard({ id, children, onCardClick }: { id: string; children: React.ReactNode; onCardClick?: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
-  const dragEndTime = useRef(0)
+  const didDrag = useRef(false)
 
   const style = transform
     ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
     : undefined
 
-  // Record when drag ends so we can ignore the click event that follows
+  // Track whether a drag actually occurred
   useEffect(() => {
     if (isDragging) {
-      dragEndTime.current = -1 // Mark drag in progress
-    } else if (dragEndTime.current === -1) {
-      dragEndTime.current = Date.now() // Drag just ended
+      didDrag.current = true
     }
   }, [isDragging])
 
   function handleClick() {
-    // Ignore clicks within 300ms of a drag ending
-    if (dragEndTime.current > 0 && Date.now() - dragEndTime.current < 300) return
+    // If a drag just completed, ignore this click
+    if (didDrag.current) {
+      didDrag.current = false
+      return
+    }
     onCardClick?.(id)
   }
 
@@ -90,9 +91,9 @@ function DraggableCard({ id, children, onCardClick }: { id: string; children: Re
       ref={setNodeRef}
       style={style}
       className={`transition-shadow cursor-pointer ${isDragging ? 'opacity-30' : ''}`}
-      onClick={handleClick}
       {...listeners}
       {...attributes}
+      onClick={handleClick}
     >
       {children}
     </div>
@@ -108,7 +109,7 @@ export default function KanbanBoard<T extends { id: string }>({
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
 
   const allItems = columns.flatMap(c => c.items)
