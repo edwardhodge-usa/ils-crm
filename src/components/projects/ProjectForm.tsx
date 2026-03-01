@@ -8,14 +8,16 @@ const FIELDS: FormFieldDef[] = [
   { key: 'engagement_type', label: 'Engagement Type', type: 'multiSelect', section: 'Details',
     options: ['Strategy/Consulting', 'Design/Concept Development', 'Production/Fabrication Oversight', 'Opening/Operations Support'] },
 
-  { key: 'project_value', label: 'Project Value', type: 'currency', section: 'Financials' },
+  { key: 'contract_value', label: 'Contract Value', type: 'currency', section: 'Financials' },
   { key: 'start_date', label: 'Start Date', type: 'date', section: 'Financials' },
-  { key: 'end_date', label: 'End Date', type: 'date', section: 'Financials' },
+  { key: 'target_completion', label: 'Target Completion', type: 'date', section: 'Financials' },
+  { key: 'actual_completion', label: 'Actual Completion', type: 'date', section: 'Financials' },
 
   { key: 'location', label: 'Location', type: 'text', section: 'Location' },
 
   { key: 'description', label: 'Description', type: 'textarea', section: 'Notes' },
-  { key: 'notes', label: 'Notes', type: 'textarea', section: 'Notes' },
+  { key: 'key_milestones', label: 'Key Milestones', type: 'textarea', section: 'Notes' },
+  { key: 'lessons_learned', label: 'Lessons Learned', type: 'textarea', section: 'Notes' },
 ]
 
 export default function ProjectForm() {

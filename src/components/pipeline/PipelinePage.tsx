@@ -27,21 +27,41 @@ interface OpportunityCard {
   sales_stage: string
 }
 
+function resolveLinkedName(idsJson: unknown, nameMap: Map<string, string>): string | null {
+  if (!idsJson) return null
+  try {
+    const ids = typeof idsJson === 'string' ? JSON.parse(idsJson) : idsJson
+    if (Array.isArray(ids) && ids.length > 0) {
+      return nameMap.get(ids[0]) ?? null
+    }
+  } catch { /* not valid JSON */ }
+  return null
+}
+
 export default function PipelinePage() {
   const { data: rawData, loading, error } = useEntityList(() => window.electronAPI.opportunities.getAll())
+  const { data: companiesData } = useEntityList(() => window.electronAPI.companies.getAll())
   const [overrides, setOverrides] = useState<Record<string, string>>({})
   const navigate = useNavigate()
+
+  const companyNames = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const c of companiesData) {
+      map.set(c.id as string, c.company_name as string)
+    }
+    return map
+  }, [companiesData])
 
   const opportunities: OpportunityCard[] = useMemo(() =>
     rawData.map(o => ({
       id: o.id as string,
       opportunity_name: (o.opportunity_name as string) || 'Unnamed',
       deal_value: o.deal_value as number | null,
-      company: o.company as string | null,
+      company: resolveLinkedName(o.company_ids, companyNames),
       probability: o.probability as string | null,
       sales_stage: overrides[o.id as string] || (o.sales_stage as string) || 'Initial Contact',
     })),
-    [rawData, overrides]
+    [rawData, overrides, companyNames]
   )
 
   const columns: KanbanColumn<OpportunityCard>[] = STAGES.map(stage => ({

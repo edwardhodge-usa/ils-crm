@@ -10,12 +10,11 @@ const FIELDS: FormFieldDef[] = [
   { key: 'approval_status', label: 'Approval Status', type: 'singleSelect', section: 'Details',
     options: ['Not Submitted', 'Submitted', 'Approved', 'Rejected', 'Pending', 'Under Review'] },
 
-  { key: 'proposed_value', label: 'Proposed Value', type: 'currency', section: 'Financials' },
-  { key: 'date_sent', label: 'Date Sent', type: 'date', section: 'Financials' },
-  { key: 'valid_until', label: 'Valid Until', type: 'date', section: 'Financials' },
+  { key: 'version', label: 'Version', type: 'text', section: 'Details' },
 
   { key: 'notes', label: 'Notes', type: 'textarea', section: 'Notes' },
-  { key: 'scope_summary', label: 'Scope Summary', type: 'textarea', section: 'Notes' },
+  { key: 'client_feedback', label: 'Client Feedback', type: 'textarea', section: 'Notes' },
+  { key: 'performance_metrics', label: 'Performance Metrics', type: 'textarea', section: 'Notes' },
 ]
 
 export default function ProposalForm() {

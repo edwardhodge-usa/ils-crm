@@ -7,9 +7,27 @@ export default function PortalAccessPage() {
   const { data: records, loading, error } = useEntityList(() => window.electronAPI.portalAccess.getAll())
 
   const columns = [
-    { key: 'name', label: 'Name', width: '18%' },
-    { key: 'email', label: 'Email', width: '18%' },
-    { key: 'company', label: 'Company', width: '15%' },
+    {
+      key: 'name',
+      label: 'Name',
+      width: '18%',
+      render: (v: unknown, row: Record<string, unknown>) =>
+        (v as string) || (row.contact_name_lookup as string) || <span className="text-[#48484A]">—</span>,
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      width: '18%',
+      render: (v: unknown, row: Record<string, unknown>) =>
+        (v as string) || (row.contact_email_lookup as string) || <span className="text-[#48484A]">—</span>,
+    },
+    {
+      key: 'company',
+      label: 'Company',
+      width: '15%',
+      render: (v: unknown, row: Record<string, unknown>) =>
+        (v as string) || (row.contact_company_lookup as string) || <span className="text-[#48484A]">—</span>,
+    },
     {
       key: 'status',
       label: 'Status',

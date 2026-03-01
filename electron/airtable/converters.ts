@@ -406,6 +406,11 @@ const PORTAL_ACCESS_MAPPINGS: FieldMapping[] = [
   { local: 'services_interested_in', airtable: PORTAL_ACCESS.servicesInterestedIn, type: 'multiSelect' },
   { local: 'contact_ids', airtable: PORTAL_ACCESS.contact, type: 'linked' },
   { local: 'framer_page_url', airtable: PORTAL_ACCESS.framerPageUrl, type: 'readonly' },
+  { local: 'contact_name_lookup', airtable: PORTAL_ACCESS.contactName, type: 'readonly' },
+  { local: 'contact_company_lookup', airtable: PORTAL_ACCESS.contactCompany, type: 'readonly' },
+  { local: 'contact_email_lookup', airtable: PORTAL_ACCESS.contactEmail, type: 'readonly' },
+  { local: 'contact_phone_lookup', airtable: PORTAL_ACCESS.contactPhone, type: 'readonly' },
+  { local: 'contact_job_title_lookup', airtable: PORTAL_ACCESS.contactJobTitle, type: 'readonly' },
 ]
 
 // ─── Portal Logs ─────────────────────────────────────────────

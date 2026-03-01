@@ -114,34 +114,22 @@ export default function Company360Page() {
               <p className="text-[13px] text-[#0A84FF] truncate">{company.website as string}</p>
             </div>
           )}
-          {Boolean(company.phone) && (
-            <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Phone</p>
-              <p className="text-[13px] text-white">{company.phone as string}</p>
-            </div>
-          )}
-          {Boolean(company.email) && (
-            <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Email</p>
-              <p className="text-[13px] text-[#0A84FF]">{company.email as string}</p>
-            </div>
-          )}
           {Boolean(company.lead_source) && (
             <div>
               <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Lead Source</p>
               <p className="text-[13px] text-white">{company.lead_source as string}</p>
             </div>
           )}
-          {Boolean(company.linkedin_url) && (
-            <div>
-              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">LinkedIn</p>
-              <p className="text-[13px] text-[#0A84FF] truncate">{company.linkedin_url as string}</p>
-            </div>
-          )}
-          {Boolean(company.size) && (
+          {Boolean(company.company_size) && (
             <div>
               <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Size</p>
-              <p className="text-[13px] text-white">{company.size as string}</p>
+              <p className="text-[13px] text-white">{company.company_size as string}</p>
+            </div>
+          )}
+          {Boolean(company.annual_revenue) && (
+            <div>
+              <p className="text-[11px] text-[#636366] uppercase tracking-wider mb-0.5">Annual Revenue</p>
+              <p className="text-[13px] text-white">{company.annual_revenue as string}</p>
             </div>
           )}
         </div>
@@ -170,11 +158,11 @@ export default function Company360Page() {
       {/* Tab Content */}
       {activeTab === 'overview' && (
         <div className="grid grid-cols-2 gap-6">
-          {(Boolean(company.address_line) || Boolean(company.city)) && (
+          {(Boolean(company.address) || Boolean(company.city)) && (
             <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
               <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Address</h3>
               <p className="text-[13px] text-white">
-                {[company.address_line, company.city, company.state, company.country]
+                {[company.address, company.city, company.state_region, company.country]
                   .filter(Boolean)
                   .join(', ')}
               </p>
@@ -188,10 +176,10 @@ export default function Company360Page() {
             </div>
           )}
 
-          {Boolean(company.description) && (
+          {Boolean(company.company_description) && (
             <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
               <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Description</h3>
-              <p className="text-[13px] text-white whitespace-pre-wrap">{company.description as string}</p>
+              <p className="text-[13px] text-white whitespace-pre-wrap">{company.company_description as string}</p>
             </div>
           )}
         </div>

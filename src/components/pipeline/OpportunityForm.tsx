@@ -20,8 +20,9 @@ const FIELDS: FormFieldDef[] = [
   { key: 'win_loss_reason', label: 'Win/Loss Reason', type: 'singleSelect', section: 'Details',
     options: ['Won - Best Fit', 'Won - Relationship', 'Won - Price', 'Lost - Budget', 'Lost - Competitor', 'Lost - Timing', 'Lost - No Decision', 'Lost - Scope Mismatch'] },
 
-  { key: 'notes', label: 'Notes', type: 'textarea', section: 'Notes' },
-  { key: 'next_step', label: 'Next Step', type: 'textarea', section: 'Notes' },
+  { key: 'notes_about', label: 'Notes', type: 'textarea', section: 'Notes' },
+  { key: 'contract_milestones', label: 'Contract Milestones', type: 'textarea', section: 'Notes' },
+  { key: 'loss_notes', label: 'Loss Notes', type: 'textarea', section: 'Notes' },
 ]
 
 export default function OpportunityForm() {

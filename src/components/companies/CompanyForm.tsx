@@ -9,20 +9,21 @@ const FIELDS: FormFieldDef[] = [
     options: ['Hospitality', 'Entertainment/Attractions', 'Corporate/Brand', 'Retail', 'Real Estate/Development', 'F&B', 'Technology', 'Other', 'Culture', 'Sports', 'Cruise', 'Hospitality/Casino', 'Consulting', 'Theme Parks', 'Entertainment', 'Marketing', 'Design', 'Education', 'Real Estate', 'Media'] },
 
   { key: 'website', label: 'Website', type: 'url', section: 'Contact' },
-  { key: 'phone', label: 'Phone', type: 'phone', section: 'Contact' },
-  { key: 'email', label: 'Email', type: 'email', section: 'Contact' },
-  { key: 'linkedin_url', label: 'LinkedIn', type: 'url', section: 'Contact' },
 
-  { key: 'address_line', label: 'Address', type: 'text', section: 'Address' },
+  { key: 'address', label: 'Address', type: 'text', section: 'Address' },
   { key: 'city', label: 'City', type: 'text', section: 'Address' },
-  { key: 'state', label: 'State', type: 'text', section: 'Address' },
+  { key: 'state_region', label: 'State/Region', type: 'text', section: 'Address' },
   { key: 'country', label: 'Country', type: 'text', section: 'Address' },
+  { key: 'postal_code', label: 'Postal Code', type: 'text', section: 'Address' },
 
   { key: 'lead_source', label: 'Lead Source', type: 'singleSelect', section: 'CRM',
     options: ['Referral', 'Inbound - Website', 'Inbound - LinkedIn', 'Inbound - Conference/Event', 'Outbound Prospecting', 'Past Relationship', 'Other', 'Wynn Entertainment'] },
-  { key: 'size', label: 'Size', type: 'text', section: 'CRM' },
+  { key: 'company_size', label: 'Size', type: 'singleSelect', section: 'CRM',
+    options: ['1-10', '11-50', '51-200', '201-500', '501-1000', '1001-5000', '5000+'] },
+  { key: 'annual_revenue', label: 'Annual Revenue', type: 'text', section: 'CRM' },
+  { key: 'referred_by', label: 'Referred By', type: 'text', section: 'CRM' },
 
-  { key: 'description', label: 'Description', type: 'textarea', section: 'Notes' },
+  { key: 'company_description', label: 'Description', type: 'textarea', section: 'Notes' },
   { key: 'notes', label: 'Notes', type: 'textarea', section: 'Notes' },
 ]
 
