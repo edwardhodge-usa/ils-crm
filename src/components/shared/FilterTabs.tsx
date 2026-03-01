@@ -12,7 +12,7 @@ export default function FilterTabs({ tabs, activeTab, onTabChange, counts }: Fil
         <button
           key={tab}
           onClick={() => onTabChange(tab)}
-          className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${
+          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
             activeTab === tab
               ? 'bg-[var(--color-accent-translucent)] text-[var(--color-accent)]'
               : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'

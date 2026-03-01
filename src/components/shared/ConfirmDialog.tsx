@@ -40,17 +40,17 @@ export default function ConfirmDialog({
         onClick={e => e.stopPropagation()}
       >
         <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-2">{title}</h3>
-        <p className="text-[13px] text-[var(--text-secondary)] mb-5">{message}</p>
+        <p className="text-base text-[var(--text-secondary)] mb-5">{message}</p>
         <div className="flex justify-end gap-2">
           <button
             onClick={onCancel}
-            className="px-3 py-1.5 text-[13px] text-[var(--text-secondary)] bg-[var(--separator-opaque)] rounded-md hover:bg-[var(--bg-hover)] transition-colors"
+            className="px-3 py-1.5 text-[var(--text-secondary)] bg-[var(--separator-opaque)] rounded-md hover:bg-[var(--bg-hover)] transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className={`px-3 py-1.5 text-[13px] text-[var(--text-primary)] rounded-md transition-colors ${
+            className={`px-3 py-1.5 text-[var(--text-primary)] rounded-md transition-colors ${
               destructive
                 ? 'bg-[var(--color-red)] hover:bg-[var(--color-red)]'
                 : 'bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]'

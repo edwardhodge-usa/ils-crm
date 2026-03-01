@@ -48,7 +48,7 @@ export default function TaskListPage() {
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
   }
 
   return (

@@ -1,0 +1,4382 @@
+{
+  "tables": [
+    {
+      "id": "tbl9Q8m06ivkTYyvR",
+      "name": "Contacts",
+      "primaryFieldId": "fldMkz6x5i8YaofZj",
+      "fields": [
+        {
+          "type": "singleLineText",
+          "id": "fldMkz6x5i8YaofZj",
+          "name": "Contact Name"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldBzVPUdMy99vfvp",
+          "name": "First Name",
+          "description": "Contact's first name"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldq4VxEf0jJgi6O5",
+          "name": "Last Name",
+          "description": "Contact's last name"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldvecarEW7fx90Ci",
+          "name": "Job Title",
+          "description": "Contact's job title or position"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldTwuGnEhbQfZhP3",
+          "name": "Company"
+        },
+        {
+          "type": "email",
+          "id": "fldBjSvbdd5WXmoIG",
+          "name": "Email"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblysTixdxGQQntHO",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldVtUb9RqF03Ubq7"
+          },
+          "id": "fldPgiO2nKgcujeXz",
+          "name": "Specialties"
+        },
+        {
+          "type": "phoneNumber",
+          "id": "fldwF5NBjGVndCXNV",
+          "name": "Phone"
+        },
+        {
+          "type": "number",
+          "options": {
+            "precision": 0
+          },
+          "id": "fldxNhfwoMf7UWVoT",
+          "name": "Lead Score"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblODEy2pLlfrz0lz",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldoz0V3WTPup4zv8"
+          },
+          "id": "fldPxLDh74yCpYwuF",
+          "name": "Proposals"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selcBuFGniZ4eV0S5",
+                "name": "New Lead",
+                "color": "blueLight2"
+              },
+              {
+                "id": "sel4KOqHHY9GY8vws",
+                "name": "Qualified",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selWLQTpl8mqdbxCe",
+                "name": "Contacted",
+                "color": "tealLight2"
+              },
+              {
+                "id": "sel4hc4C14YzBCZKH",
+                "name": "Disqualified",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selGxV9Cdaa2zXwE0",
+                "name": "Converted",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selKeAZt80dWD3Nw9",
+                "name": "Unqualified",
+                "color": "blueLight2"
+              }
+            ]
+          },
+          "id": "fld5Ed1Gg51xRBIrm",
+          "name": "Qualification Status"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selub1rTFB2H2dicS",
+                "name": "Referral",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selgQZnGtR4JaiBhs",
+                "name": "Website",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selC4ENCj90pg9Ao7",
+                "name": "Inbound",
+                "color": "tealLight2"
+              },
+              {
+                "id": "sel7tKcq8qv71NoVx",
+                "name": "Outbound",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selGkkPIX5YHh5aTs",
+                "name": "Event",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selvkuhFUCPL2nj89",
+                "name": "Social Media",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selg5NEUYzbaAjqX9",
+                "name": "Other",
+                "color": "redLight2"
+              },
+              {
+                "id": "seloMRh3R1RLCQtCb",
+                "name": "LinkedIn",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selyQBRne5zFblmgF",
+                "name": "Cold Call",
+                "color": "cyanLight2"
+              }
+            ]
+          },
+          "id": "fldxxbhPmFaJ7xZeK",
+          "name": "Lead Source"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selGJTuGub7BDf1MH",
+                "name": "Prospect",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selbbdgUlu2ec169u",
+                "name": "Customer",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selpjMghGDF4w8d1V",
+                "name": "Partner",
+                "color": "tealLight2"
+              },
+              {
+                "id": "sellwyPkWhT0MKcui",
+                "name": "Reseller",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selS12Vapisj4avCH",
+                "name": "Vendor",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selDlsqKWGRwLHZEX",
+                "name": "Other",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selILp2Ex716mdPCT",
+                "name": "New",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selbeF4iGdvBiY1RL",
+                "name": "Returning",
+                "color": "cyanLight2"
+              }
+            ]
+          },
+          "id": "fldF8X4HZbybc1Yy6",
+          "name": "Client Type"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selGHrnQCWYUfTLuK",
+                "name": "Technology",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selfoXl6cck15AQre",
+                "name": "Healthcare",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "sellPyNQgANa02bvd",
+                "name": "Finance",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selNU8XGMMZ3mWdCu",
+                "name": "Education",
+                "color": "greenLight2"
+              },
+              {
+                "id": "seliD68GcQhq4X2rV",
+                "name": "Manufacturing",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selDrmFkI2lzIji8d",
+                "name": "Real Estate",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "sel7ecYc605E7WA2K",
+                "name": "Consulting",
+                "color": "redLight2"
+              },
+              {
+                "id": "sel2cw32snbO6pQ2J",
+                "name": "Other",
+                "color": "pinkLight2"
+              },
+              {
+                "id": "selQfbAHCRPFMKmAh",
+                "name": "Hospitality",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selORQUWGNs0GOyHQ",
+                "name": "Logistics",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "seloMGqxSCHqnteFG",
+                "name": "Fitness",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selmTiuFlyh9OCby1",
+                "name": "Legal",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selqrYoyQToy4voE2",
+                "name": "Media",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selm8jnrd7jLZDxlx",
+                "name": "Design",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selip567txkyKWqul",
+                "name": "Venture Capital",
+                "color": "redLight2"
+              },
+              {
+                "id": "seltWNY9gwm8KJqA0",
+                "name": "Retail",
+                "color": "pinkLight2"
+              },
+              {
+                "id": "sel9M9FMwmKDFDKjf",
+                "name": "Entertainment",
+                "color": "redBright"
+              }
+            ]
+          },
+          "id": "fldHoIj9zCNB15avX",
+          "name": "Industry"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "iso",
+              "format": "YYYY-MM-DD"
+            }
+          },
+          "id": "fldoILwnnEloVrzLk",
+          "name": "Last Contact Date"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldfbmMsacAKerGek",
+          "name": "Notes"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblsalt5lmHlh4s7z",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldit4f09UfFrzSUB"
+          },
+          "id": "fldYhB3vDq28worr9",
+          "name": "Sales Opportunities"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblribgEf5RENNDQW",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldDq3cetx5nrVqGo"
+          },
+          "id": "fldj08SdhFcsYpRva",
+          "name": "Imported Contacts"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldnukky57mRgMpxv",
+          "name": "Imported Contact Name"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "sel5z1PWJcRbdH4Rs",
+                "name": "CSV Upload",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selLBAhukdaU8bkit",
+                "name": "API Sync",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selUcc3432rqtfZ2Z",
+                "name": "Manual Entry",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selu9YqEcT3PI4GQY",
+                "name": "Third Party",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selFZhN8R0qm2JotC",
+                "name": "Integration",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selAQ4BlCaui5782C",
+                "name": "Other",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selzMPQyAYiRiSacG",
+                "name": "Popl",
+                "color": "redLight2"
+              }
+            ]
+          },
+          "id": "fldZG5LYBnFcEwhyw",
+          "name": "Import Source"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "local",
+              "format": "l"
+            }
+          },
+          "id": "fldoeYmeSZDrd7Y25",
+          "name": "Import Date"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "seljlaoQ67BZjaqBQ",
+                "name": "Pending Review",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selztOKCc0tjqyJ80",
+                "name": "In Review",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selEL4c6GFrTBjDei",
+                "name": "Approved",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selMxRBRNZS48nDbM",
+                "name": "Rejected",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selH5tFUmaiRuwPZx",
+                "name": "Needs Info",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selQ9q2Aq8JUDrSSn",
+                "name": "Duplicate",
+                "color": "orangeLight2"
+              }
+            ]
+          },
+          "id": "fldbCsU8sEBNRm1kX",
+          "name": "Onboarding Status"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldB5b9qTiIUkdiLk",
+          "name": "Review Notes"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selgIOfAMNOpwDx8o",
+                "name": "Lead",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selLThiRZvlq0DGqT",
+                "name": "Customer",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selSHI4pgLMK2qWYq",
+                "name": "Partner",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selDpPIIfkObJyfR9",
+                "name": "Other",
+                "color": "greenLight2"
+              },
+              {
+                "id": "seldY5ZhR7fCbs0PX",
+                "name": "Unknown",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "seldHdJXrihRKBFGa",
+                "name": "Vendor",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selxa4snyCn2IixL9",
+                "name": "Talent",
+                "color": "blueLight2"
+              }
+            ]
+          },
+          "id": "fldofD9DQHfugTxsC",
+          "name": "Categorization"
+        },
+        {
+          "type": "checkbox",
+          "options": {
+            "icon": "thumbsUp",
+            "color": "greenBright"
+          },
+          "id": "fldxbLMAKgqeawWkw",
+          "name": "Sync to Contacts"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "local",
+              "format": "l"
+            }
+          },
+          "id": "fld6gBrJu9XCGAIll",
+          "name": "Review Completion Date"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldDwXhduziJxKyCx",
+          "name": "Reason for Rejection"
+        },
+        {
+          "type": "multipleSelects",
+          "options": {
+            "choices": [
+              {
+                "id": "self842MsSLvN9E7V",
+                "name": "Architecture",
+                "color": "blueLight2"
+              },
+              {
+                "id": "seluAC2VAn2LYoObx",
+                "name": "Art Director",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "sel2HfufkfFidt3JF",
+                "name": "Audio",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selxT5J8NQEGUuFDy",
+                "name": "AVC",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selc6ZCE23MDPxuuM",
+                "name": "Concerts",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selHGhqG1NSW6zhBX",
+                "name": "Creative Director",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selFvCxYUrop7rSY6",
+                "name": "Events",
+                "color": "redLight2"
+              },
+              {
+                "id": "selKLDs6Zvun4BvHe",
+                "name": "Experiences",
+                "color": "pinkLight2"
+              },
+              {
+                "id": "selkh71hUW4jjaH2u",
+                "name": "F&B Consulting",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "selhhAgWBkf0tkVHx",
+                "name": "Fabrication",
+                "color": "grayLight2"
+              },
+              {
+                "id": "selawOMMuNjfLME0m",
+                "name": "FFE",
+                "color": "blueLight1"
+              },
+              {
+                "id": "sel8e2TZ8FeSKtndi",
+                "name": "Interiors",
+                "color": "cyanLight1"
+              },
+              {
+                "id": "selsSX3oxVucRZlbh",
+                "name": "Kitchen Consulting",
+                "color": "tealLight1"
+              },
+              {
+                "id": "selRCoRB8aIhuMuKY",
+                "name": "Luxury",
+                "color": "greenLight1"
+              },
+              {
+                "id": "selymEOWdA8MsSfjC",
+                "name": "Manufacture - Lighting",
+                "color": "yellowLight1"
+              },
+              {
+                "id": "sel8RUWQFOWj4gPs3",
+                "name": "Manufacture-Materials",
+                "color": "orangeLight1"
+              },
+              {
+                "id": "selZ1kzkJy63eMAaN",
+                "name": "Manufacture-Video",
+                "color": "redLight1"
+              },
+              {
+                "id": "sel6bJMg2o3SHOYJ7",
+                "name": "Marketing",
+                "color": "pinkLight1"
+              },
+              {
+                "id": "selllp8Jc3jStLpoF",
+                "name": "Media",
+                "color": "purpleLight1"
+              },
+              {
+                "id": "selRaL5jmNZNsor2h",
+                "name": "PerformerManagement",
+                "color": "grayLight1"
+              },
+              {
+                "id": "selSPq3afaQhIR1OW",
+                "name": "Producer",
+                "color": "blueBright"
+              },
+              {
+                "id": "selN0ykAmMzPefExr",
+                "name": "Production",
+                "color": "cyanBright"
+              },
+              {
+                "id": "selGSCBXrM4PdNqjP",
+                "name": "ProjectManagement",
+                "color": "tealBright"
+              },
+              {
+                "id": "sellNh0RJNrrYSHcG",
+                "name": "Scenography",
+                "color": "greenBright"
+              },
+              {
+                "id": "sel5DeqEVrJUum8bo",
+                "name": "ShowDirector",
+                "color": "yellowBright"
+              },
+              {
+                "id": "selJCyeOo8cLqCf8d",
+                "name": "SoundMixing",
+                "color": "orangeBright"
+              },
+              {
+                "id": "selC1hSuLIKjrAtWP",
+                "name": "Sourcing",
+                "color": "redBright"
+              },
+              {
+                "id": "selm5zmB8t8bJQZVJ",
+                "name": "Strategy",
+                "color": "pinkBright"
+              },
+              {
+                "id": "sel6c5SV5qFs6ngcc",
+                "name": "Video",
+                "color": "purpleBright"
+              },
+              {
+                "id": "seluwRkMf6BOpOo7s",
+                "name": "Writing",
+                "color": "grayBright"
+              },
+              {
+                "id": "seleksnB7QeBHClKO",
+                "name": "IAAPA25",
+                "color": "blueDark1"
+              },
+              {
+                "id": "sel7tkOv7Ps6XDfQp",
+                "name": "LDI2025",
+                "color": "cyanDark1"
+              },
+              {
+                "id": "selXAxStQ7oksecUM",
+                "name": "SohoHolloway",
+                "color": "tealDark1"
+              },
+              {
+                "id": "selhMvQsoC0ABx0bh",
+                "name": "SOHOHOLLOWAY",
+                "color": "greenDark1"
+              },
+              {
+                "id": "selCeMkviNWVPuX3S",
+                "name": "SATE2025",
+                "color": "yellowDark1"
+              },
+              {
+                "id": "selpfeKwRPgVG1vTA",
+                "name": "SATE25",
+                "color": "orangeDark1"
+              },
+              {
+                "id": "seleVb9yd8hJfr7aZ",
+                "name": "CRM",
+                "color": "redDark1"
+              },
+              {
+                "id": "selfFvSpbE31wzgF2",
+                "name": "SOHO HOLLOWAY",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selcxZ84dtSzWSgwE",
+                "name": "SATE 2025",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selRa48KdREDnJ4xe",
+                "name": "Soho Holloway",
+                "color": "blueLight2"
+              }
+            ]
+          },
+          "id": "fldO7kfLDA9jZswPB",
+          "name": "Tags"
+        },
+        {
+          "type": "singleCollaborator",
+          "id": "fldO7a9QFfKQ7tbkg",
+          "name": "Imported By"
+        },
+        {
+          "type": "singleCollaborator",
+          "id": "fld5dsmbFIwgU5UHk",
+          "name": "Assigned Admin"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblTUNClZpfFjhFVm",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldNz08up6Zcn3HjK"
+          },
+          "id": "fldgWTSW7dKdCZPFl",
+          "name": "Interactions",
+          "description": "Interactions with this contact"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblwEt5YsYDP22qrr",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldyzxf3dGGCT02t0"
+          },
+          "id": "fldsWpetRKu2E4e9U",
+          "name": "Tasks",
+          "description": "Tasks related to this contact"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbll416ZwFACYQSm4",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fld5uAeJxjSB3WCqs"
+          },
+          "id": "fldtExCKnttD4XsMe",
+          "name": "Projects"
+        },
+        {
+          "type": "url",
+          "id": "fldWrrBfD7aLxsXT4",
+          "name": "LinkedIn URL",
+          "description": "Contact's LinkedIn profile URL"
+        },
+        {
+          "type": "url",
+          "id": "fldnWic86lLjcF9MR",
+          "name": "Website",
+          "description": "Contact's personal or company website"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldxn8YVJ1pWGkaF8",
+          "name": "Address Line",
+          "description": "Street address"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldAoanFJ1Fmrzkx5",
+          "name": "City",
+          "description": "City"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld1qq6PMLW6Ytbig",
+          "name": "State",
+          "description": "State or region"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldnTdpTO4njtc4gZ",
+          "name": "Country",
+          "description": "Country"
+        },
+        {
+          "type": "multipleAttachments",
+          "options": {
+            "isReversed": false
+          },
+          "id": "fldl1WOfz7vHNSOUd",
+          "name": "Contact Photo",
+          "description": "Contact's profile photo or headshot"
+        },
+        {
+          "type": "multipleAttachments",
+          "options": {
+            "isReversed": false
+          },
+          "id": "flduN4Ne23EIGSBS0",
+          "name": "Company Logo",
+          "description": "Company logo image"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblEauAm0ZYuMbHUa",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldQ2RK3PeAPMzkJB"
+          },
+          "id": "fldYXDUc9YKKsGTBt",
+          "name": "Companies"
+        },
+        {
+          "type": "createdBy",
+          "id": "fld18NNjUH4xe7kSS",
+          "name": "Created By"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldFX8WvENPPkN6g1",
+          "name": "Rate Info",
+          "description": "Pricing notes, day rates, typical project costs (for partners/vendors)"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "sel6q1ueDYn4mNZho",
+                "name": "\u2b50\u2b50\u2b50\u2b50\u2b50 Excellent",
+                "color": "greenLight2"
+              },
+              {
+                "id": "sel8k8uQlyOY8zAiq",
+                "name": "\u2b50\u2b50\u2b50\u2b50 Good",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selaiU0LTuWpbuqFZ",
+                "name": "\u2b50\u2b50\u2b50 Average",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selFeZ7ih6hKENWQV",
+                "name": "\u2b50\u2b50 Below Average",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selCSqrCVnwoFW3Zm",
+                "name": "\u2b50 Poor",
+                "color": "redLight2"
+              }
+            ]
+          },
+          "id": "fldz86orj3p0ynZGB",
+          "name": "Quality Rating",
+          "description": "Assessment of work quality (for partners/vendors)"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selwaqI1yxDPJxeUg",
+                "name": "\u2b50\u2b50\u2b50\u2b50\u2b50 Excellent",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selfVZyoWxHI00Lqh",
+                "name": "\u2b50\u2b50\u2b50\u2b50 Good",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selesXDYVaokp4n64",
+                "name": "\u2b50\u2b50\u2b50 Average",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selJYb2GQRiQxL6yB",
+                "name": "\u2b50\u2b50 Below Average",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selOsLYhaCmoctbK4",
+                "name": "\u2b50 Poor",
+                "color": "redLight2"
+              }
+            ]
+          },
+          "id": "fldgIuvazBCfLa7Wu",
+          "name": "Reliability Rating",
+          "description": "How reliable on deadlines/communication (for partners/vendors)"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selveqDBOgl5yXQXX",
+                "name": "Active - Preferred",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selZo55qfSWEdGvHD",
+                "name": "Active",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selNyBIkZ62xXR8lg",
+                "name": "Inactive",
+                "color": "grayLight2"
+              },
+              {
+                "id": "selhAjW1jLEv4ogWG",
+                "name": "Do Not Use",
+                "color": "redLight2"
+              }
+            ]
+          },
+          "id": "fldIEgv4HtZTr57AX",
+          "name": "Partner Status",
+          "description": "Current relationship status (for partners/vendors)"
+        },
+        {
+          "type": "multipleAttachments",
+          "options": {
+            "isReversed": false
+          },
+          "id": "fldbhgP4g3zAoHnSR",
+          "name": "Portfolio/Samples",
+          "description": "Examples of their work (for partners/vendors)"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selVaNcBi2jTgX1bY",
+                "name": "Fabricator",
+                "color": "blueLight2"
+              },
+              {
+                "id": "sellHdKezzVJIn0QQ",
+                "name": "AV/Lighting",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "selloGlru4fqoqmoI",
+                "name": "Scenic/Set Builder",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selQ2nqV9jSZWctG5",
+                "name": "Architect",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selcwH1iKgwYcVJRT",
+                "name": "Interior Designer",
+                "color": "pinkLight2"
+              },
+              {
+                "id": "selLOnY60h9PuMet2",
+                "name": "Graphic Designer",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selTDMYh5cdtzbGqe",
+                "name": "F&B Consultant",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "sel8UVv1TispnFMh5",
+                "name": "Tech/Interactive",
+                "color": "redLight2"
+              },
+              {
+                "id": "selMEvd81uysDauWw",
+                "name": "Operations Consultant",
+                "color": "grayLight2"
+              },
+              {
+                "id": "selvkCuxSfauQ0WFk",
+                "name": "Production Company",
+                "color": "blueLight1"
+              },
+              {
+                "id": "selzWFyDp8k0aTzcF",
+                "name": "Freelancer/Individual",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selVzVxVVOGvM11rY",
+                "name": "Other",
+                "color": "grayLight2"
+              },
+              {
+                "id": "selv0svUAHachWM7q",
+                "name": "Client",
+                "color": "yellowLight1"
+              }
+            ]
+          },
+          "id": "fldvehyP9Y3Ra2wUM",
+          "name": "Partner Type",
+          "description": "Type of partner/vendor"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbll416ZwFACYQSm4",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldTphE0ecQivlxxD"
+          },
+          "id": "fldOOrElk4KRkSxcG",
+          "name": "Projects (as Partner/Vendor)",
+          "description": "Projects this contact has worked on as a partner/vendor"
+        },
+        {
+          "type": "rollup",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fldgWTSW7dKdCZPFl",
+            "fieldIdInLinkedTable": "fldOTeAY7Y0JDnaMF",
+            "referencedFieldIds": [],
+            "result": {
+              "type": "date",
+              "options": {
+                "dateFormat": {
+                  "name": "iso",
+                  "format": "YYYY-MM-DD"
+                }
+              }
+            }
+          },
+          "id": "fldptkl81ex4SvQYN",
+          "name": "Last Interaction Date"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld1D4u2KbIk0aUPR",
+          "name": "Event Tags"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldWtoMSWdFla3dII",
+          "name": "Lead Note"
+        },
+        {
+          "type": "phoneNumber",
+          "id": "fldwULn4qSjwzSOTj",
+          "name": "Mobile Phone"
+        },
+        {
+          "type": "phoneNumber",
+          "id": "fldueNgIMN0Ui5MWw",
+          "name": "Work Phone"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldGgFJJ7XeLAR17a",
+          "name": "Postal Code"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblN1jruT8VeucPKa",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fld1tMK48dxrLU9R4"
+          },
+          "id": "fld0W66oRTQwvb9Nq",
+          "name": "Portal Access"
+        }
+      ],
+      "views": [
+        {
+          "id": "viwzVdOkbuDOvqNkP",
+          "name": "Grid view",
+          "type": "grid"
+        },
+        {
+          "id": "viwniBmPTZtwy5I4W",
+          "name": "Gallery",
+          "type": "gallery"
+        },
+        {
+          "id": "viwB5dgG9Eob4DCt3",
+          "name": "Partners",
+          "type": "grid"
+        },
+        {
+          "id": "viwMuJk2x4iodhkEF",
+          "name": "Partners Gallery",
+          "type": "gallery"
+        },
+        {
+          "id": "viwlxvGpUqUrLXIFw",
+          "name": "Vendors",
+          "type": "grid"
+        }
+      ]
+    },
+    {
+      "id": "tblsalt5lmHlh4s7z",
+      "name": "Opportunites",
+      "primaryFieldId": "fldsvZbiY3YFK2Ocp",
+      "fields": [
+        {
+          "type": "singleLineText",
+          "id": "fldsvZbiY3YFK2Ocp",
+          "name": "Opportunity Name"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldLZDfABWEJ9fCyZ",
+          "name": "Notes: About"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblEauAm0ZYuMbHUa",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldbvXQ26UDd3SHAB"
+          },
+          "id": "fldYyFlO4LavZM5gI",
+          "name": "Company",
+          "description": "Company for this opportunity"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl9Q8m06ivkTYyvR",
+            "isReversed": false,
+            "prefersSingleRecordLink": true,
+            "inverseLinkFieldId": "fldYhB3vDq28worr9"
+          },
+          "id": "fldit4f09UfFrzSUB",
+          "name": "Associated Contact"
+        },
+        {
+          "type": "currency",
+          "options": {
+            "precision": 2,
+            "symbol": "$"
+          },
+          "id": "fld1y3pUaljvn2nF5",
+          "name": "Deal Value"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "sel0CyHLUGNooySq3",
+                "name": "Qualification",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selMEW1qdqCrc1xEG",
+                "name": "Meeting Scheduled",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selTJBP36yLVtKtdQ",
+                "name": "Proposal Sent",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selxAYv847hERvPEX",
+                "name": "Negotiation",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selysgtpDJP9aSQm0",
+                "name": "Closed Won",
+                "color": "greenBright"
+              },
+              {
+                "id": "selEjyVGsTBbvWEC5",
+                "name": "Closed Lost",
+                "color": "grayDark1"
+              },
+              {
+                "id": "selVrZwWWCetepb1D",
+                "name": "Initial Contact",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selr9wKwBv2OkSgYB",
+                "name": "Contract Sent",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selspHqCprDrhuQEb",
+                "name": "Development",
+                "color": "blueBright"
+              },
+              {
+                "id": "selGUSPAzywVKZT8k",
+                "name": "Investment",
+                "color": "purpleLight1"
+              },
+              {
+                "id": "sel9C8RYe2y6thB5U",
+                "name": "Future Client",
+                "color": "greenLight1"
+              }
+            ]
+          },
+          "id": "fldMV4ZUWb0h1pyPN",
+          "name": "Sales Stage",
+          "description": "Current stage in your sales process"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblwEt5YsYDP22qrr",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldhzkBEvT2UlcW7g"
+          },
+          "id": "fldBGsrhhPk7egFL1",
+          "name": "Tasks",
+          "description": "Tasks related to this opportunity"
+        },
+        {
+          "type": "multipleSelects",
+          "options": {
+            "choices": [
+              {
+                "id": "selRUT8GGIGSLZI98",
+                "name": "Strategy/Consulting",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selz44PquS0SG7esW",
+                "name": "Design/Concept Development",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "selh9j07OlkqGZdS4",
+                "name": "Production/Fabrication Oversight",
+                "color": "greenLight2"
+              },
+              {
+                "id": "sel2RPJlnlDkYIzAR",
+                "name": "Opening/Operations Support",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selFccKis1NRRKaB1",
+                "name": "Executive Producing",
+                "color": "cyanLight1"
+              }
+            ]
+          },
+          "id": "fldYvZ8T1Iy7r91z5",
+          "name": "Engagement Type",
+          "description": "Type(s) of work for this opportunity"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selusvMcyDYKd21pd",
+                "name": "Cold",
+                "color": "cyanBright"
+              },
+              {
+                "id": "selO3PuNncZXXnGDg",
+                "name": "Low",
+                "color": "purpleBright"
+              },
+              {
+                "id": "selbg6uh33llrRXV8",
+                "name": "02 Medium",
+                "color": "orangeBright"
+              },
+              {
+                "id": "selMl4b4T3eJIbjqE",
+                "name": "01 High",
+                "color": "redBright"
+              },
+              {
+                "id": "selfGUEqcSzEOblTw",
+                "name": "04 FUTURE ROADMAP",
+                "color": "yellowLight2"
+              }
+            ]
+          },
+          "id": "fld4oRQmcZ3VaQeUP",
+          "name": "Probability",
+          "description": "Deal probability rating - Cold and Low are excluded from weighted pipeline calculations"
+        },
+        {
+          "type": "dateTime",
+          "options": {
+            "dateFormat": {
+              "name": "iso",
+              "format": "YYYY-MM-DD"
+            },
+            "timeFormat": {
+              "name": "24hour",
+              "format": "HH:mm"
+            },
+            "timeZone": "utc"
+          },
+          "id": "fld7ZbwNVRSKCOly8",
+          "name": "Next Meeting Date"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selhbLsGcjBUnRo1F",
+                "name": "Standard Capabilities Deck",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selrSXs1ts2SyFNiA",
+                "name": "Customized Quals",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "selXQ6F8lJucvQyEu",
+                "name": "Both",
+                "color": "greenLight2"
+              }
+            ]
+          },
+          "id": "fldhJn8M3xeQYdPHG",
+          "name": "Quals Type",
+          "description": "Type of qualifications sent"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldLjPejA0TcYj8R8",
+          "name": "Contract Milestones"
+        },
+        {
+          "type": "checkbox",
+          "options": {
+            "icon": "check",
+            "color": "greenBright"
+          },
+          "id": "flda4mTsRoIiFqVZL",
+          "name": "Qualifications Sent",
+          "description": "Have qualifications been sent?"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "iso",
+              "format": "YYYY-MM-DD"
+            }
+          },
+          "id": "fldpSYPc9Mf1hRhdU",
+          "name": "Expected Close Date",
+          "description": "When you expect to close this deal"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selTL4OCPOjGvNsWh",
+                "name": "Referral",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selFAcyt2yVU8gfxX",
+                "name": "Inbound - Website",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selMqsPWh8agiBvpt",
+                "name": "Inbound - LinkedIn",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selKFCpbiSuUYQA5f",
+                "name": "Inbound - Conference/Event",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "selC1sp11gS0HDts4",
+                "name": "Outbound Prospecting",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "sel3jZn427kiAfGYI",
+                "name": "Past Relationship",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "seljVuNDrhDpPmWcd",
+                "name": "Other",
+                "color": "grayLight2"
+              },
+              {
+                "id": "selNOhEhGohLQEJft",
+                "name": "Partnership",
+                "color": "blueLight1"
+              }
+            ]
+          },
+          "id": "fldDr4GsoxjnNmpo1",
+          "name": "Lead Source",
+          "description": "How this opportunity came to us"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldZ3V2AL5IFj6W1G",
+          "name": "Referred By",
+          "description": "Who referred this opportunity (if referral)"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "sel20baW7fHxxrXEK",
+                "name": "Won - Best Fit",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selsCtxxnOv4gXNtp",
+                "name": "Won - Relationship",
+                "color": "greenLight1"
+              },
+              {
+                "id": "seldtfgmlRXHY4Sht",
+                "name": "Won - Price",
+                "color": "greenBright"
+              },
+              {
+                "id": "selFTmZDMYJGLEuvM",
+                "name": "Lost - Budget",
+                "color": "redLight2"
+              },
+              {
+                "id": "selPvZ8XNjIU8GiSX",
+                "name": "Lost - Competitor",
+                "color": "redLight1"
+              },
+              {
+                "id": "selv4lkqnwcvizf6W",
+                "name": "Lost - Timing",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selBzkEM4r2Vmdi3t",
+                "name": "Lost - No Decision",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "seldUEIXsTCHHwAzE",
+                "name": "Lost - Scope Mismatch",
+                "color": "grayLight2"
+              }
+            ]
+          },
+          "id": "fldEkMImrxZQMnuCJ",
+          "name": "Win/Loss Reason",
+          "description": "Why you won or lost this deal"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldVOzXUQ5lMYzcVp",
+          "name": "Loss Notes",
+          "description": "Details on why the deal was lost"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblTUNClZpfFjhFVm",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldgRf0WkgdcMLseJ"
+          },
+          "id": "fldyL4Obl1EfVvpVU",
+          "name": "Interactions",
+          "description": "Interactions related to this opportunity"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbll416ZwFACYQSm4",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldUKkazQiEmhIH4E"
+          },
+          "id": "fldrOFbZgxZ6izAla",
+          "name": "Project",
+          "description": "Project created from this opportunity (if won)"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblODEy2pLlfrz0lz",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldPs5pFveiqZbpnn"
+          },
+          "id": "fldQNa9p8jAEnrZB2",
+          "name": "Proposals"
+        },
+        {
+          "type": "formula",
+          "options": {
+            "isValid": true,
+            "formula": "IF({fld4oRQmcZ3VaQeUP} = 'High', 0.8, IF({fld4oRQmcZ3VaQeUP} = 'Medium', 0.5, 0))",
+            "referencedFieldIds": [
+              "fld4oRQmcZ3VaQeUP"
+            ],
+            "result": {
+              "type": "number",
+              "options": {
+                "precision": 0
+              }
+            }
+          },
+          "id": "flda4MrS0FecCa4TO",
+          "name": "Probability Value"
+        },
+        {
+          "type": "multipleAttachments",
+          "options": {
+            "isReversed": false
+          },
+          "id": "fldVld8A8bfeyPnJG",
+          "name": "Attachments"
+        }
+      ],
+      "views": [
+        {
+          "id": "viwpVdLLkDdSFd9zw",
+          "name": "Overall List",
+          "type": "grid"
+        },
+        {
+          "id": "viwtB1kEDrdY8diPU",
+          "name": "Cold List",
+          "type": "grid"
+        },
+        {
+          "id": "viwSkuuCmh68ufrCO",
+          "name": "GALLERY",
+          "type": "gallery"
+        },
+        {
+          "id": "viwwZiUHqW4ZKAM2s",
+          "name": "List temp",
+          "type": "levels"
+        },
+        {
+          "id": "viwIr79F3qiLm3YG8",
+          "name": "Sync",
+          "type": "grid"
+        },
+        {
+          "id": "viw7hpzMRm562ze5c",
+          "name": "Active Pipeline",
+          "type": "grid"
+        },
+        {
+          "id": "viwSLCWWu4KrBYhgi",
+          "name": "Future Roadmap",
+          "type": "grid"
+        },
+        {
+          "id": "viwv1VMO0OwDqUilh",
+          "name": "Kanban",
+          "type": "kanban"
+        }
+      ]
+    },
+    {
+      "id": "tblwEt5YsYDP22qrr",
+      "name": "Tasks",
+      "description": "Follow-ups, to-dos, and action items to ensure nothing falls through the cracks",
+      "primaryFieldId": "fldfYqgokx0nP9jrq",
+      "fields": [
+        {
+          "type": "singleLineText",
+          "id": "fldfYqgokx0nP9jrq",
+          "name": "Task",
+          "description": "What needs to be done"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selWDYlL3XtAqFtUD",
+                "name": "To Do",
+                "color": "redLight2"
+              },
+              {
+                "id": "selBgckgnbINicK1o",
+                "name": "In Progress",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selaiRj9b1bw41KtU",
+                "name": "Waiting",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selgHDoKsGktxiOZy",
+                "name": "Completed",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selHzDbvSXp6zA5fK",
+                "name": "Cancelled",
+                "color": "grayLight2"
+              }
+            ]
+          },
+          "id": "fld5j051j1H7rPmbw",
+          "name": "Status",
+          "description": "Task status"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblsalt5lmHlh4s7z",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldBGsrhhPk7egFL1"
+          },
+          "id": "fldhzkBEvT2UlcW7g",
+          "name": "Sales Opportunities"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldwi4Fm7aOdyh7R3",
+          "name": "Notes",
+          "description": "Additional details or context"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selGt1NiT1mClqZiF",
+                "name": "Administrative",
+                "color": "grayLight2"
+              },
+              {
+                "id": "selyKlP7WuJ9GFlxY",
+                "name": "Follow-up Call",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selRNfQq4cf7Vd04N",
+                "name": "Follow-up Email",
+                "color": "blueLight2"
+              },
+              {
+                "id": "sel0QWN8mnMM26qsG",
+                "name": "Internal Review",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selSG4pMBui4QdPw2",
+                "name": "Other",
+                "color": "grayLight2"
+              },
+              {
+                "id": "sel0d1ehcgQt4MaMl",
+                "name": "Presentation Deck",
+                "color": "greenLight2"
+              },
+              {
+                "id": "sel7b4DYQXkpfuQM4",
+                "name": "Research",
+                "color": "pinkLight2"
+              },
+              {
+                "id": "selGSmgImx2MriuR1",
+                "name": "Schedule Meeting",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selm3vaUILj29uNJO",
+                "name": "Send Proposal",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selSqlxULa7oxgnO0",
+                "name": "Send Qualifications",
+                "color": "purpleLight2"
+              }
+            ]
+          },
+          "id": "fldXcqtkVSh60H20b",
+          "name": "Type",
+          "description": "Category of task"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selLYqu5I4g8eiaa8",
+                "name": "\ud83d\udd34 High",
+                "color": "redLight2"
+              },
+              {
+                "id": "sel8LhHUTw0WdKhWG",
+                "name": "\ud83d\udfe1 Medium",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selkuiukX7dA09RxG",
+                "name": "\ud83d\udfe2 Low",
+                "color": "greenLight2"
+              }
+            ]
+          },
+          "id": "fldREFoOWpRN4Ejfg",
+          "name": "Priority",
+          "description": "Task priority"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "iso",
+              "format": "YYYY-MM-DD"
+            }
+          },
+          "id": "fldrV9zjZGNlm2znw",
+          "name": "Due Date",
+          "description": "When this task is due"
+        },
+        {
+          "type": "singleCollaborator",
+          "id": "fldtfWkEqvv5YHODj",
+          "name": "Assigned To",
+          "description": "Who is responsible for this task"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "iso",
+              "format": "YYYY-MM-DD"
+            }
+          },
+          "id": "fldOE0MEitlXCeC5e",
+          "name": "Completed Date",
+          "description": "When the task was completed"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl9Q8m06ivkTYyvR",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldsWpetRKu2E4e9U"
+          },
+          "id": "fldyzxf3dGGCT02t0",
+          "name": "Contacts"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbll416ZwFACYQSm4",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldizOqFE6ParTzho"
+          },
+          "id": "fldtxrwOzmkpjVtdj",
+          "name": "Projects"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblODEy2pLlfrz0lz",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldQARjLcMpanbY6m"
+          },
+          "id": "fldB9nEqdI6EZMfPo",
+          "name": "Proposal",
+          "description": "Proposal this task was created from"
+        }
+      ],
+      "views": [
+        {
+          "id": "viw8k7g16hE6dtbor",
+          "name": "Grid view",
+          "type": "grid"
+        },
+        {
+          "id": "viwdsQpHWOMlxdCZy",
+          "name": "Tasks Due Soon",
+          "type": "grid"
+        },
+        {
+          "id": "viwqM0OIkpQZdu9ub",
+          "name": "Active Tasks",
+          "type": "gallery"
+        },
+        {
+          "id": "viwCttmqjuNyAqwwP",
+          "name": "List",
+          "type": "levels"
+        },
+        {
+          "id": "viwfKeh6NinAdOPaD",
+          "name": "Sync",
+          "type": "grid"
+        }
+      ]
+    },
+    {
+      "id": "tblODEy2pLlfrz0lz",
+      "name": "Proposals",
+      "primaryFieldId": "fld5Y8fCuS1jhkWF2",
+      "fields": [
+        {
+          "type": "singleLineText",
+          "id": "fld5Y8fCuS1jhkWF2",
+          "name": "Proposal Name"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl9Q8m06ivkTYyvR",
+            "isReversed": false,
+            "prefersSingleRecordLink": true,
+            "inverseLinkFieldId": "fldPxLDh74yCpYwuF"
+          },
+          "id": "fldoz0V3WTPup4zv8",
+          "name": "Client"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldQ8g5iqtMPHxb8S",
+          "name": "Version"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selbgTMhpHomrofZc",
+                "name": "Draft",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selKT16A5BJ1AknUx",
+                "name": "Pending Approval",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "seljk4LcK7pKLVlSO",
+                "name": "Approved",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selonFKju9c2hWEr2",
+                "name": "Sent to Client",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selk1aaV7DEJLPODn",
+                "name": "Closed Won",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "sel7Nt04iZdzuMGyN",
+                "name": "Closed Lost",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selg5lY6qbp5HD965",
+                "name": "Submitted",
+                "color": "blueLight2"
+              },
+              {
+                "id": "sel3MoS5UutZ1FCaf",
+                "name": "In Review",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selUJCaKwOuiRqnzt",
+                "name": "Rejected",
+                "color": "tealLight2"
+              }
+            ]
+          },
+          "id": "fldBzyWMITVJdZyRl",
+          "name": "Status"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "sel1Ck78htOruGnnb",
+                "name": "Basic",
+                "color": "blueLight2"
+              },
+              {
+                "id": "sellwO0sDpmIWkBYN",
+                "name": "Detailed",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selrqFODXlGXnngMj",
+                "name": "Custom",
+                "color": "tealLight2"
+              },
+              {
+                "id": "sel6uPnt09Txt8MEM",
+                "name": "Standard Template",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selaVhWfbIHB87Vfk",
+                "name": "Custom Template",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selpoYlYak1gK85oO",
+                "name": "Marketing Template",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selSxVMkafRcWf1Dl",
+                "name": "IT Template",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selTtYe4OQ4R2TcA5",
+                "name": "Service Template",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selVzwzbZjAaIQJSK",
+                "name": "Design Template",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selSavqrem9wcYuWC",
+                "name": "Security Template",
+                "color": "redLight2"
+              },
+              {
+                "id": "selnAuV2xts22wAY3",
+                "name": "Strategy Template",
+                "color": "pinkLight2"
+              },
+              {
+                "id": "selaDKER4kmRDWzM6",
+                "name": "HR Template",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "selfLY2ALh2ajOEm0",
+                "name": "Event Template",
+                "color": "grayLight2"
+              }
+            ]
+          },
+          "id": "fldAOt35mhF1ne0UK",
+          "name": "Template Used"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selO4bKTwcXIi06LF",
+                "name": "Not Submitted",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selwGpidfyh0693lH",
+                "name": "Submitted",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selE4scEmpISa2Bd6",
+                "name": "Approved",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selmtCwhmBSgluLKZ",
+                "name": "Rejected",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selLYu5HT3DSg5wL0",
+                "name": "Pending",
+                "color": "blueLight2"
+              },
+              {
+                "id": "seldhaZ08rJkbYgJg",
+                "name": "Under Review",
+                "color": "cyanLight2"
+              }
+            ]
+          },
+          "id": "fldwWCRdvqYVTXZ12",
+          "name": "Approval Status"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldhUnP1A7gxJNaxe",
+          "name": "Client Feedback"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldZeAOE1WpLOY3aH",
+          "name": "Performance Metrics"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblEauAm0ZYuMbHUa",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fld8pQnDzVmyonJ45"
+          },
+          "id": "fldxxsjKV66IhPKzL",
+          "name": "Company",
+          "description": "Company this proposal is for"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblsalt5lmHlh4s7z",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldQNa9p8jAEnrZB2"
+          },
+          "id": "fldPs5pFveiqZbpnn",
+          "name": "Related Opportunity",
+          "description": "Sales opportunity this proposal is for"
+        },
+        {
+          "type": "richText",
+          "id": "fldryZ3MW513WcmrK",
+          "name": "Notes"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblwEt5YsYDP22qrr",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldB9nEqdI6EZMfPo"
+          },
+          "id": "fldQARjLcMpanbY6m",
+          "name": "Tasks"
+        },
+        {
+          "type": "createdBy",
+          "id": "fld9TDETWFG7tFusb",
+          "name": "Created By"
+        }
+      ],
+      "views": [
+        {
+          "id": "viwzVnusFqtaZ2pD2",
+          "name": "Grid view",
+          "type": "grid"
+        },
+        {
+          "id": "viwsSERQepTD01WoN",
+          "name": "Sync",
+          "type": "grid"
+        }
+      ]
+    },
+    {
+      "id": "tbll416ZwFACYQSm4",
+      "name": "Projects",
+      "description": "Active and completed projects - post-close project tracking and delivery",
+      "primaryFieldId": "fldkrhZTZ6pFweiBx",
+      "fields": [
+        {
+          "type": "singleLineText",
+          "id": "fldkrhZTZ6pFweiBx",
+          "name": "Project Name",
+          "description": "Name of the project"
+        },
+        {
+          "type": "multipleSelects",
+          "options": {
+            "choices": [
+              {
+                "id": "selT5SljWoDWZv65U",
+                "name": "Strategy/Consulting",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selsQfADhZ3asYzAT",
+                "name": "Design/Concept Development",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "seln1geugioYiuLF2",
+                "name": "Production/Fabrication Oversight",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selbY2ODVcetk3HOS",
+                "name": "Opening/Operations Support",
+                "color": "orangeLight2"
+              }
+            ]
+          },
+          "id": "fld5nII1Fq8N1LVEO",
+          "name": "Engagement Type",
+          "description": "Type(s) of work on this project"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "sel6vFbbMXUwfHVbZ",
+                "name": "Kickoff",
+                "color": "blueLight2"
+              },
+              {
+                "id": "sel4hkLPrPul8Nelq",
+                "name": "Discovery",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selCSKq3mf5SrmPrR",
+                "name": "Concept Development",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "selYFshRv9WIOBcBM",
+                "name": "Design Development",
+                "color": "pinkLight2"
+              },
+              {
+                "id": "selpqTjqOalw0wWK8",
+                "name": "Production",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selCXyv9VBNrK26l9",
+                "name": "Installation",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selwXUC0uMwDmFmW4",
+                "name": "Opening/Launch",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "seltcVXa1snUiTn1Z",
+                "name": "Closeout",
+                "color": "grayLight2"
+              },
+              {
+                "id": "selWMoiOpPNnp83mF",
+                "name": "Complete",
+                "color": "greenBright"
+              },
+              {
+                "id": "seldsQGjoxQHr3Re4",
+                "name": "On Hold",
+                "color": "redLight2"
+              },
+              {
+                "id": "sel8S7jIdbfuYR1hg",
+                "name": "Cancelled",
+                "color": "grayDark1"
+              },
+              {
+                "id": "selnbkhRNJeWCollO",
+                "name": "Strategy",
+                "color": "redLight1"
+              }
+            ]
+          },
+          "id": "fld4Pv2FM3skC3chQ",
+          "name": "Status",
+          "description": "Current project status"
+        },
+        {
+          "type": "currency",
+          "options": {
+            "precision": 0,
+            "symbol": "$"
+          },
+          "id": "fld4J4KCazP7C1IMC",
+          "name": "Contract Value",
+          "description": "Total contract value"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "iso",
+              "format": "YYYY-MM-DD"
+            }
+          },
+          "id": "fldTOw6VgwsvJXW7O",
+          "name": "Start Date",
+          "description": "Project start date"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "iso",
+              "format": "YYYY-MM-DD"
+            }
+          },
+          "id": "fldID5gpDgtmQDVUd",
+          "name": "Target Completion",
+          "description": "Target completion/delivery date"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "iso",
+              "format": "YYYY-MM-DD"
+            }
+          },
+          "id": "fldKc3rU95N8sCDdg",
+          "name": "Actual Completion",
+          "description": "Actual completion date"
+        },
+        {
+          "type": "singleCollaborator",
+          "id": "fldDKZQgxaaAej7mU",
+          "name": "Project Lead",
+          "description": "ILS team lead for this project"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldFwzNbpWAL9tV8R",
+          "name": "Location",
+          "description": "Project location/site"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldr8mgLCY9ISv4Bd",
+          "name": "Description",
+          "description": "Project overview and scope"
+        },
+        {
+          "type": "multilineText",
+          "id": "fld19Ezi7Md5PPWxQ",
+          "name": "Key Milestones",
+          "description": "Major milestones and deliverables"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldKxqY5ZYIrCIOgU",
+          "name": "Lessons Learned",
+          "description": "Post-project notes for future reference"
+        },
+        {
+          "type": "multipleAttachments",
+          "options": {
+            "isReversed": false
+          },
+          "id": "fld2qAFRKhP3v5js2",
+          "name": "Project Files",
+          "description": "Key project documents, images, etc."
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblsalt5lmHlh4s7z",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldrOFbZgxZ6izAla"
+          },
+          "id": "fldUKkazQiEmhIH4E",
+          "name": "Sales Opportunities"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblEauAm0ZYuMbHUa",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldtgQEptCxvaaAzk"
+          },
+          "id": "fldMMHrrBsAHvyQ0e",
+          "name": "Client",
+          "description": "Client company for this project"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblwEt5YsYDP22qrr",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldtxrwOzmkpjVtdj"
+          },
+          "id": "fldizOqFE6ParTzho",
+          "name": "Tasks",
+          "description": "Tasks for this project"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl9Q8m06ivkTYyvR",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldtExCKnttD4XsMe"
+          },
+          "id": "fld5uAeJxjSB3WCqs",
+          "name": "Primary Contact",
+          "description": "Main client contact for this project"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl9Q8m06ivkTYyvR",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldOOrElk4KRkSxcG"
+          },
+          "id": "fldTphE0ecQivlxxD",
+          "name": "Contacts"
+        }
+      ],
+      "views": [
+        {
+          "id": "viwV5imuPCHJUbBnx",
+          "name": "Grid view",
+          "type": "grid"
+        },
+        {
+          "id": "viwTKMA77q1wulFci",
+          "name": "Sync",
+          "type": "grid"
+        }
+      ]
+    },
+    {
+      "id": "tblTUNClZpfFjhFVm",
+      "name": "Interactions",
+      "description": "Log of all communications - calls, emails, meetings with contacts",
+      "primaryFieldId": "fldMog5p49xWLD5Zb",
+      "fields": [
+        {
+          "type": "singleLineText",
+          "id": "fldMog5p49xWLD5Zb",
+          "name": "Subject",
+          "description": "Brief description of the interaction"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selwxjU1I96KWGx89",
+                "name": "\ud83d\udce7 Email",
+                "color": "blueLight2"
+              },
+              {
+                "id": "sel3DeeY3FTazUX42",
+                "name": "\ud83d\udcde Phone Call",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selv1QjLVJM2fgXem",
+                "name": "\ud83e\udd1d Meeting (In-Person)",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "seldTfT4v4ZKhbHMG",
+                "name": "\ud83d\udcbb Meeting (Virtual)",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selfG5LDhihcstJNU",
+                "name": "\ud83c\udf7d\ufe0f Lunch/Dinner",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selz9cuXNtsaLIfMr",
+                "name": "\ud83c\udfaa Conference/Event",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selcx8azGEiPLjRua",
+                "name": "\ud83d\udcdd Note",
+                "color": "grayLight2"
+              }
+            ]
+          },
+          "id": "fldsdGx3u8RPS8GrH",
+          "name": "Type",
+          "description": "Type of interaction"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "iso",
+              "format": "YYYY-MM-DD"
+            }
+          },
+          "id": "fldOTeAY7Y0JDnaMF",
+          "name": "Date",
+          "description": "When the interaction occurred"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selMNwJytgdx3EMVw",
+                "name": "Outbound (we initiated)",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selEPBpMUxWLHOFOD",
+                "name": "Inbound (they initiated)",
+                "color": "greenLight2"
+              }
+            ]
+          },
+          "id": "fld9d6pw2GM3Syhag",
+          "name": "Direction",
+          "description": "Inbound or outbound"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldqqHNLs8mXW2RRA",
+          "name": "Summary",
+          "description": "Notes and key takeaways from the interaction"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldyh8QUnhF3hUsBV",
+          "name": "Next Steps",
+          "description": "Action items or follow-ups identified"
+        },
+        {
+          "type": "singleCollaborator",
+          "id": "fldn0mHhKfd88K6z8",
+          "name": "Logged By",
+          "description": "Who logged this interaction"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl9Q8m06ivkTYyvR",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldgWTSW7dKdCZPFl"
+          },
+          "id": "fldNz08up6Zcn3HjK",
+          "name": "Contacts"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblsalt5lmHlh4s7z",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldyL4Obl1EfVvpVU"
+          },
+          "id": "fldgRf0WkgdcMLseJ",
+          "name": "Sales Opportunities"
+        }
+      ],
+      "views": [
+        {
+          "id": "viwfmXffdoCVfYYoI",
+          "name": "Grid view",
+          "type": "grid"
+        },
+        {
+          "id": "viwSUaOfqgsMPrpEZ",
+          "name": "Sync",
+          "type": "grid"
+        }
+      ]
+    },
+    {
+      "id": "tblribgEf5RENNDQW",
+      "name": "Imported Contacts",
+      "primaryFieldId": "fldKc8P6eYXjMpAJ6",
+      "fields": [
+        {
+          "type": "singleLineText",
+          "id": "fldKc8P6eYXjMpAJ6",
+          "name": "Imported Contact Name"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld31Zl7X7DBZdL9K",
+          "name": "Company"
+        },
+        {
+          "type": "multipleSelects",
+          "options": {
+            "choices": [
+              {
+                "id": "sel7jV4p3hJ2GwNV3",
+                "name": "Architecture",
+                "color": "greenBright"
+              },
+              {
+                "id": "sel2jN8eL1bPGhuIM",
+                "name": "Art Director",
+                "color": "grayBright"
+              },
+              {
+                "id": "selkLJxxK4iTz8x7F",
+                "name": "Audio",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selHOkgmGegJFv14Q",
+                "name": "AVC",
+                "color": "redLight2"
+              },
+              {
+                "id": "selVYzxM4hdXFBXd4",
+                "name": "Concerts",
+                "color": "pinkLight1"
+              },
+              {
+                "id": "selTL0ekOc2SI0XqS",
+                "name": "Creative Director",
+                "color": "purpleBright"
+              },
+              {
+                "id": "selSy5kjAws3nbfOZ",
+                "name": "Events",
+                "color": "orangeLight1"
+              },
+              {
+                "id": "selevuqKxuMfCpHgZ",
+                "name": "Experiences",
+                "color": "purpleLight1"
+              },
+              {
+                "id": "sel73Sxe9Tlotw49k",
+                "name": "F&B Consulting",
+                "color": "tealBright"
+              },
+              {
+                "id": "sellxyx9OTwfaFwke",
+                "name": "Fabrication",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selmXDDF92CV1TTR1",
+                "name": "FFE",
+                "color": "blueBright"
+              },
+              {
+                "id": "selYTPPr51Ay6FZJS",
+                "name": "Interiors",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "sel4tMZGFQpxdVsQg",
+                "name": "Kitchen Consulting",
+                "color": "cyanBright"
+              },
+              {
+                "id": "selBzPYZpdEShUjbS",
+                "name": "Luxury",
+                "color": "redLight1"
+              },
+              {
+                "id": "selGHPCNKmdXvHiMD",
+                "name": "Manufacture - Lighting",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "selkaz7uQCBE9FmpT",
+                "name": "Manufacture - Materials",
+                "color": "pinkLight2"
+              },
+              {
+                "id": "seldL0XHIQyemVYLv",
+                "name": "Manufacture - Video",
+                "color": "grayLight2"
+              },
+              {
+                "id": "selWEWyRWz9GlKTUy",
+                "name": "Marketing",
+                "color": "grayLight1"
+              },
+              {
+                "id": "seloh9UFsBpBaOoyQ",
+                "name": "Media",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selaTYxpYORLIurfT",
+                "name": "Performer Management",
+                "color": "redBright"
+              },
+              {
+                "id": "selibbg9OS3Djn4FD",
+                "name": "Producer",
+                "color": "cyanLight1"
+              },
+              {
+                "id": "selZpb2dnmjGDuwty",
+                "name": "Production",
+                "color": "tealLight1"
+              },
+              {
+                "id": "selwpFCTmIUBq6Seq",
+                "name": "Project Management",
+                "color": "greenLight1"
+              },
+              {
+                "id": "selyPAL5DqlBCjFh2",
+                "name": "Scenography",
+                "color": "greenLight2"
+              },
+              {
+                "id": "sel5hhtJ6HVfZ9xAF",
+                "name": "Show Director",
+                "color": "pinkBright"
+              },
+              {
+                "id": "selkKe6xaA0M3Urtp",
+                "name": "Sound Mixing",
+                "color": "orangeBright"
+              },
+              {
+                "id": "selOwODqq2kiH10Qw",
+                "name": "Sourcing",
+                "color": "yellowBright"
+              },
+              {
+                "id": "selF3exEMuOeHZEf1",
+                "name": "Stratagy",
+                "color": "yellowLight1"
+              },
+              {
+                "id": "selnEqG8AszTEol4e",
+                "name": "Video",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "sel5BhVUAlhwqsAK9",
+                "name": "Writing",
+                "color": "blueLight1"
+              },
+              {
+                "id": "selcBPIsJ3lbjyFhC",
+                "name": "IAAPA25",
+                "color": "blueLight2"
+              },
+              {
+                "id": "sel1OJjaL2tKNj9eu",
+                "name": "LDI2025",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selautwB8x5jilUGH",
+                "name": "Soho Holloway",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selcZQZMpfuJdoD61",
+                "name": "SOHO HOLLOWAY",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selJguhvGEk7D2qkG",
+                "name": "SATE 2025",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selqtKWqf5lEvahGp",
+                "name": "SATE25",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selDABwLC9YtKCIud",
+                "name": "CRM",
+                "color": "blueLight2"
+              }
+            ]
+          },
+          "id": "fldn2bUb5Khf7iumL",
+          "name": "Tags"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selaqT4vkrg3scybl",
+                "name": "Lead",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selSuVzTXrQ9UV4jO",
+                "name": "Customer",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selOpEej7ctnZJboi",
+                "name": "Partner",
+                "color": "tealLight2"
+              },
+              {
+                "id": "sel1r17Lk1HLqsBj8",
+                "name": "Other",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selcWetGos2pmOHAY",
+                "name": "Unknown",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selgp4MhgkWNrA1sy",
+                "name": "Vendor",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selTnUX9fzyBAyj9r",
+                "name": "Talent",
+                "color": "redLight2"
+              }
+            ]
+          },
+          "id": "fldrYKTLd2HnL7GSe",
+          "name": "Categorization"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblysTixdxGQQntHO",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldPQWyanCOcXVxmL"
+          },
+          "id": "fldlkF1wlCbxBQ3KJ",
+          "name": "Specialties"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld7c1acCh17aOi0p",
+          "name": "First Name"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldICvkgNbRG9dpqm",
+          "name": "Last Name"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldTHA6J24XaECMsz",
+          "name": "Job Title"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld9ejqJy5wjBqvrx",
+          "name": "Email"
+        },
+        {
+          "type": "phoneNumber",
+          "id": "fldZfFoFsOrIW2wQZ",
+          "name": "Phone"
+        },
+        {
+          "type": "phoneNumber",
+          "id": "fldm8LaalVz7l38PS",
+          "name": "Mobile Phone"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "seldfQnBs6xxjLinq",
+                "name": "Approved",
+                "color": "tealLight2"
+              },
+              {
+                "id": "sel90ezPnIgQuR7AM",
+                "name": "Rejected",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selTFA2oNHhzvmcMm",
+                "name": "Needs Info",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selECQQN9aIyGjFLm",
+                "name": "Duplicate",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selvlPF9uxXs2ysX7",
+                "name": "Review",
+                "color": "blueLight2"
+              }
+            ]
+          },
+          "id": "fldncdRP37p6BB9UX",
+          "name": "Onboarding Status"
+        },
+        {
+          "type": "phoneNumber",
+          "id": "fld9wvepdWiVG4i70",
+          "name": "Other Phone"
+        },
+        {
+          "type": "url",
+          "id": "fldzikDES0UdCd4FQ",
+          "name": "LinkedIn URL"
+        },
+        {
+          "type": "url",
+          "id": "fld57XgOQ9sFJOfof",
+          "name": "Website"
+        },
+        {
+          "type": "url",
+          "id": "fldNdNyWMAGEOfOyH",
+          "name": "Contact Photo URL"
+        },
+        {
+          "type": "singleCollaborator",
+          "id": "fldWK7U0Qj1dk8Ume",
+          "name": "Imported By"
+        },
+        {
+          "type": "singleCollaborator",
+          "id": "flds9MpvnwGkYX9Gi",
+          "name": "Assigned Admin"
+        },
+        {
+          "type": "checkbox",
+          "options": {
+            "icon": "thumbsUp",
+            "color": "greenBright"
+          },
+          "id": "fldjm5mEIT25nlWjT",
+          "name": "Sync to Contacts"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl9Q8m06ivkTYyvR",
+            "isReversed": false,
+            "prefersSingleRecordLink": true,
+            "inverseLinkFieldId": "fldj08SdhFcsYpRva"
+          },
+          "id": "fldDq3cetx5nrVqGo",
+          "name": "Related CRM Contact"
+        },
+        {
+          "type": "multilineText",
+          "id": "fld1A8rCPjuXYSGp1",
+          "name": "Reason for Rejection"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldwI75ClzRJ7lli0",
+          "name": "Event Tags"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld1Zpkm1Kms9XvRv",
+          "name": "Address Line"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldfS2EeVb5l3ic5h",
+          "name": "City"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldIoe4TldH0WJUZj",
+          "name": "State"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldljgJjsqMkpMbkc",
+          "name": "Country"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldc5Aj4hRRZ4tIgE",
+          "name": "Company Description"
+        },
+        {
+          "type": "url",
+          "id": "flduCN8BdOUkZeTTJ",
+          "name": "Business Card Image URL"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldMsJukGZt02TYVu",
+          "name": "Note"
+        },
+        {
+          "type": "phoneNumber",
+          "id": "fld8MuOecNSVON5rD",
+          "name": "Work Phone"
+        },
+        {
+          "type": "phoneNumber",
+          "id": "fldUkm871jdjXQloI",
+          "name": "Office Phone"
+        },
+        {
+          "type": "phoneNumber",
+          "id": "fldBl4gTpGGFVEJOB",
+          "name": "Fax"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldCgacbjwFoRlHIp",
+          "name": "Company Founding Year"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldehmtkMRlb4M5Zi",
+          "name": "Company NAICS Code"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldiB3195PfAK7Wfg",
+          "name": "Company Type"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldsJURWi2VvrvN2v",
+          "name": "Company Size"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldiFajpEd7M14YBF",
+          "name": "Company Industry"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldLJr6gTu9zTeo0r",
+          "name": "Company Annual Revenue"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldwAf4k6bsI922O4",
+          "name": "Company Street Address"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldXhL0dxuxXxDnti",
+          "name": "Company Street Address 2"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld4tMsuM8QhnhuZm",
+          "name": "Company City"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldv9qnkGC3pnZQnv",
+          "name": "Company State"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld4YLilZ2HdhmCse",
+          "name": "Company Country"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldamMPu4kkZGugZn",
+          "name": "Company Postal Code"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldIsJaEWbMOb2juI",
+          "name": "Postal Code"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "local",
+              "format": "l"
+            }
+          },
+          "id": "fldNa8uThfClQFB79",
+          "name": "Import Date"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selNZkvIGddrBNbwF",
+                "name": "CSV Upload",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selhzQaQ7brCA7KhG",
+                "name": "API Sync",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "sel669RXd9sDHeFrq",
+                "name": "Manual Entry",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selJnr5W5AEjEHGaZ",
+                "name": "Third Party",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selv9I3PnzSaIAqMt",
+                "name": "Integration",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selCEfIoa4aw9SzUT",
+                "name": "Other",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selYDMWlohqB4PBum",
+                "name": "Popl",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selBfDjrIWVMmgnit",
+                "name": "Google Contacts - Auto Import",
+                "color": "blueLight2"
+              }
+            ]
+          },
+          "id": "fld1fDiNE3vhoyi3P",
+          "name": "Import Source"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldKYaclj13Bmut7D",
+          "name": "Review Notes"
+        }
+      ],
+      "views": [
+        {
+          "id": "viwUcxZgvLzNzWFcP",
+          "name": "Grid view",
+          "type": "grid"
+        },
+        {
+          "id": "viwMN62pi0cuOm2hR",
+          "name": "Gallery",
+          "type": "gallery"
+        },
+        {
+          "id": "viwJ5jn8FcPERgBRs",
+          "name": "List",
+          "type": "levels"
+        },
+        {
+          "id": "viwSo8UivzvFtRr7s",
+          "name": "Sync",
+          "type": "grid"
+        }
+      ]
+    },
+    {
+      "id": "tblEauAm0ZYuMbHUa",
+      "name": "Companies",
+      "description": "Organizations - clients, prospects, and companies you do business with",
+      "primaryFieldId": "fldVYiMOLq3LJgbZ3",
+      "fields": [
+        {
+          "type": "singleLineText",
+          "id": "fldVYiMOLq3LJgbZ3",
+          "name": "Company Name",
+          "description": "Organization name"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selYNTq2Qza3v0Vcr",
+                "name": "Prospect",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selOYSH1OPzqlAtBh",
+                "name": "Active Client",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selRz9VvIz3fMheLM",
+                "name": "Past Client",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selC3qFla7U4H8IuC",
+                "name": "Partner",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "selIy8fZxpiguJPEI",
+                "name": "Vendor",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selPZVpYy78zzpvBg",
+                "name": "Other",
+                "color": "grayLight2"
+              }
+            ]
+          },
+          "id": "fldtLJxxK5oT6Nzjn",
+          "name": "Type",
+          "description": "Relationship type"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "sel28fICzjbyAJPXB",
+                "name": "Hospitality",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selO1ywmFfWvRIZIP",
+                "name": "Entertainment/Attractions",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "selkTm9HbWI8Td7vu",
+                "name": "Corporate/Brand",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selKiAxmLwVIrb869",
+                "name": "Retail",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selbY1ZVA6MOauvDF",
+                "name": "Real Estate/Development",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selmAxo5jefzCTiV4",
+                "name": "F&B",
+                "color": "redLight2"
+              },
+              {
+                "id": "selCcfPiHbV7OboX5",
+                "name": "Technology",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "sele4zsaZHHkSHCRH",
+                "name": "Other",
+                "color": "grayLight2"
+              },
+              {
+                "id": "selDbvMLBcRmLFJzk",
+                "name": "Culture",
+                "color": "blueDark1"
+              },
+              {
+                "id": "selI5T5QZoPLxXY2S",
+                "name": "Sports",
+                "color": "orangeDark1"
+              },
+              {
+                "id": "sel0DfkLzHxnYKo7B",
+                "name": "Cruise",
+                "color": "purpleBright"
+              },
+              {
+                "id": "selAFtDfM1sosHYmW",
+                "name": "Hospitality/Casino",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selqybppmSXMnN3BZ",
+                "name": "Consulting",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selquJfu9HkF6E7Zi",
+                "name": "Theme Parks",
+                "color": "blueLight2"
+              },
+              {
+                "id": "sel3o7ngHRjlZpp3k",
+                "name": "Entertainment",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selcSO8yGllFaul07",
+                "name": "Marketing",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selzMY7sx7cDafnJZ",
+                "name": "Design",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selr4aImD3HgVSHRh",
+                "name": "Education",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selwlYpetLOm4weXs",
+                "name": "Real Estate",
+                "color": "blueLight2"
+              },
+              {
+                "id": "seln7o34fUFIwvf7f",
+                "name": "Media",
+                "color": "blueLight2"
+              }
+            ]
+          },
+          "id": "fldPz4rknFpmEXZAD",
+          "name": "Industry",
+          "description": "Industry vertical"
+        },
+        {
+          "type": "url",
+          "id": "fldVBnFiEeyDf9oCg",
+          "name": "Website",
+          "description": "Company website"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldyd3pnfJ5PCwwQD",
+          "name": "Address",
+          "description": "Primary address"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldJGkGiCoxduD4sg",
+          "name": "City",
+          "description": "City"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldNekCaGCR56MLcJ",
+          "name": "State/Region",
+          "description": "State or region"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldjvoxUo8iuKITjB",
+          "name": "Country",
+          "description": "Country"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selJLPY8bWUwS2ysl",
+                "name": "Referral",
+                "color": "greenLight2"
+              },
+              {
+                "id": "sel24G5KMvl8Nmye4",
+                "name": "Inbound - Website",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selzUGIKXXfDfmzTa",
+                "name": "Inbound - LinkedIn",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "seltJCEt6H9jaTpEF",
+                "name": "Inbound - Conference/Event",
+                "color": "purpleLight2"
+              },
+              {
+                "id": "selhbnLD51cmU1Qdh",
+                "name": "Outbound Prospecting",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "selbXeuh2HqY398Op",
+                "name": "Past Relationship",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selrEiNIyDMsaw4V6",
+                "name": "Other",
+                "color": "grayLight2"
+              },
+              {
+                "id": "selB1MEcGk7DhGart",
+                "name": "Wynn Entertainment",
+                "color": "blueLight2"
+              }
+            ]
+          },
+          "id": "fldSPGKJKbHclLzoD",
+          "name": "Lead Source",
+          "description": "How this company came to us"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldLLGU72wwf7LxEf",
+          "name": "Referred By",
+          "description": "Who referred them (if referral)"
+        },
+        {
+          "type": "multilineText",
+          "id": "flddUZDFk4l9f377V",
+          "name": "Notes",
+          "description": "General notes about this company"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "iso",
+              "format": "YYYY-MM-DD"
+            }
+          },
+          "id": "fldxQpzFGadejLLVp",
+          "name": "Created Date",
+          "description": "When this record was created"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblsalt5lmHlh4s7z",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldYyFlO4LavZM5gI"
+          },
+          "id": "fldbvXQ26UDd3SHAB",
+          "name": "Sales Opportunities"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbll416ZwFACYQSm4",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldMMHrrBsAHvyQ0e"
+          },
+          "id": "fldtgQEptCxvaaAzk",
+          "name": "Projects"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl9Q8m06ivkTYyvR",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldYXDUc9YKKsGTBt"
+          },
+          "id": "fldQ2RK3PeAPMzkJB",
+          "name": "Contacts",
+          "description": "People at this company"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblODEy2pLlfrz0lz",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldxxsjKV66IhPKzL"
+          },
+          "id": "fld8pQnDzVmyonJ45",
+          "name": "Proposals"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldIDywGKU18pEndd",
+          "name": "Company Description"
+        },
+        {
+          "type": "multipleAttachments",
+          "options": {
+            "isReversed": false
+          },
+          "id": "fldhCu5ooToK84g4G",
+          "name": "Attachments"
+        },
+        {
+          "type": "number",
+          "options": {
+            "precision": 0
+          },
+          "id": "fldZaxAXqeImQcuzW",
+          "name": "Founding Year"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldL93N86XiMu5sUn",
+          "name": "NAICS Code"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldSgiy8i2QUTmZbX",
+          "name": "Company Type"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld0FFqLVasuvG9Uf",
+          "name": "Company Size"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldMaVs106qf6Gmqp",
+          "name": "Annual Revenue"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldqa7L8FPSeSQ9xG",
+          "name": "Postal Code"
+        }
+      ],
+      "views": [
+        {
+          "id": "viw8f2tS5TR8RQ5jP",
+          "name": "Grid view",
+          "type": "grid"
+        },
+        {
+          "id": "viwcwYqkQmo49ehaK",
+          "name": "Contact Cards",
+          "type": "gallery"
+        },
+        {
+          "id": "viwGgUH29t3szTeL2",
+          "name": "Sync",
+          "type": "grid"
+        }
+      ]
+    },
+    {
+      "id": "tblysTixdxGQQntHO",
+      "name": "Specialties",
+      "primaryFieldId": "fldLVp1uePoKCuJlM",
+      "fields": [
+        {
+          "type": "singleLineText",
+          "id": "fldLVp1uePoKCuJlM",
+          "name": "Specialty"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblribgEf5RENNDQW",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldlkF1wlCbxBQ3KJ"
+          },
+          "id": "fldPQWyanCOcXVxmL",
+          "name": "Imported Contacts"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl9Q8m06ivkTYyvR",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldPgiO2nKgcujeXz"
+          },
+          "id": "fldVtUb9RqF03Ubq7",
+          "name": "Contacts"
+        }
+      ],
+      "views": [
+        {
+          "id": "viwMXwdDJyFHBA6ti",
+          "name": "Grid view",
+          "type": "grid"
+        },
+        {
+          "id": "viwmyNInQvMx2gfg2",
+          "name": "Sync",
+          "type": "grid"
+        }
+      ]
+    },
+    {
+      "id": "tblN1jruT8VeucPKa",
+      "name": "Portal Access",
+      "description": "Client portal access permissions and contact information",
+      "primaryFieldId": "fldqnVE5ppj8ACyf3",
+      "fields": [
+        {
+          "type": "singleLineText",
+          "id": "fldqnVE5ppj8ACyf3",
+          "name": "Name"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fldMkz6x5i8YaofZj",
+            "result": {
+              "type": "singleLineText"
+            }
+          },
+          "id": "fldwGCWvBs8GCz5ka",
+          "name": "Contact Name"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fldTwuGnEhbQfZhP3",
+            "result": {
+              "type": "singleLineText"
+            }
+          },
+          "id": "fldbeA6Zdgcf6k4Si",
+          "name": "Contact Company"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fldBjSvbdd5WXmoIG",
+            "result": {
+              "type": "email"
+            }
+          },
+          "id": "fldtZJw7XdUeVGNcA",
+          "name": "Contact Email"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selw0mLFDSRH447sT",
+                "name": "ACTIVE",
+                "color": "greenBright"
+              },
+              {
+                "id": "selRZ2Kj708FP0sO9",
+                "name": "IN-ACTIVE",
+                "color": "purpleLight1"
+              }
+            ]
+          },
+          "id": "fldqbzNiTFt7jpdyW",
+          "name": "Status"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldU70JpJQ1GpbRNQ",
+          "name": "Email"
+        },
+        {
+          "type": "formula",
+          "options": {
+            "isValid": true,
+            "formula": " CONCATENATE(\"https://www.imaginelabstudios.com/\", TRIM({fldkAjPIMUMlHNT2A}))",
+            "referencedFieldIds": [
+              "fldkAjPIMUMlHNT2A"
+            ],
+            "result": {
+              "type": "singleLineText"
+            }
+          },
+          "id": "fldzVcWNLBnNQjwQ6",
+          "name": "Framer Page URL"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldiOyYVt4QN8Yon4",
+          "name": "Notes"
+        },
+        {
+          "type": "singleCollaborator",
+          "id": "fldQ0KnWXkFlInBu1",
+          "name": "Assignee"
+        },
+        {
+          "type": "multipleAttachments",
+          "options": {
+            "isReversed": false
+          },
+          "id": "fldCvoIAUEUg0DraC",
+          "name": "Attachments"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "local",
+              "format": "l"
+            }
+          },
+          "id": "fld8m3xt2QOi2EF3b",
+          "name": "Date Added"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldkAjPIMUMlHNT2A",
+          "name": "Page Address"
+        },
+        {
+          "type": "multipleSelects",
+          "options": {
+            "choices": [
+              {
+                "id": "selXXp6t0VDrFT1pB",
+                "name": "Web Design",
+                "color": "blueLight2"
+              },
+              {
+                "id": "sely6f6OqepLQaOXt",
+                "name": "Branding",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selURpDqvgnlwWcvp",
+                "name": "SEO",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selS6NRdg0qOxtKDg",
+                "name": "Social Media",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selZH2PhW00dtwT4t",
+                "name": "Consulting",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selrcWxXIZdFd9eF7",
+                "name": "Other",
+                "color": "orangeLight2"
+              }
+            ]
+          },
+          "id": "fldcBIAHs2jpNkQbD",
+          "name": "Services Interested In"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selX1l5ezVRVOBgHU",
+                "name": "Referral",
+                "color": "blueLight2"
+              },
+              {
+                "id": "sel3taXqrB230vffp",
+                "name": "Web Search",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "seldeZyA7MvfXqtSl",
+                "name": "Social Media",
+                "color": "tealLight2"
+              },
+              {
+                "id": "sel0wa4USzBMUgaus",
+                "name": "Event",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selPWXbVeqHVh6U1n",
+                "name": "Other",
+                "color": "yellowLight2"
+              }
+            ]
+          },
+          "id": "fldnIkdS9MSewsUqy",
+          "name": "Lead Source"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "local",
+              "format": "l"
+            }
+          },
+          "id": "flduKP6vlsDlxZuGW",
+          "name": "Expected Project Start Date"
+        },
+        {
+          "type": "currency",
+          "options": {
+            "precision": 2,
+            "symbol": "$"
+          },
+          "id": "fldQisibz3rZaC4mi",
+          "name": "Project Budget"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldn0nMxnqpHkLykk",
+          "name": "Decision Maker"
+        },
+        {
+          "type": "date",
+          "options": {
+            "dateFormat": {
+              "name": "local",
+              "format": "l"
+            }
+          },
+          "id": "fldvhmfQXneMvWXD1",
+          "name": "Follow-Up Date"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              {
+                "id": "selXtSkic2jYzNmba",
+                "name": "Lead",
+                "color": "blueLight2"
+              },
+              {
+                "id": "selQ5fI4M3i8r1VBJ",
+                "name": "Contacted",
+                "color": "cyanLight2"
+              },
+              {
+                "id": "selWADMx3Qo8ZFJhV",
+                "name": "Qualified",
+                "color": "tealLight2"
+              },
+              {
+                "id": "selTpIvuuAmU0l7qj",
+                "name": "Proposal Sent",
+                "color": "greenLight2"
+              },
+              {
+                "id": "selhZqE9wx0qipgDv",
+                "name": "Negotiation",
+                "color": "yellowLight2"
+              },
+              {
+                "id": "selJBSFZNH4eIjt0V",
+                "name": "Closed Won",
+                "color": "orangeLight2"
+              },
+              {
+                "id": "sel2awSTyhIRVWY66",
+                "name": "Closed Lost",
+                "color": "redLight2"
+              }
+            ]
+          },
+          "id": "fldYrwOrTeimfHC5c",
+          "name": "Stage"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl9Q8m06ivkTYyvR",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fld0W66oRTQwvb9Nq"
+          },
+          "id": "fld1tMK48dxrLU9R4",
+          "name": "Contact"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fldwF5NBjGVndCXNV",
+            "result": {
+              "type": "phoneNumber"
+            }
+          },
+          "id": "fldH8ZDUC4l0vKXpV",
+          "name": "Contact Phone"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fldvecarEW7fx90Ci",
+            "result": {
+              "type": "singleLineText"
+            }
+          },
+          "id": "fldQbVqtuSO4KXgg9",
+          "name": "Contact Job Title"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fldHoIj9zCNB15avX",
+            "result": {
+              "type": "singleSelect",
+              "options": {
+                "choices": [
+                  {
+                    "id": "selGHrnQCWYUfTLuK",
+                    "name": "Technology",
+                    "color": "blueLight2"
+                  },
+                  {
+                    "id": "selfoXl6cck15AQre",
+                    "name": "Healthcare",
+                    "color": "cyanLight2"
+                  },
+                  {
+                    "id": "sellPyNQgANa02bvd",
+                    "name": "Finance",
+                    "color": "tealLight2"
+                  },
+                  {
+                    "id": "selNU8XGMMZ3mWdCu",
+                    "name": "Education",
+                    "color": "greenLight2"
+                  },
+                  {
+                    "id": "seliD68GcQhq4X2rV",
+                    "name": "Manufacturing",
+                    "color": "yellowLight2"
+                  },
+                  {
+                    "id": "selDrmFkI2lzIji8d",
+                    "name": "Real Estate",
+                    "color": "orangeLight2"
+                  },
+                  {
+                    "id": "sel7ecYc605E7WA2K",
+                    "name": "Consulting",
+                    "color": "redLight2"
+                  },
+                  {
+                    "id": "sel2cw32snbO6pQ2J",
+                    "name": "Other",
+                    "color": "pinkLight2"
+                  },
+                  {
+                    "id": "selQfbAHCRPFMKmAh",
+                    "name": "Hospitality",
+                    "color": "blueLight2"
+                  },
+                  {
+                    "id": "selORQUWGNs0GOyHQ",
+                    "name": "Logistics",
+                    "color": "cyanLight2"
+                  },
+                  {
+                    "id": "seloMGqxSCHqnteFG",
+                    "name": "Fitness",
+                    "color": "tealLight2"
+                  },
+                  {
+                    "id": "selmTiuFlyh9OCby1",
+                    "name": "Legal",
+                    "color": "greenLight2"
+                  },
+                  {
+                    "id": "selqrYoyQToy4voE2",
+                    "name": "Media",
+                    "color": "yellowLight2"
+                  },
+                  {
+                    "id": "selm8jnrd7jLZDxlx",
+                    "name": "Design",
+                    "color": "orangeLight2"
+                  },
+                  {
+                    "id": "selip567txkyKWqul",
+                    "name": "Venture Capital",
+                    "color": "redLight2"
+                  },
+                  {
+                    "id": "seltWNY9gwm8KJqA0",
+                    "name": "Retail",
+                    "color": "pinkLight2"
+                  },
+                  {
+                    "id": "sel9M9FMwmKDFDKjf",
+                    "name": "Entertainment",
+                    "color": "redBright"
+                  }
+                ]
+              }
+            }
+          },
+          "id": "fldqTLSogKYG6wIwI",
+          "name": "Contact Industry"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": false,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": null,
+            "result": null
+          },
+          "id": "fldWEtETWKSprknaF",
+          "name": "Contact Speciality"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fldO7kfLDA9jZswPB",
+            "result": {
+              "type": "multipleSelects",
+              "options": {
+                "choices": [
+                  {
+                    "id": "self842MsSLvN9E7V",
+                    "name": "Architecture",
+                    "color": "blueLight2"
+                  },
+                  {
+                    "id": "seluAC2VAn2LYoObx",
+                    "name": "Art Director",
+                    "color": "cyanLight2"
+                  },
+                  {
+                    "id": "sel2HfufkfFidt3JF",
+                    "name": "Audio",
+                    "color": "tealLight2"
+                  },
+                  {
+                    "id": "selxT5J8NQEGUuFDy",
+                    "name": "AVC",
+                    "color": "greenLight2"
+                  },
+                  {
+                    "id": "selc6ZCE23MDPxuuM",
+                    "name": "Concerts",
+                    "color": "yellowLight2"
+                  },
+                  {
+                    "id": "selHGhqG1NSW6zhBX",
+                    "name": "Creative Director",
+                    "color": "orangeLight2"
+                  },
+                  {
+                    "id": "selFvCxYUrop7rSY6",
+                    "name": "Events",
+                    "color": "redLight2"
+                  },
+                  {
+                    "id": "selKLDs6Zvun4BvHe",
+                    "name": "Experiences",
+                    "color": "pinkLight2"
+                  },
+                  {
+                    "id": "selkh71hUW4jjaH2u",
+                    "name": "F&B Consulting",
+                    "color": "purpleLight2"
+                  },
+                  {
+                    "id": "selhhAgWBkf0tkVHx",
+                    "name": "Fabrication",
+                    "color": "grayLight2"
+                  },
+                  {
+                    "id": "selawOMMuNjfLME0m",
+                    "name": "FFE",
+                    "color": "blueLight1"
+                  },
+                  {
+                    "id": "sel8e2TZ8FeSKtndi",
+                    "name": "Interiors",
+                    "color": "cyanLight1"
+                  },
+                  {
+                    "id": "selsSX3oxVucRZlbh",
+                    "name": "Kitchen Consulting",
+                    "color": "tealLight1"
+                  },
+                  {
+                    "id": "selRCoRB8aIhuMuKY",
+                    "name": "Luxury",
+                    "color": "greenLight1"
+                  },
+                  {
+                    "id": "selymEOWdA8MsSfjC",
+                    "name": "Manufacture - Lighting",
+                    "color": "yellowLight1"
+                  },
+                  {
+                    "id": "sel8RUWQFOWj4gPs3",
+                    "name": "Manufacture-Materials",
+                    "color": "orangeLight1"
+                  },
+                  {
+                    "id": "selZ1kzkJy63eMAaN",
+                    "name": "Manufacture-Video",
+                    "color": "redLight1"
+                  },
+                  {
+                    "id": "sel6bJMg2o3SHOYJ7",
+                    "name": "Marketing",
+                    "color": "pinkLight1"
+                  },
+                  {
+                    "id": "selllp8Jc3jStLpoF",
+                    "name": "Media",
+                    "color": "purpleLight1"
+                  },
+                  {
+                    "id": "selRaL5jmNZNsor2h",
+                    "name": "PerformerManagement",
+                    "color": "grayLight1"
+                  },
+                  {
+                    "id": "selSPq3afaQhIR1OW",
+                    "name": "Producer",
+                    "color": "blueBright"
+                  },
+                  {
+                    "id": "selN0ykAmMzPefExr",
+                    "name": "Production",
+                    "color": "cyanBright"
+                  },
+                  {
+                    "id": "selGSCBXrM4PdNqjP",
+                    "name": "ProjectManagement",
+                    "color": "tealBright"
+                  },
+                  {
+                    "id": "sellNh0RJNrrYSHcG",
+                    "name": "Scenography",
+                    "color": "greenBright"
+                  },
+                  {
+                    "id": "sel5DeqEVrJUum8bo",
+                    "name": "ShowDirector",
+                    "color": "yellowBright"
+                  },
+                  {
+                    "id": "selJCyeOo8cLqCf8d",
+                    "name": "SoundMixing",
+                    "color": "orangeBright"
+                  },
+                  {
+                    "id": "selC1hSuLIKjrAtWP",
+                    "name": "Sourcing",
+                    "color": "redBright"
+                  },
+                  {
+                    "id": "selm5zmB8t8bJQZVJ",
+                    "name": "Strategy",
+                    "color": "pinkBright"
+                  },
+                  {
+                    "id": "sel6c5SV5qFs6ngcc",
+                    "name": "Video",
+                    "color": "purpleBright"
+                  },
+                  {
+                    "id": "seluwRkMf6BOpOo7s",
+                    "name": "Writing",
+                    "color": "grayBright"
+                  },
+                  {
+                    "id": "seleksnB7QeBHClKO",
+                    "name": "IAAPA25",
+                    "color": "blueDark1"
+                  },
+                  {
+                    "id": "sel7tkOv7Ps6XDfQp",
+                    "name": "LDI2025",
+                    "color": "cyanDark1"
+                  },
+                  {
+                    "id": "selXAxStQ7oksecUM",
+                    "name": "SohoHolloway",
+                    "color": "tealDark1"
+                  },
+                  {
+                    "id": "selhMvQsoC0ABx0bh",
+                    "name": "SOHOHOLLOWAY",
+                    "color": "greenDark1"
+                  },
+                  {
+                    "id": "selCeMkviNWVPuX3S",
+                    "name": "SATE2025",
+                    "color": "yellowDark1"
+                  },
+                  {
+                    "id": "selpfeKwRPgVG1vTA",
+                    "name": "SATE25",
+                    "color": "orangeDark1"
+                  },
+                  {
+                    "id": "seleVb9yd8hJfr7aZ",
+                    "name": "CRM",
+                    "color": "redDark1"
+                  },
+                  {
+                    "id": "selfFvSpbE31wzgF2",
+                    "name": "SOHO HOLLOWAY",
+                    "color": "blueLight2"
+                  },
+                  {
+                    "id": "selcxZ84dtSzWSgwE",
+                    "name": "SATE 2025",
+                    "color": "blueLight2"
+                  },
+                  {
+                    "id": "selRa48KdREDnJ4xe",
+                    "name": "Soho Holloway",
+                    "color": "blueLight2"
+                  }
+                ]
+              }
+            }
+          },
+          "id": "fldM8HUiHkQy7tOFx",
+          "name": "Contact Tags"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fldnWic86lLjcF9MR",
+            "result": {
+              "type": "url"
+            }
+          },
+          "id": "fldX1QmphBEEZX7hr",
+          "name": "Contact Website"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fldxn8YVJ1pWGkaF8",
+            "result": {
+              "type": "singleLineText"
+            }
+          },
+          "id": "fld55H7Qh189M9nTc",
+          "name": "Contact Address Line"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fldAoanFJ1Fmrzkx5",
+            "result": {
+              "type": "singleLineText"
+            }
+          },
+          "id": "fldocH6IhXiWnS1O9",
+          "name": "Contact City"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fld1qq6PMLW6Ytbig",
+            "result": {
+              "type": "singleLineText"
+            }
+          },
+          "id": "fld95YpyLfDuEtgHQ",
+          "name": "Contact State"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fld1tMK48dxrLU9R4",
+            "fieldIdInLinkedTable": "fldnTdpTO4njtc4gZ",
+            "result": {
+              "type": "singleLineText"
+            }
+          },
+          "id": "fldb9Nsoynf3zrZGr",
+          "name": "Contact Country"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldYZ1Su7WnNPxf17",
+          "name": "Company"
+        },
+        {
+          "type": "phoneNumber",
+          "id": "fldHVA9pJd2j2bJNi",
+          "name": "Phone Number"
+        },
+        {
+          "type": "url",
+          "id": "fldJhqz0wngVDNxwt",
+          "name": "Website"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldvaQB8wzgaLLn2Y",
+          "name": "Address"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldqESjieqvuj1k4P",
+          "name": "Primary Contact"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld2UX68BMEk768Ao",
+          "name": "Position/Title"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld8JNk7r3mQvco7V",
+          "name": "Industry"
+        }
+      ],
+      "views": [
+        {
+          "id": "viwh89ujiaCWv6PLJ",
+          "name": "Grid view",
+          "type": "grid"
+        }
+      ]
+    },
+    {
+      "id": "tblj70XPHI7wnUmxO",
+      "name": "Portal Logs",
+      "description": "Login session logs for the ImagineLab client portal",
+      "primaryFieldId": "fldZ9kEv2VoSs6Zhm",
+      "fields": [
+        {
+          "type": "autoNumber",
+          "id": "fldZ9kEv2VoSs6Zhm",
+          "name": "Id"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldbRGSVQ234FhLl5",
+          "name": "Client Email"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld09uABu5pMflwqw",
+          "name": "Client Name"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldHKPjjjj5qJ4jKj",
+          "name": "Company"
+        },
+        {
+          "type": "url",
+          "id": "fldlawC5fpW6SC7YJ",
+          "name": "Clarity Session"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldD4kj0jIVeJ7Xjn",
+          "name": "IP Address"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldvJWb179RimoEVP",
+          "name": "City"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldW4wHM9wNIap0Vf",
+          "name": "Region"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fld2gGOgdCs4OZORY",
+          "name": "Country"
+        },
+        {
+          "type": "multilineText",
+          "id": "fldKPYPCJ8a77TiSZ",
+          "name": "User Agent"
+        },
+        {
+          "type": "url",
+          "id": "fldA8GMWwQMthnnta",
+          "name": "Page URL"
+        },
+        {
+          "type": "dateTime",
+          "options": {
+            "dateFormat": {
+              "name": "iso",
+              "format": "YYYY-MM-DD"
+            },
+            "timeFormat": {
+              "name": "12hour",
+              "format": "h:mma"
+            },
+            "timeZone": "America/Los_Angeles"
+          },
+          "id": "fldtntKgWXKanYEWZ",
+          "name": "Timestamp"
+        }
+      ],
+      "views": [
+        {
+          "id": "viwva25J6HivAaxiY",
+          "name": "Grid view",
+          "type": "grid"
+        }
+      ]
+    }
+  ]
+}

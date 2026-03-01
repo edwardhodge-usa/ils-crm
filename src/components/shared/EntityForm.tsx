@@ -94,14 +94,14 @@ export default function EntityForm({
           <button
             type="button"
             onClick={onCancel}
-            className="px-3 py-1.5 text-[13px] text-[var(--text-secondary)] bg-[var(--separator-opaque)] rounded-md hover:bg-[var(--bg-hover)] transition-colors"
+            className="px-3 py-1.5 text-[var(--text-secondary)] bg-[var(--separator-opaque)] rounded-md hover:bg-[var(--bg-hover)] transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="px-3 py-1.5 text-[13px] text-[var(--text-primary)] bg-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40"
+            className="px-3 py-1.5 text-[var(--text-primary)] bg-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
@@ -109,7 +109,7 @@ export default function EntityForm({
       </div>
 
       {error && (
-        <div className="px-3 py-2 bg-[var(--color-red)]/15 border border-[var(--color-red)]/30 rounded-md text-[13px] text-[var(--color-red)]">
+        <div className="px-3 py-2 bg-[var(--color-red)]/15 border border-[var(--color-red)]/30 rounded-md text-[var(--color-red)]">
           {error}
         </div>
       )}
@@ -117,7 +117,7 @@ export default function EntityForm({
       {/* Sections */}
       {Array.from(sections.entries()).map(([sectionName, sectionFields]) => (
         <div key={sectionName} className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-          <h3 className="text-[12px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-4">{sectionName}</h3>
+          <h3 className="text-base font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-4">{sectionName}</h3>
           <div className="grid grid-cols-2 gap-4">
             {sectionFields.map(field => (
               <FieldRenderer
@@ -144,13 +144,13 @@ function FieldRenderer({
   onChange: (v: unknown) => void
 }) {
   const baseInputClass =
-    'w-full bg-[var(--bg-window)] border border-[var(--separator-opaque)] rounded-md px-3 py-2 text-[13px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none focus:border-[var(--color-accent)] transition-colors'
+    'w-full bg-[var(--bg-window)] border border-[var(--separator-opaque)] rounded-md px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none focus:border-[var(--color-accent)] transition-colors'
 
   if (field.type === 'readonly') {
     return (
       <div className={field.type === 'readonly' ? 'col-span-2' : ''}>
-        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
-        <p className="text-[13px] text-[var(--text-secondary)] px-3 py-2">{(value as string) || '—'}</p>
+        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+        <p className="text-base text-[var(--text-secondary)] px-3 py-2">{(value as string) || '—'}</p>
       </div>
     )
   }
@@ -158,7 +158,7 @@ function FieldRenderer({
   if (field.type === 'textarea') {
     return (
       <div className="col-span-2">
-        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
         <textarea
           className={`${baseInputClass} min-h-[80px] resize-y`}
           value={(value as string) || ''}
@@ -178,7 +178,7 @@ function FieldRenderer({
           onChange={e => onChange(e.target.checked)}
           className="w-4 h-4 rounded border-[var(--separator-opaque)] bg-[var(--bg-window)] text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
         />
-        <label className="text-[13px] text-[var(--text-primary)]">{field.label}</label>
+        <label className="text-base text-[var(--text-primary)]">{field.label}</label>
       </div>
     )
   }
@@ -186,7 +186,7 @@ function FieldRenderer({
   if (field.type === 'singleSelect') {
     return (
       <div>
-        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
         <select
           className={baseInputClass}
           value={(value as string) || ''}
@@ -212,7 +212,7 @@ function FieldRenderer({
 
     return (
       <div className="col-span-2">
-        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
         <div className="flex flex-wrap gap-1.5">
           {field.options?.map(opt => {
             const isSelected = selected.includes(opt)
@@ -226,7 +226,7 @@ function FieldRenderer({
                     : [...selected, opt]
                   onChange(JSON.stringify(next))
                 }}
-                className={`px-2 py-1 rounded-md text-[11px] transition-colors ${
+                className={`px-2 py-1 rounded-md transition-colors ${
                   isSelected
                     ? 'bg-[var(--color-accent-translucent)] text-[var(--color-accent)] border border-[var(--color-accent)]/40'
                     : 'bg-[var(--separator-opaque)] text-[var(--text-secondary)] border border-transparent hover:bg-[var(--bg-hover)]'
@@ -244,9 +244,9 @@ function FieldRenderer({
   if (field.type === 'currency') {
     return (
       <div>
-        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[var(--text-tertiary)]">$</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">$</span>
           <input
             type="number"
             className={`${baseInputClass} pl-7`}
@@ -262,7 +262,7 @@ function FieldRenderer({
   if (field.type === 'number') {
     return (
       <div>
-        <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
         <input
           type="number"
           className={baseInputClass}
@@ -284,7 +284,7 @@ function FieldRenderer({
 
   return (
     <div>
-      <label className="block text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+      <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
       <input
         type={inputType}
         className={baseInputClass}

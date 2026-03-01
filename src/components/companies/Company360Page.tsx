@@ -78,7 +78,7 @@ export default function Company360Page() {
       {/* Back button */}
       <button
         onClick={() => navigate('/companies')}
-        className="flex items-center gap-1 text-[13px] text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
+        className="flex items-center gap-1 text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m15 18-6-6 6-6" />
@@ -93,7 +93,7 @@ export default function Company360Page() {
             <h2 className="text-xl font-semibold text-[var(--text-primary)]">
               {company.company_name as string || 'Unnamed Company'}
             </h2>
-            <div className="flex items-center gap-3 mt-1.5 text-[13px] text-[var(--text-secondary)]">
+            <div className="flex items-center gap-3 mt-1.5 text-[var(--text-secondary)]">
               {Boolean(company.industry) && <span>{company.industry as string}</span>}
             </div>
           </div>
@@ -101,13 +101,13 @@ export default function Company360Page() {
             <StatusBadge value={company.type as string} />
             <button
               onClick={() => navigate(`/companies/${id}/edit`)}
-              className="px-2.5 py-1 text-[12px] text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:bg-[var(--color-accent)]/20 transition-colors"
+              className="px-2.5 py-1 text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:bg-[var(--color-accent)]/20 transition-colors"
             >
               Edit
             </button>
             <button
               onClick={() => setShowDelete(true)}
-              className="px-2.5 py-1 text-[12px] text-[var(--color-red)] bg-[var(--color-red)]/15 rounded-md hover:bg-[var(--color-red)]/20 transition-colors"
+              className="px-2.5 py-1 text-[var(--color-red)] bg-[var(--color-red)]/15 rounded-md hover:bg-[var(--color-red)]/20 transition-colors"
             >
               Delete
             </button>
@@ -117,26 +117,26 @@ export default function Company360Page() {
         <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-[var(--separator-opaque)]">
           {Boolean(company.website) && (
             <div>
-              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Website</p>
-              <p className="text-[13px] text-[var(--color-accent)] truncate">{company.website as string}</p>
+              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Website</p>
+              <p className="text-base text-[var(--color-accent)] truncate">{company.website as string}</p>
             </div>
           )}
           {Boolean(company.lead_source) && (
             <div>
-              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Lead Source</p>
-              <p className="text-[13px] text-[var(--text-primary)]">{company.lead_source as string}</p>
+              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Lead Source</p>
+              <p className="text-base text-[var(--text-primary)]">{company.lead_source as string}</p>
             </div>
           )}
           {Boolean(company.company_size) && (
             <div>
-              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Size</p>
-              <p className="text-[13px] text-[var(--text-primary)]">{company.company_size as string}</p>
+              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Size</p>
+              <p className="text-base text-[var(--text-primary)]">{company.company_size as string}</p>
             </div>
           )}
           {Boolean(company.annual_revenue) && (
             <div>
-              <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Annual Revenue</p>
-              <p className="text-[13px] text-[var(--text-primary)]">{company.annual_revenue as string}</p>
+              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Annual Revenue</p>
+              <p className="text-base text-[var(--text-primary)]">{company.annual_revenue as string}</p>
             </div>
           )}
         </div>
@@ -148,7 +148,7 @@ export default function Company360Page() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-[13px] font-medium border-b-2 transition-colors ${
+            className={`px-4 py-2 font-medium border-b-2 transition-colors ${
               activeTab === tab.key
                 ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -167,8 +167,8 @@ export default function Company360Page() {
         <div className="grid grid-cols-2 gap-6">
           {(Boolean(company.address) || Boolean(company.city)) && (
             <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Address</h3>
-              <p className="text-[13px] text-[var(--text-primary)]">
+              <h3 className="text-base font-medium text-[var(--text-secondary)] mb-2">Address</h3>
+              <p className="text-base text-[var(--text-primary)]">
                 {[company.address, company.city, company.state_region, company.country]
                   .filter(Boolean)
                   .join(', ')}
@@ -178,15 +178,15 @@ export default function Company360Page() {
 
           {Boolean(company.notes) && (
             <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Notes</h3>
-              <p className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap">{company.notes as string}</p>
+              <h3 className="text-base font-medium text-[var(--text-secondary)] mb-2">Notes</h3>
+              <p className="text-base text-[var(--text-primary)] whitespace-pre-wrap">{company.notes as string}</p>
             </div>
           )}
 
           {Boolean(company.company_description) && (
             <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Description</h3>
-              <p className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap">{company.company_description as string}</p>
+              <h3 className="text-base font-medium text-[var(--text-secondary)] mb-2">Description</h3>
+              <p className="text-base text-[var(--text-primary)] whitespace-pre-wrap">{company.company_description as string}</p>
             </div>
           )}
         </div>

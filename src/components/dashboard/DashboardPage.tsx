@@ -49,7 +49,7 @@ export default function DashboardPage() {
   const formatCurrency = (v: number) => `$${v.toLocaleString(undefined, { minimumFractionDigits: 0 })}`
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
   }
 
   return (
@@ -65,7 +65,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 gap-6">
         {/* Pipeline Snapshot */}
         <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-          <h3 className="text-[13px] font-semibold text-[var(--text-primary)] mb-3">Pipeline by Stage</h3>
+          <h3 className="text-base font-semibold text-[var(--text-primary)] mb-3">Pipeline by Stage</h3>
           {pipeline.length > 0 ? (() => {
             const maxCount = Math.max(...pipeline.map(s => s.count))
             return (
@@ -75,9 +75,9 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <StatusBadge value={stage.sales_stage} />
-                        <span className="text-[12px] text-[var(--text-tertiary)]">{stage.count} {stage.count === 1 ? 'deal' : 'deals'}</span>
+                        <span className="text-base text-[var(--text-tertiary)]">{stage.count} {stage.count === 1 ? 'deal' : 'deals'}</span>
                       </div>
-                      <span className="text-[13px] text-[var(--text-primary)] font-medium">
+                      <span className="text-base text-[var(--text-primary)] font-medium">
                         {formatCurrency(stage.total_value)}
                       </span>
                     </div>
@@ -92,19 +92,19 @@ export default function DashboardPage() {
               </div>
             )
           })() : (
-            <p className="text-[13px] text-[var(--text-tertiary)]">No active pipeline data</p>
+            <p className="text-base text-[var(--text-tertiary)]">No active pipeline data</p>
           )}
           {stats && stats.wonValue > 0 && (
             <div className="mt-3 pt-3 border-t border-[var(--separator-opaque)] flex justify-between">
-              <span className="text-[12px] text-[var(--text-tertiary)]">Total Won</span>
-              <span className="text-[13px] text-[var(--color-green)] font-medium">{formatCurrency(stats.wonValue)}</span>
+              <span className="text-base text-[var(--text-tertiary)]">Total Won</span>
+              <span className="text-base text-[var(--color-green)] font-medium">{formatCurrency(stats.wonValue)}</span>
             </div>
           )}
         </div>
 
         {/* Tasks Due Today */}
         <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-          <h3 className="text-[13px] font-semibold text-[var(--text-primary)] mb-3">Tasks Due Today</h3>
+          <h3 className="text-base font-semibold text-[var(--text-primary)] mb-3">Tasks Due Today</h3>
           {tasksDue.length > 0 ? (
             <div className="space-y-2">
               {tasksDue.map((t, i) => (
@@ -113,43 +113,43 @@ export default function DashboardPage() {
                   className="flex items-center justify-between cursor-default hover:bg-[var(--bg-hover)] -mx-1 px-1 rounded transition-colors"
                   onClick={() => navigate(`/tasks/${t.id as string}/edit`)}
                 >
-                  <span className="text-[13px] text-[var(--text-primary)]">{t.task as string}</span>
+                  <span className="text-base text-[var(--text-primary)]">{t.task as string}</span>
                   <StatusBadge value={t.priority as string} />
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-[13px] text-[var(--text-tertiary)]">No tasks due today</p>
+            <p className="text-base text-[var(--text-tertiary)]">No tasks due today</p>
           )}
         </div>
       </div>
 
       {/* Follow-Up Alerts */}
       <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-        <h3 className="text-[13px] font-semibold text-[var(--text-primary)] mb-3">
+        <h3 className="text-base font-semibold text-[var(--text-primary)] mb-3">
           Follow-Up Alerts
-          <span className="ml-2 text-[11px] text-[var(--text-tertiary)] font-normal">30+ days since last contact</span>
+          <span className="ml-2 text-[var(--text-tertiary)] font-normal">30+ days since last contact</span>
         </h3>
         {followUps.length > 0 ? (
           <div className="space-y-2">
             {followUps.slice(0, 10).map((c, i) => (
               <div
                 key={(c.id as string) || i}
-                className="flex items-center justify-between text-[13px] cursor-default hover:bg-[var(--bg-hover)] -mx-1 px-1 rounded transition-colors"
+                className="flex items-center justify-between cursor-default hover:bg-[var(--bg-hover)] -mx-1 px-1 rounded transition-colors"
                 onClick={() => navigate(`/contacts/${c.id as string}`)}
               >
                 <div>
                   <span className="text-[var(--text-primary)]">{c.contact_name as string}</span>
                   {Boolean(c.company) && <span className="text-[var(--text-tertiary)] ml-2">{c.company as string}</span>}
                 </div>
-                <span className="text-[var(--color-orange)] text-[12px]">
+                <span className="text-[var(--color-orange)]">
                   Last: {c.last_contact_date as string}
                 </span>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-[13px] text-[var(--text-tertiary)]">All contacts recently reached</p>
+          <p className="text-base text-[var(--text-tertiary)]">All contacts recently reached</p>
         )}
       </div>
     </div>
@@ -159,9 +159,9 @@ export default function DashboardPage() {
 function StatCard({ label, value, subtitle }: { label: string; value: number; subtitle?: string }) {
   return (
     <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-      <p className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider">{label}</p>
+      <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider">{label}</p>
       <p className="text-2xl font-semibold text-[var(--text-primary)] mt-1">{value}</p>
-      {subtitle && <p className="text-[12px] text-[var(--text-secondary)] mt-0.5">{subtitle}</p>}
+      {subtitle && <p className="text-base text-[var(--text-secondary)] mt-0.5">{subtitle}</p>}
     </div>
   )
 }

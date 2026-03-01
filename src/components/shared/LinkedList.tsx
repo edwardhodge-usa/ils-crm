@@ -20,7 +20,7 @@ export default function LinkedList({
   emptyMessage: string
 }) {
   if (items.length === 0) {
-    return <p className="text-[13px] text-[var(--text-tertiary)] py-8 text-center">{emptyMessage}</p>
+    return <p className="text-base text-[var(--text-tertiary)] py-8 text-center">{emptyMessage}</p>
   }
 
   return (
@@ -32,9 +32,9 @@ export default function LinkedList({
           onClick={() => onItemClick?.(item)}
         >
           <div>
-            <p className="text-[13px] text-[var(--text-primary)] font-medium">{item[nameKey] as string || 'Unnamed'}</p>
+            <p className="text-base text-[var(--text-primary)] font-medium">{item[nameKey] as string || 'Unnamed'}</p>
             {extraKey && extraLabel && (
-              <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
+              <p className="text-base text-[var(--text-tertiary)] mt-0.5">
                 {extraLabel}: {extraRender ? extraRender(item[extraKey]) : (item[extraKey] as string) || '—'}
               </p>
             )}

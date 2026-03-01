@@ -87,7 +87,7 @@ export default function PipelinePage() {
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
   }
 
   const totalValue = opportunities
@@ -102,7 +102,7 @@ export default function PipelinePage() {
     <div className="flex flex-col h-full">
       {/* Summary bar */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-6 text-[13px]">
+        <div className="flex items-center gap-6">
         <div>
           <span className="text-[var(--text-tertiary)]">Active Pipeline: </span>
           <span className="text-[var(--text-primary)] font-medium">${totalValue.toLocaleString()}</span>
@@ -127,19 +127,19 @@ export default function PipelinePage() {
           columns={columns}
           renderCard={(opp) => (
             <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-3 hover:border-[var(--color-accent)]/50 transition-colors">
-              <p className="text-[13px] text-[var(--text-primary)] font-medium mb-1 line-clamp-2">
+              <p className="text-base text-[var(--text-primary)] font-medium mb-1 line-clamp-2">
                 {opp.opportunity_name}
               </p>
               {Boolean(opp.company) && (
-                <p className="text-[11px] text-[var(--text-tertiary)] mb-2">{opp.company}</p>
+                <p className="text-base text-[var(--text-tertiary)] mb-2">{opp.company}</p>
               )}
               <div className="flex items-center justify-between">
                 {opp.deal_value ? (
-                  <span className="text-[12px] text-[var(--color-green)] font-medium">
+                  <span className="text-base text-[var(--color-green)] font-medium">
                     ${opp.deal_value.toLocaleString()}
                   </span>
                 ) : (
-                  <span className="text-[12px] text-[var(--text-placeholder)]">No value</span>
+                  <span className="text-base text-[var(--text-placeholder)]">No value</span>
                 )}
                 {Boolean(opp.probability) && (
                   <StatusBadge value={opp.probability!} />

@@ -86,7 +86,7 @@ export default function Sidebar() {
               key={item.path}
               onClick={() => navigate(item.path)}
               aria-label={item.label}
-              className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
+              className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md font-medium transition-colors ${
                 isActive
                   ? 'bg-[var(--color-accent)] text-[var(--text-on-accent)]'
                   : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
@@ -104,7 +104,7 @@ export default function Sidebar() {
         <button
           onClick={() => navigate(SETTINGS_ROUTE.path)}
           aria-label={SETTINGS_ROUTE.label}
-          className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
+          className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md font-medium transition-colors ${
             location.pathname === SETTINGS_ROUTE.path
               ? 'bg-[var(--color-accent)] text-[var(--text-on-accent)]'
               : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'

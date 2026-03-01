@@ -91,7 +91,7 @@ export default function DataTable({
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search..."
-              className="w-full max-w-sm bg-[var(--bg-secondary)] border border-[var(--separator-opaque)] rounded-md px-3 py-1.5 text-[13px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors"
+              className="w-full max-w-sm bg-[var(--bg-secondary)] border border-[var(--separator-opaque)] rounded-lg px-3 py-2 text-[14px] text-[var(--text-primary)] placeholder-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)] transition-colors"
             />
           ) : <div />}
           {actions}
@@ -100,13 +100,13 @@ export default function DataTable({
 
       {/* Table */}
       <div className="flex-1 overflow-auto rounded-lg border border-[var(--separator-opaque)]">
-        <table className="w-full text-[13px]">
+        <table className="w-full text-[14px]">
           <thead className="sticky top-0 bg-[var(--bg-secondary)] z-10">
             <tr>
               {columns.map(col => (
                 <th
                   key={col.key}
-                  className={`text-left px-4 py-2.5 text-[var(--text-secondary)] font-medium border-b border-[var(--separator-opaque)] ${
+                  className={`text-left px-4 py-2 text-[12px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold border-b border-[var(--separator-opaque)] whitespace-nowrap ${
                     col.sortable !== false ? 'cursor-default hover:text-[var(--text-primary)] select-none' : ''
                   }`}
                   style={col.width ? { width: col.width } : undefined}
@@ -115,7 +115,7 @@ export default function DataTable({
                   <span className="flex items-center gap-1">
                     {col.label}
                     {sortKey === col.key && (
-                      <span className="text-[10px]">{sortDir === 'asc' ? '▲' : '▼'}</span>
+                      <span className="text-[9px]">{sortDir === 'asc' ? '▲' : '▼'}</span>
                     )}
                   </span>
                 </th>
@@ -126,13 +126,22 @@ export default function DataTable({
             {sorted.map((row, i) => (
               <tr
                 key={(row.id as string) || i}
-                className={`border-b border-[var(--separator-opaque)] last:border-b-0 ${
-                  onRowClick ? 'cursor-default hover:bg-[var(--bg-secondary)] transition-colors' : ''
+                className={`border-b border-[var(--separator)] last:border-b-0 ${
+                  i % 2 === 1 ? 'bg-[var(--bg-tertiary)]' : ''
+                } ${
+                  onRowClick ? 'cursor-default hover:bg-[var(--bg-hover)] transition-colors' : ''
                 }`}
                 onClick={() => onRowClick?.(row)}
               >
-                {columns.map(col => (
-                  <td key={col.key} className="px-4 py-2.5 text-[var(--text-primary)]">
+                {columns.map((col, ci) => (
+                  <td
+                    key={col.key}
+                    className={`px-4 py-2.5 truncate max-w-0 ${
+                      ci === 0
+                        ? 'text-[var(--text-primary)] font-medium'
+                        : 'text-[var(--text-secondary)]'
+                    }`}
+                  >
                     {col.render
                       ? col.render(row[col.key], row)
                       : (row[col.key] != null ? formatCellValue(row[col.key]) : <span className="text-[var(--text-placeholder)]">—</span>)

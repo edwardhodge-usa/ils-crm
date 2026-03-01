@@ -19,7 +19,7 @@ export default function TopBar() {
 
       <div className="flex items-center gap-3">
         {/* Sync indicator */}
-        <div className="flex items-center gap-1.5 text-[12px]">
+        <div className="flex items-center gap-1.5">
           {isSyncing ? (
             <>
               <svg className="w-3 h-3 text-[var(--color-accent)] spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -40,7 +40,7 @@ export default function TopBar() {
         {/* Search button */}
         <button
           aria-label="Search"
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[12px] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
           onClick={() => {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
           }}

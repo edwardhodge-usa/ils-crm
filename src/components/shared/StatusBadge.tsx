@@ -53,7 +53,7 @@ export default function StatusBadge({ value }: { value: string | null | undefine
   const color = colorMap[value] || defaultColor
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${color}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${color}`}>
       {value}
     </span>
   )

@@ -62,7 +62,7 @@ export default function ImportedContactsPage() {
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[var(--color-red)] text-[13px]">{error}</div>
+    return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
   }
 
   return (
@@ -92,31 +92,31 @@ export default function ImportedContactsPage() {
           <div className="flex items-start justify-between">
             <div>
               <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">{selected.contact_name as string || 'Unnamed'}</h3>
-              <div className="flex gap-4 mt-1 text-[13px] text-[var(--text-secondary)]">
+              <div className="flex gap-4 mt-1 text-[var(--text-secondary)]">
                 {Boolean(selected.email) && <span>{selected.email as string}</span>}
                 {Boolean(selected.company) && <span>{selected.company as string}</span>}
                 {Boolean(selected.job_title) && <span>{selected.job_title as string}</span>}
               </div>
               {Boolean(selected.notes) && (
-                <p className="mt-2 text-[13px] text-[var(--text-tertiary)]">{selected.notes as string}</p>
+                <p className="mt-2 text-[var(--text-tertiary)]">{selected.notes as string}</p>
               )}
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => { setAction('approve') }}
-                className="px-3 py-1.5 text-[13px] text-[var(--text-on-accent)] bg-[var(--color-green)] rounded-md hover:brightness-110 transition-colors"
+                className="px-3 py-1.5 text-[var(--text-on-accent)] bg-[var(--color-green)] rounded-md hover:brightness-110 transition-colors"
               >
                 Approve
               </button>
               <button
                 onClick={() => { setAction('reject') }}
-                className="px-3 py-1.5 text-[13px] text-[var(--text-on-accent)] bg-[var(--color-red)] rounded-md hover:brightness-110 transition-colors"
+                className="px-3 py-1.5 text-[var(--text-on-accent)] bg-[var(--color-red)] rounded-md hover:brightness-110 transition-colors"
               >
                 Reject
               </button>
               <button
                 onClick={() => setSelected(null)}
-                className="px-3 py-1.5 text-[13px] text-[var(--text-secondary)] bg-[var(--separator-opaque)] rounded-md hover:bg-[var(--bg-hover)] transition-colors"
+                className="px-3 py-1.5 text-[var(--text-secondary)] bg-[var(--separator-opaque)] rounded-md hover:bg-[var(--bg-hover)] transition-colors"
               >
                 Close
               </button>

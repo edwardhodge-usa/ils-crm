@@ -169,9 +169,9 @@ export default function CommandPalette() {
                   {typeIcons[result.type] || '?'}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-[var(--text-primary)] truncate">{result.name}</p>
+                  <p className="text-base text-[var(--text-primary)] truncate">{result.name}</p>
                   {result.subtitle && (
-                    <p className="text-[11px] text-[var(--text-tertiary)] truncate">{result.subtitle}</p>
+                    <p className="text-base text-[var(--text-tertiary)] truncate">{result.subtitle}</p>
                   )}
                 </div>
                 <span className="text-[10px] text-[var(--text-placeholder)] capitalize flex-shrink-0">{result.type}</span>
@@ -183,14 +183,14 @@ export default function CommandPalette() {
         {/* Empty state */}
         {query.trim() && results.length === 0 && (
           <div className="py-8 text-center">
-            <p className="text-[13px] text-[var(--text-tertiary)]">No results for "{query}"</p>
+            <p className="text-base text-[var(--text-tertiary)]">No results for "{query}"</p>
           </div>
         )}
 
         {/* Hint */}
         {!query.trim() && (
           <div className="py-6 text-center">
-            <p className="text-[13px] text-[var(--text-tertiary)]">Type to search across all records</p>
+            <p className="text-base text-[var(--text-tertiary)]">Type to search across all records</p>
           </div>
         )}
       </div>
