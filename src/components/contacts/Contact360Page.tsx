@@ -13,6 +13,7 @@ export default function Contact360Page() {
   const [contact, setContact] = useState<Record<string, unknown> | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [linkedData, setLinkedData] = useState<Record<string, Record<string, unknown>[]>>({})
+  const [specialtyNames, setSpecialtyNames] = useState<string[]>([])
   const [showDelete, setShowDelete] = useState(false)
 
   useEffect(() => {
@@ -23,12 +24,13 @@ export default function Contact360Page() {
         setContact(result.data as Record<string, unknown>)
       }
 
-      // Load linked records for tabs
-      const [opps, tasks, proposals, interactions] = await Promise.all([
+      // Load linked records for tabs + specialties
+      const [opps, tasks, proposals, interactions, specialtiesRes] = await Promise.all([
         window.electronAPI.opportunities.getAll(),
         window.electronAPI.tasks.getAll(),
         window.electronAPI.proposals.getAll(),
         window.electronAPI.interactions.getAll(),
+        window.electronAPI.specialties.getAll(),
       ])
 
       const linked: Record<string, Record<string, unknown>[]> = {}
@@ -62,6 +64,20 @@ export default function Contact360Page() {
       }
 
       setLinkedData(linked)
+
+      // Resolve specialty names from IDs
+      if (specialtiesRes.success && specialtiesRes.data && result.data) {
+        const contact = result.data as Record<string, unknown>
+        try {
+          const ids: string[] = JSON.parse((contact.specialties_ids as string) || '[]')
+          const allSpecialties = specialtiesRes.data as Record<string, unknown>[]
+          const names = allSpecialties
+            .filter(s => ids.includes(s.id as string))
+            .map(s => s.specialty as string)
+            .filter(Boolean)
+          setSpecialtyNames(names)
+        } catch { /* not valid JSON */ }
+      }
     }
     load()
   }, [id])
@@ -238,6 +254,20 @@ export default function Contact360Page() {
             <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
               <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Rate Info</h3>
               <p className="text-[13px] text-white whitespace-pre-wrap">{contact.rate_info as string}</p>
+            </div>
+          )}
+
+          {/* Specialties */}
+          {specialtyNames.length > 0 && (
+            <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4 col-span-2">
+              <h3 className="text-[13px] font-medium text-[#98989D] mb-2">Specialties</h3>
+              <div className="flex flex-wrap gap-2">
+                {specialtyNames.map(name => (
+                  <span key={name} className="px-2.5 py-1 bg-[#3A3A3C] rounded-full text-[12px] text-white">
+                    {name}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 

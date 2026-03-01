@@ -109,6 +109,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
 
   // Interactions (full CRUD)
   registerEntityCrud('interactions', 'interactions')
+  registerReadOnly('specialties', 'specialties')
   registerReadOnly('portalLogs', 'portal_logs')
 
   // Imported contacts (read-only + approve/reject)
