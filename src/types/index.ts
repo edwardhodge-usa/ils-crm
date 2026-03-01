@@ -270,6 +270,20 @@ export interface PortalLog {
   timestamp: string | null
 }
 
+// ─── View/List Types ─────────────────────────────────────────
+
+export interface ContactListItem {
+  id: string
+  firstName: string
+  lastName: string
+  jobTitle: string | null
+  companyName: string | null
+  qualityRating: number          // 1-5, maps to 5-dot rating
+  specialtyNames: string[]       // display names from linked Specialties
+  specialtyColors: string[]      // one color per specialty (same length)
+  daysSinceContact: number | null
+}
+
 // ─── Sync Types ──────────────────────────────────────────────
 
 export interface SyncStatus {

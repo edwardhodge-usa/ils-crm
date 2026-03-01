@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DataTable from '../shared/DataTable'
-import StatusBadge from '../shared/StatusBadge'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import PrimaryButton from '../shared/PrimaryButton'
 import useEntityList from '../../hooks/useEntityList'
+import { ContactRow } from './ContactRow'
+import type { ContactListItem } from '@/types'
 
 const SPECIALTY_COLORS = [
   'bg-[var(--color-accent)]/20 text-[var(--color-accent)]',
@@ -23,10 +23,19 @@ function specialtyColor(name: string): string {
   return SPECIALTY_COLORS[hash % SPECIALTY_COLORS.length]
 }
 
+function parseQualityRating(raw: string | null | undefined): number {
+  if (!raw) return 0
+  // Airtable rating fields come back as numeric strings like "3" or numbers
+  const n = parseInt(raw as string, 10)
+  return isNaN(n) ? 0 : Math.min(5, Math.max(0, n))
+}
+
 export default function ContactListPage() {
   const { data: contacts, loading, error } = useEntityList(() => window.electronAPI.contacts.getAll())
   const navigate = useNavigate()
   const [specialtyMap, setSpecialtyMap] = useState<Record<string, string>>({})
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     window.electronAPI.specialties.getAll().then(res => {
@@ -37,75 +46,54 @@ export default function ContactListPage() {
         }
         setSpecialtyMap(map)
       }
-    }).catch(() => { /* specialtyMap stays empty — specialty cells show "—" */ })
+    }).catch(() => { /* specialtyMap stays empty — specialty cells show no tags */ })
   }, [])
 
-  const columns = [
-    { key: 'contact_name', label: 'Name', width: '17%' },
-    { key: 'company', label: 'Company', width: '14%' },
-    {
-      key: 'categorization',
-      label: 'Category',
-      width: '10%',
-      render: (v: unknown) => <StatusBadge value={v as string} />,
-    },
-    { key: 'email', label: 'Email', width: '18%' },
-    { key: 'phone', label: 'Phone', width: '12%' },
-    {
-      key: 'specialties_ids',
-      label: 'Specialties',
-      width: '16%',
-      sortable: false,
-      render: (v: unknown) => {
-        if (!v) return <span className="text-[var(--text-placeholder)]">—</span>
-        try {
-          const ids = JSON.parse(v as string) as string[]
-          const names = ids.map(id => specialtyMap[id]).filter(Boolean)
-          if (names.length === 0) return <span className="text-[var(--text-placeholder)]">—</span>
-          return (
-            <div className="flex flex-wrap gap-1">
-              {names.slice(0, 2).map(name => (
-                <span key={name} className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${specialtyColor(name)}`}>
-                  {name}
-                </span>
-              ))}
-              {names.length > 2 && (
-                <span className="text-[10px] text-[var(--text-tertiary)]">+{names.length - 2}</span>
-              )}
-            </div>
-          )
-        } catch {
-          return <span className="text-[var(--text-placeholder)]">—</span>
-        }
-      },
-    },
-    {
-      key: 'tags',
-      label: 'Tags',
-      width: '13%',
-      sortable: false,
-      render: (v: unknown) => {
-        if (!v) return <span className="text-[var(--text-placeholder)]">—</span>
-        try {
-          const tags = JSON.parse(v as string) as string[]
-          return (
-            <div className="flex flex-wrap gap-1">
-              {tags.slice(0, 2).map(t => (
-                <span key={t} className="px-1.5 py-0.5 bg-[var(--separator-opaque)] rounded text-[10px] text-[var(--text-secondary)]">
-                  {t}
-                </span>
-              ))}
-              {tags.length > 2 && (
-                <span className="text-[10px] text-[var(--text-tertiary)]">+{tags.length - 2}</span>
-              )}
-            </div>
-          )
-        } catch {
-          return <span className="text-[var(--text-placeholder)]">—</span>
-        }
-      },
-    },
-  ]
+  // Map raw DB rows to ContactListItem
+  function toListItem(row: Record<string, unknown>): ContactListItem {
+    const specialtyIds: string[] = (() => {
+      try {
+        const raw = row.specialties_ids as string | null
+        return raw ? (JSON.parse(raw) as string[]) : []
+      } catch {
+        return []
+      }
+    })()
+
+    const specialtyNames = specialtyIds.map(id => specialtyMap[id]).filter(Boolean)
+    const specialtyColors = specialtyNames.map(name => specialtyColor(name))
+
+    const daysSinceContact: number | null = (() => {
+      const raw = row.days_since_contact ?? row.days_since_last_contact
+      if (raw === null || raw === undefined || raw === '') return null
+      const n = Number(raw)
+      return isNaN(n) ? null : n
+    })()
+
+    return {
+      id: row.id as string,
+      firstName: (row.first_name as string | null) ?? '',
+      lastName: (row.last_name as string | null) ?? '',
+      jobTitle: (row.job_title as string | null) ?? null,
+      companyName: (row.company as string | null) ?? null,
+      qualityRating: parseQualityRating(row.quality_rating as string | null),
+      specialtyNames,
+      specialtyColors,
+      daysSinceContact,
+    }
+  }
+
+  const filteredContacts: ContactListItem[] = (contacts as Record<string, unknown>[])
+    .map(toListItem)
+    .filter(c => {
+      if (!search.trim()) return true
+      const q = search.toLowerCase()
+      return (
+        `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
+        (c.companyName ?? '').toLowerCase().includes(q) ||
+        (c.jobTitle ?? '').toLowerCase().includes(q)
+      )
+    })
 
   if (loading) return <LoadingSpinner />
 
@@ -114,17 +102,41 @@ export default function ContactListPage() {
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={contacts}
-      onRowClick={(row) => navigate(`/contacts/${row.id}`)}
-      searchKeys={['contact_name', 'company', 'email', 'categorization']}
-      emptyMessage="No contacts yet. Sync from Airtable in Settings."
-      actions={
+    <div className="flex flex-col h-full">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--separator)] flex-shrink-0">
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search contacts…"
+          className="flex-1 text-[12px] px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--separator)] text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)]"
+        />
         <PrimaryButton onClick={() => navigate('/contacts/new')}>
-          + New Contact
+          + New
         </PrimaryButton>
-      }
-    />
+      </div>
+
+      {/* List */}
+      <div className="flex-1 overflow-y-auto">
+        {filteredContacts.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-[12px] text-[var(--text-secondary)]">
+            {search ? 'No contacts match your search.' : 'No contacts yet. Sync from Airtable in Settings.'}
+          </div>
+        ) : (
+          filteredContacts.map(contact => (
+            <ContactRow
+              key={contact.id}
+              contact={contact}
+              isSelected={selectedId === contact.id}
+              onClick={() => {
+                setSelectedId(contact.id)
+                navigate(`/contacts/${contact.id}`)
+              }}
+            />
+          ))
+        )}
+      </div>
+    </div>
   )
 }
