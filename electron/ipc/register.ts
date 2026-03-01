@@ -107,8 +107,8 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
   registerEntityCrud('projects', 'projects')
   registerEntityCrud('portalAccess', 'portal_access')
 
-  // Read-only entities
-  registerReadOnly('interactions', 'interactions')
+  // Interactions (full CRUD)
+  registerEntityCrud('interactions', 'interactions')
   registerReadOnly('portalLogs', 'portal_logs')
 
   // Imported contacts (read-only + approve/reject)

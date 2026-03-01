@@ -64,21 +64,32 @@ export default function DashboardPage() {
         {/* Pipeline Snapshot */}
         <div className="bg-[#2C2C2E] rounded-lg border border-[#3A3A3C] p-4">
           <h3 className="text-[13px] font-semibold text-white mb-3">Pipeline by Stage</h3>
-          {pipeline.length > 0 ? (
-            <div className="space-y-2">
-              {pipeline.map(stage => (
-                <div key={stage.sales_stage} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <StatusBadge value={stage.sales_stage} />
-                    <span className="text-[12px] text-[#636366]">{stage.count} {stage.count === 1 ? 'deal' : 'deals'}</span>
+          {pipeline.length > 0 ? (() => {
+            const maxCount = Math.max(...pipeline.map(s => s.count))
+            return (
+              <div className="space-y-3">
+                {pipeline.map(stage => (
+                  <div key={stage.sales_stage}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <StatusBadge value={stage.sales_stage} />
+                        <span className="text-[12px] text-[#636366]">{stage.count} {stage.count === 1 ? 'deal' : 'deals'}</span>
+                      </div>
+                      <span className="text-[13px] text-white font-medium">
+                        {formatCurrency(stage.total_value)}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-[#1C1C1E] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#0A84FF] rounded-full transition-all duration-500"
+                        style={{ width: `${maxCount > 0 ? (stage.count / maxCount) * 100 : 0}%` }}
+                      />
+                    </div>
                   </div>
-                  <span className="text-[13px] text-white font-medium">
-                    {formatCurrency(stage.total_value)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
+                ))}
+              </div>
+            )
+          })() : (
             <p className="text-[13px] text-[#636366]">No active pipeline data</p>
           )}
           {stats && stats.wonValue > 0 && (

@@ -54,8 +54,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   projects: makeCrudBridge('projects'),
   portalAccess: makeCrudBridge('portalAccess'),
 
-  // Read-only entities
-  interactions: makeReadOnlyBridge('interactions'),
+  // Interactions (full CRUD)
+  interactions: makeCrudBridge('interactions'),
   portalLogs: {
     getAll: () => ipcRenderer.invoke('portalLogs:getAll'),
   },

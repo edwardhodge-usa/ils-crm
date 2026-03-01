@@ -1,13 +1,60 @@
+import { useNavigate } from 'react-router-dom'
+import DataTable from '../shared/DataTable'
+import StatusBadge from '../shared/StatusBadge'
+import LoadingSpinner from '../shared/LoadingSpinner'
+import PrimaryButton from '../shared/PrimaryButton'
+import useEntityList from '../../hooks/useEntityList'
+
 export default function InteractionsPage() {
+  const { data: interactions, loading, error } = useEntityList(() => window.electronAPI.interactions.getAll())
+  const navigate = useNavigate()
+
+  const columns = [
+    { key: 'subject', label: 'Subject', width: '25%' },
+    {
+      key: 'type',
+      label: 'Type',
+      width: '18%',
+      render: (v: unknown) => <StatusBadge value={v as string} />,
+    },
+    {
+      key: 'direction',
+      label: 'Direction',
+      width: '15%',
+      render: (v: unknown) => <StatusBadge value={v as string} />,
+    },
+    { key: 'date', label: 'Date', width: '12%' },
+    {
+      key: 'summary',
+      label: 'Summary',
+      width: '30%',
+      sortable: false,
+      render: (v: unknown) => {
+        if (!v) return <span className="text-[#48484A]">—</span>
+        const text = String(v)
+        return <span className="truncate block max-w-[300px]">{text.length > 80 ? text.slice(0, 80) + '…' : text}</span>
+      },
+    },
+  ]
+
+  if (loading) return <LoadingSpinner />
+
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-[#FF453A] text-[13px]">{error}</div>
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center h-full text-[#98989D]">
-      <svg className="w-16 h-16 opacity-30 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
-      <h2 className="text-lg font-medium text-[#636366]">Interactions</h2>
-      <p className="text-sm text-[#48484A] mt-1 max-w-sm text-center">
-        Communication log for calls, emails, and meetings. Future integration with Gmail and Google Calendar will auto-populate this view.
-      </p>
-    </div>
+    <DataTable
+      columns={columns}
+      data={interactions}
+      onRowClick={(row) => navigate(`/interactions/${row.id}/edit`)}
+      searchKeys={['subject', 'summary', 'type']}
+      emptyMessage="No interactions logged yet. Click + Log Interaction to record your first call, email, or meeting."
+      actions={
+        <PrimaryButton onClick={() => navigate('/interactions/new')}>
+          + Log Interaction
+        </PrimaryButton>
+      }
+    />
   )
 }

@@ -18,6 +18,7 @@ import ProjectListPage from './components/projects/ProjectListPage'
 import ProjectForm from './components/projects/ProjectForm'
 import ImportedContactsPage from './components/imported-contacts/ImportedContactsPage'
 import InteractionsPage from './components/interactions/InteractionsPage'
+import InteractionForm from './components/interactions/InteractionForm'
 import PortalAccessPage from './components/portal/PortalAccessPage'
 import PortalLogsPage from './components/portal/PortalLogsPage'
 import CommandPalette from './components/layout/CommandPalette'
@@ -65,8 +66,10 @@ export default function App() {
           {/* Imported Contacts */}
           <Route path="/imported-contacts" element={<ImportedContactsPage />} />
 
-          {/* Interactions (read-only, future Gmail/GCal) */}
+          {/* Interactions */}
           <Route path="/interactions" element={<InteractionsPage />} />
+          <Route path="/interactions/new" element={<InteractionForm />} />
+          <Route path="/interactions/:id/edit" element={<InteractionForm />} />
 
           {/* Portal */}
           <Route path="/portal" element={<PortalAccessPage />} />

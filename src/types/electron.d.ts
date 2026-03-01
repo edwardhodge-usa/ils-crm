@@ -34,7 +34,7 @@ interface ElectronAPI {
   tasks: EntityAPI
   proposals: EntityAPI
   projects: EntityAPI
-  interactions: ReadOnlyEntityAPI
+  interactions: EntityAPI
   importedContacts: ReadOnlyEntityAPI & {
     approve: (id: string) => Promise<{ success: boolean; error?: string }>
     reject: (id: string, reason: string) => Promise<{ success: boolean; error?: string }>

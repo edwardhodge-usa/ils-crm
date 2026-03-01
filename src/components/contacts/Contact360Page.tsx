@@ -90,7 +90,23 @@ export default function Contact360Page() {
             <div className="flex items-center gap-3 mt-1.5 text-[13px] text-[#98989D]">
               {Boolean(contact.job_title) && <span>{contact.job_title as string}</span>}
               {Boolean(contact.job_title) && Boolean(contact.company) && <span>at</span>}
-              {Boolean(contact.company) && <span className="text-white">{contact.company as string}</span>}
+              {Boolean(contact.company) && (() => {
+                let companyId: string | null = null
+                try {
+                  const ids = JSON.parse(contact.companies_ids as string || '[]')
+                  if (Array.isArray(ids) && ids.length > 0) companyId = ids[0]
+                } catch { /* not linked */ }
+                return companyId ? (
+                  <button
+                    onClick={() => navigate(`/companies/${companyId}`)}
+                    className="text-[#0A84FF] hover:text-[#0077ED] transition-colors"
+                  >
+                    {contact.company as string}
+                  </button>
+                ) : (
+                  <span className="text-white">{contact.company as string}</span>
+                )
+              })()}
             </div>
           </div>
           <div className="flex items-center gap-2">

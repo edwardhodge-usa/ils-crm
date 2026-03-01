@@ -13,7 +13,7 @@ export const NAV_ITEMS: RouteConfig[] = [
   { path: '/tasks', label: 'Tasks', icon: 'CheckSquare', newPath: '/tasks/new' },
   { path: '/proposals', label: 'Proposals', icon: 'FileText', newPath: '/proposals/new' },
   { path: '/projects', label: 'Projects', icon: 'FolderKanban', newPath: '/projects/new' },
-  { path: '/interactions', label: 'Interactions', icon: 'MessageSquare' },
+  { path: '/interactions', label: 'Interactions', icon: 'MessageSquare', newPath: '/interactions/new' },
   { path: '/imported-contacts', label: 'Imported Contacts', icon: 'UserPlus' },
   { path: '/portal', label: 'Portal Access', icon: 'Shield' },
   { path: '/portal-logs', label: 'Portal Logs', icon: 'ScrollText' },
