@@ -23,6 +23,7 @@ import InteractionForm from './components/interactions/InteractionForm'
 import PortalAccessPage from './components/portal/PortalAccessPage'
 import PortalLogsPage from './components/portal/PortalLogsPage'
 import CommandPalette from './components/layout/CommandPalette'
+import { EmptyState } from './components/shared'
 
 export default function App() {
   useEffect(() => {
@@ -58,6 +59,12 @@ export default function App() {
           <Route path="/pipeline" element={<PipelinePage />} />
           <Route path="/pipeline/new" element={<OpportunityForm />} />
           <Route path="/pipeline/:id/edit" element={<OpportunityForm />} />
+
+          {/* RFQs — placeholder */}
+          <Route path="/rfqs" element={<div className="flex-1 flex items-center justify-center"><EmptyState title="RFQs" subtitle="Coming soon" /></div>} />
+
+          {/* Contracts — placeholder */}
+          <Route path="/contracts" element={<div className="flex-1 flex items-center justify-center"><EmptyState title="Contracts" subtitle="Coming soon" /></div>} />
 
           {/* Tasks */}
           <Route path="/tasks" element={<TaskListPage />} />
