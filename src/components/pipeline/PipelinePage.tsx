@@ -1,30 +1,36 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import KanbanBoard, { type KanbanColumn } from '../shared/KanbanBoard'
-import StatusBadge from '../shared/StatusBadge'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import PrimaryButton from '../shared/PrimaryButton'
 import useEntityList from '../../hooks/useEntityList'
+import { KanbanBoard } from './KanbanBoard'
+import type { DealItem } from '@/types'
 
-const STAGES = [
-  'Initial Contact',
-  'Qualification',
-  'Meeting Scheduled',
-  'Proposal Sent',
-  'Negotiation',
-  'Contract Sent',
-  'Development',
-  'Closed Won',
-  'Closed Lost',
-]
+type DealStage = DealItem['stage']
 
-interface OpportunityCard {
-  id: string
-  opportunity_name: string
-  deal_value: number | null
-  company: string | null
-  probability: string | null
-  sales_stage: string
+// Map all legacy/extended Airtable stage values to the 5 canonical Kanban stages
+const STAGE_MAP: Record<string, DealStage> = {
+  // Prospecting bucket
+  'Initial Contact': 'Prospecting',
+  'Outbound Prospecting': 'Prospecting',
+  'Future Client': 'Prospecting',
+  'Investment': 'Prospecting',
+  // Qualified bucket
+  'Qualification': 'Qualified',
+  'Meeting Scheduled': 'Qualified',
+  // Direct pass-throughs
+  'Proposal Sent': 'Proposal Sent',
+  'Negotiation': 'Negotiation',
+  'Contract Sent': 'Negotiation',
+  'Development': 'Negotiation',
+  // Win/loss
+  'Closed Won': 'Closed Won',
+  // Closed Lost is excluded from the board (filtered out below)
+}
+
+function toStage(raw: string | null | undefined): DealStage | null {
+  if (!raw) return 'Prospecting'
+  return STAGE_MAP[raw] ?? null
 }
 
 function resolveLinkedName(idsJson: unknown, nameMap: Map<string, string>): string | null {
@@ -41,7 +47,7 @@ function resolveLinkedName(idsJson: unknown, nameMap: Map<string, string>): stri
 export default function PipelinePage() {
   const { data: rawData, loading, error } = useEntityList(() => window.electronAPI.opportunities.getAll())
   const { data: companiesData } = useEntityList(() => window.electronAPI.companies.getAll())
-  const [overrides, setOverrides] = useState<Record<string, string>>({})
+  const [selectedDealId, setSelectedDealId] = useState<string | null>(null)
   const navigate = useNavigate()
 
   const companyNames = useMemo(() => {
@@ -52,37 +58,25 @@ export default function PipelinePage() {
     return map
   }, [companiesData])
 
-  const opportunities: OpportunityCard[] = useMemo(() =>
-    rawData.map(o => ({
-      id: o.id as string,
-      opportunity_name: (o.opportunity_name as string) || 'Unnamed',
-      deal_value: o.deal_value as number | null,
-      company: resolveLinkedName(o.company_ids, companyNames),
-      probability: o.probability as string | null,
-      sales_stage: overrides[o.id as string] || (o.sales_stage as string) || 'Initial Contact',
-    })),
-    [rawData, overrides, companyNames]
-  )
+  const deals: DealItem[] = useMemo(() => {
+    const mapped: DealItem[] = []
+    for (const o of rawData) {
+      const stage = toStage(o.sales_stage as string | null)
+      // Exclude Closed Lost and any unmapped stages
+      if (!stage) continue
 
-  const columns: KanbanColumn<OpportunityCard>[] = STAGES.map(stage => ({
-    id: stage,
-    label: stage,
-    items: opportunities.filter(o => o.sales_stage === stage),
-  }))
-
-  async function handleMove(itemId: string, _fromColumn: string, toColumn: string) {
-    // Optimistic update
-    setOverrides(prev => ({ ...prev, [itemId]: toColumn }))
-
-    // Push to Airtable
-    try {
-      await window.electronAPI.opportunities.update(itemId, { sales_stage: toColumn })
-    } catch (err) {
-      // Revert on failure
-      console.error('Failed to update pipeline stage:', err)
-      setOverrides(prev => ({ ...prev, [itemId]: _fromColumn }))
+      mapped.push({
+        id: o.id as string,
+        dealName: (o.opportunity_name as string) || 'Unnamed',
+        companyName: resolveLinkedName(o.company_ids, companyNames),
+        value: o.deal_value as number | null,
+        probability: (o.probability_value as number | null) ?? null,
+        stage,
+        daysInStage: null, // not synced from Airtable — formula field not in local DB
+      })
     }
-  }
+    return mapped
+  }, [rawData, companyNames])
 
   if (loading) return <LoadingSpinner />
 
@@ -90,67 +84,65 @@ export default function PipelinePage() {
     return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
   }
 
-  const totalValue = opportunities
-    .filter(o => o.sales_stage !== 'Closed Won' && o.sales_stage !== 'Closed Lost')
-    .reduce((sum, o) => sum + (o.deal_value || 0), 0)
-
-  const wonValue = opportunities
-    .filter(o => o.sales_stage === 'Closed Won')
-    .reduce((sum, o) => sum + (o.deal_value || 0), 0)
+  const activeDeals = deals.filter(d => d.stage !== 'Closed Won')
+  const totalValue = activeDeals.reduce((sum, d) => sum + (d.value ?? 0), 0)
+  const wonValue = deals.filter(d => d.stage === 'Closed Won').reduce((sum, d) => sum + (d.value ?? 0), 0)
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Summary bar */}
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--separator)] flex-shrink-0">
         <div className="flex items-center gap-6">
-        <div>
-          <span className="text-[var(--text-tertiary)]">Active Pipeline: </span>
-          <span className="text-[var(--text-primary)] font-medium">${totalValue.toLocaleString()}</span>
-        </div>
-        <div>
-          <span className="text-[var(--text-tertiary)]">Won: </span>
-          <span className="text-[var(--color-green)] font-medium">${wonValue.toLocaleString()}</span>
-        </div>
-        <div>
-          <span className="text-[var(--text-tertiary)]">Deals: </span>
-          <span className="text-[var(--text-primary)] font-medium">{opportunities.length}</span>
-        </div>
+          <h1 className="text-[13px] font-semibold text-[var(--text-primary)]">Pipeline</h1>
+          <div className="flex items-center gap-4 text-[11px]">
+            <div>
+              <span className="text-[var(--text-tertiary)]">Active: </span>
+              <span className="text-[var(--text-primary)] font-medium">${totalValue.toLocaleString()}</span>
+            </div>
+            <div>
+              <span className="text-[var(--text-tertiary)]">Won: </span>
+              <span className="text-[var(--color-green)] font-medium">${wonValue.toLocaleString()}</span>
+            </div>
+            <div>
+              <span className="text-[var(--text-tertiary)]">Deals: </span>
+              <span className="text-[var(--text-primary)] font-medium">{deals.length}</span>
+            </div>
+          </div>
         </div>
         <PrimaryButton onClick={() => navigate('/pipeline/new')}>
-          + New Opportunity
+          + New Deal
         </PrimaryButton>
       </div>
 
-      {/* Kanban */}
-      <div className="flex-1 min-h-0">
+      {/* Kanban board — fills remaining height */}
+      <div className="flex-1 min-h-0 overflow-hidden">
         <KanbanBoard
-          columns={columns}
-          renderCard={(opp) => (
-            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-3 hover:border-[var(--color-accent)]/50 transition-colors">
-              <p className="text-base text-[var(--text-primary)] font-medium mb-1 line-clamp-2">
-                {opp.opportunity_name}
-              </p>
-              {Boolean(opp.company) && (
-                <p className="text-base text-[var(--text-tertiary)] mb-2">{opp.company}</p>
-              )}
-              <div className="flex items-center justify-between">
-                {opp.deal_value ? (
-                  <span className="text-base text-[var(--color-green)] font-medium">
-                    ${opp.deal_value.toLocaleString()}
-                  </span>
-                ) : (
-                  <span className="text-base text-[var(--text-placeholder)]">No value</span>
-                )}
-                {Boolean(opp.probability) && (
-                  <StatusBadge value={opp.probability!} />
-                )}
-              </div>
-            </div>
-          )}
-          onMove={handleMove}
-          onCardClick={(id) => navigate(`/pipeline/${id}/edit`)}
+          deals={deals}
+          selectedDealId={selectedDealId}
+          onSelectDeal={(id) => setSelectedDealId(prev => prev === id ? null : id)}
         />
       </div>
+
+      {/* Deal detail slide-in panel (placeholder — Task 7) */}
+      {selectedDealId && (
+        <div
+          className="absolute right-0 top-0 bottom-0 w-[300px] bg-[var(--bg-sheet)] border-l border-[var(--separator)] shadow-xl z-10 flex flex-col"
+          style={{ top: 0 }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--separator)]">
+            <span className="text-[12px] font-semibold text-[var(--text-primary)]">Deal Detail</span>
+            <button
+              onClick={() => setSelectedDealId(null)}
+              className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] text-[16px] leading-none"
+            >
+              ×
+            </button>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-[11px] text-[var(--text-tertiary)]">Deal detail coming in Task 7</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -272,6 +272,16 @@ export interface PortalLog {
 
 // ─── View/List Types ─────────────────────────────────────────
 
+export interface DealItem {
+  id: string
+  dealName: string
+  companyName: string | null
+  value: number | null
+  probability: number | null
+  stage: 'Prospecting' | 'Qualified' | 'Proposal Sent' | 'Negotiation' | 'Closed Won'
+  daysInStage: number | null
+}
+
 export interface ContactListItem {
   id: string
   firstName: string
