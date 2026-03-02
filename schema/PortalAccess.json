@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PortalAccess",
+  "description": "Client portal access records. Links to Contacts with multiple lookup fields for resolved contact data. Shared with imaginelab-portal (Next.js).",
+  "airtable": {
+    "baseId": "appYXbUdcmSwBoPFU",
+    "tableId": "tblN1jruT8VeucPKa",
+    "fieldCount": 37,
+    "syncMode": "full-crud",
+    "primaryField": "name"
+  },
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Airtable record ID"
+    },
+
+    "name": {
+      "type": "string",
+      "airtableFieldId": "fldqnVE5ppj8ACyf3",
+      "airtableType": "singleLineText",
+      "primary": true
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "airtableFieldId": "fldU70JpJQ1GpbRNQ",
+      "airtableType": "email"
+    },
+    "pageAddress": {
+      "type": "string",
+      "airtableFieldId": "fldkAjPIMUMlHNT2A",
+      "airtableType": "singleLineText"
+    },
+    "decisionMaker": {
+      "type": "string",
+      "airtableFieldId": "fldn0nMxnqpHkLykk",
+      "airtableType": "singleLineText"
+    },
+    "company": {
+      "type": "string",
+      "airtableFieldId": "fldYZ1Su7WnNPxf17",
+      "airtableType": "singleLineText"
+    },
+    "address": {
+      "type": "string",
+      "airtableFieldId": "fldvaQB8wzgaLLn2Y",
+      "airtableType": "singleLineText"
+    },
+    "primaryContact": {
+      "type": "string",
+      "airtableFieldId": "fldqESjieqvuj1k4P",
+      "airtableType": "singleLineText"
+    },
+    "positionTitle": {
+      "type": "string",
+      "airtableFieldId": "fld2UX68BMEk768Ao",
+      "airtableType": "singleLineText"
+    },
+    "industry": {
+      "type": "string",
+      "airtableFieldId": "fld8JNk7r3mQvco7V",
+      "airtableType": "singleLineText"
+    },
+    "notes": {
+      "type": "string",
+      "airtableFieldId": "fldiOyYVt4QN8Yon4",
+      "airtableType": "multilineText"
+    },
+    "phoneNumber": {
+      "type": "string",
+      "airtableFieldId": "fldHVA9pJd2j2bJNi",
+      "airtableType": "phoneNumber"
+    },
+    "website": {
+      "type": "string",
+      "format": "uri",
+      "airtableFieldId": "fldJhqz0wngVDNxwt",
+      "airtableType": "url"
+    },
+    "projectBudget": {
+      "type": ["number", "null"],
+      "airtableFieldId": "fldQisibz3rZaC4mi",
+      "airtableType": "currency"
+    },
+    "dateAdded": {
+      "type": "string",
+      "format": "date",
+      "airtableFieldId": "fld8m3xt2QOi2EF3b",
+      "airtableType": "date"
+    },
+    "expectedProjectStartDate": {
+      "type": "string",
+      "format": "date",
+      "airtableFieldId": "flduKP6vlsDlxZuGW",
+      "airtableType": "date"
+    },
+    "followUpDate": {
+      "type": "string",
+      "format": "date",
+      "airtableFieldId": "fldvhmfQXneMvWXD1",
+      "airtableType": "date"
+    },
+    "status": {
+      "type": "string",
+      "airtableFieldId": "fldqbzNiTFt7jpdyW",
+      "airtableType": "singleSelect"
+    },
+    "leadSource": {
+      "type": "string",
+      "airtableFieldId": "fldnIkdS9MSewsUqy",
+      "airtableType": "singleSelect"
+    },
+    "stage": {
+      "type": "string",
+      "airtableFieldId": "fldYrwOrTeimfHC5c",
+      "airtableType": "singleSelect"
+    },
+    "servicesInterestedIn": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldcBIAHs2jpNkQbD",
+      "airtableType": "multipleSelects",
+      "description": "Stored as JSON array in SQLite"
+    },
+    "contactIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fld1tMK48dxrLU9R4",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Contacts",
+      "linkedTableId": "tbl9Q8m06ivkTYyvR"
+    },
+
+    "framerPageUrl": {
+      "type": "string",
+      "format": "uri",
+      "airtableFieldId": "fldzVcWNLBnNQjwQ6",
+      "airtableType": "formula",
+      "readOnly": true,
+      "description": "Formula field — read-only, computed by Airtable"
+    },
+
+    "contactNameLookup": {
+      "type": "string",
+      "airtableFieldId": "fldwGCWvBs8GCz5ka",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.contactName",
+      "description": "Lookup — resolved contact name. Known issue: shows empty when linked record not resolved."
+    },
+    "contactCompanyLookup": {
+      "type": "string",
+      "airtableFieldId": "fldbeA6Zdgcf6k4Si",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.company"
+    },
+    "contactEmailLookup": {
+      "type": "string",
+      "airtableFieldId": "fldtZJw7XdUeVGNcA",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.email"
+    },
+    "contactPhoneLookup": {
+      "type": "string",
+      "airtableFieldId": "fldH8ZDUC4l0vKXpV",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.phone"
+    },
+    "contactJobTitleLookup": {
+      "type": "string",
+      "airtableFieldId": "fldQbVqtuSO4KXgg9",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.jobTitle"
+    },
+    "contactIndustryLookup": {
+      "type": "string",
+      "airtableFieldId": "fldqTLSogKYG6wIwI",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.industry"
+    },
+    "contactTagsLookup": {
+      "type": "string",
+      "airtableFieldId": "fldM8HUiHkQy7tOFx",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.tags"
+    },
+    "contactWebsiteLookup": {
+      "type": "string",
+      "airtableFieldId": "fldX1QmphBEEZX7hr",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.website"
+    },
+    "contactAddressLineLookup": {
+      "type": "string",
+      "airtableFieldId": "fld55H7Qh189M9nTc",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.addressLine"
+    },
+    "contactCityLookup": {
+      "type": "string",
+      "airtableFieldId": "fldocH6IhXiWnS1O9",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.city"
+    },
+    "contactStateLookup": {
+      "type": "string",
+      "airtableFieldId": "fld95YpyLfDuEtgHQ",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.state"
+    },
+    "contactCountryLookup": {
+      "type": "string",
+      "airtableFieldId": "fldb9Nsoynf3zrZGr",
+      "airtableType": "lookup",
+      "readOnly": true,
+      "lookupSource": "Contacts.country"
+    },
+
+    "assignee": {
+      "type": "string",
+      "airtableFieldId": "fldQ0KnWXkFlInBu1",
+      "airtableType": "collaborator"
+    },
+    "attachments": {
+      "type": "array",
+      "items": { "type": "object" },
+      "airtableFieldId": "fldCvoIAUEUg0DraC",
+      "airtableType": "multipleAttachments"
+    },
+
+    "_airtableModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_localModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_pendingPush": {
+      "type": "boolean"
+    }
+  }
+}

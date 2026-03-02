@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tasks",
+  "description": "Action items linked to Opportunities, Contacts, Projects, and Proposals. Has formula-based Overdue field.",
+  "airtable": {
+    "baseId": "appYXbUdcmSwBoPFU",
+    "tableId": "tblwEt5YsYDP22qrr",
+    "fieldCount": 12,
+    "syncMode": "full-crud",
+    "primaryField": "task"
+  },
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Airtable record ID"
+    },
+    "task": {
+      "type": "string",
+      "airtableFieldId": "fldfYqgokx0nP9jrq",
+      "airtableType": "singleLineText",
+      "primary": true,
+      "description": "Task title / description (primary field)"
+    },
+    "notes": {
+      "type": "string",
+      "airtableFieldId": "fldwi4Fm7aOdyh7R3",
+      "airtableType": "multilineText"
+    },
+    "dueDate": {
+      "type": "string",
+      "format": "date",
+      "airtableFieldId": "fldrV9zjZGNlm2znw",
+      "airtableType": "date",
+      "description": "IMPORTANT: Stored as ISO string in SQLite. Use date(due_date) for SQLite comparisons, not raw value."
+    },
+    "completedDate": {
+      "type": "string",
+      "format": "date",
+      "airtableFieldId": "fldOE0MEitlXCeC5e",
+      "airtableType": "date"
+    },
+    "status": {
+      "type": "string",
+      "airtableFieldId": "fld5j051j1H7rPmbw",
+      "airtableType": "singleSelect",
+      "description": "Options likely have emoji prefixes — fetch from metadata API"
+    },
+    "type": {
+      "type": "string",
+      "airtableFieldId": "fldXcqtkVSh60H20b",
+      "airtableType": "singleSelect"
+    },
+    "priority": {
+      "type": "string",
+      "airtableFieldId": "fldREFoOWpRN4Ejfg",
+      "airtableType": "singleSelect",
+      "description": "Options have emoji prefixes (e.g. '🔴 High'). Always fetch exact names from metadata API."
+    },
+    "salesOpportunitiesIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldhzkBEvT2UlcW7g",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Opportunities",
+      "linkedTableId": "tblsalt5lmHlh4s7z"
+    },
+    "contactsIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldyzxf3dGGCT02t0",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Contacts",
+      "linkedTableId": "tbl9Q8m06ivkTYyvR"
+    },
+    "projectsIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldtxrwOzmkpjVtdj",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Projects",
+      "linkedTableId": "tbll416ZwFACYQSm4"
+    },
+    "proposalIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldB9nEqdI6EZMfPo",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Proposals",
+      "linkedTableId": "tblODEy2pLlfrz0lz"
+    },
+    "assignedTo": {
+      "type": "string",
+      "airtableFieldId": "fldtfWkEqvv5YHODj",
+      "airtableType": "collaborator"
+    },
+    "_airtableModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_localModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_pendingPush": {
+      "type": "boolean"
+    }
+  }
+}

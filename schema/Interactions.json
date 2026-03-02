@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Interactions",
+  "description": "Communication log — emails, calls, meetings. Linked to Contacts and Opportunities.",
+  "airtable": {
+    "baseId": "appYXbUdcmSwBoPFU",
+    "tableId": "tblTUNClZpfFjhFVm",
+    "fieldCount": 9,
+    "syncMode": "full-crud",
+    "primaryField": "subject"
+  },
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Airtable record ID"
+    },
+    "subject": {
+      "type": "string",
+      "airtableFieldId": "fldMog5p49xWLD5Zb",
+      "airtableType": "singleLineText",
+      "primary": true
+    },
+    "summary": {
+      "type": "string",
+      "airtableFieldId": "fldqqHNLs8mXW2RRA",
+      "airtableType": "multilineText"
+    },
+    "nextSteps": {
+      "type": "string",
+      "airtableFieldId": "fldyh8QUnhF3hUsBV",
+      "airtableType": "multilineText"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "airtableFieldId": "fldOTeAY7Y0JDnaMF",
+      "airtableType": "date"
+    },
+    "type": {
+      "type": "string",
+      "airtableFieldId": "fldsdGx3u8RPS8GrH",
+      "airtableType": "singleSelect"
+    },
+    "direction": {
+      "type": "string",
+      "airtableFieldId": "fld9d6pw2GM3Syhag",
+      "airtableType": "singleSelect"
+    },
+    "contactsIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldNz08up6Zcn3HjK",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Contacts",
+      "linkedTableId": "tbl9Q8m06ivkTYyvR"
+    },
+    "salesOpportunitiesIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldgRf0WkgdcMLseJ",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Opportunities",
+      "linkedTableId": "tblsalt5lmHlh4s7z"
+    },
+    "loggedBy": {
+      "type": "string",
+      "airtableFieldId": "fldn0mHhKfd88K6z8",
+      "airtableType": "collaborator"
+    },
+    "_airtableModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_localModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_pendingPush": {
+      "type": "boolean"
+    }
+  }
+}

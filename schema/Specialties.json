@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Specialties",
+  "description": "Lookup table for specialty categories. 70 canonical entries. Read-only — no push to Airtable.",
+  "airtable": {
+    "baseId": "appYXbUdcmSwBoPFU",
+    "tableId": "tblysTixdxGQQntHO",
+    "fieldCount": 3,
+    "syncMode": "read-only",
+    "primaryField": "specialty"
+  },
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Airtable record ID"
+    },
+    "specialty": {
+      "type": "string",
+      "airtableFieldId": "fldLVp1uePoKCuJlM",
+      "airtableType": "singleLineText",
+      "primary": true,
+      "description": "Canonical specialty name"
+    },
+    "importedContactsIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldPQWyanCOcXVxmL",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "ImportedContacts",
+      "linkedTableId": "tblribgEf5RENNDQW"
+    },
+    "contactsIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldVtUb9RqF03Ubq7",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Contacts",
+      "linkedTableId": "tbl9Q8m06ivkTYyvR"
+    },
+    "_airtableModifiedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "No _localModifiedAt or _pendingPush — this table is read-only"
+    }
+  }
+}

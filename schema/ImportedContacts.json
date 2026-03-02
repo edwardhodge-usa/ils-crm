@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ImportedContacts",
+  "description": "Bulk import staging area. Contacts are reviewed here before approval into the main Contacts table. Read + approve/reject only (no general CRUD push).",
+  "airtable": {
+    "baseId": "appYXbUdcmSwBoPFU",
+    "tableId": "tblribgEf5RENNDQW",
+    "fieldCount": 48,
+    "syncMode": "read-plus-approve-reject",
+    "primaryField": "importedContactName"
+  },
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Airtable record ID"
+    },
+    "importedContactName": {
+      "type": "string",
+      "airtableFieldId": "fldKc8P6eYXjMpAJ6",
+      "airtableType": "singleLineText",
+      "primary": true
+    },
+    "company": {
+      "type": "string",
+      "airtableFieldId": "fld31Zl7X7DBZdL9K",
+      "airtableType": "singleLineText"
+    },
+    "firstName": {
+      "type": "string",
+      "airtableFieldId": "fld7c1acCh17aOi0p",
+      "airtableType": "singleLineText"
+    },
+    "lastName": {
+      "type": "string",
+      "airtableFieldId": "fldICvkgNbRG9dpqm",
+      "airtableType": "singleLineText"
+    },
+    "jobTitle": {
+      "type": "string",
+      "airtableFieldId": "fldTHA6J24XaECMsz",
+      "airtableType": "singleLineText"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "airtableFieldId": "fld9ejqJy5wjBqvrx",
+      "airtableType": "singleLineText"
+    },
+    "eventTags": {
+      "type": "string",
+      "airtableFieldId": "fldwI75ClzRJ7lli0",
+      "airtableType": "singleLineText"
+    },
+    "addressLine": {
+      "type": "string",
+      "airtableFieldId": "fld1Zpkm1Kms9XvRv",
+      "airtableType": "singleLineText"
+    },
+    "city": {
+      "type": "string",
+      "airtableFieldId": "fldfS2EeVb5l3ic5h",
+      "airtableType": "singleLineText"
+    },
+    "state": {
+      "type": "string",
+      "airtableFieldId": "fldIoe4TldH0WJUZj",
+      "airtableType": "singleLineText"
+    },
+    "country": {
+      "type": "string",
+      "airtableFieldId": "fldljgJjsqMkpMbkc",
+      "airtableType": "singleLineText"
+    },
+    "companyFoundingYear": {
+      "type": "string",
+      "airtableFieldId": "fldCgacbjwFoRlHIp",
+      "airtableType": "singleLineText"
+    },
+    "companyNaicsCode": {
+      "type": "string",
+      "airtableFieldId": "fldehmtkMRlb4M5Zi",
+      "airtableType": "singleLineText"
+    },
+    "companyType": {
+      "type": "string",
+      "airtableFieldId": "fldiB3195PfAK7Wfg",
+      "airtableType": "singleLineText"
+    },
+    "companySize": {
+      "type": "string",
+      "airtableFieldId": "fldsJURWi2VvrvN2v",
+      "airtableType": "singleLineText"
+    },
+    "companyIndustry": {
+      "type": "string",
+      "airtableFieldId": "fldiFajpEd7M14YBF",
+      "airtableType": "singleLineText"
+    },
+    "companyAnnualRevenue": {
+      "type": "string",
+      "airtableFieldId": "fldLJr6gTu9zTeo0r",
+      "airtableType": "singleLineText"
+    },
+    "companyStreetAddress": {
+      "type": "string",
+      "airtableFieldId": "fldwAf4k6bsI922O4",
+      "airtableType": "singleLineText"
+    },
+    "companyStreetAddress2": {
+      "type": "string",
+      "airtableFieldId": "fldXhL0dxuxXxDnti",
+      "airtableType": "singleLineText"
+    },
+    "companyCity": {
+      "type": "string",
+      "airtableFieldId": "fld4tMsuM8QhnhuZm",
+      "airtableType": "singleLineText"
+    },
+    "companyState": {
+      "type": "string",
+      "airtableFieldId": "fldv9qnkGC3pnZQnv",
+      "airtableType": "singleLineText"
+    },
+    "companyCountry": {
+      "type": "string",
+      "airtableFieldId": "fld4YLilZ2HdhmCse",
+      "airtableType": "singleLineText"
+    },
+    "companyPostalCode": {
+      "type": "string",
+      "airtableFieldId": "fldamMPu4kkZGugZn",
+      "airtableType": "singleLineText"
+    },
+    "postalCode": {
+      "type": "string",
+      "airtableFieldId": "fldIsJaEWbMOb2juI",
+      "airtableType": "singleLineText"
+    },
+    "companyDescription": {
+      "type": "string",
+      "airtableFieldId": "fldc5Aj4hRRZ4tIgE",
+      "airtableType": "multilineText"
+    },
+    "note": {
+      "type": "string",
+      "airtableFieldId": "fldMsJukGZt02TYVu",
+      "airtableType": "multilineText"
+    },
+    "reasonForRejection": {
+      "type": "string",
+      "airtableFieldId": "fld1A8rCPjuXYSGp1",
+      "airtableType": "multilineText"
+    },
+    "reviewNotes": {
+      "type": "string",
+      "airtableFieldId": "fldKYaclj13Bmut7D",
+      "airtableType": "multilineText"
+    },
+    "phone": {
+      "type": "string",
+      "airtableFieldId": "fldZfFoFsOrIW2wQZ",
+      "airtableType": "phoneNumber"
+    },
+    "mobilePhone": {
+      "type": "string",
+      "airtableFieldId": "fldm8LaalVz7l38PS",
+      "airtableType": "phoneNumber"
+    },
+    "otherPhone": {
+      "type": "string",
+      "airtableFieldId": "fld9wvepdWiVG4i70",
+      "airtableType": "phoneNumber"
+    },
+    "workPhone": {
+      "type": "string",
+      "airtableFieldId": "fld8MuOecNSVON5rD",
+      "airtableType": "phoneNumber"
+    },
+    "officePhone": {
+      "type": "string",
+      "airtableFieldId": "fldUkm871jdjXQloI",
+      "airtableType": "phoneNumber"
+    },
+    "fax": {
+      "type": "string",
+      "airtableFieldId": "fldBl4gTpGGFVEJOB",
+      "airtableType": "phoneNumber"
+    },
+    "linkedInUrl": {
+      "type": "string",
+      "format": "uri",
+      "airtableFieldId": "fldzikDES0UdCd4FQ",
+      "airtableType": "url"
+    },
+    "website": {
+      "type": "string",
+      "format": "uri",
+      "airtableFieldId": "fld57XgOQ9sFJOfof",
+      "airtableType": "url"
+    },
+    "contactPhotoUrl": {
+      "type": "string",
+      "format": "uri",
+      "airtableFieldId": "fldNdNyWMAGEOfOyH",
+      "airtableType": "url"
+    },
+    "businessCardImageUrl": {
+      "type": "string",
+      "format": "uri",
+      "airtableFieldId": "flduCN8BdOUkZeTTJ",
+      "airtableType": "url"
+    },
+    "importDate": {
+      "type": "string",
+      "format": "date",
+      "airtableFieldId": "fldNa8uThfClQFB79",
+      "airtableType": "date"
+    },
+    "categorization": {
+      "type": "string",
+      "airtableFieldId": "fldrYKTLd2HnL7GSe",
+      "airtableType": "singleSelect"
+    },
+    "onboardingStatus": {
+      "type": "string",
+      "airtableFieldId": "fldncdRP37p6BB9UX",
+      "airtableType": "singleSelect",
+      "description": "Set to 'Approved' or 'Rejected' via IPC actions"
+    },
+    "importSource": {
+      "type": "string",
+      "airtableFieldId": "fld1fDiNE3vhoyi3P",
+      "airtableType": "singleSelect"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldn2bUb5Khf7iumL",
+      "airtableType": "multipleSelects",
+      "description": "Stored as JSON array in SQLite"
+    },
+    "syncToContacts": {
+      "type": "boolean",
+      "airtableFieldId": "fldjm5mEIT25nlWjT",
+      "airtableType": "checkbox"
+    },
+    "specialtiesIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldlkF1wlCbxBQ3KJ",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Specialties",
+      "linkedTableId": "tblysTixdxGQQntHO"
+    },
+    "relatedCrmContactIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldDq3cetx5nrVqGo",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Contacts",
+      "linkedTableId": "tbl9Q8m06ivkTYyvR"
+    },
+    "importedBy": {
+      "type": "string",
+      "airtableFieldId": "fldWK7U0Qj1dk8Ume",
+      "airtableType": "collaborator",
+      "readOnly": true
+    },
+    "assignedAdmin": {
+      "type": "string",
+      "airtableFieldId": "flds9MpvnwGkYX9Gi",
+      "airtableType": "collaborator"
+    },
+    "_airtableModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_localModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_pendingPush": {
+      "type": "boolean"
+    }
+  }
+}

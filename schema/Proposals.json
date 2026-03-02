@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Proposals",
+  "description": "Client proposals. Inline task fields were removed — uses linked Tasks instead.",
+  "airtable": {
+    "baseId": "appYXbUdcmSwBoPFU",
+    "tableId": "tblODEy2pLlfrz0lz",
+    "fieldCount": 13,
+    "syncMode": "full-crud",
+    "primaryField": "proposalName"
+  },
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Airtable record ID"
+    },
+    "proposalName": {
+      "type": "string",
+      "airtableFieldId": "fld5Y8fCuS1jhkWF2",
+      "airtableType": "singleLineText",
+      "primary": true
+    },
+    "version": {
+      "type": "string",
+      "airtableFieldId": "fldQ8g5iqtMPHxb8S",
+      "airtableType": "singleLineText"
+    },
+    "clientFeedback": {
+      "type": "string",
+      "airtableFieldId": "fldhUnP1A7gxJNaxe",
+      "airtableType": "multilineText"
+    },
+    "performanceMetrics": {
+      "type": "string",
+      "airtableFieldId": "fldZeAOE1WpLOY3aH",
+      "airtableType": "multilineText"
+    },
+    "notes": {
+      "type": "string",
+      "airtableFieldId": "fldryZ3MW513WcmrK",
+      "airtableType": "multilineText"
+    },
+    "scopeSummary": {
+      "type": "string",
+      "description": "Added via migration — may not exist in older Airtable records"
+    },
+    "proposedValue": {
+      "type": ["number", "null"],
+      "description": "Added via migration"
+    },
+    "dateSent": {
+      "type": "string",
+      "format": "date",
+      "description": "Added via migration"
+    },
+    "validUntil": {
+      "type": "string",
+      "format": "date",
+      "description": "Added via migration"
+    },
+    "status": {
+      "type": "string",
+      "airtableFieldId": "fldBzyWMITVJdZyRl",
+      "airtableType": "singleSelect"
+    },
+    "templateUsed": {
+      "type": "string",
+      "airtableFieldId": "fldAOt35mhF1ne0UK",
+      "airtableType": "singleSelect"
+    },
+    "approvalStatus": {
+      "type": "string",
+      "airtableFieldId": "fldwWCRdvqYVTXZ12",
+      "airtableType": "singleSelect"
+    },
+    "clientIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldoz0V3WTPup4zv8",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Contacts",
+      "linkedTableId": "tbl9Q8m06ivkTYyvR"
+    },
+    "companyIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldxxsjKV66IhPKzL",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Companies",
+      "linkedTableId": "tblEauAm0ZYuMbHUa"
+    },
+    "relatedOpportunityIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldPs5pFveiqZbpnn",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Opportunities",
+      "linkedTableId": "tblsalt5lmHlh4s7z"
+    },
+    "tasksIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldQARjLcMpanbY6m",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Tasks",
+      "linkedTableId": "tblwEt5YsYDP22qrr"
+    },
+    "createdBy": {
+      "type": "string",
+      "airtableFieldId": "fld9TDETWFG7tFusb",
+      "airtableType": "collaborator"
+    },
+    "_airtableModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_localModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_pendingPush": {
+      "type": "boolean"
+    }
+  }
+}
