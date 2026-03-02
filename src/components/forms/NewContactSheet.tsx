@@ -215,7 +215,7 @@ export function NewContactSheet({ isOpen, onClose, onSave }: NewContactSheetProp
                 type="button"
                 onClick={() => set('qualityRating', i + 1 === form.qualityRating ? 0 : i + 1)}
                 aria-label={`Rate ${i + 1} out of 5`}
-                className="focus:outline-none"
+                className=""
               >
                 <div
                   style={{ width: 10, height: 10 }}
@@ -248,7 +248,7 @@ export function NewContactSheet({ isOpen, onClose, onSave }: NewContactSheetProp
 
         {/* Footer */}
         {saveError && (
-          <p className="text-[12px] text-red-500">{saveError}</p>
+          <p className="text-[12px] text-[var(--color-red)]">{saveError}</p>
         )}
         <div className="flex justify-end gap-2 pt-2 border-t border-[var(--separator)]">
           <button
@@ -262,7 +262,7 @@ export function NewContactSheet({ isOpen, onClose, onSave }: NewContactSheetProp
             type="button"
             onClick={handleSave}
             disabled={!canSave || saving}
-            className="px-4 py-1.5 text-[13px] font-medium text-[var(--text-on-accent)] bg-[var(--color-accent)] rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+            className="px-4 py-1.5 text-[13px] font-medium text-[var(--text-on-accent)] bg-[var(--color-accent)] rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 transition-colors duration-150"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>

@@ -82,7 +82,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
       style={{
         boxShadow: 'var(--shadow-lg)',
         transform: visible ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform 250ms ease-out',
+        transition: 'transform 250ms cubic-bezier(0,0,0.2,1)',
       }}
     >
       {deal ? (

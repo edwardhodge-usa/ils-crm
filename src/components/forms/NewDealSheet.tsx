@@ -157,7 +157,7 @@ export function NewDealSheet({ isOpen, onClose, onSave }: NewDealSheetProps) {
               max={100}
               value={form.probability}
               onChange={(e) => set('probability', Number(e.target.value))}
-              className="w-16 text-[var(--color-accent)] bg-transparent font-semibold text-[13px] border-none outline-none focus:outline-none"
+              className="w-16 text-[var(--color-accent)] bg-transparent font-semibold text-[13px] border-none"
             />
             <span className="text-[11px] text-[var(--color-accent)]">%</span>
           </div>
@@ -180,7 +180,7 @@ export function NewDealSheet({ isOpen, onClose, onSave }: NewDealSheetProps) {
 
         {/* Footer */}
         {Boolean(saveError) && (
-          <p className="text-[12px] text-red-500">{saveError}</p>
+          <p className="text-[12px] text-[var(--color-red)]">{saveError}</p>
         )}
         <div className="flex justify-end gap-2 pt-2 border-t border-[var(--separator)]">
           <button
@@ -194,7 +194,7 @@ export function NewDealSheet({ isOpen, onClose, onSave }: NewDealSheetProps) {
             type="button"
             onClick={handleSave}
             disabled={!canSave || saving}
-            className="px-4 py-1.5 text-[13px] font-medium text-[var(--text-on-accent)] bg-[var(--color-accent)] rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+            className="px-4 py-1.5 text-[13px] font-medium text-[var(--text-on-accent)] bg-[var(--color-accent)] rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 transition-colors duration-150"
           >
             {saving ? 'Saving...' : 'Save Deal'}
           </button>

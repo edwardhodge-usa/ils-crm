@@ -117,7 +117,7 @@ export default function EntityForm({
       {/* Sections */}
       {Array.from(sections.entries()).map(([sectionName, sectionFields]) => (
         <div key={sectionName} className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-          <h3 className="text-base font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-4">{sectionName}</h3>
+          <h3 className="text-[13px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-4">{sectionName}</h3>
           <div className="grid grid-cols-2 gap-4">
             {sectionFields.map(field => (
               <FieldRenderer
@@ -150,7 +150,7 @@ function FieldRenderer({
     return (
       <div className={field.type === 'readonly' ? 'col-span-2' : ''}>
         <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
-        <p className="text-base text-[var(--text-secondary)] px-3 py-2">{(value as string) || '—'}</p>
+        <p className="text-[13px] text-[var(--text-secondary)] px-3 py-2">{(value as string) || '—'}</p>
       </div>
     )
   }
@@ -178,7 +178,7 @@ function FieldRenderer({
           onChange={e => onChange(e.target.checked)}
           className="w-4 h-4 rounded border-[var(--separator-opaque)] bg-[var(--bg-window)] text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
         />
-        <label className="text-base text-[var(--text-primary)]">{field.label}</label>
+        <label className="text-[13px] text-[var(--text-primary)]">{field.label}</label>
       </div>
     )
   }

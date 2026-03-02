@@ -182,7 +182,7 @@ export function LogInteractionSheet({
           />
           <label
             htmlFor="follow-up-toggle"
-            className="text-[13px] text-[var(--text-secondary)] cursor-pointer select-none"
+            className="text-[13px] text-[var(--text-secondary)] cursor-default select-none"
           >
             Add a follow-up task
           </label>
@@ -232,7 +232,7 @@ export function LogInteractionSheet({
 
         {/* Footer */}
         {Boolean(saveError) && (
-          <p className="text-[12px] text-red-500">{saveError}</p>
+          <p className="text-[12px] text-[var(--color-red)]">{saveError}</p>
         )}
         <div className="flex justify-end gap-2 pt-2 border-t border-[var(--separator)]">
           <button
@@ -246,7 +246,7 @@ export function LogInteractionSheet({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-1.5 text-[13px] font-medium text-[var(--text-on-accent)] bg-[var(--color-accent)] rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+            className="px-4 py-1.5 text-[13px] font-medium text-[var(--text-on-accent)] bg-[var(--color-accent)] rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 transition-colors duration-150"
           >
             {saving ? 'Saving...' : 'Log Interaction'}
           </button>

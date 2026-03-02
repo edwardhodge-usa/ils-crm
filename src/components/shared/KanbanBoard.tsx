@@ -39,10 +39,10 @@ function DroppableColumn<T extends { id: string }>({
   return (
     <div className="flex flex-col min-w-[260px] w-[260px] flex-shrink-0">
       <div className="flex items-center justify-between px-2 pb-2">
-        <h3 className="text-base font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+        <h3 className="text-[13px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
           {column.label}
         </h3>
-        <span className="text-base text-[var(--text-tertiary)] bg-[var(--separator-opaque)] px-1.5 py-0.5 rounded-full">
+        <span className="text-[13px] text-[var(--text-tertiary)] bg-[var(--separator-opaque)] px-1.5 py-0.5 rounded-full">
           {column.items.length}
         </span>
       </div>

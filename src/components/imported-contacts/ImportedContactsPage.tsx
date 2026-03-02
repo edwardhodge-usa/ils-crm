@@ -161,13 +161,13 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
           <div className="flex gap-2 mt-3">
             <button
               onClick={onApprove}
-              className="flex-1 px-3 py-1.5 text-[12px] font-semibold text-white bg-[var(--color-green)] rounded-lg hover:opacity-90 transition-opacity cursor-default"
+              className="flex-1 px-3 py-1.5 text-[12px] font-semibold text-[var(--text-on-accent)] bg-[var(--color-green)] rounded-lg hover:opacity-90 transition-opacity cursor-default"
             >
               Approve
             </button>
             <button
               onClick={onReject}
-              className="flex-1 px-3 py-1.5 text-[12px] font-semibold text-white bg-[var(--color-red)] rounded-lg hover:opacity-90 transition-opacity cursor-default"
+              className="flex-1 px-3 py-1.5 text-[12px] font-semibold text-[var(--text-on-accent)] bg-[var(--color-red)] rounded-lg hover:opacity-90 transition-opacity cursor-default"
             >
               Reject
             </button>
@@ -292,7 +292,7 @@ export default function ImportedContactsPage() {
                 onClick={() => { setActiveTab(tab); setSelectedId(null) }}
                 className={`px-2 py-0.5 text-[10px] font-semibold rounded-full cursor-default transition-colors duration-[150ms] ${
                   activeTab === tab
-                    ? 'bg-[var(--color-accent)] text-white'
+                    ? 'bg-[var(--color-accent)] text-[var(--text-on-accent)]'
                     : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
                 }`}
               >

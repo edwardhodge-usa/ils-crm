@@ -6,7 +6,7 @@ interface RatingDotsProps {
 
 export function RatingDots({ value, max = 5, size = 6 }: RatingDotsProps) {
   return (
-    <div className="flex gap-0.5 items-center flex-shrink-0">
+    <div className="flex gap-0.5 items-center flex-shrink-0" aria-label={`Rating: ${value} of ${max}`}>
       {Array.from({ length: max }, (_, i) => (
         <div
           key={i}

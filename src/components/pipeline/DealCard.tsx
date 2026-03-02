@@ -13,7 +13,7 @@ export function DealCard({ deal, isSelected, onClick }: DealCardProps) {
   return (
     <div
       onClick={onClick}
-      className={`deal-card p-3 rounded-xl cursor-default transition-all duration-[150ms] border ${
+      className={`deal-card p-3 rounded-[12px] cursor-default transition-all duration-[150ms] border ${
         isSelected
           ? 'deal-card--selected bg-[var(--bg-sheet)] border-[var(--color-accent)] shadow-[0_0_0_1px_var(--color-accent-translucent)]'
           : 'bg-[var(--bg-card)] border-transparent hover:bg-[var(--bg-sheet)] hover:border-[var(--separator)]'

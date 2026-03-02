@@ -189,7 +189,7 @@ function GeneralSection() {
           <button
             onClick={handleSave}
             disabled={!hasChanges}
-            className="px-4 py-1.5 bg-[var(--color-accent)] text-[var(--text-on-accent)] text-[13px] font-medium rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 bg-[var(--color-accent)] text-[var(--text-on-accent)] text-[13px] font-medium rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40"
           >
             Save Changes
           </button>
@@ -245,7 +245,7 @@ function SyncSection() {
           <button
             onClick={handleForceSync}
             disabled={isSyncing}
-            className="px-4 py-1.5 bg-[var(--color-accent)] text-[var(--text-on-accent)] text-[13px] font-medium rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-1.5 bg-[var(--color-accent)] text-[var(--text-on-accent)] text-[13px] font-medium rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40 flex items-center gap-2"
           >
             {isSyncing && (
               <svg className="w-3.5 h-3.5 spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

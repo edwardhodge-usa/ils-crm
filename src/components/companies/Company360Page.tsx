@@ -126,26 +126,26 @@ export default function Company360Page() {
         <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-[var(--separator-opaque)]">
           {Boolean(company.website) && (
             <div>
-              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Website</p>
-              <p className="text-base text-[var(--color-accent)] truncate">{company.website as string}</p>
+              <p className="text-[13px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Website</p>
+              <p className="text-[13px] text-[var(--color-accent)] truncate">{company.website as string}</p>
             </div>
           )}
           {Boolean(company.lead_source) && (
             <div>
-              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Lead Source</p>
-              <p className="text-base text-[var(--text-primary)]">{company.lead_source as string}</p>
+              <p className="text-[13px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Lead Source</p>
+              <p className="text-[13px] text-[var(--text-primary)]">{company.lead_source as string}</p>
             </div>
           )}
           {Boolean(company.company_size) && (
             <div>
-              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Size</p>
-              <p className="text-base text-[var(--text-primary)]">{company.company_size as string}</p>
+              <p className="text-[13px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Size</p>
+              <p className="text-[13px] text-[var(--text-primary)]">{company.company_size as string}</p>
             </div>
           )}
           {Boolean(company.annual_revenue) && (
             <div>
-              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Annual Revenue</p>
-              <p className="text-base text-[var(--text-primary)]">{company.annual_revenue as string}</p>
+              <p className="text-[13px] text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Annual Revenue</p>
+              <p className="text-[13px] text-[var(--text-primary)]">{company.annual_revenue as string}</p>
             </div>
           )}
         </div>
@@ -176,8 +176,8 @@ export default function Company360Page() {
         <div className="grid grid-cols-2 gap-6">
           {(Boolean(company.address) || Boolean(company.city)) && (
             <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-base font-medium text-[var(--text-secondary)] mb-2">Address</h3>
-              <p className="text-base text-[var(--text-primary)]">
+              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Address</h3>
+              <p className="text-[13px] text-[var(--text-primary)]">
                 {[company.address, company.city, company.state_region, company.country]
                   .filter(Boolean)
                   .join(', ')}
@@ -187,15 +187,15 @@ export default function Company360Page() {
 
           {Boolean(company.notes) && (
             <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-base font-medium text-[var(--text-secondary)] mb-2">Notes</h3>
-              <p className="text-base text-[var(--text-primary)] whitespace-pre-wrap">{company.notes as string}</p>
+              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Notes</h3>
+              <p className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap">{company.notes as string}</p>
             </div>
           )}
 
           {Boolean(company.company_description) && (
             <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-base font-medium text-[var(--text-secondary)] mb-2">Description</h3>
-              <p className="text-base text-[var(--text-primary)] whitespace-pre-wrap">{company.company_description as string}</p>
+              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Description</h3>
+              <p className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap">{company.company_description as string}</p>
             </div>
           )}
         </div>

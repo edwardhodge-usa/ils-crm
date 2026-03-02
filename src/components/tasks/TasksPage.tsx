@@ -116,7 +116,11 @@ function TaskRow({ task, section, onComplete, onEdit }: TaskRowProps) {
       onClick={() => onEdit(task.id)}
     >
       {/* Checkbox */}
-      <div
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={isComplete}
+        aria-label="Mark task complete"
         className={`flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors duration-[150ms] ${
           isComplete
             ? 'bg-[var(--color-green)] border-[var(--color-green)]'
@@ -125,11 +129,11 @@ function TaskRow({ task, section, onComplete, onEdit }: TaskRowProps) {
         onClick={e => { e.stopPropagation(); onComplete(task.id) }}
       >
         {isComplete && (
-          <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none">
+          <svg className="w-2.5 h-2.5 text-[var(--text-on-accent)]" viewBox="0 0 10 10" fill="none">
             <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
-      </div>
+      </button>
 
       {/* Title */}
       <div className={`flex-1 text-[13px] min-w-0 truncate ${isComplete ? 'line-through text-[var(--text-tertiary)]' : 'text-[var(--text-primary)]'}`}>
@@ -154,6 +158,8 @@ function TaskRow({ task, section, onComplete, onEdit }: TaskRowProps) {
       <div
         className={`flex-shrink-0 w-2 h-2 rounded-full ${dot.color}`}
         title={dot.label}
+        aria-label={dot.label}
+        role="img"
       />
     </div>
   )
