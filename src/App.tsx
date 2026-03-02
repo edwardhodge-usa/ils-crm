@@ -10,6 +10,7 @@ import CompanyListPage from './components/companies/CompanyListPage'
 import Company360Page from './components/companies/Company360Page'
 import CompanyForm from './components/companies/CompanyForm'
 import TaskListPage from './components/tasks/TaskListPage'
+import TasksPage from './components/tasks/TasksPage'
 import TaskForm from './components/tasks/TaskForm'
 import PipelinePage from './components/pipeline/PipelinePage'
 import OpportunityForm from './components/pipeline/OpportunityForm'
@@ -21,6 +22,7 @@ import RfqListPage from './components/rfqs/RfqListPage'
 import ContractListPage from './components/contracts/ContractListPage'
 import ImportedContactsPage from './components/imported-contacts/ImportedContactsPage'
 import InteractionsPage from './components/interactions/InteractionsPage'
+import InteractionListPage from './components/interactions/InteractionListPage'
 import InteractionForm from './components/interactions/InteractionForm'
 import PortalAccessPage from './components/portal/PortalAccessPage'
 import PortalLogsPage from './components/portal/PortalLogsPage'
@@ -68,7 +70,8 @@ export default function App() {
           <Route path="/contracts" element={<ContractListPage />} />
 
           {/* Tasks */}
-          <Route path="/tasks" element={<TaskListPage />} />
+          <Route path="/tasks" element={<TasksPage />} />
+          <Route path="/tasks/list" element={<TaskListPage />} />
           <Route path="/tasks/new" element={<TaskForm />} />
           <Route path="/tasks/:id/edit" element={<TaskForm />} />
 
@@ -86,7 +89,8 @@ export default function App() {
           <Route path="/imported-contacts" element={<ImportedContactsPage />} />
 
           {/* Interactions */}
-          <Route path="/interactions" element={<InteractionsPage />} />
+          <Route path="/interactions" element={<InteractionListPage />} />
+          <Route path="/interactions/table" element={<InteractionsPage />} />
           <Route path="/interactions/new" element={<InteractionForm />} />
           <Route path="/interactions/:id/edit" element={<InteractionForm />} />
 
