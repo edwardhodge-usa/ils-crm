@@ -64,13 +64,13 @@ export function InteractionRow({ interaction, isSelected, onClick }: Interaction
       {/* Line 2: date + note preview */}
       <div className="mt-0.5 flex items-start gap-1.5 min-h-[16px]">
         {Boolean(date) && (
-          <span className="text-[11px] text-[var(--text-tertiary)] flex-shrink-0 leading-tight">
+          <span className="text-[12px] text-[var(--text-tertiary)] flex-shrink-0 leading-tight">
             {formatDate(date)}
           </span>
         )}
         {Boolean(preview) && (
           <span
-            className="text-[11px] text-[var(--text-secondary)] leading-tight overflow-hidden"
+            className="text-[12px] text-[var(--text-secondary)] leading-tight overflow-hidden"
             style={{ maxHeight: '45px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
           >
             {preview}

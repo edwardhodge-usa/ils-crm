@@ -10,13 +10,49 @@ import useEntityList from '../../hooks/useEntityList'
 const STATUS_TABS = ['All', 'Review', 'Approved', 'Rejected', 'Needs Info', 'Duplicate'] as const
 type StatusTab = typeof STATUS_TABS[number]
 
+const AVATAR_COLORS = [
+  { bg: 'rgba(99,102,241,0.18)', fg: '#818CF8' },
+  { bg: 'rgba(52,211,153,0.18)', fg: '#34D399' },
+  { bg: 'rgba(251,146,60,0.18)', fg: '#FB923C' },
+  { bg: 'rgba(56,189,248,0.18)', fg: '#38BDF8' },
+  { bg: 'rgba(168,85,247,0.18)', fg: '#A855F7' },
+  { bg: 'rgba(244,63,94,0.18)', fg: '#F43F5E' },
+]
+
+function avatarColor(name: string) {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
+function initials(name: string): string {
+  return name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?'
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Build a display name from available fields */
+function getContactName(contact: Record<string, unknown>): string {
+  // Try the primary field first
+  const imported = (contact.imported_contact_name as string | null)?.trim()
+  if (imported) return imported
+
+  // Try first_name + last_name
+  const first = (contact.first_name as string | null)?.trim() ?? ''
+  const last = (contact.last_name as string | null)?.trim() ?? ''
+  if (first || last) return `${first} ${last}`.trim()
+
+  // Fall back to email
+  const email = (contact.email as string | null)?.trim()
+  if (email) return email
+
+  return 'Unnamed'
+}
 
 function formatDate(raw: unknown): string {
   if (!raw) return ''
   const s = String(raw)
   if (!s) return ''
-  // ISO date: YYYY-MM-DD
   const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
   if (!match) return s
   const [, y, m, d] = match.map(Number)
@@ -36,36 +72,63 @@ interface ListRowProps {
 }
 
 function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
-  const name = (contact.contact_name as string | null) || 'Unnamed'
+  const name = getContactName(contact)
   const source = (contact.import_source as string | null) ?? null
   const status = (contact.onboarding_status as string | null) ?? null
+  const company = (contact.company as string | null) ?? null
+  const color = avatarColor(name)
 
   return (
     <div
       onClick={onClick}
-      className={`px-3 py-2.5 cursor-default border-b border-[var(--separator)] transition-colors duration-[150ms] ${
-        isSelected
-          ? 'bg-[var(--color-accent-translucent)]'
-          : 'hover:bg-[var(--bg-hover)]'
-      }`}
+      className="cursor-default transition-colors duration-[150ms]"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '9px 12px',
+        borderBottom: '1px solid var(--separator)',
+        background: isSelected ? 'var(--color-accent-translucent)' : undefined,
+      }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-hover)' }}
+      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
     >
-      {/* Line 1: name */}
-      <div className="text-[13px] font-semibold text-[var(--text-primary)] truncate leading-tight">
-        {name}
+      {/* Avatar */}
+      <div style={{
+        width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 11, fontWeight: 700, background: color.bg, color: color.fg,
+      }}>
+        {initials(name)}
       </div>
 
-      {/* Line 2: status badge + source */}
-      <div className="flex items-center gap-1.5 mt-0.5 min-h-[16px]">
-        {Boolean(status) && (
-          <span className="text-[10px]">
-            <StatusBadge value={status} />
-          </span>
-        )}
-        {Boolean(source) && (
-          <span className="ml-auto text-[10px] text-[var(--text-tertiary)] leading-none flex-shrink-0 truncate max-w-[80px]">
-            {source}
-          </span>
-        )}
+      {/* Name + subtitle */}
+      <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          lineHeight: 1.3,
+        }}>
+          {name}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+          {Boolean(status) && <StatusBadge value={status} />}
+          {Boolean(company) && !source && (
+            <span style={{
+              fontSize: 11, color: 'var(--text-tertiary)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {company}
+            </span>
+          )}
+          {Boolean(source) && (
+            <span style={{
+              fontSize: 11, color: 'var(--text-tertiary)', flexShrink: 0, marginLeft: 'auto',
+            }}>
+              {source}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -91,7 +154,7 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
     )
   }
 
-  const name = (contact.contact_name as string | null) || 'Unnamed'
+  const name = getContactName(contact)
   const email = (contact.email as string | null) ?? null
   const company = (contact.company as string | null) ?? null
   const jobTitle = (contact.job_title as string | null) ?? null
@@ -100,9 +163,10 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
   const importDate = contact.import_date ?? null
   const status = (contact.onboarding_status as string | null) ?? null
   const categorization = (contact.categorization as string | null) ?? null
-  const notes = (contact.notes as string | null) ?? null
+  const notes = (contact.note as string | null) ?? null
 
   const isAlreadyReviewed = status === 'Approved' || status === 'Rejected'
+  const color = avatarColor(name)
 
   const fields: Array<{ label: string; value: string | null }> = [
     { label: 'Email', value: email },
@@ -117,10 +181,11 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
-        <div className="text-[11px] text-[var(--text-tertiary)] truncate">
-          {name}
-        </div>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '10px 16px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
+      }}>
+        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{name}</span>
         {Boolean(status) && <StatusBadge value={status} />}
       </div>
 
@@ -128,46 +193,70 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
       <div className="flex-1 overflow-y-auto">
 
         {/* Hero block */}
-        <div className="px-4 pt-4 pb-3 border-b border-[var(--separator)]">
-          <div className="text-[18px] font-bold text-[var(--text-primary)] leading-tight">
-            {name}
-          </div>
-          <div className="flex flex-wrap items-center gap-2 mt-1.5">
-            {Boolean(categorization) && (
-              <StatusBadge value={categorization} />
-            )}
-            {Boolean(jobTitle) && !categorization && (
-              <span className="text-[11px] text-[var(--text-tertiary)]">
-                {jobTitle}
-              </span>
-            )}
+        <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 17, fontWeight: 700, background: color.bg, color: color.fg,
+            }}>
+              {initials(name)}
+            </div>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {name}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                {Boolean(categorization) && <StatusBadge value={categorization} />}
+                {Boolean(jobTitle) && !categorization && (
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{jobTitle}</span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Approve / Reject actions */}
-        <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.07em', color: 'var(--text-secondary)', marginBottom: 8,
+          }}>
             Review Action
           </div>
           {isAlreadyReviewed ? (
-            <div className="text-[12px] text-[var(--text-tertiary)] italic">
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
               Already {status?.toLowerCase()}. Use the buttons below to change the decision.
             </div>
           ) : (
-            <div className="text-[12px] text-[var(--text-secondary)]">
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
               Review this contact and approve to add them to Contacts, or reject to archive.
             </div>
           )}
-          <div className="flex gap-2 mt-3">
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             <button
               onClick={onApprove}
-              className="flex-1 px-3 py-1.5 text-[12px] font-semibold text-[var(--text-on-accent)] bg-[var(--color-green)] rounded-lg hover:opacity-90 transition-opacity cursor-default"
+              style={{
+                flex: 1, padding: '7px 12px', fontSize: 13, fontWeight: 600,
+                color: 'var(--text-on-accent)', background: 'var(--color-green)',
+                borderRadius: 8, border: 'none', cursor: 'default',
+                fontFamily: 'inherit', transition: 'opacity 150ms',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
             >
               Approve
             </button>
             <button
               onClick={onReject}
-              className="flex-1 px-3 py-1.5 text-[12px] font-semibold text-[var(--text-on-accent)] bg-[var(--color-red)] rounded-lg hover:opacity-90 transition-opacity cursor-default"
+              style={{
+                flex: 1, padding: '7px 12px', fontSize: 13, fontWeight: 600,
+                color: 'var(--text-on-accent)', background: 'var(--color-red)',
+                borderRadius: 8, border: 'none', cursor: 'default',
+                fontFamily: 'inherit', transition: 'opacity 150ms',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
             >
               Reject
             </button>
@@ -175,18 +264,27 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
         </div>
 
         {/* Contact details */}
-        <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.07em', color: 'var(--text-secondary)', marginBottom: 8,
+          }}>
             Details
           </div>
-          <div className="space-y-1.5">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {fields.map(({ label, value }) =>
               value ? (
-                <div key={label} className="flex items-start gap-2">
-                  <span className="text-[11px] text-[var(--text-tertiary)] w-[72px] flex-shrink-0 pt-px">
+                <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{
+                    fontSize: 12, color: 'var(--text-tertiary)', width: 72,
+                    flexShrink: 0, paddingTop: 1,
+                  }}>
                     {label}
                   </span>
-                  <span className="text-[12px] text-[var(--text-primary)] flex-1 min-w-0 break-words">
+                  <span style={{
+                    fontSize: 13, color: 'var(--text-primary)', flex: 1,
+                    minWidth: 0, wordBreak: 'break-word',
+                  }}>
                     {value}
                   </span>
                 </div>
@@ -197,11 +295,17 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
 
         {/* Notes */}
         {Boolean(notes) && (
-          <div className="px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+          <div style={{ padding: '14px 16px' }}>
+            <div style={{
+              fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+              letterSpacing: '0.07em', color: 'var(--text-secondary)', marginBottom: 8,
+            }}>
               Notes
             </div>
-            <p className="text-[12px] text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
+            <p style={{
+              fontSize: 13, color: 'var(--text-secondary)',
+              lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0,
+            }}>
               {notes}
             </p>
           </div>
@@ -237,7 +341,9 @@ export default function ImportedContactsPage() {
     if (search.trim()) {
       const q = search.toLowerCase()
       result = result.filter(c =>
-        String(c.contact_name ?? '').toLowerCase().includes(q) ||
+        String(c.imported_contact_name ?? '').toLowerCase().includes(q) ||
+        String(c.first_name ?? '').toLowerCase().includes(q) ||
+        String(c.last_name ?? '').toLowerCase().includes(q) ||
         String(c.email ?? '').toLowerCase().includes(q) ||
         String(c.company ?? '').toLowerCase().includes(q)
       )
@@ -267,38 +373,45 @@ export default function ImportedContactsPage() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
 
-      {/* List pane — 240px fixed */}
-      <div className="w-[240px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
+      {/* List pane — 300px fixed */}
+      <div className="w-[300px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
 
         {/* Search */}
-        <div className="px-3 py-2 border-b border-[var(--separator)] flex-shrink-0">
+        <div className="px-3 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search contacts…"
-            className="w-full text-[12px] px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--separator)] text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)]"
+            className="w-full text-[13px] px-3 py-1.5 rounded-full bg-[var(--bg-secondary)] border border-transparent text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
 
         {/* Status tabs */}
-        <div className="px-2 py-1.5 border-b border-[var(--separator)] flex-shrink-0">
-          <div className="flex flex-wrap gap-1">
+        <div style={{ padding: '6px 10px', borderBottom: '1px solid var(--separator)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             {STATUS_TABS.map(tab => (
               <button
                 key={tab}
                 onClick={() => { setActiveTab(tab); setSelectedId(null) }}
-                className={`px-2 py-0.5 text-[10px] font-semibold rounded-full cursor-default transition-colors duration-[150ms] ${
-                  activeTab === tab
-                    ? 'bg-[var(--color-accent)] text-[var(--text-on-accent)]'
-                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
-                }`}
+                style={{
+                  padding: '3px 8px',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  borderRadius: 9999,
+                  cursor: 'default',
+                  border: 'none',
+                  fontFamily: 'inherit',
+                  transition: 'background 150ms',
+                  background: activeTab === tab ? 'var(--color-accent)' : 'var(--bg-secondary)',
+                  color: activeTab === tab ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+                }}
               >
                 {tab}
                 {tabCounts[tab] > 0 && (
-                  <span className="ml-1 opacity-70">{tabCounts[tab]}</span>
+                  <span style={{ marginLeft: 3, opacity: 0.7 }}>{tabCounts[tab]}</span>
                 )}
               </button>
             ))}
@@ -308,7 +421,7 @@ export default function ImportedContactsPage() {
         {/* List */}
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-[12px] text-[var(--text-secondary)] px-4 text-center">
+            <div className="flex items-center justify-center h-full text-[13px] text-[var(--text-secondary)] px-4 text-center">
               {search
                 ? 'No contacts match your search.'
                 : activeTab === 'All'
@@ -339,7 +452,7 @@ export default function ImportedContactsPage() {
       <ConfirmDialog
         open={action !== null}
         title={action === 'approve' ? 'Approve Contact' : 'Reject Contact'}
-        message={`${action === 'approve' ? 'Approve' : 'Reject'} "${(selected?.contact_name as string) ?? 'this contact'}"?`}
+        message={`${action === 'approve' ? 'Approve' : 'Reject'} "${selected ? getContactName(selected) : 'this contact'}"?`}
         confirmLabel={action === 'approve' ? 'Approve' : 'Reject'}
         destructive={action === 'reject'}
         onConfirm={handleAction}

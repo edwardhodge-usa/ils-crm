@@ -31,22 +31,27 @@ export function getDashboardStats(): Record<string, unknown> {
 
 export function getTasksDueToday(): Record<string, unknown>[] {
   const db = getDatabase()
+  // Tasks due today + overdue (up to 7 days back)
   const result = db.exec(
-    `SELECT * FROM tasks WHERE date(due_date) = date('now') AND status NOT IN ('Completed', 'Cancelled') ORDER BY priority DESC`
+    `SELECT * FROM tasks
+     WHERE date(due_date) <= date('now')
+       AND date(due_date) >= date('now', '-7 days')
+       AND status NOT IN ('Completed', 'Cancelled')
+     ORDER BY due_date ASC, priority DESC`
   )
   return resultToObjects(result)
 }
 
 export function getFollowUpAlerts(): Record<string, unknown>[] {
   const db = getDatabase()
-  // Contacts not contacted in 30+ days
+  // Contacts not contacted in 14+ days (any categorization that isn't archived)
   const result = db.exec(
     `SELECT id, contact_name, company, email, phone, last_contact_date, categorization
      FROM contacts
      WHERE last_contact_date IS NOT NULL
        AND last_contact_date != ''
-       AND julianday('now') - julianday(last_contact_date) > 30
-       AND categorization IN ('Lead', 'Customer')
+       AND julianday('now') - julianday(last_contact_date) > 14
+       AND (categorization IS NULL OR categorization NOT IN ('Archived', 'Rejected'))
      ORDER BY last_contact_date ASC
      LIMIT 20`
   )

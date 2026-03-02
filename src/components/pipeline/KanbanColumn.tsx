@@ -29,12 +29,12 @@ export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: Kan
           style={{ backgroundColor: stageColor }}
         />
         <span
-          className="text-[11px] font-bold uppercase tracking-[0.06em] flex-1 truncate"
+          className="text-[12px] font-bold uppercase tracking-[0.06em] flex-1 truncate"
           style={{ color: stageColor }}
         >
           {stage}
         </span>
-        <span className="text-[10px] font-semibold text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded-full">
+        <span className="text-[11px] font-semibold text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded-full">
           {deals.length}
         </span>
       </div>
@@ -50,7 +50,7 @@ export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: Kan
           />
         ))}
         {deals.length === 0 && (
-          <div className="text-[11px] text-[var(--text-tertiary)] italic text-center py-4">
+          <div className="text-[12px] text-[var(--text-tertiary)] italic text-center py-4">
             No deals
           </div>
         )}
@@ -58,7 +58,7 @@ export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: Kan
 
       {/* Column footer — total */}
       <div className="pt-3 mt-1 border-t border-[var(--separator)]">
-        <div className="text-[11px] font-semibold text-[var(--text-secondary)] text-right px-1">
+        <div className="text-[12px] font-semibold text-[var(--text-secondary)] text-right px-1">
           {totalValue > 0 ? `$${totalValue.toLocaleString()}` : '—'}
         </div>
       </div>

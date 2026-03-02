@@ -102,12 +102,12 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
-        <div className="text-[11px] text-[var(--text-tertiary)] truncate">
+        <div className="text-[12px] text-[var(--text-tertiary)] truncate">
           {projectName}
         </div>
         <button
           onClick={() => navigate(`/projects/${projectId}/edit`)}
-          className="px-2.5 py-1 text-[11px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:opacity-80 transition-opacity cursor-default"
+          className="px-2.5 py-1 text-[12px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:opacity-80 transition-opacity cursor-default"
         >
           Edit
         </button>
@@ -124,7 +124,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
             {Boolean(status) && <StatusBadge value={status} />}
             {Boolean(location) && (
-              <span className="text-[11px] text-[var(--text-tertiary)]">{location}</span>
+              <span className="text-[12px] text-[var(--text-tertiary)]">{location}</span>
             )}
           </div>
         </div>
@@ -134,18 +134,18 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
 
         {/* 3. Key dates */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
             Timeline
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Start Date</div>
+              <div className="text-[12px] text-[var(--text-tertiary)] mb-0.5">Start Date</div>
               <div className="text-[12px] font-medium text-[var(--text-primary)]">
                 {startDate || '—'}
               </div>
             </div>
             <div>
-              <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">End Date</div>
+              <div className="text-[12px] text-[var(--text-tertiary)] mb-0.5">End Date</div>
               <div className="text-[12px] font-medium text-[var(--text-primary)]">
                 {endDate || '—'}
               </div>
@@ -155,7 +155,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
 
         {/* 4. Linked Contacts */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
             Contacts
           </div>
           {contacts.length === 0 ? (
@@ -175,7 +175,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
                   <div className="flex-1 min-w-0">
                     <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{name}</div>
                     {Boolean(title) && (
-                      <div className="text-[10px] text-[var(--text-tertiary)] truncate">{title}</div>
+                      <div className="text-[12px] text-[var(--text-tertiary)] truncate">{title}</div>
                     )}
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
 
         {/* 5. Linked Opportunities */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
             Opportunities
           </div>
           {opps.length === 0 ? (
@@ -202,7 +202,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
                   {(o.opportunity_name as string) || '—'}
                 </div>
                 {Boolean(o.deal_value) && (
-                  <div className="text-[11px] text-[var(--color-green)] mt-0.5">
+                  <div className="text-[12px] text-[var(--color-green)] mt-0.5">
                     ${Number(o.deal_value).toLocaleString()}
                   </div>
                 )}
@@ -214,7 +214,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         {/* 6. Notes */}
         {(Boolean(description) || Boolean(keyMilestones)) && (
           <div className="px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
               Notes
             </div>
             {Boolean(description) && (
@@ -224,7 +224,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             )}
             {Boolean(keyMilestones) && (
               <>
-                <div className="text-[10px] text-[var(--text-tertiary)] mt-2 mb-0.5 font-medium">Key Milestones</div>
+                <div className="text-[12px] text-[var(--text-tertiary)] mt-2 mb-0.5 font-medium">Key Milestones</div>
                 <div className="text-[12px] text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
                   {keyMilestones}
                 </div>

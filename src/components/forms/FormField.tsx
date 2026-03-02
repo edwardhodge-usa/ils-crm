@@ -10,7 +10,7 @@ export function FormField({ label, htmlFor, children, className = '' }: FormFiel
     <div className={`flex flex-col gap-1 ${className}`}>
       <label
         htmlFor={htmlFor}
-        className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--text-label)]"
+        className="text-[12px] font-semibold uppercase tracking-[0.05em] text-[var(--text-secondary)]"
       >
         {label}
       </label>

@@ -21,7 +21,7 @@ export function DealCard({ deal, isSelected, onClick }: DealCardProps) {
     >
       {/* Company name */}
       {companyName && (
-        <div className="text-[11px] font-semibold text-[var(--text-secondary)] truncate mb-0.5">
+        <div className="text-[12px] font-semibold text-[var(--text-secondary)] truncate mb-0.5">
           {companyName}
         </div>
       )}
@@ -41,12 +41,12 @@ export function DealCard({ deal, isSelected, onClick }: DealCardProps) {
         <StageBadge stage={stage} />
         <div className="flex items-center gap-2 flex-shrink-0">
           {probability != null && (
-            <span className="text-[10px] font-semibold text-[var(--text-secondary)]">
+            <span className="text-[11px] font-semibold text-[var(--text-secondary)]">
               {probability}%
             </span>
           )}
           {daysInStage != null && (
-            <span className="text-[10px] text-[var(--text-tertiary)] tabular-nums">
+            <span className="text-[12px] text-[var(--text-tertiary)] tabular-nums">
               {daysInStage}d
             </span>
           )}

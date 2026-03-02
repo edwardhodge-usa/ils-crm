@@ -116,7 +116,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
             <div className="mt-2">
               <StageProgress currentStage={(deal.sales_stage as string) || ''} />
             </div>
-            <div className="flex items-center gap-4 mt-2 text-[11px] text-[var(--text-tertiary)]">
+            <div className="flex items-center gap-4 mt-2 text-[12px] text-[var(--text-tertiary)]">
               {deal.probability_value != null && (
                 <span>{deal.probability_value as number}% probability</span>
               )}
@@ -128,7 +128,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
             {['Log Activity', 'Edit Deal', 'Email'].map(label => (
               <button
                 key={label}
-                className="flex-1 py-1.5 text-[11px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-lg hover:opacity-80 transition-opacity duration-[150ms] cursor-default"
+                className="flex-1 py-1.5 text-[12px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-lg hover:opacity-80 transition-opacity duration-[150ms] cursor-default"
               >
                 {label}
               </button>
@@ -137,7 +137,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
 
           {/* Details section */}
           <div className="px-4 py-3 border-b border-[var(--separator)] flex-shrink-0">
-            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">Details</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">Details</div>
             <div className="flex flex-col gap-1.5 text-[12px]">
               {Boolean(deal.expected_close_date) && (
                 <div className="flex justify-between">
@@ -162,9 +162,9 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
 
           {/* Open Tasks section */}
           <div className="px-4 py-3 flex-1 overflow-y-auto">
-            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">Tasks</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">Tasks</div>
             {linkedTasks.length === 0 ? (
-              <div className="text-[11px] text-[var(--text-tertiary)] italic">No tasks</div>
+              <div className="text-[12px] text-[var(--text-tertiary)] italic">No tasks</div>
             ) : (
               linkedTasks.map(task => (
                 <div
@@ -177,7 +177,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
                       {(task.task as string) || '—'}
                     </div>
                     {Boolean(task.due_date) && (
-                      <div className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{task.due_date as string}</div>
+                      <div className="text-[12px] text-[var(--text-tertiary)] mt-0.5">{task.due_date as string}</div>
                     )}
                   </div>
                 </div>
@@ -188,7 +188,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
       ) : (
         /* Loading state while data fetches */
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-[11px] text-[var(--text-tertiary)]">Loading…</div>
+          <div className="text-[12px] text-[var(--text-tertiary)]">Loading…</div>
         </div>
       )}
     </div>

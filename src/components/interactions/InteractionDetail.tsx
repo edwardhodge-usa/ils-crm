@@ -97,7 +97,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
       <div className="flex items-center justify-end px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
         <button
           onClick={() => navigate(`/interactions/${interactionId}/edit`)}
-          className="px-2.5 py-1 text-[11px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:opacity-80 transition-opacity cursor-default"
+          className="px-2.5 py-1 text-[12px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:opacity-80 transition-opacity cursor-default"
         >
           Edit
         </button>
@@ -129,7 +129,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
         {/* Contact chip */}
         {Boolean(contactName) && (
           <div className="px-4 py-3 border-b border-[var(--separator)]">
-            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-1.5">
+            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-1.5">
               Contact
             </div>
             <span className="inline-flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1 rounded-full bg-[var(--color-accent-translucent)] text-[var(--color-accent)] leading-none">
@@ -142,7 +142,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
         {/* Duration (if present) */}
         {Boolean(duration) && (
           <div className="px-4 py-3 border-b border-[var(--separator)]">
-            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-1">
+            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-1">
               Duration
             </div>
             <div className="text-[13px] text-[var(--text-primary)]">
@@ -154,7 +154,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
         {/* Summary / Notes */}
         {Boolean(summary) && (
           <div className="px-4 py-3 border-b border-[var(--separator)]">
-            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-1.5">
+            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-1.5">
               Summary
             </div>
             <div className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed">
@@ -166,7 +166,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
         {/* Next steps */}
         {Boolean(next_steps) && (
           <div className="px-4 py-3 border-b border-[var(--separator)]">
-            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-1.5">
+            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-1.5">
               Next Steps
             </div>
             <div className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed">

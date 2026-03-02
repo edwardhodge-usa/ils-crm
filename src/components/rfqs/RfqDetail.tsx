@@ -85,7 +85,7 @@ export function RfqDetail({ rfqId, rfqData }: RfqDetailProps) {
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
-        <div className="text-[11px] text-[var(--text-tertiary)] truncate">
+        <div className="text-[12px] text-[var(--text-tertiary)] truncate">
           {rfqTitle}
         </div>
       </div>
@@ -108,7 +108,7 @@ export function RfqDetail({ rfqId, rfqData }: RfqDetailProps) {
 
         {/* 3. Linked Contact + Company */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
             Related
           </div>
           {Boolean(contactName) && (
@@ -117,7 +117,7 @@ export function RfqDetail({ rfqId, rfqData }: RfqDetailProps) {
               onClick={() => contact && navigate(`/contacts/${contact.id as string}`)}
             >
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Contact</div>
+                <div className="text-[12px] text-[var(--text-tertiary)] mb-0.5">Contact</div>
                 <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{contactName}</div>
               </div>
             </div>
@@ -128,7 +128,7 @@ export function RfqDetail({ rfqId, rfqData }: RfqDetailProps) {
               onClick={() => company && navigate(`/companies/${company.id as string}`)}
             >
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Company</div>
+                <div className="text-[12px] text-[var(--text-tertiary)] mb-0.5">Company</div>
                 <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{companyName}</div>
               </div>
             </div>
@@ -141,7 +141,7 @@ export function RfqDetail({ rfqId, rfqData }: RfqDetailProps) {
         {/* 4. Notes */}
         {Boolean(notes) && (
           <div className="px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
               Notes
             </div>
             <div className="text-[12px] text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">

@@ -145,7 +145,7 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
-        <div className="text-[11px] text-[var(--text-tertiary)] truncate">
+        <div className="text-[12px] text-[var(--text-tertiary)] truncate">
           {name}
         </div>
         {Boolean(status) && <StatusBadge value={status} />}
@@ -171,7 +171,7 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
             <div className="text-[18px] font-bold text-[var(--text-primary)] tabular-nums">
               {logCount}
             </div>
-            <div className="text-[10px] text-[var(--text-tertiary)] mt-0.5">
+            <div className="text-[12px] text-[var(--text-tertiary)] mt-0.5">
               Portal Visits
             </div>
           </div>
@@ -179,7 +179,7 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
             <div className="text-[13px] font-semibold text-[var(--text-primary)]">
               {lastActivity ?? '—'}
             </div>
-            <div className="text-[10px] text-[var(--text-tertiary)] mt-0.5">
+            <div className="text-[12px] text-[var(--text-tertiary)] mt-0.5">
               Last Activity
             </div>
           </div>
@@ -187,14 +187,14 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
 
         {/* Details */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
             Details
           </div>
           <div className="space-y-1.5">
             {fields.map(({ label, value }) =>
               value ? (
                 <div key={label} className="flex items-start gap-2">
-                  <span className="text-[11px] text-[var(--text-tertiary)] w-[80px] flex-shrink-0 pt-px">
+                  <span className="text-[12px] text-[var(--text-tertiary)] w-[80px] flex-shrink-0 pt-px">
                     {label}
                   </span>
                   <span className="text-[12px] text-[var(--text-primary)] flex-1 min-w-0 break-words">
@@ -209,7 +209,7 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
         {/* Recent portal log entries */}
         {relatedLogs.length > 0 && (
           <div className="px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
               Recent Visits
             </div>
             {relatedLogs.slice(0, 5).map((log, i) => {
@@ -227,17 +227,17 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
                   className="py-1.5 border-b border-[var(--separator)] last:border-0"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-[var(--text-tertiary)] flex-shrink-0">
+                    <span className="text-[12px] text-[var(--text-tertiary)] flex-shrink-0">
                       {dateStr}
                     </span>
                     {Boolean(city) && (
-                      <span className="text-[10px] text-[var(--text-tertiary)] truncate">
+                      <span className="text-[12px] text-[var(--text-tertiary)] truncate">
                         {city}
                       </span>
                     )}
                   </div>
                   {Boolean(page) && (
-                    <div className="text-[11px] text-[var(--color-accent)] truncate mt-0.5">
+                    <div className="text-[12px] text-[var(--color-accent)] truncate mt-0.5">
                       {page}
                     </div>
                   )}
@@ -288,7 +288,7 @@ export default function PortalAccessPage() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
 
       {/* List pane — 240px fixed */}
       <div className="w-[240px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">

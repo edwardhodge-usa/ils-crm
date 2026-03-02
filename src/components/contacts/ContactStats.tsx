@@ -18,7 +18,7 @@ export function ContactStats({ stats }: ContactStatsProps) {
           <div className="text-[15px] font-bold text-[var(--text-primary)] leading-tight">
             {stat.value}
           </div>
-          <div className="text-[10px] text-[var(--text-tertiary)] mt-0.5 leading-tight">
+          <div className="text-[12px] text-[var(--text-tertiary)] mt-0.5 leading-tight">
             {stat.label}
           </div>
         </div>

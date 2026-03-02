@@ -81,7 +81,7 @@ export default function DataTable({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
       {/* Search bar + actions */}
       {(searchKeys?.length || actions) && (
         <div className="flex items-center justify-between gap-3 mb-3">

@@ -39,18 +39,16 @@ button {
   border-radius: 4px;
 }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
+/* Let macOS handle scrollbar rendering natively (overlay, auto-hide) */
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(128,128,128,0.25);
-  border-radius: 4px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+  background: transparent;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(128,128,128,0.40);
-  border: 2px solid transparent;
-  background-clip: content-box;
+  background: rgba(128,128,128,0.30);
+  border-radius: 3px;
 }
 
 html, body { overflow: hidden; height: 100%; }

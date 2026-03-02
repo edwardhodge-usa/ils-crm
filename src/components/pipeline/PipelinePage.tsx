@@ -90,7 +90,7 @@ export default function PipelinePage() {
   const wonValue = deals.filter(d => d.stage === 'Closed Won').reduce((sum, d) => sum + (d.value ?? 0), 0)
 
   return (
-    <div className="relative flex flex-col h-full overflow-hidden">
+    <div className="relative flex flex-col h-full w-full overflow-hidden">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--separator)] flex-shrink-0">
         <div className="flex items-center gap-6">

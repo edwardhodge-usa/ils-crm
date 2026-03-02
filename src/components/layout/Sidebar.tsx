@@ -87,14 +87,17 @@ function NavButton({
       onClick={onClick}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
-      className={`w-full flex items-center gap-2 px-2.5 py-[5px] mx-1.5 rounded-[var(--radius-md,8px)] text-[13px] transition-[background] duration-150 ${
+      className={`w-full flex items-center gap-2.5 px-3 py-[6px] mx-1.5 rounded-[var(--radius-md,8px)] text-[15px] transition-[background] duration-150 ${
         isActive
-          ? 'bg-[var(--color-accent-translucent)] text-[var(--color-accent)] font-medium'
+          ? 'font-medium'
           : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] font-normal'
       }`}
-      style={{ width: 'calc(100% - 12px)' }}
+      style={{
+        width: 'calc(100% - 12px)',
+        ...(isActive ? { background: 'var(--color-accent)', color: 'var(--text-on-accent)' } : {}),
+      }}
     >
-      {Icon && <Icon className="w-[16px] h-[16px] flex-shrink-0 opacity-80" />}
+      {Icon && <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? 'opacity-100' : 'opacity-80'}`} />}
       <span className="truncate">{label}</span>
     </button>
   )
@@ -110,7 +113,7 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="w-[192px] h-full flex-shrink-0 bg-[var(--bg-sidebar)] border-r border-[var(--separator)] flex flex-col overflow-hidden">
+    <div className="w-[216px] h-full flex-shrink-0 bg-[var(--bg-sidebar)] border-r border-[var(--separator)] flex flex-col overflow-hidden">
       {/* Titlebar clearance for macOS traffic lights */}
       <div className="h-11 flex-shrink-0 window-drag" />
 
@@ -120,7 +123,7 @@ export default function Sidebar() {
           <div key={sectionIndex} className={sectionIndex > 0 ? 'mt-3' : ''}>
             {/* Section label */}
             {section.label && (
-              <div className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--text-label,var(--text-tertiary))] select-none">
+              <div className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-secondary)] select-none">
                 {section.label}
               </div>
             )}

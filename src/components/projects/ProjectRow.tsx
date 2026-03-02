@@ -34,7 +34,7 @@ export function ProjectRow({ project, isSelected, onClick }: ProjectRowProps) {
           <StatusBadge value={status} />
         )}
         {Boolean(companyName) && (
-          <span className="text-[10px] text-[var(--text-tertiary)] leading-none truncate">
+          <span className="text-[12px] text-[var(--text-tertiary)] leading-none truncate">
             {companyName}
           </span>
         )}

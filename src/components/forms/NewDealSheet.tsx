@@ -147,7 +147,7 @@ export function NewDealSheet({ isOpen, onClose, onSave }: NewDealSheetProps) {
         {/* Probability — auto-fills from stage, still manually editable */}
         <FormField label="Probability">
           <div className="flex items-center gap-2 p-2 rounded-[var(--radius-md)] bg-[var(--color-accent-translucent)]">
-            <span className="text-[11px] text-[var(--color-accent)] font-medium whitespace-nowrap">
+            <span className="text-[12px] text-[var(--color-accent)] font-medium whitespace-nowrap">
               Auto from stage:
             </span>
             <input
@@ -159,7 +159,7 @@ export function NewDealSheet({ isOpen, onClose, onSave }: NewDealSheetProps) {
               onChange={(e) => set('probability', Number(e.target.value))}
               className="w-16 text-[var(--color-accent)] bg-transparent font-semibold text-[13px] border-none"
             />
-            <span className="text-[11px] text-[var(--color-accent)]">%</span>
+            <span className="text-[12px] text-[var(--color-accent)]">%</span>
           </div>
         </FormField>
 

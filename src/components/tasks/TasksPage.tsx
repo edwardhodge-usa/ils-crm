@@ -81,15 +81,15 @@ function SectionHeader({ label, count, icon, iconColor, collapsed, onToggle }: S
       onClick={onToggle}
     >
       <span className={`text-[14px] ${iconColor}`}>{icon}</span>
-      <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] flex-1">
+      <span className="text-[12px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] flex-1">
         {label}
       </span>
       {count > 0 && (
-        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--bg-secondary)] text-[var(--text-secondary)] leading-none tabular-nums">
+        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--bg-secondary)] text-[var(--text-secondary)] leading-none tabular-nums">
           {count}
         </span>
       )}
-      <span className="text-[10px] text-[var(--text-tertiary)] ml-1">
+      <span className="text-[12px] text-[var(--text-tertiary)] ml-1">
         {collapsed ? '▶' : '▼'}
       </span>
     </div>
@@ -224,7 +224,7 @@ export default function TasksPage() {
   const noTasks = overdue.length === 0 && todayTasks.length === 0 && upcoming.length === 0
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--separator)] flex-shrink-0">

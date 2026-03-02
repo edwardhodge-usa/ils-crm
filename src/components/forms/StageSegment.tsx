@@ -27,7 +27,7 @@ export function StageSegment({ value, onChange }: StageSegmentProps) {
             onClick={() => onChange(stage, STAGE_PROBABILITIES[stage])}
             aria-pressed={isSelected}
             className={[
-              'flex-1 rounded-md border text-[10px] font-semibold py-1.5 px-1 transition-colors duration-150',
+              'flex-1 rounded-md border text-[11px] font-semibold py-1.5 px-1 transition-colors duration-150',
               isSelected
                 ? 'bg-[var(--color-accent)] text-[var(--text-on-accent)] border-[var(--color-accent)]'
                 : 'bg-transparent text-[var(--text-secondary)] border-[var(--separator-strong)] hover:bg-[var(--bg-hover)]',

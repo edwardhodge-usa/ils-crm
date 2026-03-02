@@ -19,7 +19,7 @@ export default function FilterTabs({ tabs, activeTab, onTabChange, counts }: Fil
           }`}
         >
           {tab}
-          <span className="ml-1 text-[10px] opacity-60">{counts[tab] ?? 0}</span>
+          <span className="ml-1 text-[11px] opacity-60">{counts[tab] ?? 0}</span>
         </button>
       ))}
     </div>

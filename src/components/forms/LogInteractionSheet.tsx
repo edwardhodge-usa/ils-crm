@@ -100,7 +100,7 @@ export function LogInteractionSheet({
                   aria-pressed={isSelected}
                   onClick={() => set('type', type)}
                   className={[
-                    'flex-1 rounded-lg border p-2 flex flex-col items-center gap-0.5 text-[10px] font-medium transition-colors duration-150',
+                    'flex-1 rounded-lg border p-2 flex flex-col items-center gap-0.5 text-[11px] font-medium transition-colors duration-150',
                     isSelected
                       ? 'bg-[var(--color-accent-translucent)] border-[var(--color-accent)] text-[var(--color-accent)]'
                       : 'border-[var(--separator-strong)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]',

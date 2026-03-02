@@ -151,7 +151,7 @@ export default function CommandPalette() {
             placeholder="Search contacts, companies, deals..."
             className="flex-1 bg-transparent text-[14px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none"
           />
-          <kbd className="text-[10px] text-[var(--text-tertiary)] bg-[var(--separator-opaque)] px-1.5 py-0.5 rounded">ESC</kbd>
+          <kbd className="text-[12px] text-[var(--text-tertiary)] bg-[var(--separator-opaque)] px-1.5 py-0.5 rounded">ESC</kbd>
         </div>
 
         {/* Results */}
@@ -166,7 +166,7 @@ export default function CommandPalette() {
                 onClick={() => navigateToResult(result)}
                 onMouseEnter={() => setSelectedIndex(i)}
               >
-                <span className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${typeColors[result.type] || 'bg-[var(--separator-opaque)] text-[var(--text-secondary)]'}`}>
+                <span className={`w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${typeColors[result.type] || 'bg-[var(--separator-opaque)] text-[var(--text-secondary)]'}`}>
                   {typeIcons[result.type] || '?'}
                 </span>
                 <div className="flex-1 min-w-0">
@@ -175,7 +175,7 @@ export default function CommandPalette() {
                     <p className="text-[13px] text-[var(--text-tertiary)] truncate">{result.subtitle}</p>
                   )}
                 </div>
-                <span className="text-[10px] text-[var(--text-placeholder)] capitalize flex-shrink-0">{result.type}</span>
+                <span className="text-[11px] text-[var(--text-placeholder)] capitalize flex-shrink-0">{result.type}</span>
               </button>
             ))}
           </div>

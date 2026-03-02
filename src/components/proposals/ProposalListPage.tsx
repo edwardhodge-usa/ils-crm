@@ -48,7 +48,7 @@ export default function ProposalListPage() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
       {/* List pane — 240px fixed */}
       <div className="w-[240px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
         {/* Toolbar */}

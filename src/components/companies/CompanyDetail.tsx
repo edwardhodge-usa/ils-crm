@@ -107,19 +107,19 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
-        <div className="text-[11px] text-[var(--text-tertiary)] truncate">
+        <div className="text-[12px] text-[var(--text-tertiary)] truncate">
           {companyName}
         </div>
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => navigate(`/companies/${companyId}/edit`)}
-            className="px-2.5 py-1 text-[11px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:opacity-80 transition-opacity cursor-default"
+            className="px-2.5 py-1 text-[12px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:opacity-80 transition-opacity cursor-default"
           >
             Edit
           </button>
           <button
             onClick={() => setShowDelete(true)}
-            className="px-2.5 py-1 text-[11px] font-medium text-[var(--color-red)] bg-[var(--color-red)]/15 rounded-md hover:bg-[var(--color-red)]/20 transition-colors cursor-default"
+            className="px-2.5 py-1 text-[12px] font-medium text-[var(--color-red)] bg-[var(--color-red)]/15 rounded-md hover:bg-[var(--color-red)]/20 transition-colors cursor-default"
           >
             Delete
           </button>
@@ -136,12 +136,12 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
             {Boolean(categoryLabel) && (
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--bg-secondary)] text-[var(--text-secondary)] leading-none">
+              <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--bg-secondary)] text-[var(--text-secondary)] leading-none">
                 {categoryLabel}
               </span>
             )}
             {Boolean(location) && (
-              <span className="text-[11px] text-[var(--text-tertiary)]">
+              <span className="text-[12px] text-[var(--text-tertiary)]">
                 {location}
               </span>
             )}
@@ -153,7 +153,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
 
         {/* 3. Linked Contacts */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
             Contacts
           </div>
           {contacts.length === 0 ? (
@@ -176,7 +176,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
                         {name}
                       </div>
                       {Boolean(title) && (
-                        <div className="text-[10px] text-[var(--text-tertiary)] truncate">
+                        <div className="text-[12px] text-[var(--text-tertiary)] truncate">
                           {title}
                         </div>
                       )}
@@ -185,7 +185,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
                 )
               })}
               {contacts.length > 5 && (
-                <div className="text-[11px] text-[var(--color-accent)] mt-1.5 cursor-default hover:underline"
+                <div className="text-[12px] text-[var(--color-accent)] mt-1.5 cursor-default hover:underline"
                   onClick={() => navigate(`/companies/${companyId}`)}>
                   View all {contacts.length} contacts
                 </div>
@@ -196,7 +196,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
 
         {/* 4. Open Opportunities */}
         <div className="px-4 py-3">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
             Open Opportunities
           </div>
           {openOpps.length === 0 ? (

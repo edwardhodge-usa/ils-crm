@@ -33,12 +33,12 @@ export function RfqRow({ rfq, isSelected, onClick }: RfqRowProps) {
       <div className="flex items-center gap-1.5 mt-0.5 min-h-[16px]">
         {Boolean(status) && <StatusBadge value={status} />}
         {Boolean(companyName) && (
-          <span className="text-[10px] text-[var(--text-tertiary)] leading-none truncate">
+          <span className="text-[12px] text-[var(--text-tertiary)] leading-none truncate">
             {companyName}
           </span>
         )}
         {Boolean(requestDate) && (
-          <span className="ml-auto text-[10px] text-[var(--text-tertiary)] leading-none flex-shrink-0 tabular-nums">
+          <span className="ml-auto text-[12px] text-[var(--text-tertiary)] leading-none flex-shrink-0 tabular-nums">
             {requestDate}
           </span>
         )}

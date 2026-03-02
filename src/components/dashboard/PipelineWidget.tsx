@@ -1,9 +1,7 @@
-// PipelineWidget — configurable pipeline summary block for the Dashboard
-// Three display modes: active-opps (bar chart by stage), active-contracts (list), combined-total (big number)
+// PipelineWidget — Pipeline Snapshot with indigo gradient bars
+// Matches approved mockup: ils-crm-dashboard-v3.html
 
-import { useState, useRef, useEffect } from 'react'
-
-export type PipelineMode = 'active-opps' | 'active-contracts' | 'combined-total'
+import { useNavigate } from 'react-router-dom'
 
 interface PipelineStage {
   sales_stage: string
@@ -11,194 +9,97 @@ interface PipelineStage {
   total_value: number
 }
 
-interface ContractItem {
-  id: string
-  name: string
-  value: number | null
-  closeDate: string | null
-}
-
 interface PipelineWidgetProps {
-  mode: PipelineMode
-  onModeChange: (mode: PipelineMode) => void
   stages: PipelineStage[]
-  contracts: ContractItem[]
-  combinedTotal: number
-}
-
-const STAGE_DOTS: Record<string, string> = {
-  Prospecting: 'bg-[var(--stage-prospecting)]',
-  Qualified: 'bg-[var(--stage-qualified)]',
-  'Proposal Sent': 'bg-[var(--stage-proposal)]',
-  Negotiation: 'bg-[var(--stage-negotiation)]',
-  'Closed Won': 'bg-[var(--stage-won)]',
-}
-
-const MODE_LABELS: Record<PipelineMode, string> = {
-  'active-opps': 'Active Opportunities',
-  'active-contracts': 'Active Contracts',
-  'combined-total': 'Combined Total',
 }
 
 function formatCurrency(v: number): string {
-  return `$${v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
+  if (v >= 1_000) return `$${Math.round(v / 1_000)}K`
+  return `$${v.toLocaleString()}`
 }
 
-export default function PipelineWidget({
-  mode,
-  onModeChange,
-  stages,
-  contracts,
-  combinedTotal,
-}: PipelineWidgetProps) {
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!dropdownOpen) return
-    function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [dropdownOpen])
-
+export default function PipelineWidget({ stages }: PipelineWidgetProps) {
+  const navigate = useNavigate()
   const maxCount = stages.length > 0 ? Math.max(...stages.map(s => s.count)) : 1
 
   return (
-    <div className="bg-[var(--bg-card)] rounded-[var(--radius-lg)] border border-[var(--separator)] p-4">
+    <div style={{
+      background: 'var(--bg-card)',
+      border: '1px solid var(--separator)',
+      borderRadius: 10,
+      overflow: 'hidden',
+    }}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--text-secondary)]">
-          Pipeline
-        </span>
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setDropdownOpen(v => !v)}
-            title="Change view"
-            className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors p-0.5 rounded"
-            aria-label="Pipeline view options"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="7" cy="3" r="1.2" fill="currentColor" />
-              <circle cx="7" cy="7" r="1.2" fill="currentColor" />
-              <circle cx="7" cy="11" r="1.2" fill="currentColor" />
-            </svg>
-          </button>
-
-          {/* Inline dropdown */}
-          {dropdownOpen && (
-            <div className="absolute right-0 top-6 z-[var(--z-overlay)] w-48 bg-[var(--bg-sheet)] border border-[var(--separator-strong)] rounded-[var(--radius-md)] shadow-[var(--shadow-md)] overflow-hidden">
-              {(Object.entries(MODE_LABELS) as [PipelineMode, string][]).map(([modeKey, modeLabel]) => (
-                <button
-                  key={modeKey}
-                  onClick={() => {
-                    onModeChange(modeKey)
-                    setDropdownOpen(false)
-                  }}
-                  className={[
-                    'w-full text-left px-3 py-2 text-[12px] flex items-center gap-2 transition-colors',
-                    mode === modeKey
-                      ? 'text-[var(--color-accent)] bg-[var(--color-accent-translucent)]'
-                      : 'text-[var(--text-primary)] hover:bg-[var(--bg-hover)]',
-                  ].join(' ')}
-                >
-                  {mode === modeKey && (
-                    <span className="text-[var(--color-accent)] font-bold">✓</span>
-                  )}
-                  {mode !== modeKey && <span className="w-[10px]" />}
-                  {modeLabel}
-                </button>
-              ))}
-            </div>
-          )}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '12px 16px 10px', borderBottom: '1px solid var(--separator)',
+      }}>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
+            Pipeline Snapshot
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic', marginTop: 1 }}>
+            Showing: Active Opportunities
+          </div>
         </div>
+        <button
+          onClick={() => navigate('/pipeline')}
+          style={{ fontSize: 13, color: 'var(--color-accent)', cursor: 'default', background: 'none', border: 'none', fontFamily: 'inherit' }}
+        >
+          Open Pipeline →
+        </button>
       </div>
 
-      {/* Mode: active-opps — horizontal bar chart by stage */}
-      {mode === 'active-opps' && (
+      {/* All rows — no cap */}
+      {stages.length === 0 ? (
+        <p style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: '24px 0', textAlign: 'center' }}>
+          No active opportunities
+        </p>
+      ) : (
         <div>
-          {stages.length === 0 ? (
-            <p className="text-[12px] text-[var(--text-tertiary)] py-4 text-center">No active opportunities</p>
-          ) : (
-            <div className="space-y-2.5">
-              {stages.map(stage => {
-                const barPct = maxCount > 0 ? (stage.count / maxCount) * 100 : 0
-                const dotClass = STAGE_DOTS[stage.sales_stage] ?? 'bg-[var(--text-tertiary)]'
-                return (
-                  <div key={stage.sales_stage} className="flex items-center gap-2">
-                    {/* Stage dot + name */}
-                    <div className="flex items-center gap-1.5 w-[130px] flex-shrink-0">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
-                      <span className="text-[11px] text-[var(--text-secondary)] truncate">
-                        {stage.sales_stage}
-                      </span>
-                    </div>
-                    {/* Bar */}
-                    <div className="flex-1 h-1.5 bg-[var(--bg-hover)] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[var(--color-accent)] rounded-full transition-all duration-[var(--duration-slow)]"
-                        style={{ width: `${barPct}%` }}
-                      />
-                    </div>
-                    {/* Count badge */}
-                    <span className="text-[11px] font-medium text-[var(--text-secondary)] w-5 text-right flex-shrink-0">
-                      {stage.count}
-                    </span>
-                    {/* Value */}
-                    <span className="text-[11px] text-[var(--text-tertiary)] w-[72px] text-right flex-shrink-0">
-                      {formatCurrency(stage.total_value)}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Mode: active-contracts — list */}
-      {mode === 'active-contracts' && (
-        <div>
-          {contracts.length === 0 ? (
-            <p className="text-[12px] text-[var(--text-tertiary)] py-4 text-center">No active contracts</p>
-          ) : (
-            <div className="space-y-1.5">
-              {contracts.map(contract => (
-                <div key={contract.id} className="flex items-center justify-between py-1">
-                  <span className="text-[12px] text-[var(--text-primary)] truncate flex-1 mr-2">
-                    {contract.name}
-                  </span>
-                  <span className="text-[11px] text-[var(--text-secondary)] mr-3 flex-shrink-0">
-                    {contract.value != null ? formatCurrency(contract.value) : '—'}
-                  </span>
-                  <span className="text-[11px] text-[var(--text-tertiary)] flex-shrink-0">
-                    {contract.closeDate ?? '—'}
-                  </span>
+          {stages.map((stage, i) => {
+            const barPct = maxCount > 0 ? (stage.count / maxCount) * 100 : 0
+            const isWon = stage.sales_stage === 'Closed Won'
+            const isLast = i === stages.length - 1
+            return (
+              <div
+                key={stage.sales_stage}
+                className="hover:bg-[var(--bg-hover)]"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 13,
+                  padding: '10px 16px', cursor: 'default',
+                  borderBottom: isLast ? 'none' : '1px solid var(--separator)',
+                  transition: 'background 150ms',
+                }}
+              >
+                <span style={{
+                  fontSize: 14, width: 140, flexShrink: 0,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  color: isWon ? 'var(--color-green)' : 'var(--text-primary)',
+                }}>
+                  {isWon ? 'Won \u2713' : stage.sales_stage}
+                </span>
+                <div style={{ flex: 1, height: 5, background: 'var(--bg-hover)', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', borderRadius: 3, width: `${barPct}%`,
+                    background: 'linear-gradient(90deg, #5856D6, #9C99FF)',
+                    opacity: isWon ? 0.45 : 1,
+                    transition: 'width 400ms cubic-bezier(0.25,0.46,0.45,0.94)',
+                  }} />
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Mode: combined-total — single large number */}
-      {mode === 'combined-total' && (
-        <div className="flex items-center justify-center py-6">
-          <div className="text-center">
-            <p
-              className="text-[36px] font-bold leading-tight"
-              style={{ color: 'var(--color-accent)' }}
-            >
-              {formatCurrency(combinedTotal)}
-            </p>
-            <p className="text-[11px] text-[var(--text-tertiary)] mt-1">
-              Total closed + active contract value
-            </p>
-          </div>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)', width: 26, textAlign: 'right', flexShrink: 0 }}>
+                  {stage.count}
+                </span>
+                <span style={{
+                  fontSize: 14, fontWeight: 600, width: 68, textAlign: 'right', flexShrink: 0,
+                  color: isWon ? 'var(--color-green)' : 'var(--text-primary)',
+                }}>
+                  {formatCurrency(stage.total_value)}
+                </span>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

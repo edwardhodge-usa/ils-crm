@@ -40,11 +40,11 @@ function LogRow({ log }: { log: Record<string, unknown> }) {
 
       {/* Timestamp + location */}
       <div className="flex-shrink-0 w-[140px]">
-        <div className="text-[11px] text-[var(--text-tertiary)] tabular-nums leading-tight">
+        <div className="text-[12px] text-[var(--text-tertiary)] tabular-nums leading-tight">
           {timestamp}
         </div>
         {Boolean(location) && (
-          <div className="text-[10px] text-[var(--text-placeholder)] mt-0.5 leading-tight">
+          <div className="text-[11px] text-[var(--text-placeholder)] mt-0.5 leading-tight">
             {location}
           </div>
         )}
@@ -58,7 +58,7 @@ function LogRow({ log }: { log: Record<string, unknown> }) {
           </div>
         )}
         {Boolean(clientEmail) && (
-          <div className="text-[10px] text-[var(--text-tertiary)] truncate mt-0.5 leading-tight">
+          <div className="text-[12px] text-[var(--text-tertiary)] truncate mt-0.5 leading-tight">
             {clientEmail}
           </div>
         )}
@@ -72,7 +72,7 @@ function LogRow({ log }: { log: Record<string, unknown> }) {
       {/* Page URL */}
       <div className="flex-1 min-w-0">
         {Boolean(pageUrl) ? (
-          <div className="text-[11px] text-[var(--color-accent)] truncate leading-tight">
+          <div className="text-[12px] text-[var(--color-accent)] truncate leading-tight">
             {pageUrl}
           </div>
         ) : (
@@ -84,7 +84,7 @@ function LogRow({ log }: { log: Record<string, unknown> }) {
       {Boolean(claritySession) && (
         <div className="flex-shrink-0">
           <span
-            className="text-[11px] text-[var(--color-accent)] cursor-default hover:underline"
+            className="text-[12px] text-[var(--color-accent)] cursor-default hover:underline"
             title={claritySession ?? undefined}
           >
             View
@@ -119,7 +119,7 @@ export default function PortalLogsPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--separator)] flex-shrink-0">
@@ -130,20 +130,20 @@ export default function PortalLogsPage() {
           placeholder="Search logs…"
           className="flex-1 text-[12px] px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--separator)] text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)]"
         />
-        <span className="text-[11px] text-[var(--text-tertiary)] tabular-nums flex-shrink-0">
+        <span className="text-[12px] text-[var(--text-tertiary)] tabular-nums flex-shrink-0">
           {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
         </span>
       </div>
 
       {/* Column headers */}
       <div className="flex items-center gap-3 px-4 py-1.5 border-b border-[var(--separator)] bg-[var(--bg-secondary)] flex-shrink-0">
-        <span className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] w-[140px] flex-shrink-0">
+        <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] w-[140px] flex-shrink-0">
           Time
         </span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] w-[140px] flex-shrink-0">
+        <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] w-[140px] flex-shrink-0">
           Client
         </span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] flex-1">
+        <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] flex-1">
           Page
         </span>
       </div>

@@ -228,7 +228,7 @@ export function NewContactSheet({ isOpen, onClose, onSave }: NewContactSheetProp
               </button>
             ))}
             {form.qualityRating > 0 && (
-              <span className="text-[11px] text-[var(--text-label)] ml-1">
+              <span className="text-[12px] text-[var(--text-secondary)] ml-1">
                 {form.qualityRating}/5
               </span>
             )}

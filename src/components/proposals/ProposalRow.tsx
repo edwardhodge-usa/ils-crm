@@ -33,12 +33,12 @@ export function ProposalRow({ proposal, isSelected, onClick }: ProposalRowProps)
       <div className="flex items-center gap-1.5 mt-0.5 min-h-[16px]">
         {Boolean(status) && <StatusBadge value={status} />}
         {value !== null && (
-          <span className="text-[10px] font-semibold text-[var(--color-green)] leading-none">
+          <span className="text-[11px] font-semibold text-[var(--color-green)] leading-none">
             ${value.toLocaleString()}
           </span>
         )}
         {Boolean(companyName) && (
-          <span className="ml-auto text-[10px] text-[var(--text-tertiary)] leading-none truncate flex-shrink-0 max-w-[80px]">
+          <span className="ml-auto text-[12px] text-[var(--text-tertiary)] leading-none truncate flex-shrink-0 max-w-[80px]">
             {companyName}
           </span>
         )}

@@ -7,9 +7,19 @@ import { EmptyState } from '../shared/EmptyState'
 import { ContactStats } from './ContactStats'
 import type { Stage } from '../shared/StageBadge'
 
-export default function Contact360Page() {
-  const { id } = useParams()
+interface Contact360Props {
+  /** When provided, use this ID instead of URL params (embedded split-pane mode) */
+  contactId?: string | null
+  /** Called after successful delete in embedded mode */
+  onDeleted?: () => void
+}
+
+export default function Contact360Page({ contactId, onDeleted }: Contact360Props = {}) {
+  const { id: routeId } = useParams()
   const navigate = useNavigate()
+  const id = contactId ?? routeId
+  const isEmbedded = contactId !== undefined
+
   const [contact, setContact] = useState<Record<string, unknown> | null>(null)
   const [linkedData, setLinkedData] = useState<Record<string, Record<string, unknown>[]>>({})
   const [specialtyNames, setSpecialtyNames] = useState<string[]>([])
@@ -17,11 +27,19 @@ export default function Contact360Page() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!id) {
+      setContact(null)
+      setLinkedData({})
+      setSpecialtyNames([])
+      return
+    }
+
     async function load() {
-      if (!id) return
-      const result = await window.electronAPI.contacts.getById(id)
+      const result = await window.electronAPI.contacts.getById(id!)
       if (result.success && result.data) {
         setContact(result.data as Record<string, unknown>)
+      } else {
+        setContact(null)
       }
 
       // Load linked records for tabs + specialties
@@ -88,7 +106,8 @@ export default function Contact360Page() {
     load()
   }, [id])
 
-  if (!contact) {
+  // Empty state when no contact selected
+  if (!id || !contact) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
         <EmptyState title="Select a contact" subtitle="Choose a contact from the list to view details" />
@@ -98,10 +117,8 @@ export default function Contact360Page() {
 
   const openOpps = linkedData.opportunities || []
   const interactions = linkedData.interactions || []
-
   const meetingCount = interactions.filter(i => i.type === 'Meeting').length
 
-  // Compute days since last contact from last_contact_date field
   let daysSince: number | string = '—'
   if (contact.last_contact_date) {
     const lastDate = new Date(contact.last_contact_date as string)
@@ -123,27 +140,42 @@ export default function Contact360Page() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
-      {/* Top bar with navigation */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--separator)]">
-        <button
-          onClick={() => navigate('/contacts')}
-          className="flex items-center gap-1 text-[12px] text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors cursor-default"
-        >
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-          Contacts
-        </button>
-        <div className="flex items-center gap-1.5">
+      {/* Top bar */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '10px 16px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
+      }}>
+        {isEmbedded ? (
+          <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{fullName}</span>
+        ) : (
+          <button
+            onClick={() => navigate('/contacts')}
+            className="flex items-center gap-1 text-[13px] text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors cursor-default"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+            Contacts
+          </button>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button
             onClick={() => navigate(`/contacts/${id}/edit`)}
-            className="px-2.5 py-1 text-[11px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:opacity-80 transition-opacity cursor-default"
+            style={{
+              padding: '4px 10px', fontSize: 12, fontWeight: 500,
+              color: 'var(--color-accent)', background: 'var(--color-accent-translucent)',
+              borderRadius: 6, border: 'none', cursor: 'default', fontFamily: 'inherit',
+            }}
           >
             Edit
           </button>
           <button
             onClick={() => setShowDelete(true)}
-            className="px-2.5 py-1 text-[11px] font-medium text-[var(--color-red)] bg-[var(--color-red)]/15 rounded-md hover:bg-[var(--color-red)]/20 transition-colors cursor-default"
+            style={{
+              padding: '4px 10px', fontSize: 12, fontWeight: 500,
+              color: 'var(--color-red)', background: 'rgba(255,59,48,0.15)',
+              borderRadius: 6, border: 'none', cursor: 'default', fontFamily: 'inherit',
+            }}
           >
             Delete
           </button>
@@ -154,26 +186,30 @@ export default function Contact360Page() {
       <div className="flex-1 overflow-y-auto">
 
         {/* 1. Hero block */}
-        <div className="px-4 pt-4 pb-3 border-b border-[var(--separator)]">
-          <div className="flex items-start gap-3">
-            <Avatar name={fullName} size={48} />
-            <div className="flex-1 min-w-0">
-              <div className="text-[16px] font-bold text-[var(--text-primary)] leading-tight">
+        <div style={{ padding: '18px 18px 14px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 13 }}>
+            <Avatar name={fullName} size={50} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, letterSpacing: -0.4 }}>
                 {fullName}
               </div>
               {(Boolean(contact.job_title) || Boolean(contact.company)) && (
-                <div className="text-[12px] text-[var(--text-secondary)] mt-0.5 truncate">
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>
                   {contact.job_title as string}
                   {Boolean(contact.job_title) && Boolean(contact.company) ? ' · ' : ''}
                   {contact.company as string}
                 </div>
               )}
               {specialtyNames.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1.5">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>
                   {specialtyNames.map((name: string) => (
                     <span
                       key={name}
-                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--color-accent-translucent)] text-[var(--color-accent)]"
+                      style={{
+                        fontSize: 11, fontWeight: 600, padding: '2px 8px',
+                        borderRadius: 4, background: 'var(--color-accent-translucent)',
+                        color: 'var(--color-accent)',
+                      }}
                     >
                       {name}
                     </span>
@@ -182,102 +218,116 @@ export default function Contact360Page() {
               )}
             </div>
           </div>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 6, marginTop: 14 }}>
+            {[
+              { label: 'Log Interaction', primary: true, onClick: () => {} },
+              { label: 'Add to Opportunity', primary: false, onClick: () => {} },
+              { label: 'Email', primary: false, onClick: () => { if (contact.email) window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`) } },
+            ].map(action => (
+              <button
+                key={action.label}
+                onClick={action.onClick}
+                style={{
+                  flex: 1, padding: '6px 12px', fontSize: 12, fontWeight: 600,
+                  borderRadius: 6, border: 'none', cursor: 'default', fontFamily: 'inherit',
+                  whiteSpace: 'nowrap', transition: 'opacity 150ms',
+                  background: action.primary ? 'var(--color-accent)' : 'var(--bg-secondary)',
+                  color: action.primary ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+                }}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* 2. Action buttons row */}
-        <div className="flex gap-2 px-4 py-2.5 border-b border-[var(--separator)]">
-          {[
-            { label: 'Log Interaction', onClick: () => {} },
-            { label: 'Add to Opportunity', onClick: () => {} },
-            { label: 'Email', onClick: () => { if (contact.email) window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`) } },
-          ].map(action => (
-            <button
-              key={action.label}
-              onClick={action.onClick}
-              className="flex-1 py-1.5 text-[11px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-lg hover:opacity-80 transition-opacity duration-[150ms] cursor-default"
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-
-        {/* 3. Stats strip */}
+        {/* 2. Stats strip */}
         <ContactStats stats={stats} />
 
-        {/* 4. Contact Info section */}
-        <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">Contact Info</div>
-          <div className="flex flex-col gap-2">
+        {/* 3. Contact Info section */}
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', marginBottom: 8 }}>
+            Contact Info
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {Boolean(contact.email) && (
               <button
                 onClick={() => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`)}
-                className="flex items-center gap-2 text-[12px] text-[var(--color-accent)] hover:underline text-left cursor-default"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'default', fontFamily: 'inherit', textAlign: 'left' }}
               >
-                <span className="text-[var(--text-tertiary)] w-4 text-center text-[10px]">✉</span>
+                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12 }}>✉</span>
                 {contact.email as string}
               </button>
             )}
             {Boolean(contact.mobile_phone) && (
-              <div className="flex items-center gap-2 text-[12px] text-[var(--text-primary)]">
-                <span className="text-[var(--text-tertiary)] w-4 text-center text-[10px]">📱</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-primary)' }}>
+                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12 }}>📱</span>
                 {contact.mobile_phone as string}
               </div>
             )}
             {Boolean(contact.phone) && !contact.mobile_phone && (
-              <div className="flex items-center gap-2 text-[12px] text-[var(--text-primary)]">
-                <span className="text-[var(--text-tertiary)] w-4 text-center text-[10px]">📞</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-primary)' }}>
+                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12 }}>📞</span>
                 {contact.phone as string}
               </div>
             )}
             {Boolean(contact.linkedin_url) && (
               <button
                 onClick={() => window.electronAPI.shell.openExternal(contact.linkedin_url as string)}
-                className="flex items-center gap-2 text-[12px] text-[var(--color-accent)] hover:underline truncate text-left cursor-default"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'default', fontFamily: 'inherit', textAlign: 'left' }}
               >
-                <span className="text-[var(--text-tertiary)] w-4 text-center text-[10px]">in</span>
+                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12, fontWeight: 700 }}>in</span>
                 {(contact.linkedin_url as string)
                   .replace('https://www.linkedin.com/in/', '')
                   .replace('https://linkedin.com/in/', '')}
               </button>
             )}
             {Boolean(contact.categorization) && (
-              <div className="flex items-center gap-2">
-                <span className="text-[var(--text-tertiary)] w-4 text-center text-[10px]">◈</span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12 }}>◈</span>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, padding: '2px 8px',
+                  borderRadius: 4, background: 'var(--bg-secondary)', color: 'var(--text-secondary)',
+                }}>
                   {contact.categorization as string}
                 </span>
               </div>
             )}
             {Boolean(contact.event_tags) && (
-              <div className="flex items-center gap-2 text-[12px] text-[var(--text-secondary)]">
-                <span className="text-[var(--text-tertiary)] w-4 text-center text-[10px]">📍</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12 }}>📍</span>
                 {contact.event_tags as string}
               </div>
             )}
           </div>
         </div>
 
-        {/* 5. Open Opportunities section */}
-        <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">Open Opportunities</div>
+        {/* 4. Open Opportunities */}
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', marginBottom: 8 }}>
+            Open Opportunities
+          </div>
           {openOpps.length === 0 ? (
-            <div className="text-[12px] text-[var(--text-tertiary)] italic">No open opportunities</div>
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No open opportunities</div>
           ) : (
             openOpps.slice(0, 3).map(opp => (
               <div
                 key={opp.id as string}
-                className="px-3 py-2 rounded-lg bg-[var(--bg-card)] mb-1.5 cursor-default"
                 onClick={() => navigate(`/pipeline/${opp.id as string}/edit`)}
+                style={{
+                  padding: '10px 12px', borderRadius: 8, marginBottom: 6, cursor: 'default',
+                  background: 'var(--bg-tertiary)', border: '1px solid var(--separator)',
+                }}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-[12px] font-medium text-[var(--text-primary)] leading-tight flex-1 truncate">
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {(opp.opportunity_name as string) || '—'}
                   </div>
-                  {Boolean(opp.sales_stage) && (
-                    <StageBadge stage={opp.sales_stage as Stage} />
-                  )}
+                  {Boolean(opp.sales_stage) && <StageBadge stage={opp.sales_stage as Stage} />}
                 </div>
-                <div className="text-[13px] font-bold text-[var(--text-primary)] mt-0.5">
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginTop: 3 }}>
                   {opp.deal_value ? `$${Number(opp.deal_value).toLocaleString()}` : '—'}
                 </div>
               </div>
@@ -285,33 +335,35 @@ export default function Contact360Page() {
           )}
         </div>
 
-        {/* 6. Recent Interactions section */}
-        <div className="px-4 py-3">
-          <div className="text-[10px] font-bold uppercase tracking-[0.07em] text-[var(--text-label)] mb-2">Recent Interactions</div>
+        {/* 5. Recent Interactions */}
+        <div style={{ padding: '14px 18px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', marginBottom: 8 }}>
+            Recent Interactions
+          </div>
           {interactions.length === 0 ? (
-            <div className="text-[12px] text-[var(--text-tertiary)] italic">No interactions yet</div>
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No interactions yet</div>
           ) : (
             interactions.slice(0, 3).map(interaction => (
               <div
                 key={interaction.id as string}
-                className="flex gap-2 py-1.5 border-b border-[var(--separator)] last:border-0"
+                style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--separator)' }}
               >
-                <div className="text-[12px] text-[var(--text-tertiary)] w-5 text-center flex-shrink-0">
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', width: 20, textAlign: 'center', flexShrink: 0 }}>
                   {interaction.type === 'Call' ? '📞' :
                    interaction.type === 'Meeting' ? '👥' :
                    interaction.type === 'Email' ? '✉' : '💬'}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-medium text-[var(--text-primary)]">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
                       {(interaction.type as string) || (interaction.subject as string) || 'Interaction'}
                     </span>
-                    <span className="text-[10px] text-[var(--text-tertiary)] flex-shrink-0">
+                    <span style={{ fontSize: 12, color: 'var(--text-tertiary)', flexShrink: 0 }}>
                       {interaction.date as string}
                     </span>
                   </div>
                   {Boolean(interaction.summary) && (
-                    <div className="text-[11px] text-[var(--text-secondary)] truncate mt-0.5">
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {interaction.summary as string}
                     </div>
                   )}
@@ -325,9 +377,18 @@ export default function Contact360Page() {
 
       {/* Error banner */}
       {deleteError && (
-        <div className="flex items-center justify-between bg-[var(--color-red)]/15 border border-[var(--color-red)]/30 px-4 py-3 text-[var(--color-red)]">
-          <span className="text-[12px]">{deleteError}</span>
-          <button onClick={() => setDeleteError(null)} className="ml-4 hover:text-[var(--text-primary)] transition-colors cursor-default">✕</button>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.3)',
+          padding: '10px 16px', color: 'var(--color-red)',
+        }}>
+          <span style={{ fontSize: 13 }}>{deleteError}</span>
+          <button
+            onClick={() => setDeleteError(null)}
+            style={{ marginLeft: 16, color: 'inherit', background: 'none', border: 'none', cursor: 'default', fontFamily: 'inherit' }}
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -338,7 +399,11 @@ export default function Contact360Page() {
         onConfirm={async () => {
           const result = await window.electronAPI.contacts.delete(id!)
           if (result.success) {
-            navigate('/contacts')
+            if (isEmbedded && onDeleted) {
+              onDeleted()
+            } else {
+              navigate('/contacts')
+            }
           } else {
             setShowDelete(false)
             setDeleteError(result.error || 'Delete failed — please try again')

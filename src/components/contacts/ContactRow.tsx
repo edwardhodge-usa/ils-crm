@@ -1,5 +1,27 @@
-import { RatingDots } from '@/components/shared'
 import type { ContactListItem } from '@/types'
+
+const AVATAR_COLORS = [
+  { bg: 'rgba(52,211,153,0.18)', fg: '#34D399' },
+  { bg: 'rgba(99,102,241,0.18)', fg: '#818CF8' },
+  { bg: 'rgba(251,146,60,0.18)', fg: '#FB923C' },
+  { bg: 'rgba(244,63,94,0.18)', fg: '#F43F5E' },
+  { bg: 'rgba(56,189,248,0.18)', fg: '#38BDF8' },
+  { bg: 'rgba(168,85,247,0.18)', fg: '#A855F7' },
+  { bg: 'rgba(245,158,11,0.18)', fg: '#F59E0B' },
+  { bg: 'rgba(16,185,129,0.18)', fg: '#10B981' },
+]
+
+function avatarColor(name: string) {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
+function initials(first: string, last: string): string {
+  const f = first.trim()[0] || ''
+  const l = last.trim()[0] || ''
+  return (f + l).toUpperCase() || '?'
+}
 
 interface ContactRowProps {
   contact: ContactListItem
@@ -10,44 +32,95 @@ interface ContactRowProps {
 export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
   const {
     firstName, lastName, jobTitle, companyName,
-    qualityRating, specialtyNames, daysSinceContact,
+    specialtyNames, daysSinceContact,
   } = contact
+
+  const name = `${firstName} ${lastName}`.trim()
+  const color = avatarColor(name)
+  const subtitle = jobTitle && companyName
+    ? `${jobTitle} · ${companyName}`
+    : jobTitle || companyName || ''
+
+  // Days badge styling: warn (orange) for 14-20d, danger (red) for 21+
+  const daysColor = daysSinceContact !== null && daysSinceContact !== undefined
+    ? daysSinceContact >= 21 ? 'var(--color-red)' : daysSinceContact >= 14 ? 'var(--color-orange)' : 'var(--color-accent)'
+    : undefined
 
   return (
     <div
       onClick={onClick}
-      className={`contact-row px-3 py-2.5 cursor-default border-b border-[var(--separator)] transition-colors duration-[150ms] ${
-        isSelected
-          ? 'contact-row--selected bg-[var(--color-accent-translucent)]'
-          : 'hover:bg-[var(--bg-hover)]'
-      }`}
+      className="cursor-default transition-colors duration-[150ms]"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 9,
+        padding: '9px 12px',
+        borderLeft: '2px solid',
+        borderLeftColor: isSelected ? 'var(--color-accent)' : 'transparent',
+        borderBottom: 'none',
+        background: isSelected ? 'var(--color-accent-translucent)' : undefined,
+      }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-hover)' }}
+      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
     >
-      {/* Line 1: rating dots + name */}
-      <div className="flex items-center gap-1.5 mb-0.5">
-        <RatingDots value={qualityRating} size={5} />
-        <span className="text-[13px] font-semibold text-[var(--text-primary)] truncate leading-tight">
-          {firstName} {lastName}
-        </span>
+      {/* Avatar */}
+      <div style={{
+        width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 11, fontWeight: 700, background: color.bg, color: color.fg,
+        letterSpacing: '-0.3px',
+      }}>
+        {initials(firstName, lastName)}
       </div>
 
-      {/* Line 2: title · company */}
-      <div className="text-[11px] text-[var(--text-secondary)] truncate mb-1 leading-tight">
-        {jobTitle && companyName
-          ? `${jobTitle} · ${companyName}`
-          : jobTitle || companyName || ''}
-      </div>
+      {/* Name + subtitle + meta */}
+      <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+        {/* Name */}
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          lineHeight: 1.3,
+        }}>
+          {name || 'Unnamed'}
+        </div>
 
-      {/* Line 3: specialty tag + days badge */}
-      <div className="flex items-center gap-1.5 min-h-[16px]">
-        {specialtyNames[0] && (
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--color-accent-translucent)] text-[var(--color-accent)] leading-none">
-            {specialtyNames[0]}
-          </span>
+        {/* Subtitle: role · company */}
+        {Boolean(subtitle) && (
+          <div style={{
+            fontSize: 12, color: 'var(--text-secondary)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            lineHeight: 1.3,
+          }}>
+            {subtitle}
+          </div>
         )}
-        {daysSinceContact !== null && daysSinceContact !== undefined && (
-          <span className="ml-auto text-[10px] text-[var(--text-tertiary)] leading-none tabular-nums">
-            {daysSinceContact}d
-          </span>
+
+        {/* Meta row: specialty tag + days badge */}
+        {(specialtyNames[0] || (daysSinceContact !== null && daysSinceContact !== undefined)) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
+            {specialtyNames[0] && (
+              <span style={{
+                fontSize: 10, fontWeight: 600, padding: '1px 6px',
+                borderRadius: 4, flexShrink: 0,
+                background: 'var(--color-accent-translucent)', color: 'var(--color-accent)',
+              }}>
+                {specialtyNames[0]}
+              </span>
+            )}
+            {daysSinceContact !== null && daysSinceContact !== undefined && (
+              <span style={{
+                fontSize: 10, fontWeight: 600, padding: '2px 6px',
+                borderRadius: 4, flexShrink: 0, marginLeft: 'auto',
+                background: daysColor === 'var(--color-accent)'
+                  ? 'var(--color-accent-translucent)'
+                  : daysColor === 'var(--color-orange)' ? 'rgba(255,159,10,0.15)' : 'rgba(255,59,48,0.15)',
+                color: daysColor,
+                whiteSpace: 'nowrap',
+              }}>
+                {daysSinceContact}d
+              </span>
+            )}
+          </div>
         )}
       </div>
     </div>
