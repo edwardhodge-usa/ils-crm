@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
+import type { ReactNode } from 'react'
 
 interface SheetProps {
   isOpen: boolean
   onClose: () => void
   title: string
-  children: React.ReactNode
+  children: ReactNode
 }
 
 export function Sheet({ isOpen, onClose, title, children }: SheetProps) {

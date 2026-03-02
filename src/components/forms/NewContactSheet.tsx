@@ -31,7 +31,7 @@ interface NewContactFormData {
 interface NewContactSheetProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (data: NewContactFormData) => void
+  onSave: (data: NewContactFormData) => Promise<void>
 }
 
 const defaultForm: NewContactFormData = {
@@ -51,15 +51,25 @@ const defaultForm: NewContactFormData = {
 
 export function NewContactSheet({ isOpen, onClose, onSave }: NewContactSheetProps) {
   const [form, setForm] = useState<NewContactFormData>(defaultForm)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   function set(field: keyof NewContactFormData, value: string | number) {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  function handleSave() {
-    onSave(form)
-    setForm(defaultForm)
-    onClose()
+  async function handleSave() {
+    setSaving(true)
+    setSaveError(null)
+    try {
+      await onSave(form)
+      setForm(defaultForm)
+      onClose()
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save contact')
+    } finally {
+      setSaving(false)
+    }
   }
 
   function handleCancel() {
@@ -198,7 +208,7 @@ export function NewContactSheet({ isOpen, onClose, onSave }: NewContactSheetProp
 
         {/* Row 8: Quality Rating */}
         <FormField label="Quality Rating">
-          <div className="flex items-center gap-2 py-1">
+          <div aria-label="Quality Rating" role="group" className="flex items-center gap-2 py-1">
             {Array.from({ length: 5 }, (_, i) => (
               <button
                 key={i}
@@ -237,6 +247,9 @@ export function NewContactSheet({ isOpen, onClose, onSave }: NewContactSheetProp
         </FormField>
 
         {/* Footer */}
+        {saveError && (
+          <p className="text-[12px] text-red-500">{saveError}</p>
+        )}
         <div className="flex justify-end gap-2 pt-2 border-t border-[var(--separator)]">
           <button
             type="button"
@@ -248,10 +261,10 @@ export function NewContactSheet({ isOpen, onClose, onSave }: NewContactSheetProp
           <button
             type="button"
             onClick={handleSave}
-            disabled={!canSave}
+            disabled={!canSave || saving}
             className="px-4 py-1.5 text-[13px] font-medium text-[var(--text-on-accent)] bg-[var(--color-accent)] rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
           >
-            Save
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>
