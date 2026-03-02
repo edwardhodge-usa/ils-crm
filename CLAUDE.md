@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM project — Airtable schema management, API integrations, and eventually a full Electron desktop CRM app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Airtable API (backend/data), Anthropic Claude API (AI features)
-- **Status**: Post-QA improvements in progress — bugs fixed, quick wins shipped, specialties added to list + detail views
+- **Status**: Full UI rebuild complete on `feature/rebuild-v2` — 17 tasks, Apple HIG-compliant design system, all views rebuilt. Awaiting user review then PR to main.
 - **Repo**: edwardhodge-usa/ils-crm
 - **Airtable Base**: ILS CRM (appYXbUdcmSwBoPFU)
 
@@ -87,6 +87,10 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-02-28** - Specialties in list pages: fetch specialties separately with useEffect, build `id→name` map, assign colors via deterministic hash (`hash % palette.length`) so same specialty always = same color
 **2026-02-28** - QA: Clicking Pipeline cards only drags, can't navigate to detail → Need to differentiate click vs drag gesture in @dnd-kit event handlers
 **2026-02-28** - GLOBAL RULE: Airtable is the single source of truth. Every app field MUST map to an Airtable field — no local-only data fields. When adding new fields: (1) check if it exists in Airtable, (2) create it if not, (3) add to field-maps.ts + converters.ts, (4) determine if it's a primary field or lookup from a linked record
+**2026-03-01** - Tailwind JIT limitation: CSS var() doesn't work reliably in `z-[...]` and `rounded-[...]` — use literal values (`z-[200]` not `z-[var(--z-modal)]`, `rounded-[12px]` not `rounded-[var(--radius-lg)]`)
+**2026-03-01** - Apple HIG: `cursor-pointer` is a critical violation on macOS. Reset.css covers `button` but not `<label>` or custom interactive elements — add explicit `cursor-default` anywhere you'd normally write `cursor-pointer`
+**2026-03-01** - Always use `text-[var(--text-on-accent)]` for text on colored backgrounds (accent, red, green) — never raw `text-white`. In light mode `--text-primary` is dark grey and will fail contrast on colored buttons
+**2026-03-01** - With react-jsx transform, `React.ReactNode` as a type is a namespace error (`React` not in scope). Use `import type { ReactNode } from 'react'` and reference `ReactNode` directly
 **2026-02-28** - When promoting a table from read-only to full CRUD, always remove it from `READ_ONLY_TABLES` in sync-engine.ts — interactions was left in the set after CRUD was shipped, silently orphaning all locally-created interactions
 **2026-02-28** - Filtering linked records with `jsonString.includes(recordId)` causes false positives when one ID is a prefix of another → Always `JSON.parse()` the array first, then use `.includes()` on the array
 **2026-02-28** - `shell:openExternal` must validate URL scheme before calling — bad data from Airtable (e.g. `file://` in a LinkedIn URL field) would otherwise open local files → Allowlist `https://`, `http://`, `mailto:`, `tel:` only
