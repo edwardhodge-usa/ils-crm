@@ -31,12 +31,28 @@ import CommandPalette from './components/layout/CommandPalette'
 export default function App() {
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const apply = (e: MediaQueryListEvent | MediaQueryList) => {
+
+    // Apply theme, but only follow the media query when mode is 'system'
+    // Settings page writes 'light' | 'dark' | 'system' to localStorage('theme-mode')
+    const applySystem = (e: MediaQueryListEvent | MediaQueryList) => {
+      const stored = localStorage.getItem('theme-mode')
+      if (stored === 'light' || stored === 'dark') return // manual override — ignore OS change
       document.documentElement.classList.toggle('dark', e.matches)
     }
-    apply(mq)
-    mq.addEventListener('change', apply)
-    return () => mq.removeEventListener('change', apply)
+
+    // Initial apply — honour stored preference if set
+    const stored = localStorage.getItem('theme-mode')
+    if (stored === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else if (stored === 'light') {
+      document.documentElement.classList.remove('dark')
+    } else {
+      // system (or unset)
+      document.documentElement.classList.toggle('dark', mq.matches)
+    }
+
+    mq.addEventListener('change', applySystem)
+    return () => mq.removeEventListener('change', applySystem)
   }, [])
 
   return (
