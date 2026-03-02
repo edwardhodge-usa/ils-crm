@@ -17,13 +17,14 @@ import ProposalListPage from './components/proposals/ProposalListPage'
 import ProposalForm from './components/proposals/ProposalForm'
 import ProjectListPage from './components/projects/ProjectListPage'
 import ProjectForm from './components/projects/ProjectForm'
+import RfqListPage from './components/rfqs/RfqListPage'
+import ContractListPage from './components/contracts/ContractListPage'
 import ImportedContactsPage from './components/imported-contacts/ImportedContactsPage'
 import InteractionsPage from './components/interactions/InteractionsPage'
 import InteractionForm from './components/interactions/InteractionForm'
 import PortalAccessPage from './components/portal/PortalAccessPage'
 import PortalLogsPage from './components/portal/PortalLogsPage'
 import CommandPalette from './components/layout/CommandPalette'
-import { EmptyState } from './components/shared'
 
 export default function App() {
   useEffect(() => {
@@ -60,11 +61,11 @@ export default function App() {
           <Route path="/pipeline/new" element={<OpportunityForm />} />
           <Route path="/pipeline/:id/edit" element={<OpportunityForm />} />
 
-          {/* RFQs — placeholder */}
-          <Route path="/rfqs" element={<div className="flex-1 flex items-center justify-center"><EmptyState title="RFQs" subtitle="Coming soon" /></div>} />
+          {/* RFQs */}
+          <Route path="/rfqs" element={<RfqListPage />} />
 
-          {/* Contracts — placeholder */}
-          <Route path="/contracts" element={<div className="flex-1 flex items-center justify-center"><EmptyState title="Contracts" subtitle="Coming soon" /></div>} />
+          {/* Contracts */}
+          <Route path="/contracts" element={<ContractListPage />} />
 
           {/* Tasks */}
           <Route path="/tasks" element={<TaskListPage />} />
