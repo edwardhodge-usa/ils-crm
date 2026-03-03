@@ -87,17 +87,36 @@ function NavButton({
       onClick={onClick}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
-      className={`w-full flex items-center gap-2.5 px-3 py-[6px] mx-1.5 rounded-[var(--radius-md,8px)] text-[15px] transition-[background] duration-150 ${
+      className={`flex items-center transition-[background] duration-150 ${
         isActive
-          ? 'font-medium'
-          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] font-normal'
+          ? ''
+          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
       }`}
       style={{
-        width: 'calc(100% - 12px)',
+        fontSize: '13px',
+        fontWeight: 500,
+        minHeight: '28px',
+        borderRadius: '8px',
+        margin: '0 8px',
+        padding: '6px 14px',
+        gap: '8px',
+        width: 'calc(100% - 16px)',
         ...(isActive ? { background: 'var(--color-accent)', color: 'var(--text-on-accent)' } : {}),
       }}
     >
-      {Icon && <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? 'opacity-100' : 'opacity-80'}`} />}
+      {Icon && (
+        <span
+          className="flex-shrink-0"
+          style={{
+            width: '18px',
+            height: '18px',
+            color: isActive ? 'var(--text-on-accent)' : 'var(--color-accent)',
+            display: 'flex',
+          }}
+        >
+          <Icon className="w-[18px] h-[18px]" />
+        </span>
+      )}
       <span className="truncate">{label}</span>
     </button>
   )
@@ -113,9 +132,9 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="w-[216px] h-full flex-shrink-0 bg-[var(--bg-sidebar)] border-r border-[var(--separator)] flex flex-col overflow-hidden">
+    <div className="h-full flex-shrink-0 bg-[var(--bg-sidebar)] border-r border-[var(--separator)] flex flex-col overflow-hidden" style={{ width: '220px' }}>
       {/* Titlebar clearance for macOS traffic lights */}
-      <div className="h-11 flex-shrink-0 window-drag" />
+      <div className="flex-shrink-0 window-drag" style={{ height: '52px' }} />
 
       {/* Nav sections */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden py-1">
@@ -123,7 +142,17 @@ export default function Sidebar() {
           <div key={sectionIndex} className={sectionIndex > 0 ? 'mt-3' : ''}>
             {/* Section label */}
             {section.label && (
-              <div className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-secondary)] select-none">
+              <div
+                className="select-none"
+                style={{
+                  padding: '16px 22px 4px',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: 'var(--text-secondary)',
+                }}
+              >
                 {section.label}
               </div>
             )}

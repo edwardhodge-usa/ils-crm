@@ -1,59 +1,86 @@
+/**
+ * StatusBadge — renders a status/category label with rgba(color, 0.10) background.
+ * Uses inline styles for reliable dark-mode token resolution (no Tailwind JIT issues).
+ */
+
+type BadgeSize = 'sm' | 'md'
+
+// Status → CSS custom-property color (the solid text color; bg derives from rgba(color, 0.10))
 const colorMap: Record<string, string> = {
   // Task/Proposal status
-  'To Do': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
-  'In Progress': 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]',
-  'Waiting': 'bg-[var(--color-orange)]/10 text-[var(--color-orange)]',
-  'Completed': 'bg-[var(--color-green)]/10 text-[var(--color-green)]',
-  'Cancelled': 'bg-[var(--text-tertiary)]/20 text-[var(--text-tertiary)]',
-  'Draft': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
-  'Pending Approval': 'bg-[var(--color-orange)]/10 text-[var(--color-orange)]',
-  'Approved': 'bg-[var(--color-green)]/10 text-[var(--color-green)]',
-  'Rejected': 'bg-[var(--color-red)]/10 text-[var(--color-red)]',
-  'Sent to Client': 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]',
+  'To Do':             'var(--text-tertiary)',
+  'In Progress':       'var(--color-accent)',
+  'Waiting':           'var(--color-orange)',
+  'Completed':         'var(--color-green)',
+  'Cancelled':         'var(--text-tertiary)',
+  'Draft':             'var(--text-tertiary)',
+  'Pending Approval':  'var(--color-orange)',
+  'Approved':          'var(--color-green)',
+  'Rejected':          'var(--color-red)',
+  'Sent to Client':    'var(--color-accent)',
 
   // Pipeline stages
-  'Initial Contact': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
-  'Qualification': 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]',
-  'Meeting Scheduled': 'bg-[var(--color-indigo)]/10 text-[var(--color-indigo)]',
-  'Proposal Sent': 'bg-[var(--color-orange)]/10 text-[var(--color-orange)]',
-  'Negotiation': 'bg-[var(--color-orange)]/10 text-[var(--color-orange)]',
-  'Contract Sent': 'bg-[var(--color-purple)]/10 text-[var(--color-purple)]',
-  'Closed Won': 'bg-[var(--color-green)]/10 text-[var(--color-green)]',
-  'Closed Lost': 'bg-[var(--color-red)]/10 text-[var(--color-red)]',
-  'Future Client': 'bg-[var(--color-indigo)]/10 text-[var(--color-indigo)]',
+  'Initial Contact':   'var(--text-tertiary)',
+  'Qualification':     'var(--color-accent)',
+  'Meeting Scheduled': 'var(--color-indigo)',
+  'Proposal Sent':     'var(--color-orange)',
+  'Negotiation':       'var(--color-orange)',
+  'Contract Sent':     'var(--color-purple)',
+  'Closed Won':        'var(--color-green)',
+  'Closed Lost':       'var(--color-red)',
+  'Future Client':     'var(--color-indigo)',
 
   // Categorization
-  'Lead': 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]',
-  'Customer': 'bg-[var(--color-green)]/10 text-[var(--color-green)]',
-  'Partner': 'bg-[var(--color-indigo)]/10 text-[var(--color-indigo)]',
-  'Vendor': 'bg-[var(--color-orange)]/10 text-[var(--color-orange)]',
-  'Talent': 'bg-[var(--color-purple)]/10 text-[var(--color-purple)]',
-  'Other': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
-  'Unknown': 'bg-[var(--text-tertiary)]/20 text-[var(--text-tertiary)]',
+  'Lead':              'var(--color-accent)',
+  'Customer':          'var(--color-green)',
+  'Partner':           'var(--color-indigo)',
+  'Vendor':            'var(--color-orange)',
+  'Talent':            'var(--color-purple)',
+  'Other':             'var(--text-tertiary)',
+  'Unknown':           'var(--text-tertiary)',
 
   // Priority
-  'High': 'bg-[var(--color-red)]/10 text-[var(--color-red)]',
-  'Medium': 'bg-[var(--color-orange)]/10 text-[var(--color-orange)]',
-  'Low': 'bg-[var(--color-green)]/10 text-[var(--color-green)]',
+  'High':              'var(--color-red)',
+  'Medium':            'var(--color-orange)',
+  'Low':               'var(--color-green)',
 
   // Company type
-  'Active Client': 'bg-[var(--color-green)]/10 text-[var(--color-green)]',
-  'Prospect': 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]',
-  'Past Client': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
+  'Active Client':     'var(--color-green)',
+  'Prospect':          'var(--color-accent)',
+  'Past Client':       'var(--text-tertiary)',
 
   // Portal
-  'ACTIVE': 'bg-[var(--color-green)]/10 text-[var(--color-green)]',
-  'IN-ACTIVE': 'bg-[var(--text-tertiary)]/20 text-[var(--text-tertiary)]',
+  'ACTIVE':            'var(--color-green)',
+  'IN-ACTIVE':         'var(--text-tertiary)',
 }
 
-const defaultColor = 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]'
+const defaultColor = 'var(--text-tertiary)'
 
-export default function StatusBadge({ value }: { value: string | null | undefined }) {
+interface StatusBadgeProps {
+  value: string | null | undefined
+  size?: BadgeSize
+}
+
+export default function StatusBadge({ value, size = 'sm' }: StatusBadgeProps) {
   if (!value) return null
   const color = colorMap[value] || defaultColor
+  const fontSize = size === 'sm' ? 10 : 12
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${color}`}>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '2px 6px',
+        borderRadius: 4,
+        fontSize,
+        fontWeight: 500,
+        lineHeight: 1.4,
+        color,
+        background: `color-mix(in srgb, ${color} 10%, transparent)`,
+        whiteSpace: 'nowrap',
+      }}
+    >
       {value}
     </span>
   )

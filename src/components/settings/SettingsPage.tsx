@@ -42,10 +42,17 @@ const SECTIONS: { id: SectionId; label: string }[] = [
 // Sub-components
 // ────────────────────────────────────────────────────────────
 
-function PrefRow({ label, children }: { label: string; children: React.ReactNode }) {
+function PrefRow({ label, children, isLast = false }: { label: string; children: React.ReactNode; isLast?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-[var(--separator)]">
-      <span className="text-[13px] text-[var(--text-primary)]">{label}</span>
+    <div
+      className="flex items-center justify-between cursor-default"
+      style={{
+        minHeight: 36,
+        padding: '10px 14px',
+        borderBottom: isLast ? 'none' : '1px solid var(--separator)',
+      }}
+    >
+      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>{label}</span>
       <div className="flex items-center gap-2">{children}</div>
     </div>
   )
@@ -53,9 +60,24 @@ function PrefRow({ label, children }: { label: string; children: React.ReactNode
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-3">
+    <p style={{
+      fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+      letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
+    }}>
       {children}
     </p>
+  )
+}
+
+function GroupedContainer({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      background: 'var(--bg-secondary)',
+      borderRadius: 12,
+      overflow: 'hidden',
+    }}>
+      {children}
+    </div>
   )
 }
 
@@ -156,10 +178,10 @@ function GeneralSection() {
     <div>
       <SectionHeader>Airtable Configuration</SectionHeader>
 
-      <div className="last:border-b-0">
+      <GroupedContainer>
         {/* API Key */}
         <PrefRow label="API Key">
-          <div className="relative flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5">
             <SettingsInput
               type={showKey ? 'text' : 'password'}
               value={apiKey}
@@ -168,7 +190,25 @@ function GeneralSection() {
             />
             <button
               onClick={() => setShowKey((v) => !v)}
-              className="px-2.5 py-1.5 bg-[var(--bg-secondary)] border border-[var(--separator-strong)] rounded-[var(--radius-md)] text-[12px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+              className="cursor-default"
+              style={{
+                padding: '5px 10px',
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--separator-strong)',
+                borderRadius: 8,
+                fontSize: 12,
+                color: 'var(--text-secondary)',
+                fontFamily: 'inherit',
+                transition: 'background 150ms, color 150ms',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'var(--bg-hover)'
+                e.currentTarget.style.color = 'var(--text-primary)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'var(--bg-tertiary)'
+                e.currentTarget.style.color = 'var(--text-secondary)'
+              }}
             >
               {showKey ? 'Hide' : 'Show'}
             </button>
@@ -176,27 +216,40 @@ function GeneralSection() {
         </PrefRow>
 
         {/* Base ID */}
-        <PrefRow label="Base ID">
+        <PrefRow label="Base ID" isLast>
           <SettingsInput
             value={baseId}
             onChange={setBaseId}
             placeholder="appXXXXXXXX"
           />
         </PrefRow>
+      </GroupedContainer>
 
-        {/* Save */}
-        <div className="pt-4 flex items-center gap-3">
-          <button
-            onClick={handleSave}
-            disabled={!hasChanges}
-            className="px-4 py-1.5 bg-[var(--color-accent)] text-[var(--text-on-accent)] text-[13px] font-medium rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40"
-          >
-            Save Changes
-          </button>
-          {Boolean(saveMessage) && (
-            <span className="text-[12px] text-[var(--color-green)]">{saveMessage}</span>
-          )}
-        </div>
+      {/* Save */}
+      <div style={{ paddingTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button
+          onClick={handleSave}
+          disabled={!hasChanges}
+          className="cursor-default disabled:opacity-40"
+          style={{
+            padding: '6px 16px',
+            background: 'var(--color-accent)',
+            color: 'var(--text-on-accent)',
+            fontSize: 13,
+            fontWeight: 500,
+            borderRadius: 8,
+            border: 'none',
+            fontFamily: 'inherit',
+            transition: 'background 150ms',
+          }}
+          onMouseEnter={e => { if (!hasChanges) return; e.currentTarget.style.background = 'var(--color-accent-hover)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-accent)' }}
+        >
+          Save Changes
+        </button>
+        {Boolean(saveMessage) && (
+          <span style={{ fontSize: 12, color: 'var(--color-green)' }}>{saveMessage}</span>
+        )}
       </div>
     </div>
   )
@@ -228,10 +281,10 @@ function SyncSection() {
     <div>
       <SectionHeader>Sync Status</SectionHeader>
 
-      <div>
+      <GroupedContainer>
         {/* Last synced */}
         <PrefRow label="Last Synced">
-          <span className="text-[13px] text-[var(--text-secondary)]">
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
             {isSyncing
               ? 'Syncing…'
               : lastSyncedAt
@@ -241,11 +294,24 @@ function SyncSection() {
         </PrefRow>
 
         {/* Force Sync button */}
-        <PrefRow label="Force Sync">
+        <PrefRow label="Force Sync" isLast>
           <button
             onClick={handleForceSync}
             disabled={isSyncing}
-            className="px-4 py-1.5 bg-[var(--color-accent)] text-[var(--text-on-accent)] text-[13px] font-medium rounded-[var(--radius-md)] hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40 flex items-center gap-2"
+            className="cursor-default disabled:opacity-40 flex items-center gap-2"
+            style={{
+              padding: '6px 16px',
+              background: 'var(--color-accent)',
+              color: 'var(--text-on-accent)',
+              fontSize: 13,
+              fontWeight: 500,
+              borderRadius: 8,
+              border: 'none',
+              fontFamily: 'inherit',
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => { if (!isSyncing) e.currentTarget.style.background = 'var(--color-accent-hover)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-accent)' }}
           >
             {isSyncing && (
               <svg className="w-3.5 h-3.5 spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -255,56 +321,67 @@ function SyncSection() {
             {isSyncing ? 'Syncing…' : 'Sync Now'}
           </button>
         </PrefRow>
+      </GroupedContainer>
 
-        {Boolean(syncMessage) && (
-          <p className="mt-2 text-[12px] text-[var(--color-red)]">{syncMessage}</p>
-        )}
-      </div>
+      {Boolean(syncMessage) && (
+        <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-red)' }}>{syncMessage}</p>
+      )}
 
       {/* Table status */}
       {tables.length > 0 && (
-        <div className="mt-6">
+        <div style={{ marginTop: 24 }}>
           <SectionHeader>Table Status</SectionHeader>
-          <div className="rounded-[var(--radius-md)] border border-[var(--separator)] overflow-hidden">
+          <GroupedContainer>
             {tables.map((t, i) => (
               <div
                 key={t.table_name}
-                className={`flex items-center justify-between px-3 py-2.5 text-[12px] ${
-                  i < tables.length - 1 ? 'border-b border-[var(--separator)]' : ''
-                }`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 14px',
+                  minHeight: 36,
+                  fontSize: 12,
+                  borderBottom: i < tables.length - 1 ? '1px solid var(--separator)' : 'none',
+                }}
               >
-                <span className="text-[var(--text-primary)] capitalize flex-1">
+                <span style={{ color: 'var(--text-primary)', textTransform: 'capitalize', flex: 1 }}>
                   {t.table_name.replace(/_/g, ' ')}
                 </span>
-                <span className="text-[var(--text-tertiary)] w-20 text-right">
+                <span style={{ color: 'var(--text-tertiary)', width: 80, textAlign: 'right' }}>
                   {t.record_count} records
                 </span>
-                <span className="text-[var(--text-tertiary)] w-28 text-right">
+                <span style={{ color: 'var(--text-tertiary)', width: 112, textAlign: 'right' }}>
                   {t.last_sync_at ? new Date(t.last_sync_at).toLocaleTimeString() : 'Never'}
                 </span>
-                <span
-                  className={`ml-3 flex items-center gap-1 w-16 justify-end ${
-                    t.status === 'error'
-                      ? 'text-[var(--color-red)]'
+                <span style={{
+                  marginLeft: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  width: 64,
+                  justifyContent: 'flex-end',
+                  color: t.status === 'error'
+                    ? 'var(--color-red)'
+                    : t.status === 'syncing'
+                    ? 'var(--color-accent)'
+                    : 'var(--color-green)',
+                }}>
+                  <span style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: t.status === 'error'
+                      ? 'var(--color-red)'
                       : t.status === 'syncing'
-                      ? 'text-[var(--color-accent)]'
-                      : 'text-[var(--color-green)]'
-                  }`}
-                >
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      t.status === 'error'
-                        ? 'bg-[var(--color-red)]'
-                        : t.status === 'syncing'
-                        ? 'bg-[var(--color-accent)]'
-                        : 'bg-[var(--color-green)]'
-                    }`}
-                  />
+                      ? 'var(--color-accent)'
+                      : 'var(--color-green)',
+                  }} />
                   {t.status}
                 </span>
               </div>
             ))}
-          </div>
+          </GroupedContainer>
         </div>
       )}
     </div>
@@ -349,7 +426,7 @@ function AppearanceSection() {
     <div>
       <SectionHeader>Display</SectionHeader>
 
-      <div>
+      <GroupedContainer>
         <PrefRow label="Theme">
           <SegmentedControl
             options={themeOptions}
@@ -358,14 +435,14 @@ function AppearanceSection() {
           />
         </PrefRow>
 
-        <PrefRow label="Pipeline Widget">
+        <PrefRow label="Pipeline Widget" isLast>
           <SegmentedControl
             options={pipelineOptions}
             value={pipelineMode}
             onChange={handlePipelineModeChange}
           />
         </PrefRow>
-      </div>
+      </GroupedContainer>
     </div>
   )
 }
@@ -408,21 +485,39 @@ export default function SettingsPage() {
         <p className="px-4 pb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] select-none">
           Settings
         </p>
-        <nav className="flex flex-col gap-0.5 px-2">
-          {SECTIONS.map((section) => (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              className={[
-                'w-full text-left px-3 py-[6px] rounded-[var(--radius-md)] text-[13px] transition-colors duration-150',
-                activeSection === section.id
-                  ? 'bg-[var(--color-accent-translucent)] text-[var(--color-accent)] font-medium'
-                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] font-normal',
-              ].join(' ')}
-            >
-              {section.label}
-            </button>
-          ))}
+        <nav className="flex flex-col gap-0.5">
+          {SECTIONS.map((section) => {
+            const isActive = activeSection === section.id
+            return (
+              <button
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                className="cursor-default"
+                style={{
+                  width: 'calc(100% - 16px)',
+                  margin: '0 8px',
+                  textAlign: 'left',
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  border: 'none',
+                  fontFamily: 'inherit',
+                  transition: 'background 150ms, color 150ms',
+                  background: isActive ? 'var(--color-accent)' : 'transparent',
+                  color: isActive ? 'var(--text-on-accent)' : 'var(--text-primary)',
+                }}
+                onMouseEnter={e => {
+                  if (!isActive) e.currentTarget.style.background = 'var(--bg-hover)'
+                }}
+                onMouseLeave={e => {
+                  if (!isActive) e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                {section.label}
+              </button>
+            )
+          })}
         </nav>
       </div>
 

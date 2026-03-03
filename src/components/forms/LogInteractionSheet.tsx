@@ -1,15 +1,17 @@
+import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { Sheet } from '@/components/shared/Sheet'
 import { FormField, inputClass } from './FormField'
+import { interactionTypeIcon } from '@/components/shared/icons/InteractionIcons'
 
 type InteractionType = 'Call' | 'Meeting' | 'Email' | 'Text' | 'Other'
 
-const INTERACTION_TYPES: { type: InteractionType; icon: string }[] = [
-  { type: 'Call', icon: '📞' },
-  { type: 'Meeting', icon: '👥' },
-  { type: 'Email', icon: '✉️' },
-  { type: 'Text', icon: '💬' },
-  { type: 'Other', icon: '📝' },
+const INTERACTION_TYPES: { type: InteractionType; icon: ReactNode }[] = [
+  { type: 'Call', icon: interactionTypeIcon('Phone Call', 18) },
+  { type: 'Meeting', icon: interactionTypeIcon('Meeting', 18) },
+  { type: 'Email', icon: interactionTypeIcon('Email', 18) },
+  { type: 'Text', icon: interactionTypeIcon(null, 18) },
+  { type: 'Other', icon: interactionTypeIcon('Note', 18) },
 ]
 
 const SHOW_DURATION: InteractionType[] = ['Call', 'Meeting']
@@ -106,7 +108,7 @@ export function LogInteractionSheet({
                       : 'border-[var(--separator-strong)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]',
                   ].join(' ')}
                 >
-                  <span className="text-[18px] leading-none">{icon}</span>
+                  <span className="leading-none">{icon}</span>
                   {type}
                 </button>
               )

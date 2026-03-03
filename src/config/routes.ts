@@ -14,37 +14,32 @@ export interface NavSection {
 
 export const NAV_SECTIONS: NavSection[] = [
   {
-    label: null,
-    items: [{ id: 'dashboard', label: 'Overview', path: '/', icon: 'grid' }],
-  },
-  {
-    label: 'People',
+    label: 'CRM',
     items: [
+      { id: 'dashboard', label: 'Dashboard', path: '/', icon: 'grid' },
       { id: 'contacts', label: 'Contacts', path: '/contacts', icon: 'person', newPath: '/contacts/new' },
       { id: 'companies', label: 'Companies', path: '/companies', icon: 'building', newPath: '/companies/new' },
+      { id: 'pipeline', label: 'Pipeline', path: '/pipeline', icon: 'chart-bar', newPath: '/pipeline/new' },
     ],
   },
   {
     label: 'Work',
     items: [
-      { id: 'pipeline', label: 'Pipeline', path: '/pipeline', icon: 'chart-bar', newPath: '/pipeline/new' },
-      { id: 'rfqs', label: 'RFQs', path: '/rfqs', icon: 'list' },
+      { id: 'tasks', label: 'Tasks', path: '/tasks', icon: 'checkbox', newPath: '/tasks/new' },
       { id: 'projects', label: 'Projects', path: '/projects', icon: 'folder', newPath: '/projects/new' },
       { id: 'proposals', label: 'Proposals', path: '/proposals', icon: 'doc-check', newPath: '/proposals/new' },
-      { id: 'contracts', label: 'Contracts', path: '/contracts', icon: 'clock' },
     ],
   },
   {
     label: 'Activity',
     items: [
-      { id: 'tasks', label: 'Tasks', path: '/tasks', icon: 'checkbox', newPath: '/tasks/new' },
       { id: 'interactions', label: 'Interactions', path: '/interactions', icon: 'bubble', newPath: '/interactions/new' },
+      { id: 'imported', label: 'Imported Contacts', path: '/imported-contacts', icon: 'inbox' },
     ],
   },
   {
-    label: 'Tools',
+    label: null,
     items: [
-      { id: 'imported', label: 'Imported Contacts', path: '/imported-contacts', icon: 'inbox' },
       { id: 'portal', label: 'Portal Access', path: '/portal', icon: 'lock' },
     ],
   },
@@ -63,14 +58,12 @@ export const SETTINGS_ROUTE: NavItem = {
 
 // Route titles for the top bar
 export const ROUTE_TITLES: Record<string, string> = {
-  '/': 'Overview',
+  '/': 'Dashboard',
   '/contacts': 'Contacts',
   '/companies': 'Companies',
   '/pipeline': 'Pipeline',
-  '/rfqs': 'RFQs',
   '/projects': 'Projects',
   '/proposals': 'Proposals',
-  '/contracts': 'Contracts',
   '/tasks': 'Tasks',
   '/interactions': 'Interactions',
   '/imported-contacts': 'Imported Contacts',

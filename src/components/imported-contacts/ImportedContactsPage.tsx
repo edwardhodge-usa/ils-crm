@@ -76,19 +76,22 @@ function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
   const source = (contact.import_source as string | null) ?? null
   const status = (contact.onboarding_status as string | null) ?? null
   const company = (contact.company as string | null) ?? null
+  const email = (contact.email as string | null) ?? null
   const color = avatarColor(name)
 
   return (
     <div
       onClick={onClick}
-      className="cursor-default transition-colors duration-[150ms]"
+      className="cursor-default"
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 10,
         padding: '9px 12px',
         borderBottom: '1px solid var(--separator)',
+        borderLeft: isSelected ? '2.5px solid var(--color-accent)' : '2.5px solid transparent',
         background: isSelected ? 'var(--color-accent-translucent)' : undefined,
+        transition: 'background 150ms',
       }}
       onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-hover)' }}
       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
@@ -105,7 +108,7 @@ function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
       {/* Name + subtitle */}
       <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
         <div style={{
-          fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+          fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           lineHeight: 1.3,
         }}>
@@ -115,15 +118,30 @@ function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
           {Boolean(status) && <StatusBadge value={status} />}
           {Boolean(company) && !source && (
             <span style={{
-              fontSize: 11, color: 'var(--text-tertiary)',
+              fontSize: 11, color: 'var(--text-secondary)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {company}
             </span>
           )}
+          {Boolean(email) && !company && !source && (
+            <span style={{
+              fontSize: 11, color: 'var(--text-secondary)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {email}
+            </span>
+          )}
           {Boolean(source) && (
             <span style={{
-              fontSize: 11, color: 'var(--text-tertiary)', flexShrink: 0, marginLeft: 'auto',
+              fontSize: 10,
+              padding: '1px 6px',
+              borderRadius: 9999,
+              background: 'rgba(88,86,214,0.10)',
+              color: 'var(--color-accent)',
+              fontWeight: 500,
+              flexShrink: 0,
+              marginLeft: 'auto',
             }}>
               {source}
             </span>
@@ -240,10 +258,11 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             <button
               onClick={onApprove}
+              className="cursor-default"
               style={{
                 flex: 1, padding: '7px 12px', fontSize: 13, fontWeight: 600,
                 color: 'var(--text-on-accent)', background: 'var(--color-green)',
-                borderRadius: 8, border: 'none', cursor: 'default',
+                borderRadius: 8, border: 'none',
                 fontFamily: 'inherit', transition: 'opacity 150ms',
               }}
               onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
@@ -253,10 +272,11 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
             </button>
             <button
               onClick={onReject}
+              className="cursor-default"
               style={{
                 flex: 1, padding: '7px 12px', fontSize: 13, fontWeight: 600,
                 color: 'var(--text-on-accent)', background: 'var(--color-red)',
-                borderRadius: 8, border: 'none', cursor: 'default',
+                borderRadius: 8, border: 'none',
                 fontFamily: 'inherit', transition: 'opacity 150ms',
               }}
               onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
@@ -267,7 +287,7 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
           </div>
         </div>
 
-        {/* Contact details */}
+        {/* Contact details — grouped container */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{
             fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
@@ -275,29 +295,35 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
           }}>
             Details
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {fields.map(({ label, value }) =>
-              value ? (
-                <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <span style={{
-                    fontSize: 12, color: 'var(--text-tertiary)', width: 72,
-                    flexShrink: 0, paddingTop: 1,
-                  }}>
-                    {label}
-                  </span>
-                  <span style={{
-                    fontSize: 13, color: 'var(--text-primary)', flex: 1,
-                    minWidth: 0, wordBreak: 'break-word',
-                  }}>
-                    {value}
-                  </span>
-                </div>
-              ) : null
-            )}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            {fields.filter(f => f.value).map(({ label, value }, i, arr) => (
+              <div
+                key={label}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minHeight: 36,
+                  padding: '10px 14px',
+                  borderBottom: i < arr.length - 1 ? '1px solid var(--separator)' : 'none',
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
+                  {label}
+                </span>
+                <span style={{
+                  fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)',
+                  textAlign: 'right', maxWidth: '60%',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {value}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Notes */}
+        {/* Notes — grouped container */}
         {Boolean(notes) && (
           <div style={{ padding: '14px 16px' }}>
             <div style={{
@@ -306,12 +332,14 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
             }}>
               Notes
             </div>
-            <p style={{
-              fontSize: 13, color: 'var(--text-secondary)',
-              lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0,
-            }}>
-              {notes}
-            </p>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', padding: '10px 14px' }}>
+              <p style={{
+                fontSize: 13, color: 'var(--text-secondary)',
+                lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0,
+              }}>
+                {notes}
+              </p>
+            </div>
           </div>
         )}
 
@@ -396,29 +424,38 @@ export default function ImportedContactsPage() {
         {/* Status tabs */}
         <div style={{ padding: '6px 10px', borderBottom: '1px solid var(--separator)', flexShrink: 0 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {STATUS_TABS.map(tab => (
-              <button
-                key={tab}
-                onClick={() => { setActiveTab(tab); setSelectedId(null) }}
-                style={{
-                  padding: '3px 8px',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  borderRadius: 9999,
-                  cursor: 'default',
-                  border: 'none',
-                  fontFamily: 'inherit',
-                  transition: 'background 150ms',
-                  background: activeTab === tab ? 'var(--color-accent)' : 'var(--bg-secondary)',
-                  color: activeTab === tab ? 'var(--text-on-accent)' : 'var(--text-secondary)',
-                }}
-              >
-                {tab}
-                {tabCounts[tab] > 0 && (
-                  <span style={{ marginLeft: 3, opacity: 0.7 }}>{tabCounts[tab]}</span>
-                )}
-              </button>
-            ))}
+            {STATUS_TABS.map(tab => {
+              const isActive = activeTab === tab
+              return (
+                <button
+                  key={tab}
+                  onClick={() => { setActiveTab(tab); setSelectedId(null) }}
+                  className="cursor-default"
+                  style={{
+                    padding: '4px 12px',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    borderRadius: 9999,
+                    border: 'none',
+                    fontFamily: 'inherit',
+                    transition: 'background 150ms',
+                    background: isActive ? 'var(--color-accent)' : 'var(--bg-secondary)',
+                    color: isActive ? 'var(--text-on-accent)' : 'var(--text-primary)',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) e.currentTarget.style.background = 'var(--bg-hover)'
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) e.currentTarget.style.background = isActive ? 'var(--color-accent)' : 'var(--bg-secondary)'
+                  }}
+                >
+                  {tab}
+                  {tabCounts[tab] > 0 && (
+                    <span style={{ marginLeft: 4, fontSize: 10, opacity: 0.8 }}>{tabCounts[tab]}</span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </div>
 

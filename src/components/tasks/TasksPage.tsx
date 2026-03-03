@@ -673,10 +673,10 @@ export default function TasksPage() {
 
   // Section rendering for "All Tasks" view
   const sectionOrder: { key: Section; label: string; icon: ReactNode; iconColor: string; labelColor?: string }[] = [
-    { key: 'overdue', label: 'Overdue', icon: '⚠', iconColor: 'var(--color-red)', labelColor: 'var(--color-red)' },
+    { key: 'overdue', label: 'Overdue', icon: '▲', iconColor: 'var(--color-red)', labelColor: 'var(--color-red)' },
     { key: 'today', label: 'Today', icon: '◉', iconColor: 'var(--color-orange)' },
     { key: 'upcoming', label: 'Upcoming', icon: '◎', iconColor: 'var(--text-secondary)' },
-    { key: 'waiting', label: 'Waiting On', icon: '⏳', iconColor: 'var(--color-yellow)' },
+    { key: 'waiting', label: 'Waiting On', icon: '◇', iconColor: 'var(--color-yellow)' },
     { key: 'nodate', label: 'No Date', icon: '○', iconColor: 'var(--text-tertiary)' },
   ]
 

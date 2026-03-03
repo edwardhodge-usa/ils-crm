@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
-import PrimaryButton from '../shared/PrimaryButton'
 import useEntityList from '../../hooks/useEntityList'
 import { CompanyRow } from './CompanyRow'
 import { CompanyDetail } from './CompanyDetail'
@@ -64,28 +63,61 @@ export default function CompanyListPage() {
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
+    return <div className="flex items-center justify-center h-full w-full text-[var(--color-red)]">{error}</div>
   }
 
   return (
     <div className="flex h-full w-full overflow-hidden">
       {/* List pane — 300px fixed */}
       <div className="w-[300px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
-        {/* Toolbar */}
-        <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
+
+        {/* Header: entity name + count badge + add button */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '12px 14px 10px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
+              Companies
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {filteredCompanies.length}
+            </span>
+          </div>
+          <button
+            onClick={() => navigate('/companies/new')}
+            style={{
+              fontSize: 18, fontWeight: 400, lineHeight: 1,
+              width: 26, height: 26, borderRadius: 6,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'none', border: 'none', cursor: 'default',
+              color: 'var(--color-accent)', fontFamily: 'inherit',
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          >
+            +
+          </button>
+        </div>
+
+        {/* Search — pill shape */}
+        <div style={{ padding: '8px 10px 6px', flexShrink: 0 }}>
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search companies…"
-            className="flex-1 text-[13px] px-3 py-1.5 rounded-full bg-[var(--bg-secondary)] border border-transparent text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)]"
+            style={{
+              width: '100%', fontSize: 12, padding: '6px 12px',
+              borderRadius: 9999, border: 'none',
+              background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+              outline: 'none', fontFamily: 'inherit',
+            }}
           />
-          <PrimaryButton onClick={() => navigate('/companies/new')}>
-            + New
-          </PrimaryButton>
         </div>
 
-        {/* List */}
+        {/* Company list */}
         <div className="flex-1 overflow-y-auto">
           {filteredCompanies.length === 0 ? (
             <div className="flex items-center justify-center h-full text-[13px] text-[var(--text-secondary)] px-4 text-center">

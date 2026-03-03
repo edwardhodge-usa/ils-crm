@@ -23,24 +23,67 @@ export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: Kan
   return (
     <div className="flex flex-col w-[232px] flex-shrink-0">
       {/* Column header */}
-      <div className="flex items-center gap-2 px-1 pb-3">
+      <div
+        className="flex items-center gap-2 flex-shrink-0"
+        style={{ padding: '0 4px 8px' }}
+      >
+        {/* Colored dot */}
         <div
-          className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ backgroundColor: stageColor }}
+          className="flex-shrink-0"
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            backgroundColor: stageColor,
+          }}
         />
+        {/* Stage name */}
         <span
-          className="text-[12px] font-bold uppercase tracking-[0.06em] flex-1 truncate"
-          style={{ color: stageColor }}
+          className="flex-1 truncate"
+          style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}
         >
           {stage}
         </span>
-        <span className="text-[11px] font-semibold text-[var(--text-tertiary)] bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded-full">
+        {/* Count badge */}
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 500,
+            color: 'var(--text-secondary)',
+            background: 'var(--bg-secondary)',
+            padding: '2px 6px',
+            borderRadius: 9999,
+            lineHeight: 1,
+          }}
+        >
           {deals.length}
         </span>
       </div>
 
-      {/* Cards */}
-      <div className="flex flex-col gap-2 flex-1">
+      {/* Column total */}
+      <div
+        className="flex-shrink-0"
+        style={{
+          fontSize: 12,
+          fontWeight: 500,
+          color: 'var(--text-secondary)',
+          padding: '0 4px 6px',
+        }}
+      >
+        {totalValue > 0 ? `$${totalValue.toLocaleString()}` : '—'}
+      </div>
+
+      {/* Cards container */}
+      <div
+        className="flex flex-col flex-1 min-h-0"
+        style={{
+          background: 'var(--bg-tertiary)',
+          borderRadius: 12,
+          padding: 8,
+          gap: 8,
+          overflowY: 'auto',
+        }}
+      >
         {deals.map(deal => (
           <DealCard
             key={deal.id}
@@ -50,17 +93,13 @@ export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: Kan
           />
         ))}
         {deals.length === 0 && (
-          <div className="text-[12px] text-[var(--text-tertiary)] italic text-center py-4">
+          <div
+            className="text-center"
+            style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '16px 0' }}
+          >
             No deals
           </div>
         )}
-      </div>
-
-      {/* Column footer — total */}
-      <div className="pt-3 mt-1 border-t border-[var(--separator)]">
-        <div className="text-[12px] font-semibold text-[var(--text-secondary)] text-right px-1">
-          {totalValue > 0 ? `$${totalValue.toLocaleString()}` : '—'}
-        </div>
       </div>
     </div>
   )

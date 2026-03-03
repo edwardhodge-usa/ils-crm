@@ -1,6 +1,6 @@
-// DashboardPage — Matches approved mockup: ils-crm-dashboard-v3.html
-// Layout: Greeting → 4 stat cards → 2 widgets (Tasks + Follow-ups) → Pipeline Snapshot
-// Natural content height, scrollable, generous spacing for 1400×900 window
+// DashboardPage — Gold standard grouped container pattern
+// Layout: Greeting → 4 stat cards (single container) → 2 widgets (Tasks + Follow-ups) → Pipeline Snapshot
+// Scrollable content, token-based colors, inline styles for design tokens
 
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -70,7 +70,13 @@ function dueLabel(dateStr?: string): { text: string; overdue: boolean } {
 }
 
 function initials(name: string): string {
-  return name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
 }
 
 const AVATAR_COLORS = [
@@ -88,51 +94,39 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
-// Max rows per widget
 const MAX_WIDGET_ROWS = 5
 
-// ── Shared inline styles ──
+// ── Hoverable row component ──
 
-const widgetBox: React.CSSProperties = {
-  background: 'var(--bg-card)',
-  border: '1px solid var(--separator)',
-  borderRadius: 10,
-  overflow: 'hidden',
-}
-
-const widgetHeader: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '12px 16px 10px',
-  borderBottom: '1px solid var(--separator)',
-}
-
-const headerLabel: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '0.08em',
-  color: 'var(--text-secondary)',
-}
-
-const linkBtn: React.CSSProperties = {
-  fontSize: 13,
-  color: 'var(--color-accent)',
-  cursor: 'default',
-  background: 'none',
-  border: 'none',
-  fontFamily: 'inherit',
-}
-
-const rowBase: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 10,
-  padding: '9px 16px',
-  borderBottom: '1px solid var(--separator)',
-  cursor: 'default',
-  transition: 'background 150ms',
+function HoverRow({
+  children,
+  isLast,
+  style,
+}: {
+  children: React.ReactNode
+  isLast: boolean
+  style?: React.CSSProperties
+}) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '10px 14px',
+        borderBottom: isLast ? 'none' : '1px solid var(--separator)',
+        cursor: 'default',
+        background: hovered ? 'var(--bg-hover)' : 'transparent',
+        transition: 'background 150ms',
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  )
 }
 
 export default function DashboardPage() {
@@ -146,9 +140,10 @@ export default function DashboardPage() {
   const [openProposalsCount, setOpenProposalsCount] = useState<number>(0)
   const [openProposalsValue, setOpenProposalsValue] = useState<number>(0)
   const [error, setError] = useState<string | null>(null)
+  const [hasApiKey, setHasApiKey] = useState<boolean>(true)
 
   const overdueCount = useMemo(() => {
-    return tasksDueToday.filter(t => t.due_date && dueLabel(t.due_date).overdue).length
+    return tasksDueToday.filter((t) => t.due_date && dueLabel(t.due_date).overdue).length
   }, [tasksDueToday])
 
   useEffect(() => {
@@ -168,16 +163,34 @@ export default function DashboardPage() {
 
         if (projectsRes.success && projectsRes.data) {
           const projects = projectsRes.data as Record<string, unknown>[]
-          const active = projects.filter(p => p.status === 'Active')
-          setActiveContractsValue(active.reduce((sum, p) => { const v = Number(p.contract_value); return sum + (isNaN(v) ? 0 : v) }, 0))
+          const active = projects.filter((p) => p.status === 'Active')
+          setActiveContractsValue(
+            active.reduce((sum, p) => {
+              const v = Number(p.contract_value)
+              return sum + (isNaN(v) ? 0 : v)
+            }, 0),
+          )
           setActiveContractsCount(active.length)
         }
 
         if (proposalsRes.success && proposalsRes.data) {
           const proposals = proposalsRes.data as Record<string, unknown>[]
-          const open = proposals.filter(p => p.status !== 'Accepted' && p.status !== 'Rejected')
+          const open = proposals.filter((p) => p.status !== 'Accepted' && p.status !== 'Rejected')
           setOpenProposalsCount(open.length)
-          setOpenProposalsValue(open.reduce((sum, p) => { const v = Number(p.value || p.proposal_value || 0); return sum + (isNaN(v) ? 0 : v) }, 0))
+          setOpenProposalsValue(
+            open.reduce((sum, p) => {
+              const v = Number(p.value || p.proposal_value || 0)
+              return sum + (isNaN(v) ? 0 : v)
+            }, 0),
+          )
+        }
+
+        // Check if API key is configured
+        try {
+          const settingsRes = await window.electronAPI.settings.get('airtable_api_key')
+          setHasApiKey(Boolean(settingsRes?.data))
+        } catch {
+          setHasApiKey(false)
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
@@ -188,7 +201,16 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-red)', fontSize: 14 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: 'var(--color-red)',
+          fontSize: 14,
+        }}
+      >
         {error}
       </div>
     )
@@ -198,45 +220,110 @@ export default function DashboardPage() {
   const visibleFollowUps = followUps.slice(0, MAX_WIDGET_ROWS)
 
   return (
-    <div style={{ padding: 26, overflowY: 'auto', height: '100%', width: '100%' }}>
-
+    <div style={{ padding: 24, overflowY: 'auto', height: '100%', width: '100%' }}>
       {/* Greeting */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: -0.5, marginBottom: 2 }}>
+      <div style={{ marginBottom: 20 }}>
+        <div
+          style={{
+            fontSize: 17,
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            marginBottom: 2,
+          }}
+        >
           {getGreeting()}, Edward
         </div>
-        <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>
-          {formatDate()}
-        </div>
+        <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-secondary)' }}>{formatDate()}</div>
       </div>
 
-      {/* 4 Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 18 }}>
-        <StatCard icon={'\u{23F0}'} value={tasksDueToday.length} label="Tasks Due Today"
+      {/* 4 Stat Cards — single grouped container */}
+      <div
+        style={{
+          background: 'var(--bg-secondary)',
+          borderRadius: 12,
+          overflow: 'hidden',
+          display: 'flex',
+          marginBottom: 16,
+        }}
+      >
+        <StatCard
+          icon={'\u{23F0}'}
+          value={tasksDueToday.length}
+          label="Tasks Due Today"
           subtitle={overdueCount > 0 ? `${overdueCount} overdue` : undefined}
-          variant={tasksDueToday.length > 0 ? 'red' : 'default'} />
-        <StatCard icon={'\u{1F4DE}'} value={followUps.length} label="Follow-ups Due"
+          variant={tasksDueToday.length > 0 ? 'red' : 'default'}
+        />
+        <StatCard
+          icon={'\u{1F4DE}'}
+          value={followUps.length}
+          label="Follow-ups Due"
           subtitle=">14 days silent"
-          variant={followUps.length > 0 ? 'red' : 'default'} />
-        <StatCard icon={'\u{1F4C4}'} value={formatCurrency(activeContractsValue)} label="Active Contracts"
+          variant={followUps.length > 0 ? 'red' : 'default'}
+        />
+        <StatCard
+          icon={'\u{1F4C4}'}
+          value={formatCurrency(activeContractsValue)}
+          label="Active Contracts"
           subtitle={activeContractsCount > 0 ? `${activeContractsCount} contracts` : undefined}
-          variant="green" />
-        <StatCard icon={'\u{1F4CB}'} value={openProposalsCount} label="Open Proposals"
+          variant="green"
+        />
+        <StatCard
+          icon={'\u{1F4CB}'}
+          value={openProposalsCount}
+          label="Open Proposals"
           subtitle={openProposalsValue > 0 ? `${formatCurrency(openProposalsValue)} pending` : undefined}
-          variant="indigo" />
+          variant="indigo"
+          isLast
+        />
       </div>
 
-      {/* Two widgets side by side — capped at 5 rows each */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
-
+      {/* Two widgets side by side */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         {/* Tasks Due Today */}
-        <div style={widgetBox}>
-          <div style={widgetHeader}>
-            <span style={headerLabel}>Tasks Due Today</span>
-            <button onClick={() => navigate('/tasks')} style={linkBtn}>View all →</button>
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 14px',
+              borderBottom: '1px solid var(--separator)',
+            }}
+          >
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Tasks Due Today
+            </span>
+            <button
+              onClick={() => navigate('/tasks')}
+              style={{
+                fontSize: 12,
+                color: 'var(--color-accent)',
+                cursor: 'default',
+                background: 'none',
+                border: 'none',
+                fontFamily: 'inherit',
+              }}
+            >
+              View all
+            </button>
           </div>
           {visibleTasks.length === 0 ? (
-            <p style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: '24px 0', textAlign: 'center' }}>
+            <p
+              style={{
+                fontSize: 13,
+                color: 'var(--text-secondary)',
+                padding: '24px 0',
+                textAlign: 'center',
+              }}
+            >
               No tasks due today
             </p>
           ) : (
@@ -244,16 +331,39 @@ export default function DashboardPage() {
               {visibleTasks.map((task, i) => {
                 const due = dueLabel(task.due_date)
                 return (
-                  <div key={task.id} className="hover:bg-[var(--bg-hover)]"
-                    style={{ ...rowBase, borderBottom: i === visibleTasks.length - 1 ? 'none' : rowBase.borderBottom }}>
-                    <div style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid var(--text-placeholder)', flexShrink: 0 }} />
-                    <span style={{ fontSize: 14, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <HoverRow key={task.id} isLast={i === visibleTasks.length - 1}>
+                    <div
+                      style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: '50%',
+                        border: '1.5px solid var(--text-secondary)',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {task.task || 'Untitled task'}
                     </span>
-                    <span style={{ fontSize: 12, flexShrink: 0, color: due.overdue ? 'var(--color-red)' : 'var(--text-tertiary)' }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        flexShrink: 0,
+                        color: due.overdue ? 'var(--color-red)' : 'var(--text-secondary)',
+                      }}
+                    >
                       {due.text}
                     </span>
-                  </div>
+                  </HoverRow>
                 )
               })}
             </div>
@@ -261,13 +371,50 @@ export default function DashboardPage() {
         </div>
 
         {/* Follow-up Alerts */}
-        <div style={widgetBox}>
-          <div style={widgetHeader}>
-            <span style={headerLabel}>Follow-up Alerts</span>
-            <button onClick={() => navigate('/contacts')} style={linkBtn}>View all →</button>
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 14px',
+              borderBottom: '1px solid var(--separator)',
+            }}
+          >
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Follow-up Alerts
+            </span>
+            <button
+              onClick={() => navigate('/contacts')}
+              style={{
+                fontSize: 12,
+                color: 'var(--color-accent)',
+                cursor: 'default',
+                background: 'none',
+                border: 'none',
+                fontFamily: 'inherit',
+              }}
+            >
+              View all
+            </button>
           </div>
           {visibleFollowUps.length === 0 ? (
-            <p style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: '24px 0', textAlign: 'center' }}>
+            <p
+              style={{
+                fontSize: 13,
+                color: 'var(--text-secondary)',
+                padding: '24px 0',
+                textAlign: 'center',
+              }}
+            >
               No follow-ups due
             </p>
           ) : (
@@ -278,27 +425,62 @@ export default function DashboardPage() {
                 const color = avatarColor(name)
                 const isDanger = days >= 21
                 return (
-                  <div key={contact.id} className="hover:bg-[var(--bg-hover)]"
-                    style={{ ...rowBase, borderBottom: i === visibleFollowUps.length - 1 ? 'none' : rowBase.borderBottom }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: '50%', fontSize: 11, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, background: color.bg, color: color.fg,
-                    }}>
+                  <HoverRow key={contact.id} isLast={i === visibleFollowUps.length - 1}>
+                    <div
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: '50%',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        background: color.bg,
+                        color: color.fg,
+                      }}
+                    >
                       {initials(name)}
                     </div>
-                    <span style={{ fontSize: 14, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {name}
                     </span>
                     {Boolean(contact.categorization) && (
-                      <span style={{ fontSize: 12, padding: '2px 7px', borderRadius: 4, background: 'var(--bg-hover)', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                          background: 'var(--bg-hover)',
+                          color: 'var(--text-secondary)',
+                          flexShrink: 0,
+                        }}
+                      >
                         {contact.categorization}
                       </span>
                     )}
-                    <span style={{ fontSize: 12, fontWeight: 600, flexShrink: 0, color: isDanger ? 'var(--color-red)' : 'var(--color-orange)' }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        flexShrink: 0,
+                        color: isDanger ? 'var(--color-red)' : 'var(--color-orange)',
+                      }}
+                    >
                       {days}d
                     </span>
-                  </div>
+                  </HoverRow>
                 )
               })}
             </div>
@@ -306,20 +488,28 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Pipeline Snapshot — shows all stages */}
+      {/* Pipeline Snapshot */}
       <PipelineWidget stages={pipelineStages} />
 
-      {/* Settings hint */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 6,
-        background: 'var(--color-accent-translucent)',
-        border: '1px solid var(--color-accent-translucent)',
-        borderRadius: 6, padding: '7px 12px', marginTop: 10,
-        fontSize: 12, color: 'var(--text-secondary)',
-      }}>
-        <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>Settings → Dashboard</span>
-        <span>: Configure what the Pipeline widget shows</span>
-      </div>
+      {/* Settings hint — only when API key is NOT configured */}
+      {!hasApiKey && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'var(--bg-secondary)',
+            borderRadius: 12,
+            padding: '10px 14px',
+            marginTop: 16,
+            fontSize: 12,
+            color: 'var(--text-secondary)',
+          }}
+        >
+          <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>Settings</span>
+          <span>: Add your Airtable API key to enable sync</span>
+        </div>
+      )}
     </div>
   )
 }

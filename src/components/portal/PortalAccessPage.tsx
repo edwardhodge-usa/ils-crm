@@ -53,27 +53,50 @@ interface PortalRowProps {
 
 function PortalAccessRow({ record, isSelected, onClick }: PortalRowProps) {
   const name = resolvedName(record)
+  const email = resolvedEmail(record)
+  const company = resolvedCompany(record)
   const status = (record.status as string | null) ?? null
 
   return (
     <div
       onClick={onClick}
-      className={`px-3 py-2.5 cursor-default border-b border-[var(--separator)] transition-colors duration-[150ms] ${
-        isSelected
-          ? 'bg-[var(--color-accent-translucent)]'
-          : 'hover:bg-[var(--bg-hover)]'
-      }`}
+      className="cursor-default"
+      style={{
+        padding: '9px 12px',
+        borderBottom: '1px solid var(--separator)',
+        borderLeft: isSelected ? '2.5px solid var(--color-accent)' : '2.5px solid transparent',
+        background: isSelected ? 'var(--color-accent-translucent)' : undefined,
+        transition: 'background 150ms',
+      }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-hover)' }}
+      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
     >
       {/* Line 1: name */}
-      <div className="text-[13px] font-semibold text-[var(--text-primary)] truncate leading-tight">
+      <div style={{
+        fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        lineHeight: 1.3,
+      }}>
         {name}
       </div>
 
-      {/* Line 2: status badge */}
-      <div className="flex items-center gap-1.5 mt-0.5 min-h-[16px]">
-        {Boolean(status) && (
-          <span className="text-[10px]">
-            <StatusBadge value={status} />
+      {/* Line 2: email/company + status */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+        {Boolean(status) && <StatusBadge value={status} />}
+        {Boolean(email) && (
+          <span style={{
+            fontSize: 11, color: 'var(--text-secondary)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {email}
+          </span>
+        )}
+        {Boolean(company) && !email && (
+          <span style={{
+            fontSize: 11, color: 'var(--text-secondary)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {company}
           </span>
         )}
       </div>
@@ -173,95 +196,140 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
       <div className="flex-1 overflow-y-auto">
 
         {/* Hero block */}
-        <div className="px-4 pt-4 pb-3 border-b border-[var(--separator)]">
-          <div className="text-[18px] font-bold text-[var(--text-primary)] leading-tight">
+        <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
             {name}
           </div>
-          <div className="flex flex-wrap items-center gap-2 mt-1.5">
+          {Boolean(email) && (
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
+              {email}
+            </div>
+          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 8 }}>
             {Boolean(status) && <StatusBadge value={status} />}
             {Boolean(stage) && <StatusBadge value={stage} />}
           </div>
         </div>
 
-        {/* Activity stats strip */}
-        <div className="flex border-b border-[var(--separator)]">
-          <div className="flex-1 px-4 py-3 text-center border-r border-[var(--separator)]">
-            <div className="text-[18px] font-bold text-[var(--text-primary)] tabular-nums">
-              {logCount}
-            </div>
-            <div className="text-[12px] text-[var(--text-tertiary)] mt-0.5">
-              Portal Visits
-            </div>
+        {/* Visit stats — grouped container */}
+        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
+          }}>
+            Activity
           </div>
-          <div className="flex-1 px-4 py-3 text-center">
-            <div className="text-[13px] font-semibold text-[var(--text-primary)]">
-              {lastActivity ?? '—'}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              minHeight: 36, padding: '10px 14px',
+              borderBottom: '1px solid var(--separator)',
+            }}>
+              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>Total Visits</span>
+              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>{logCount}</span>
             </div>
-            <div className="text-[12px] text-[var(--text-tertiary)] mt-0.5">
-              Last Activity
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              minHeight: 36, padding: '10px 14px',
+            }}>
+              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>Last Activity</span>
+              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>{lastActivity ?? '---'}</span>
             </div>
           </div>
         </div>
 
-        {/* Details */}
-        <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
+        {/* Details — grouped container */}
+        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
+          }}>
             Details
           </div>
-          <div className="space-y-1.5">
-            {fields.map(({ label, value }) =>
-              value ? (
-                <div key={label} className="flex items-start gap-2">
-                  <span className="text-[12px] text-[var(--text-tertiary)] w-[80px] flex-shrink-0 pt-px">
-                    {label}
-                  </span>
-                  <span className="text-[12px] text-[var(--text-primary)] flex-1 min-w-0 break-words">
-                    {value}
-                  </span>
-                </div>
-              ) : null
-            )}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            {fields.filter(f => f.value).map(({ label, value }, i, arr) => (
+              <div
+                key={label}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minHeight: 36,
+                  padding: '10px 14px',
+                  borderBottom: i < arr.length - 1 ? '1px solid var(--separator)' : 'none',
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
+                  {label}
+                </span>
+                <span style={{
+                  fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)',
+                  textAlign: 'right', maxWidth: '60%',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {value}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Recent portal log entries */}
+        {/* Recent portal log entries — grouped container */}
         {relatedLogs.length > 0 && (
-          <div className="px-4 py-3">
-            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
+          <div style={{ padding: '14px 16px' }}>
+            <div style={{
+              fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+              letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
+            }}>
               Recent Visits
             </div>
-            {relatedLogs.slice(0, 5).map((log, i) => {
-              const ts = String(log.timestamp ?? '')
-              const dateStr = (() => {
-                const m = ts.match(/^(\d{4}-\d{2}-\d{2})/)
-                return m ? formatDate(m[1]) : ts
-              })()
-              const page = (log.page_url as string | null) ?? null
-              const city = (log.city as string | null) ?? null
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {relatedLogs.slice(0, 5).map((log, i, arr) => {
+                const ts = String(log.timestamp ?? '')
+                const dateStr = (() => {
+                  const m = ts.match(/^(\d{4}-\d{2}-\d{2})/)
+                  return m ? formatDate(m[1]) : ts
+                })()
+                const page = (log.page_url as string | null) ?? null
+                const city = (log.city as string | null) ?? null
 
-              return (
-                <div
-                  key={i}
-                  className="py-1.5 border-b border-[var(--separator)] last:border-0"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[12px] text-[var(--text-tertiary)] flex-shrink-0">
-                      {dateStr}
-                    </span>
-                    {Boolean(city) && (
-                      <span className="text-[12px] text-[var(--text-tertiary)] truncate">
-                        {city}
+                return (
+                  <div
+                    key={i}
+                    className="cursor-default"
+                    style={{
+                      padding: '10px 14px',
+                      borderBottom: i < arr.length - 1 ? '1px solid var(--separator)' : 'none',
+                      transition: 'background 150ms',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-secondary)', flexShrink: 0 }}>
+                        {dateStr}
                       </span>
+                      {Boolean(city) && (
+                        <span style={{
+                          fontSize: 13, color: 'var(--text-primary)',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>
+                          {city}
+                        </span>
+                      )}
+                    </div>
+                    {Boolean(page) && (
+                      <div style={{
+                        fontSize: 11, color: 'var(--color-accent)', marginTop: 2,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {page}
+                      </div>
                     )}
                   </div>
-                  {Boolean(page) && (
-                    <div className="text-[12px] text-[var(--color-accent)] truncate mt-0.5">
-                      {page}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         )}
 
@@ -312,13 +380,13 @@ export default function PortalAccessPage() {
       <div className="w-[240px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
 
         {/* Search */}
-        <div className="px-3 py-2 border-b border-[var(--separator)] flex-shrink-0">
+        <div className="px-3 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search portal access…"
-            className="w-full text-[12px] px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--separator)] text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)]"
+            className="w-full text-[13px] px-3 py-1.5 rounded-full bg-[var(--bg-secondary)] border border-transparent text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
 

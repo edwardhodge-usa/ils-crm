@@ -76,21 +76,38 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
   const proposalName = (proposal.proposal_name as string) || 'Unnamed Proposal'
   const status = (proposal.status as string | null) ?? null
   const notes = (proposal.notes as string | null) ?? null
+  const version = (proposal.version as string | null) ?? null
+  const templateUsed = (proposal.template_used as string | null) ?? null
+  const approvalStatus = (proposal.approval_status as string | null) ?? null
+  const proposedValue = proposal.proposed_value ? Number(proposal.proposed_value) : null
 
   const contactName = contact
     ? (contact.contact_name as string) || [contact.first_name, contact.last_name].filter(Boolean).join(' ') || null
     : null
   const companyName = company ? (company.company_name as string) || null : null
 
-  const version = (proposal.version as string | null) ?? null
-  const templateUsed = (proposal.template_used as string | null) ?? null
-  const approvalStatus = (proposal.approval_status as string | null) ?? null
-
   const stats = [
     { label: 'Version', value: version || '—' },
     { label: 'Template', value: templateUsed || '—' },
     { label: 'Approval', value: approvalStatus || '—' },
   ]
+
+  const infoRows: { label: string; value: string | null; isDropdown?: boolean; isLink?: boolean; linkTo?: string }[] = [
+    { label: 'Status', value: status, isDropdown: true },
+    { label: 'Value', value: proposedValue ? `$${proposedValue.toLocaleString()}` : null },
+    { label: 'Approval', value: approvalStatus, isDropdown: true },
+    { label: 'Version', value: version },
+    { label: 'Template', value: templateUsed },
+  ]
+
+  const visibleInfoRows = infoRows.filter(r => Boolean(r.value))
+
+  const linkedRows: { label: string; value: string | null; linkTo?: string }[] = [
+    { label: 'Contact', value: contactName, linkTo: contact ? `/contacts/${contact.id as string}` : undefined },
+    { label: 'Company', value: companyName, linkTo: company ? `/companies/${company.id as string}` : undefined },
+  ]
+
+  const visibleLinkedRows = linkedRows.filter(r => Boolean(r.value))
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
@@ -109,65 +126,147 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" style={{ padding: '0 18px' }}>
 
         {/* 1. Hero block */}
-        <div className="px-4 pt-4 pb-3 border-b border-[var(--separator)]">
-          <div className="text-[18px] font-bold text-[var(--text-primary)] leading-tight">
+        <div style={{ padding: '18px 0 14px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2 }}>
             {proposalName}
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
             {Boolean(status) && <StatusBadge value={status} />}
+            {Boolean(proposedValue) && (
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-green)' }}>
+                ${proposedValue!.toLocaleString()}
+              </span>
+            )}
           </div>
         </div>
 
         {/* 2. Stats strip */}
         <ContactStats stats={stats} />
 
-        {/* 3. Linked Contact + Company */}
-        <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
-            Related
-          </div>
-          {Boolean(contactName) && (
-            <div
-              className="flex items-center gap-2 py-1.5 border-b border-[var(--separator)] last:border-0 cursor-default hover:bg-[var(--bg-hover)] -mx-4 px-4 transition-colors duration-[150ms]"
-              onClick={() => contact && navigate(`/contacts/${contact.id as string}`)}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="text-[12px] text-[var(--text-tertiary)] mb-0.5">Contact</div>
-                <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{contactName}</div>
-              </div>
+        {/* 3. Proposal details — Apple HIG form rows */}
+        {visibleInfoRows.length > 0 && (
+          <div style={{ marginTop: 16, marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+              Proposal Info
             </div>
-          )}
-          {Boolean(companyName) && (
-            <div
-              className="flex items-center gap-2 py-1.5 cursor-default hover:bg-[var(--bg-hover)] -mx-4 px-4 transition-colors duration-[150ms]"
-              onClick={() => company && navigate(`/companies/${company.id as string}`)}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="text-[12px] text-[var(--text-tertiary)] mb-0.5">Company</div>
-                <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{companyName}</div>
-              </div>
-            </div>
-          )}
-          {!contactName && !companyName && (
-            <div className="text-[12px] text-[var(--text-tertiary)] italic">No linked contact or company</div>
-          )}
-        </div>
-
-        {/* 4. Notes */}
-        {Boolean(notes) && (
-          <div className="px-4 py-3">
-            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
-              Notes
-            </div>
-            <div className="text-[12px] text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
-              {notes}
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {visibleInfoRows.map((row, idx) => (
+                <DetailFormRow
+                  key={row.label}
+                  label={row.label}
+                  value={row.value!}
+                  isDropdown={row.isDropdown}
+                  isLast={idx === visibleInfoRows.length - 1}
+                />
+              ))}
             </div>
           </div>
         )}
 
+        {/* 4. Linked Contact + Company */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+            Related
+          </div>
+          {visibleLinkedRows.length === 0 ? (
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0' }}>No linked contact or company</div>
+          ) : (
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {visibleLinkedRows.map((row, idx) => (
+                <div
+                  key={row.label}
+                  className="cursor-default"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 14px', minHeight: 36,
+                    borderBottom: idx < visibleLinkedRows.length - 1 ? '1px solid var(--separator)' : undefined,
+                    transition: 'background 150ms',
+                  }}
+                  onClick={() => row.linkTo && navigate(row.linkTo)}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}
+                >
+                  <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>
+                    {row.label}
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+                    <span style={{
+                      fontSize: 13, fontWeight: 400,
+                      color: row.linkTo ? 'var(--color-accent)' : 'var(--text-secondary)',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {row.value}
+                    </span>
+                    {Boolean(row.linkTo) && (
+                      <span style={{ fontSize: 14, color: 'var(--text-tertiary)', flexShrink: 0 }}>›</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 5. Notes */}
+        {Boolean(notes) && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+              Notes
+            </div>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', padding: '10px 14px' }}>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                {notes}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bottom spacer */}
+        <div style={{ height: 16 }} />
+
+      </div>
+    </div>
+  )
+}
+
+/** A single Apple-style form row for the detail pane */
+function DetailFormRow({ label, value, isDropdown, isLast }: {
+  label: string
+  value: string
+  isDropdown?: boolean
+  isLast?: boolean
+}) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '10px 14px', minHeight: 36,
+      borderBottom: isLast ? undefined : '1px solid var(--separator)',
+    }}>
+      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>
+        {label}
+      </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+        <span
+          style={{
+            fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
+            background: hovered ? 'var(--bg-hover)' : 'transparent',
+            transition: 'background 150ms',
+          }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          {value}
+        </span>
+        {isDropdown && (
+          <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4, flexShrink: 0 }}>⌃</span>
+        )}
       </div>
     </div>
   )

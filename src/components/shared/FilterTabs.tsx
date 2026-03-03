@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 interface FilterTabsProps {
   tabs: string[]
   activeTab: string
@@ -7,21 +9,60 @@ interface FilterTabsProps {
 
 export default function FilterTabs({ tabs, activeTab, onTabChange, counts }: FilterTabsProps) {
   return (
-    <div className="flex gap-1 mb-4">
+    <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
       {tabs.map(tab => (
-        <button
+        <TabButton
           key={tab}
+          label={tab}
+          count={counts[tab] ?? 0}
+          isActive={activeTab === tab}
           onClick={() => onTabChange(tab)}
-          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-            activeTab === tab
-              ? 'bg-[var(--color-accent-translucent)] text-[var(--color-accent)]'
-              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
-          }`}
-        >
-          {tab}
-          <span className="ml-1 text-[11px] opacity-60">{counts[tab] ?? 0}</span>
-        </button>
+        />
       ))}
     </div>
+  )
+}
+
+function TabButton({
+  label,
+  count,
+  isActive,
+  onClick,
+}: {
+  label: string
+  count: number
+  isActive: boolean
+  onClick: () => void
+}) {
+  const [hovered, setHovered] = useState(false)
+
+  const bg = isActive
+    ? 'var(--color-accent)'
+    : hovered
+      ? 'var(--bg-hover)'
+      : 'var(--bg-secondary)'
+  const color = isActive ? 'var(--text-on-accent)' : 'var(--text-primary)'
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: '4px 12px',
+        borderRadius: 9999,
+        fontSize: 12,
+        fontWeight: 500,
+        background: bg,
+        color,
+        border: 'none',
+        cursor: 'default',
+        transition: 'background 150ms, color 150ms',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {label}
+      <span style={{ marginLeft: 4, fontSize: 11, opacity: 0.6 }}>{count}</span>
+    </button>
   )
 }

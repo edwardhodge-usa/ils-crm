@@ -32,7 +32,7 @@ interface ContactRowProps {
 export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
   const {
     firstName, lastName, jobTitle, companyName,
-    specialtyNames, daysSinceContact,
+    specialtyNames, specialtyColors, daysSinceContact,
   } = contact
 
   const name = `${firstName} ${lastName}`.trim()
@@ -46,19 +46,28 @@ export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
     ? daysSinceContact >= 21 ? 'var(--color-red)' : daysSinceContact >= 14 ? 'var(--color-orange)' : 'var(--color-accent)'
     : undefined
 
+  // Parse specialty color from "bg|fg" encoded string
+  function parseSpecColor(encoded: string | undefined): { bg: string; fg: string } {
+    if (!encoded || !encoded.includes('|')) {
+      return { bg: 'rgba(88,86,214,0.10)', fg: '#5856D6' }
+    }
+    const [bg, fg] = encoded.split('|')
+    return { bg, fg }
+  }
+
   return (
     <div
       onClick={onClick}
-      className="cursor-default transition-colors duration-[150ms]"
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 9,
-        padding: '9px 12px',
-        borderLeft: '2px solid',
+        padding: '11px 14px 12px',
+        borderLeft: '2.5px solid',
         borderLeftColor: isSelected ? 'var(--color-accent)' : 'transparent',
-        borderBottom: 'none',
         background: isSelected ? 'var(--color-accent-translucent)' : undefined,
+        cursor: 'default',
+        transition: 'background 150ms',
       }}
       onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-hover)' }}
       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
@@ -77,7 +86,7 @@ export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
       <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
         {/* Name */}
         <div style={{
-          fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+          fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           lineHeight: 1.3,
         }}>
@@ -87,7 +96,7 @@ export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
         {/* Subtitle: role · company */}
         {Boolean(subtitle) && (
           <div style={{
-            fontSize: 12, color: 'var(--text-secondary)',
+            fontSize: 11, color: 'var(--text-secondary)',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             lineHeight: 1.3,
           }}>
@@ -98,21 +107,25 @@ export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
         {/* Meta row: specialty tag + days badge */}
         {(specialtyNames[0] || (daysSinceContact !== null && daysSinceContact !== undefined)) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
-            {specialtyNames[0] && (
-              <span style={{
-                fontSize: 10, fontWeight: 500, padding: '1px 6px',
-                borderRadius: 4, flexShrink: 0,
-                background: 'var(--color-accent-translucent)', color: 'var(--color-accent)',
-              }}>
-                {specialtyNames[0]}
-              </span>
-            )}
+            {specialtyNames[0] && (() => {
+              const sc = parseSpecColor(specialtyColors[0])
+              return (
+                <span style={{
+                  fontSize: 10, fontWeight: 500, padding: '1px 6px',
+                  borderRadius: 4, flexShrink: 0, opacity: 0.85,
+                  background: sc.bg, color: sc.fg,
+                }}>
+                  {specialtyNames[0]}
+                </span>
+              )
+            })()}
             {daysSinceContact !== null && daysSinceContact !== undefined && (
               <span style={{
                 fontSize: 10, fontWeight: 500, padding: '2px 6px',
                 borderRadius: 4, flexShrink: 0, marginLeft: 'auto',
+                opacity: 0.85,
                 background: daysColor === 'var(--color-accent)'
-                  ? 'var(--color-accent-translucent)'
+                  ? 'rgba(88,86,214,0.10)'
                   : daysColor === 'var(--color-orange)' ? 'rgba(255,159,10,0.10)' : 'rgba(255,59,48,0.10)',
                 color: daysColor,
                 whiteSpace: 'nowrap',

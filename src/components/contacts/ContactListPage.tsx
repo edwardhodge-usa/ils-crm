@@ -1,27 +1,26 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
-import PrimaryButton from '../shared/PrimaryButton'
 import useEntityList from '../../hooks/useEntityList'
 import { ContactRow } from './ContactRow'
 import Contact360Page from './Contact360Page'
 import type { ContactListItem } from '@/types'
 
-const SPECIALTY_COLORS = [
-  'bg-[var(--color-accent)]/20 text-[var(--color-accent)]',
-  'bg-[var(--color-green)]/20 text-[var(--color-green)]',
-  'bg-[var(--color-purple)]/20 text-[var(--color-purple)]',
-  'bg-[var(--color-orange)]/20 text-[var(--color-orange)]',
-  'bg-[var(--color-teal)]/20 text-[var(--color-teal)]',
-  'bg-[var(--color-red)]/20 text-[var(--color-red)]',
-  'bg-[var(--color-pink)]/20 text-[var(--color-pink)]',
-  'bg-[var(--color-yellow)]/20 text-[var(--color-yellow)]',
+const SPECIALTY_COLORS_RAW = [
+  { bg: 'rgba(88,86,214,0.10)', fg: '#5856D6' },
+  { bg: 'rgba(52,199,89,0.10)', fg: '#34C759' },
+  { bg: 'rgba(175,82,222,0.10)', fg: '#AF52DE' },
+  { bg: 'rgba(255,149,0,0.10)', fg: '#FF9500' },
+  { bg: 'rgba(90,200,250,0.10)', fg: '#5AC8FA' },
+  { bg: 'rgba(255,59,48,0.10)', fg: '#FF3B30' },
+  { bg: 'rgba(255,45,85,0.10)', fg: '#FF2D55' },
+  { bg: 'rgba(255,204,0,0.10)', fg: '#FFCC00' },
 ]
 
-function specialtyColor(name: string): string {
+function specialtyColor(name: string): { bg: string; fg: string } {
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xfffff
-  return SPECIALTY_COLORS[hash % SPECIALTY_COLORS.length]
+  return SPECIALTY_COLORS_RAW[hash % SPECIALTY_COLORS_RAW.length]
 }
 
 function parseQualityRating(raw: string | null | undefined): number {
@@ -60,7 +59,10 @@ export default function ContactListPage() {
     })()
 
     const specialtyNames = specialtyIds.map(id => specialtyMap[id]).filter(Boolean)
-    const specialtyColors = specialtyNames.map(name => specialtyColor(name))
+    const specialtyColors = specialtyNames.map(name => {
+      const c = specialtyColor(name)
+      return `${c.bg}|${c.fg}`
+    })
 
     const daysSinceContact: number | null = (() => {
       const raw = row.days_since_contact ?? row.days_since_last_contact
@@ -111,10 +113,29 @@ export default function ContactListPage() {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '12px 14px 10px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
         }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: -0.2 }}>
-            Contacts
-          </span>
-          <PrimaryButton onClick={() => navigate('/contacts/new')}>+</PrimaryButton>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
+              Contacts
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {filteredContacts.length}
+            </span>
+          </div>
+          <button
+            onClick={() => navigate('/contacts/new')}
+            style={{
+              fontSize: 18, fontWeight: 400, lineHeight: 1,
+              width: 26, height: 26, borderRadius: 6,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'none', border: 'none', cursor: 'default',
+              color: 'var(--color-accent)', fontFamily: 'inherit',
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          >
+            +
+          </button>
         </div>
 
         {/* Search */}

@@ -1,11 +1,67 @@
 import { useEffect, useState } from 'react'
-import { StageBadge } from '@/components/shared'
 import { StageProgress } from './StageProgress'
-import type { Stage } from '@/components/shared'
 
 interface DealDetailProps {
   dealId: string | null
   onClose: () => void
+}
+
+/** A single form row in the grouped container */
+function FormRow({
+  label,
+  value,
+  chevron = false,
+}: {
+  label: string
+  value: string
+  chevron?: boolean
+}) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 14px',
+        minHeight: 36,
+        borderBottom: '1px solid var(--separator)',
+        background: hovered ? 'var(--bg-hover)' : 'transparent',
+        transition: 'background 150ms',
+        cursor: 'default',
+      }}
+    >
+      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>{label}</span>
+      <span className="flex items-center gap-1" style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+        {value || '—'}
+        {chevron && <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 2 }}>⌃</span>}
+      </span>
+    </div>
+  )
+}
+
+/** Status badge for tasks */
+function TaskStatusBadge({ status }: { status: string }) {
+  const isComplete = status?.toLowerCase().includes('complete') || status?.toLowerCase().includes('done')
+  return (
+    <span
+      style={{
+        fontSize: 10,
+        fontWeight: 500,
+        padding: '2px 6px',
+        borderRadius: 4,
+        opacity: 0.85,
+        background: isComplete ? 'rgba(48, 209, 88, 0.10)' : 'rgba(118, 118, 128, 0.10)',
+        color: isComplete ? 'var(--color-green)' : 'var(--text-secondary)',
+        lineHeight: 1.2,
+      }}
+    >
+      {status || 'Open'}
+    </span>
+  )
 }
 
 export function DealDetail({ dealId, onClose }: DealDetailProps) {
@@ -76,119 +132,247 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
     }
   }, [dealId, deal])
 
+  // Format engagement type (multiSelect — may be JSON array)
+  function formatEngagementType(raw: unknown): string {
+    if (!raw) return '—'
+    try {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+      if (Array.isArray(parsed)) return parsed.join(', ')
+    } catch { /* not JSON */ }
+    return String(raw)
+  }
+
   return (
     <div
-      className="absolute top-0 right-0 bottom-0 w-[300px] bg-[var(--bg-sheet)] border-l border-[var(--separator)] z-10 flex flex-col"
+      className="absolute top-0 right-0 bottom-0 flex flex-col"
       style={{
-        boxShadow: 'var(--shadow-lg)',
+        width: 300,
+        background: 'var(--bg-window)',
+        borderLeft: '1px solid var(--separator)',
+        zIndex: 10,
         transform: visible ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform 250ms cubic-bezier(0,0,0.2,1)',
       }}
     >
       {deal ? (
-        <>
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--separator)] flex-shrink-0">
-            <StageBadge stage={(deal.sales_stage as Stage) || 'Prospecting'} />
-            <button
-              onClick={onClose}
-              className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] text-[13px] cursor-default"
-            >
-              ✕
-            </button>
-          </div>
+        <div className="flex flex-col flex-1 min-h-0" style={{ overflowY: 'auto' }}>
+          {/* Hero */}
+          <div style={{ padding: '24px 20px 16px' }}>
+            {/* Close button */}
+            <div className="flex justify-end" style={{ marginBottom: 8 }}>
+              <button
+                onClick={onClose}
+                className="flex items-center justify-center"
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  fontSize: 13,
+                  color: 'var(--text-secondary)',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'default',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              >
+                ✕
+              </button>
+            </div>
 
-          {/* Deal name + company */}
-          <div className="px-4 pt-3 pb-2 border-b border-[var(--separator)] flex-shrink-0">
-            <div className="text-[15px] font-bold text-[var(--text-primary)] leading-tight mb-0.5">
+            {/* Deal name */}
+            <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.25, marginBottom: 4 }}>
               {(deal.opportunity_name as string) || '—'}
             </div>
+
+            {/* Company name */}
             {Boolean(deal.company_name) && (
-              <div className="text-[12px] text-[var(--text-secondary)]">{deal.company_name as string}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                {deal.company_name as string}
+              </div>
             )}
-          </div>
 
-          {/* Value + stage progress */}
-          <div className="px-4 py-3 border-b border-[var(--separator)] flex-shrink-0">
-            <div className="text-[26px] font-bold text-[var(--text-primary)] tracking-tight leading-none">
-              {deal.deal_value != null ? `$${Number(deal.deal_value).toLocaleString()}` : '—'}
-            </div>
-            <div className="mt-2">
-              <StageProgress currentStage={(deal.sales_stage as string) || ''} />
-            </div>
-            <div className="flex items-center gap-4 mt-2 text-[12px] text-[var(--text-tertiary)]">
-              {deal.probability_value != null && (
-                <span>{deal.probability_value as number}% probability</span>
-              )}
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex gap-2 px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
-            {['Log Activity', 'Edit Deal', 'Email'].map(label => (
-              <button
-                key={label}
-                className="flex-1 py-1.5 text-[12px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-lg hover:opacity-80 transition-opacity duration-[150ms] cursor-default"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Details section */}
-          <div className="px-4 py-3 border-b border-[var(--separator)] flex-shrink-0">
-            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">Details</div>
-            <div className="flex flex-col gap-1.5 text-[12px]">
-              {Boolean(deal.expected_close_date) && (
-                <div className="flex justify-between">
-                  <span className="text-[var(--text-tertiary)]">Close Date</span>
-                  <span className="text-[var(--text-primary)]">{deal.expected_close_date as string}</span>
-                </div>
-              )}
-              {Boolean(deal.quals_type) && (
-                <div className="flex justify-between">
-                  <span className="text-[var(--text-tertiary)]">Type</span>
-                  <span className="text-[var(--text-primary)]">{deal.quals_type as string}</span>
-                </div>
-              )}
-              {Boolean(deal.lead_source) && (
-                <div className="flex justify-between">
-                  <span className="text-[var(--text-tertiary)]">Lead Source</span>
-                  <span className="text-[var(--text-primary)]">{deal.lead_source as string}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Open Tasks section */}
-          <div className="px-4 py-3 flex-1 overflow-y-auto">
-            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">Tasks</div>
-            {linkedTasks.length === 0 ? (
-              <div className="text-[12px] text-[var(--text-tertiary)] italic">No tasks</div>
-            ) : (
-              linkedTasks.map(task => (
-                <div
-                  key={task.id as string}
-                  className="flex items-start gap-2 py-1.5 border-b border-[var(--separator)] last:border-0"
+            {/* Action buttons */}
+            <div className="flex gap-2" style={{ marginTop: 16 }}>
+              {['Log Activity', 'Edit Deal', 'Email'].map(label => (
+                <button
+                  key={label}
+                  className="flex-1"
+                  style={{
+                    padding: '6px 0',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: 'var(--color-accent)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'default',
+                    transition: 'background 150ms',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                 >
-                  <div className="w-3.5 h-3.5 rounded border border-[var(--separator-strong)] flex-shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] text-[var(--text-primary)] leading-tight truncate">
-                      {(task.task as string) || '—'}
-                    </div>
-                    {Boolean(task.due_date) && (
-                      <div className="text-[12px] text-[var(--text-tertiary)] mt-0.5">{task.due_date as string}</div>
-                    )}
-                  </div>
-                </div>
-              ))
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Stage progress bar */}
+          <div style={{ padding: '0 20px 16px' }}>
+            <StageProgress currentStage={(deal.sales_stage as string) || ''} />
+          </div>
+
+          {/* Grouped container — deal fields */}
+          <div style={{ margin: '0 12px 16px', background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            <FormRow
+              label="Stage"
+              value={(deal.sales_stage as string) || '—'}
+              chevron
+            />
+            <FormRow
+              label="Value"
+              value={deal.deal_value != null ? `$${Number(deal.deal_value).toLocaleString()}` : '—'}
+            />
+            <FormRow
+              label="Probability"
+              value={deal.probability_value != null ? `${deal.probability_value as number}%` : '—'}
+            />
+            <FormRow
+              label="Close Date"
+              value={(deal.expected_close_date as string) || '—'}
+            />
+            {Boolean(deal.contact_name) && (
+              <FormRow
+                label="Contact"
+                value={deal.contact_name as string}
+              />
+            )}
+            <FormRow
+              label="Engagement Type"
+              value={formatEngagementType(deal.engagement_type)}
+              chevron
+            />
+            {Boolean(deal.quals_type) && (
+              <FormRow
+                label="Type"
+                value={deal.quals_type as string}
+                chevron
+              />
+            )}
+            {Boolean(deal.lead_source) && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 14px',
+                  minHeight: 36,
+                  cursor: 'default',
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>Lead Source</span>
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+                  {deal.lead_source as string}
+                </span>
+              </div>
             )}
           </div>
-        </>
+
+          {/* Tasks section */}
+          <div style={{ padding: '0 12px 16px' }}>
+            <div style={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase' as const,
+              color: 'var(--text-secondary)',
+              padding: '0 4px 8px',
+            }}>
+              Tasks
+            </div>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {linkedTasks.length === 0 ? (
+                <div style={{
+                  padding: '10px 14px',
+                  fontSize: 13,
+                  color: 'var(--text-tertiary)',
+                  fontStyle: 'italic',
+                }}>
+                  No linked tasks
+                </div>
+              ) : (
+                linkedTasks.map((task, i) => (
+                  <div
+                    key={task.id as string}
+                    className="flex items-center justify-between"
+                    style={{
+                      padding: '10px 14px',
+                      minHeight: 36,
+                      borderBottom: i < linkedTasks.length - 1 ? '1px solid var(--separator)' : 'none',
+                      cursor: 'default',
+                    }}
+                  >
+                    <span
+                      className="truncate flex-1"
+                      style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', marginRight: 8 }}
+                    >
+                      {(task.task as string) || '—'}
+                    </span>
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      <TaskStatusBadge status={(task.status as string) || ''} />
+                      <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>⌃</span>
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Action buttons at bottom */}
+          <div className="flex gap-2" style={{ padding: '8px 12px 20px' }}>
+            <button
+              className="flex-1"
+              style={{
+                padding: '8px 0',
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--text-on-accent)',
+                background: 'var(--color-accent)',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'default',
+                transition: 'opacity 150ms',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '0.85' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+            >
+              Edit
+            </button>
+            <button
+              className="flex-1"
+              style={{
+                padding: '8px 0',
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--color-red)',
+                background: 'transparent',
+                border: '1px solid var(--color-red)',
+                borderRadius: 8,
+                cursor: 'default',
+                transition: 'background 150ms',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
       ) : (
         /* Loading state while data fetches */
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-[12px] text-[var(--text-tertiary)]">Loading…</div>
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Loading...</div>
         </div>
       )}
     </div>

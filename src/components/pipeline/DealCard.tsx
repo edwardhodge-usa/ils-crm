@@ -1,5 +1,14 @@
-import { StageBadge } from '@/components/shared'
+import { useState } from 'react'
 import type { DealItem } from '@/types'
+
+/** Raw stage color hex values for the badge formula (rgba with 0.10 alpha) */
+const STAGE_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
+  'Prospecting':  { bg: 'var(--stage-prospecting-bg)', text: 'var(--stage-prospecting)' },
+  'Qualified':    { bg: 'var(--stage-qualified-bg)',    text: 'var(--stage-qualified)' },
+  'Proposal Sent':{ bg: 'var(--stage-proposal-bg)',     text: 'var(--stage-proposal)' },
+  'Negotiation':  { bg: 'var(--stage-negotiation-bg)',  text: 'var(--stage-negotiation)' },
+  'Closed Won':   { bg: 'var(--stage-won-bg)',          text: 'var(--stage-won)' },
+}
 
 interface DealCardProps {
   deal: DealItem
@@ -8,49 +17,73 @@ interface DealCardProps {
 }
 
 export function DealCard({ deal, isSelected, onClick }: DealCardProps) {
-  const { dealName, companyName, value, probability, stage, daysInStage } = deal
+  const { dealName, companyName, value, probability, stage } = deal
+  const [hovered, setHovered] = useState(false)
+  const badgeColors = STAGE_BADGE_COLORS[stage] ?? { bg: 'var(--bg-secondary)', text: 'var(--text-secondary)' }
 
   return (
     <div
       onClick={onClick}
-      className={`deal-card p-3 rounded-[12px] cursor-default transition-all duration-[150ms] border ${
-        isSelected
-          ? 'deal-card--selected bg-[var(--bg-sheet)] border-[var(--color-accent)] shadow-[0_0_0_1px_var(--color-accent-translucent)]'
-          : 'bg-[var(--bg-card)] border-transparent hover:bg-[var(--bg-sheet)] hover:border-[var(--separator)]'
-      }`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: isSelected
+          ? 'var(--bg-hover)'
+          : hovered
+            ? 'var(--bg-hover)'
+            : 'var(--bg-secondary)',
+        borderRadius: 8,
+        padding: '10px 12px',
+        cursor: 'default',
+        transition: 'background 150ms',
+        border: isSelected ? '1px solid var(--color-accent)' : '1px solid transparent',
+      }}
     >
       {/* Company name */}
       {companyName && (
-        <div className="text-[12px] font-semibold text-[var(--text-secondary)] truncate mb-0.5">
+        <div
+          className="truncate"
+          style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-secondary)', marginBottom: 2 }}
+        >
           {companyName}
         </div>
       )}
 
       {/* Deal name */}
-      <div className="text-[12px] font-medium text-[var(--text-primary)] leading-tight mb-2 line-clamp-2">
+      <div
+        className="line-clamp-2"
+        style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.3, marginBottom: 8 }}
+      >
         {dealName}
       </div>
 
       {/* Value */}
-      <div className="text-[15px] font-bold text-[var(--text-primary)] tracking-tight mb-2">
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
         {value != null ? `$${value.toLocaleString()}` : '—'}
       </div>
 
-      {/* Bottom row: probability + days */}
+      {/* Bottom row: stage badge + probability */}
       <div className="flex items-center justify-between gap-2">
-        <StageBadge stage={stage} />
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {probability != null && (
-            <span className="text-[11px] font-semibold text-[var(--text-secondary)]">
-              {probability}%
-            </span>
-          )}
-          {daysInStage != null && (
-            <span className="text-[12px] text-[var(--text-tertiary)] tabular-nums">
-              {daysInStage}d
-            </span>
-          )}
-        </div>
+        {/* Stage badge — badge formula */}
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 500,
+            color: badgeColors.text,
+            background: badgeColors.bg,
+            padding: '2px 6px',
+            borderRadius: 4,
+            opacity: 0.85,
+            lineHeight: 1.2,
+          }}
+        >
+          {stage}
+        </span>
+        {probability != null && (
+          <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-secondary)' }}>
+            {probability}%
+          </span>
+        )}
       </div>
     </div>
   )

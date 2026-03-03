@@ -43,11 +43,11 @@ button {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: transparent;
+  background: var(--color-scrollbar-thumb, transparent);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(128,128,128,0.30);
+  background: var(--color-scrollbar-thumb-hover, rgba(128,128,128,0.30));
   border-radius: 3px;
 }
 
@@ -62,5 +62,24 @@ img { display: block; max-width: 100%; }
   *, *::before, *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/* Accessibility: Reduce Transparency */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-panel,
+  .sidebar {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Accessibility: Increase Contrast */
+@media (prefers-contrast: more) {
+  :root {
+    --separator: rgba(0,0,0,0.25);
+  }
+  .dark {
+    --separator: rgba(255,255,255,0.25);
   }
 }

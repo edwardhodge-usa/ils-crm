@@ -91,6 +91,16 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
     { label: 'Value', value: contractValue ? `$${contractValue.toLocaleString()}` : '—' },
   ]
 
+  const infoRows: { label: string; value: string | null; isDropdown?: boolean }[] = [
+    { label: 'Project Lead', value: projectLead },
+    { label: 'Start Date', value: startDate },
+    { label: 'End Date', value: endDate },
+    { label: 'Status', value: status, isDropdown: true },
+    { label: 'Contract Value', value: contractValue ? `$${contractValue.toLocaleString()}` : null },
+  ]
+
+  const visibleRows = infoRows.filter(r => Boolean(r.value))
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
       {/* Top bar */}
@@ -108,17 +118,17 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" style={{ padding: '0 18px' }}>
 
         {/* 1. Hero block */}
-        <div className="px-4 pt-4 pb-3 border-b border-[var(--separator)]">
-          <div className="text-[18px] font-bold text-[var(--text-primary)] leading-tight">
+        <div style={{ padding: '18px 0 14px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2 }}>
             {projectName}
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
             {Boolean(status) && <StatusBadge value={status} />}
             {Boolean(location) && (
-              <span className="text-[12px] text-[var(--text-tertiary)]">{location}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{location}</span>
             )}
           </div>
         </div>
@@ -127,124 +137,182 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         <ContactStats stats={stats} />
 
         {/* 3. Project details — Apple HIG form rows */}
-        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', margin: '12px 16px' }}>
-          {/* Project Lead */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Project Lead</span>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
-              {projectLead ?? '—'}
-            </span>
+        <div style={{ marginTop: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+            Project Info
           </div>
-          {/* Start Date */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Start Date</span>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
-              {startDate || '—'}
-            </span>
-          </div>
-          {/* End Date */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>End Date</span>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
-              {endDate || '—'}
-            </span>
-          </div>
-          {/* Status */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Status</span>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
-              {status || '—'}
-            </span>
-          </div>
-          {/* Contract Value */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', minHeight: 36 }}>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Contract Value</span>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
-              {contractValue ? `$${contractValue.toLocaleString()}` : '—'}
-            </span>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            {visibleRows.length === 0 ? (
+              <div style={{ padding: 14, textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)' }}>
+                No project info
+              </div>
+            ) : (
+              visibleRows.map((row, idx) => (
+                <DetailFormRow
+                  key={row.label}
+                  label={row.label}
+                  value={row.value!}
+                  isDropdown={row.isDropdown}
+                  isLast={idx === visibleRows.length - 1}
+                />
+              ))
+            )}
           </div>
         </div>
 
         {/* 4. Linked Contacts */}
-        <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
             Contacts
           </div>
           {contacts.length === 0 ? (
-            <div className="text-[12px] text-[var(--text-tertiary)] italic">No linked contacts</div>
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0' }}>No linked contacts</div>
           ) : (
-            contacts.slice(0, 3).map(c => {
-              const name = (c.contact_name as string) ||
-                [c.first_name, c.last_name].filter(Boolean).join(' ') ||
-                'Unnamed'
-              const title = (c.job_title as string | null) ?? null
-              return (
-                <div
-                  key={c.id as string}
-                  className="flex items-center gap-2 py-1.5 border-b border-[var(--separator)] last:border-0 cursor-default hover:bg-[var(--bg-hover)] -mx-4 px-4 transition-colors duration-[150ms]"
-                  onClick={() => navigate(`/contacts/${c.id as string}`)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{name}</div>
-                    {Boolean(title) && (
-                      <div className="text-[12px] text-[var(--text-tertiary)] truncate">{title}</div>
-                    )}
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {contacts.slice(0, 3).map((c, idx) => {
+                const name = (c.contact_name as string) ||
+                  [c.first_name, c.last_name].filter(Boolean).join(' ') ||
+                  'Unnamed'
+                const title = (c.job_title as string | null) ?? null
+                return (
+                  <div
+                    key={c.id as string}
+                    className="cursor-default"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 14px',
+                      borderBottom: idx < Math.min(contacts.length, 3) - 1 ? '1px solid var(--separator)' : undefined,
+                      transition: 'background 150ms',
+                    }}
+                    onClick={() => navigate(`/contacts/${c.id as string}`)}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                    onMouseLeave={e => e.currentTarget.style.background = ''}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {name}
+                      </div>
+                      {Boolean(title) && (
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {title}
+                        </div>
+                      )}
+                    </div>
+                    <span style={{ fontSize: 14, color: 'var(--text-tertiary)', flexShrink: 0 }}>›</span>
                   </div>
-                </div>
-              )
-            })
+                )
+              })}
+            </div>
           )}
         </div>
 
         {/* 5. Linked Opportunities */}
-        <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
             Opportunities
           </div>
           {opps.length === 0 ? (
-            <div className="text-[12px] text-[var(--text-tertiary)] italic">No linked opportunities</div>
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0' }}>No linked opportunities</div>
           ) : (
-            opps.slice(0, 3).map(o => (
-              <div
-                key={o.id as string}
-                className="px-3 py-2 rounded-lg bg-[var(--bg-card)] mb-1.5 cursor-default hover:bg-[var(--bg-hover)] transition-colors duration-[150ms]"
-                onClick={() => navigate(`/pipeline/${o.id as string}/edit`)}
-              >
-                <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">
-                  {(o.opportunity_name as string) || '—'}
-                </div>
-                {Boolean(o.deal_value) && (
-                  <div className="text-[12px] text-[var(--color-green)] mt-0.5">
-                    ${Number(o.deal_value).toLocaleString()}
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {opps.slice(0, 3).map((o, idx) => (
+                <div
+                  key={o.id as string}
+                  className="cursor-default"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 14px',
+                    borderBottom: idx < Math.min(opps.length, 3) - 1 ? '1px solid var(--separator)' : undefined,
+                    transition: 'background 150ms',
+                  }}
+                  onClick={() => navigate(`/pipeline/${o.id as string}/edit`)}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {(o.opportunity_name as string) || '—'}
+                    </div>
+                    {Boolean(o.deal_value) && (
+                      <div style={{ fontSize: 11, color: 'var(--color-green)', marginTop: 1 }}>
+                        ${Number(o.deal_value).toLocaleString()}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))
+                  <span style={{ fontSize: 14, color: 'var(--text-tertiary)', flexShrink: 0 }}>›</span>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
         {/* 6. Notes */}
         {(Boolean(description) || Boolean(keyMilestones)) && (
-          <div className="px-4 py-3">
-            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
               Notes
             </div>
-            {Boolean(description) && (
-              <div className="text-[12px] text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
-                {description}
-              </div>
-            )}
-            {Boolean(keyMilestones) && (
-              <>
-                <div className="text-[12px] text-[var(--text-tertiary)] mt-2 mb-0.5 font-medium">Key Milestones</div>
-                <div className="text-[12px] text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
-                  {keyMilestones}
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', padding: '10px 14px' }}>
+              {Boolean(description) && (
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                  {description}
                 </div>
-              </>
-            )}
+              )}
+              {Boolean(keyMilestones) && (
+                <>
+                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8, marginBottom: 2, fontWeight: 500 }}>Key Milestones</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                    {keyMilestones}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
 
+        {/* Bottom spacer */}
+        <div style={{ height: 16 }} />
+
+      </div>
+    </div>
+  )
+}
+
+/** A single Apple-style form row for the detail pane */
+function DetailFormRow({ label, value, isDropdown, isLast }: {
+  label: string
+  value: string
+  isDropdown?: boolean
+  isLast?: boolean
+}) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '10px 14px', minHeight: 36,
+      borderBottom: isLast ? undefined : '1px solid var(--separator)',
+    }}>
+      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>
+        {label}
+      </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+        <span
+          style={{
+            fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
+            background: hovered ? 'var(--bg-hover)' : 'transparent',
+            transition: 'background 150ms',
+          }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          {value}
+        </span>
+        {isDropdown && (
+          <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4, flexShrink: 0 }}>⌃</span>
+        )}
       </div>
     </div>
   )

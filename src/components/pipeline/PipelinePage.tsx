@@ -92,21 +92,24 @@ export default function PipelinePage() {
   return (
     <div className="relative flex flex-col h-full w-full overflow-hidden">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--separator)] flex-shrink-0">
+      <div
+        className="flex items-center justify-between flex-shrink-0"
+        style={{ padding: '10px 16px', borderBottom: '1px solid var(--separator)' }}
+      >
         <div className="flex items-center gap-6">
-          <h1 className="text-[13px] font-semibold text-[var(--text-primary)]">Pipeline</h1>
-          <div className="flex items-center gap-4 text-[11px]">
+          <h1 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Pipeline</h1>
+          <div className="flex items-center gap-5">
             <div>
-              <span className="text-[var(--text-tertiary)]">Active: </span>
-              <span className="text-[var(--text-primary)] font-medium">${totalValue.toLocaleString()}</span>
+              <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-secondary)' }}>Active </span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-accent)' }}>${totalValue.toLocaleString()}</span>
             </div>
             <div>
-              <span className="text-[var(--text-tertiary)]">Won: </span>
-              <span className="text-[var(--color-green)] font-medium">${wonValue.toLocaleString()}</span>
+              <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-secondary)' }}>Won </span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-green)' }}>${wonValue.toLocaleString()}</span>
             </div>
             <div>
-              <span className="text-[var(--text-tertiary)]">Deals: </span>
-              <span className="text-[var(--text-primary)] font-medium">{deals.length}</span>
+              <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-secondary)' }}>Deals </span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{deals.length}</span>
             </div>
           </div>
         </div>

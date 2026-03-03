@@ -1,12 +1,12 @@
 const ICON_COLORS = [
-  { bg: 'rgba(99,102,241,0.15)', fg: '#818CF8' },
-  { bg: 'rgba(52,211,153,0.15)', fg: '#34D399' },
-  { bg: 'rgba(251,146,60,0.15)', fg: '#FB923C' },
-  { bg: 'rgba(56,189,248,0.15)', fg: '#38BDF8' },
-  { bg: 'rgba(168,85,247,0.15)', fg: '#A855F7' },
-  { bg: 'rgba(244,63,94,0.15)', fg: '#F43F5E' },
-  { bg: 'rgba(245,158,11,0.15)', fg: '#F59E0B' },
-  { bg: 'rgba(16,185,129,0.15)', fg: '#10B981' },
+  { bg: 'rgba(99,102,241,0.12)', fg: '#818CF8' },
+  { bg: 'rgba(52,211,153,0.12)', fg: '#34D399' },
+  { bg: 'rgba(251,146,60,0.12)', fg: '#FB923C' },
+  { bg: 'rgba(56,189,248,0.12)', fg: '#38BDF8' },
+  { bg: 'rgba(168,85,247,0.12)', fg: '#A855F7' },
+  { bg: 'rgba(244,63,94,0.12)', fg: '#F43F5E' },
+  { bg: 'rgba(245,158,11,0.12)', fg: '#F59E0B' },
+  { bg: 'rgba(16,185,129,0.12)', fg: '#10B981' },
 ]
 
 function iconColor(name: string) {
@@ -35,19 +35,21 @@ export function CompanyRow({ company, isSelected, onClick }: CompanyRowProps) {
   return (
     <div
       onClick={onClick}
-      className="cursor-default transition-colors duration-[150ms]"
+      className="cursor-default"
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
+        gap: 9,
         padding: '9px 12px',
-        borderBottom: '1px solid var(--separator)',
+        borderLeft: '2.5px solid',
+        borderLeftColor: isSelected ? 'var(--color-accent)' : 'transparent',
         background: isSelected ? 'var(--color-accent-translucent)' : undefined,
+        transition: 'background 150ms',
       }}
       onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-hover)' }}
       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
     >
-      {/* Building icon */}
+      {/* Letter icon */}
       <div style={{
         width: 30, height: 30, borderRadius: 7, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -56,10 +58,10 @@ export function CompanyRow({ company, isSelected, onClick }: CompanyRowProps) {
         {name.charAt(0).toUpperCase()}
       </div>
 
-      {/* Name + category */}
+      {/* Name + category + contact count */}
       <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
         <div style={{
-          fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+          fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           lineHeight: 1.3,
         }}>
@@ -68,9 +70,10 @@ export function CompanyRow({ company, isSelected, onClick }: CompanyRowProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
           {Boolean(categoryLabel) && (
             <span style={{
-              fontSize: 11, fontWeight: 600, padding: '1px 6px',
-              borderRadius: 4, lineHeight: 1.4,
-              background: 'var(--bg-secondary)', color: 'var(--text-secondary)',
+              fontSize: 11, fontWeight: 500, padding: '1px 6px',
+              borderRadius: 4, lineHeight: 1.4, opacity: 0.85,
+              background: `rgba(${hexToRgb(color.fg)},0.10)`,
+              color: color.fg,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               maxWidth: 140,
             }}>
@@ -79,7 +82,7 @@ export function CompanyRow({ company, isSelected, onClick }: CompanyRowProps) {
           )}
           {contactCount > 0 && (
             <span style={{
-              fontSize: 11, color: 'var(--text-tertiary)',
+              fontSize: 11, color: 'var(--text-secondary)',
               fontVariantNumeric: 'tabular-nums', flexShrink: 0,
               marginLeft: categoryLabel ? 0 : 'auto',
             }}>
@@ -90,4 +93,13 @@ export function CompanyRow({ company, isSelected, onClick }: CompanyRowProps) {
       </div>
     </div>
   )
+}
+
+/** Convert a hex color like #818CF8 to "129,140,248" for rgba() */
+function hexToRgb(hex: string): string {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.substring(0, 2), 16)
+  const g = parseInt(h.substring(2, 4), 16)
+  const b = parseInt(h.substring(4, 6), 16)
+  return `${r},${g},${b}`
 }

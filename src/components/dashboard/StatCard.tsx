@@ -1,7 +1,5 @@
-// StatCard — metric tile with icon and colored variant
-// Matches approved mockup: ils-crm-dashboard-v3.html
-
-import { useEffect, useState } from 'react'
+// StatCard — flat metric tile inside grouped container
+// Gold standard: no individual bg/shadow/radius — parent container provides grouping
 
 interface StatCardProps {
   icon: string
@@ -9,69 +7,55 @@ interface StatCardProps {
   label: string
   subtitle?: string
   variant?: 'default' | 'red' | 'green' | 'indigo'
+  isLast?: boolean
 }
 
-const VARIANTS = {
-  default: {
-    light: { bg: 'white', border: 'rgba(0,0,0,0.08)', num: 'var(--text-primary)', shadow: '0 1px 3px rgba(0,0,0,0.06)' },
-    dark: { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.07)', num: 'var(--text-primary)', shadow: 'none' },
-  },
-  red: {
-    light: { bg: 'rgba(255,59,48,0.04)', border: 'rgba(255,59,48,0.18)', num: '#FF3B30', shadow: 'none' },
-    dark: { bg: 'rgba(255,69,58,0.06)', border: 'rgba(255,69,58,0.28)', num: '#FF453A', shadow: 'none' },
-  },
-  green: {
-    light: { bg: 'rgba(52,199,89,0.04)', border: 'rgba(52,199,89,0.18)', num: '#34C759', shadow: 'none' },
-    dark: { bg: 'rgba(48,209,88,0.05)', border: 'rgba(48,209,88,0.22)', num: '#30D158', shadow: 'none' },
-  },
-  indigo: {
-    light: { bg: 'rgba(88,86,214,0.04)', border: 'rgba(88,86,214,0.18)', num: '#5856D6', shadow: 'none' },
-    dark: { bg: 'rgba(88,86,214,0.06)', border: 'rgba(88,86,214,0.25)', num: '#9C99FF', shadow: 'none' },
-  },
+const ACCENT_COLORS: Record<string, { light: string; dark: string }> = {
+  red: { light: '#FF3B30', dark: '#FF453A' },
+  green: { light: '#34C759', dark: '#30D158' },
+  indigo: { light: '#5856D6', dark: '#5E5CE6' },
 }
 
-export default function StatCard({ icon, value, label, subtitle, variant = 'default' }: StatCardProps) {
-  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'))
+export default function StatCard({ icon, value, label, subtitle, variant = 'default', isLast = false }: StatCardProps) {
+  // Determine accent color for value when variant is not default and value > 0
+  const hasAccent = variant !== 'default'
+  const numericValue = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^0-9.-]/g, ''))
+  const showAccent = hasAccent && !isNaN(numericValue) && numericValue > 0
 
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains('dark'))
-    })
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-    return () => observer.disconnect()
-  }, [])
-
-  const v = VARIANTS[variant][isDark ? 'dark' : 'light']
+  // Detect dark mode for accent color selection
+  const isDark = document.documentElement.classList.contains('dark')
+  const accentColor = showAccent && ACCENT_COLORS[variant]
+    ? (isDark ? ACCENT_COLORS[variant].dark : ACCENT_COLORS[variant].light)
+    : undefined
 
   return (
     <div
       style={{
-        background: v.bg,
-        border: `1px solid ${v.border}`,
-        boxShadow: v.shadow,
-        borderRadius: 10,
-        padding: 14,
+        flex: 1,
+        padding: 16,
+        minHeight: 80,
         cursor: 'default',
+        borderRight: isLast ? 'none' : '1px solid var(--separator)',
       }}
     >
-      <div style={{ fontSize: 19, marginBottom: 7, lineHeight: 1 }}>{icon}</div>
+      <div style={{ fontSize: 17, marginBottom: 6, lineHeight: 1 }}>{icon}</div>
       <div
         style={{
-          fontSize: 26,
-          fontWeight: 700,
-          letterSpacing: -1,
+          fontSize: 22,
+          fontWeight: 600,
+          letterSpacing: -0.5,
           lineHeight: 1,
           marginBottom: 4,
-          color: v.num,
+          color: accentColor || 'var(--text-primary)',
         }}
       >
         {value}
       </div>
-      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>
+      <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-secondary)' }}>
         {label}
       </div>
       {Boolean(subtitle) && (
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
           {subtitle}
         </div>
       )}
