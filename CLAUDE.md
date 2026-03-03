@@ -105,6 +105,7 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-02** - Mockup file: `/Users/EdwardHodge_1/Desktop/CLAUDE MOCKUPS/ils-crm-tasks-v2.html` — approved 4-column layout (App Sidebar 220px | Categories 210px | Task List 380px | Detail flex-1). Real Airtable data. HIG-audited (12 violations found and fixed). These patterns must be followed when implementing in Electron
 **2026-03-02** - Agent-based tech debt scans can report false positives (e.g. `checkbox()` "unused" when it's actually called via mapping type) → Always verify findings with Grep before deleting code
 **2026-03-02** - Airtable collaborator fields return `{id, email, name}` objects → Add `'collaborator'` converter type that extracts `.name`. Skip in `localToAirtable` (read-only like formula/rollup). 6 collaborator fields across 5 tables.
+**2026-03-03** - Badge text unreadable in dark mode (darker accessible text on dark tinted backgrounds) → Add `fgDark` property to all color maps with Apple bright dark-mode system colors. Use `useDarkMode()` hook + `isDark ? fgDark : fg`. Dark mode mapping: Blue→#409CFF, Green→#30D158, Orange→#FF9F0A, Red→#FF453A, Purple→#BF5AF2, Indigo→#5E5CE6, Teal→#40CBE0, Pink→#FF375F. Cross-component encoding: "bg|fg|fgDark" string format for specialty colors passed through props
 
 ## Key Commands
 
