@@ -1,30 +1,78 @@
-export interface RouteConfig {
-  path: string
+// src/config/routes.ts
+export interface NavItem {
+  id: string
   label: string
-  icon?: string
-  newPath?: string  // path for "New" action
+  path: string
+  icon: string
+  newPath?: string // path for "New" action (used by Cmd+N in Layout)
 }
 
-export const NAV_ITEMS: RouteConfig[] = [
-  { path: '/', label: 'Dashboard', icon: 'LayoutDashboard' },
-  { path: '/contacts', label: 'Contacts', icon: 'Users', newPath: '/contacts/new' },
-  { path: '/companies', label: 'Companies', icon: 'Building2', newPath: '/companies/new' },
-  { path: '/pipeline', label: 'Pipeline', icon: 'Kanban', newPath: '/pipeline/new' },
-  { path: '/tasks', label: 'Tasks', icon: 'CheckSquare', newPath: '/tasks/new' },
-  { path: '/proposals', label: 'Proposals', icon: 'FileText', newPath: '/proposals/new' },
-  { path: '/projects', label: 'Projects', icon: 'FolderKanban', newPath: '/projects/new' },
-  { path: '/interactions', label: 'Interactions', icon: 'MessageSquare', newPath: '/interactions/new' },
-  { path: '/imported-contacts', label: 'Imported Contacts', icon: 'UserPlus' },
-  { path: '/portal', label: 'Portal Access', icon: 'Shield' },
-  { path: '/portal-logs', label: 'Portal Logs', icon: 'ScrollText' },
+export interface NavSection {
+  label: string | null
+  items: NavItem[]
+}
+
+export const NAV_SECTIONS: NavSection[] = [
+  {
+    label: 'CRM',
+    items: [
+      { id: 'dashboard', label: 'Dashboard', path: '/', icon: 'grid' },
+      { id: 'contacts', label: 'Contacts', path: '/contacts', icon: 'person', newPath: '/contacts/new' },
+      { id: 'companies', label: 'Companies', path: '/companies', icon: 'building', newPath: '/companies/new' },
+      { id: 'pipeline', label: 'Pipeline', path: '/pipeline', icon: 'chart-bar', newPath: '/pipeline/new' },
+    ],
+  },
+  {
+    label: 'Work',
+    items: [
+      { id: 'tasks', label: 'Tasks', path: '/tasks', icon: 'checkbox', newPath: '/tasks/new' },
+      { id: 'projects', label: 'Projects', path: '/projects', icon: 'folder', newPath: '/projects/new' },
+      { id: 'proposals', label: 'Proposals', path: '/proposals', icon: 'doc-check', newPath: '/proposals/new' },
+    ],
+  },
+  {
+    label: 'Activity',
+    items: [
+      { id: 'interactions', label: 'Interactions', path: '/interactions', icon: 'bubble', newPath: '/interactions/new' },
+      { id: 'imported', label: 'Imported Contacts', path: '/imported-contacts', icon: 'inbox' },
+    ],
+  },
+  {
+    label: null,
+    items: [
+      { id: 'portal', label: 'Portal Access', path: '/portal', icon: 'lock' },
+    ],
+  },
 ]
 
-export const SETTINGS_ROUTE: RouteConfig = { path: '/settings', label: 'Settings', icon: 'Settings' }
+// Flat list of all nav items (for Cmd+N, title lookups, etc.)
+export const NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap(s => s.items)
 
-export const ROUTE_TITLES: Record<string, string> = Object.fromEntries(
-  [...NAV_ITEMS, SETTINGS_ROUTE].map(item => [item.path, item.label])
-)
+// Settings item (not in nav sections, pinned to sidebar bottom)
+export const SETTINGS_ROUTE: NavItem = {
+  id: 'settings',
+  label: 'Settings',
+  path: '/settings',
+  icon: 'settings',
+}
 
+// Route titles for the top bar
+export const ROUTE_TITLES: Record<string, string> = {
+  '/': 'Dashboard',
+  '/contacts': 'Contacts',
+  '/companies': 'Companies',
+  '/pipeline': 'Pipeline',
+  '/projects': 'Projects',
+  '/proposals': 'Proposals',
+  '/tasks': 'Tasks',
+  '/interactions': 'Interactions',
+  '/imported-contacts': 'Imported Contacts',
+  '/portal': 'Portal Access',
+  '/portal-logs': 'Portal Logs',
+  '/settings': 'Settings',
+}
+
+// Routes that support "New" action (Cmd+N)
 export const NEW_ROUTES: Record<string, string> = Object.fromEntries(
   NAV_ITEMS.filter(item => item.newPath).map(item => [item.path, item.newPath!])
 )

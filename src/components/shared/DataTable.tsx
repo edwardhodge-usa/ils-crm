@@ -81,7 +81,7 @@ export default function DataTable({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
       {/* Search bar + actions */}
       {(searchKeys?.length || actions) && (
         <div className="flex items-center justify-between gap-3 mb-3">
@@ -101,7 +101,7 @@ export default function DataTable({
       {/* Table */}
       <div className="flex-1 overflow-auto rounded-lg border border-[var(--separator-opaque)]">
         <table className="w-full text-[14px]">
-          <thead className="sticky top-0 bg-[var(--bg-secondary)] z-10">
+          <thead className="sticky top-0 bg-[var(--bg-window)] z-10">
             <tr>
               {columns.map(col => (
                 <th

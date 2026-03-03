@@ -125,7 +125,8 @@ export default function CommandPalette() {
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[20%]"
+      aria-label="Command Palette"
+      className="fixed inset-0 z-[200] flex items-start justify-center pt-[20%]"
       onClick={() => setOpen(false)}
     >
       {/* Backdrop */}
@@ -133,7 +134,7 @@ export default function CommandPalette() {
 
       {/* Palette */}
       <div
-        className="relative w-[520px] bg-[var(--bg-secondary)] rounded-xl border border-[var(--separator-opaque)] shadow-2xl overflow-hidden"
+        className="relative w-[520px] bg-[var(--bg-secondary)] rounded-[12px] border border-[var(--separator-opaque)] shadow-[var(--shadow-lg)] overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Search input */}
@@ -150,7 +151,7 @@ export default function CommandPalette() {
             placeholder="Search contacts, companies, deals..."
             className="flex-1 bg-transparent text-[14px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none"
           />
-          <kbd className="text-[10px] text-[var(--text-tertiary)] bg-[var(--separator-opaque)] px-1.5 py-0.5 rounded">ESC</kbd>
+          <kbd className="text-[12px] text-[var(--text-tertiary)] bg-[var(--separator-opaque)] px-1.5 py-0.5 rounded">ESC</kbd>
         </div>
 
         {/* Results */}
@@ -165,16 +166,16 @@ export default function CommandPalette() {
                 onClick={() => navigateToResult(result)}
                 onMouseEnter={() => setSelectedIndex(i)}
               >
-                <span className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${typeColors[result.type] || 'bg-[var(--separator-opaque)] text-[var(--text-secondary)]'}`}>
+                <span className={`w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${typeColors[result.type] || 'bg-[var(--separator-opaque)] text-[var(--text-secondary)]'}`}>
                   {typeIcons[result.type] || '?'}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-base text-[var(--text-primary)] truncate">{result.name}</p>
+                  <p className="text-[13px] text-[var(--text-primary)] truncate">{result.name}</p>
                   {result.subtitle && (
-                    <p className="text-base text-[var(--text-tertiary)] truncate">{result.subtitle}</p>
+                    <p className="text-[13px] text-[var(--text-tertiary)] truncate">{result.subtitle}</p>
                   )}
                 </div>
-                <span className="text-[10px] text-[var(--text-placeholder)] capitalize flex-shrink-0">{result.type}</span>
+                <span className="text-[11px] text-[var(--text-placeholder)] capitalize flex-shrink-0">{result.type}</span>
               </button>
             ))}
           </div>
@@ -183,14 +184,14 @@ export default function CommandPalette() {
         {/* Empty state */}
         {query.trim() && results.length === 0 && (
           <div className="py-8 text-center">
-            <p className="text-base text-[var(--text-tertiary)]">No results for "{query}"</p>
+            <p className="text-[13px] text-[var(--text-tertiary)]">No results for "{query}"</p>
           </div>
         )}
 
         {/* Hint */}
         {!query.trim() && (
           <div className="py-6 text-center">
-            <p className="text-base text-[var(--text-tertiary)]">Type to search across all records</p>
+            <p className="text-[13px] text-[var(--text-tertiary)]">Type to search across all records</p>
           </div>
         )}
       </div>

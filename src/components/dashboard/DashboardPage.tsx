@@ -1,15 +1,11 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import StatusBadge from '../shared/StatusBadge'
+// DashboardPage — Gold standard grouped container pattern
+// Layout: Greeting → 4 stat cards (single container) → 2 widgets (Tasks + Follow-ups) → Pipeline Snapshot
+// Scrollable content, token-based colors, inline styles for design tokens
 
-interface DashboardStats {
-  contactCount: number
-  companyCount: number
-  activeOpportunities: number
-  activeTasks: number
-  totalPipelineValue: number
-  wonValue: number
-}
+import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import StatCard from './StatCard'
+import PipelineWidget from './PipelineWidget'
 
 interface PipelineStage {
   sales_stage: string
@@ -17,28 +13,185 @@ interface PipelineStage {
   total_value: number
 }
 
+interface TaskItem {
+  id: string
+  task?: string
+  due_date?: string
+  priority?: string
+}
+
+interface FollowUpContact {
+  id: string
+  contact_name?: string
+  company?: string
+  categorization?: string
+  last_contact_date?: string
+}
+
+function getGreeting(): string {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function formatDate(): string {
+  return new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+function formatCurrency(v: number): string {
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
+  if (v >= 1_000) return `$${Math.round(v / 1_000)}K`
+  return `$${v.toLocaleString()}`
+}
+
+function daysSince(dateStr: string): number {
+  const d = new Date(dateStr)
+  const now = new Date()
+  return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function dueLabel(dateStr?: string): { text: string; overdue: boolean } {
+  if (!dateStr) return { text: '', overdue: false }
+  const d = new Date(dateStr)
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  d.setHours(0, 0, 0, 0)
+  const diff = Math.floor((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  if (diff < 0) return { text: `${Math.abs(diff)}d overdue`, overdue: true }
+  if (diff === 0) return { text: 'Today', overdue: false }
+  if (diff === 1) return { text: 'Tomorrow', overdue: false }
+  return { text: `In ${diff}d`, overdue: false }
+}
+
+function initials(name: string): string {
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
+const AVATAR_COLORS = [
+  { bg: 'rgba(0,122,255,0.18)', fg: '#007AFF' },       // systemBlue
+  { bg: 'rgba(52,199,89,0.18)', fg: '#34C759' },        // systemGreen
+  { bg: 'rgba(255,149,0,0.18)', fg: '#FF9500' },        // systemOrange
+  { bg: 'rgba(255,45,85,0.18)', fg: '#FF2D55' },        // systemPink
+  { bg: 'rgba(175,82,222,0.18)', fg: '#AF52DE' },       // systemPurple
+  { bg: 'rgba(88,86,214,0.18)', fg: '#5856D6' },        // systemIndigo
+]
+
+function avatarColor(name: string) {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
+const MAX_WIDGET_ROWS = 5
+
+// ── Hoverable row component ──
+
+function HoverRow({
+  children,
+  isLast,
+  style,
+}: {
+  children: React.ReactNode
+  isLast: boolean
+  style?: React.CSSProperties
+}) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '10px 14px',
+        borderBottom: isLast ? 'none' : '1px solid var(--separator)',
+        cursor: 'default',
+        background: hovered ? 'var(--bg-hover)' : 'transparent',
+        transition: 'background 150ms',
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate()
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [tasksDue, setTasksDue] = useState<Record<string, unknown>[]>([])
-  const [followUps, setFollowUps] = useState<Record<string, unknown>[]>([])
-  const [pipeline, setPipeline] = useState<PipelineStage[]>([])
+
+  const [tasksDueToday, setTasksDueToday] = useState<TaskItem[]>([])
+  const [followUps, setFollowUps] = useState<FollowUpContact[]>([])
+  const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([])
+  const [activeContractsValue, setActiveContractsValue] = useState<number>(0)
+  const [activeContractsCount, setActiveContractsCount] = useState<number>(0)
+  const [openProposalsCount, setOpenProposalsCount] = useState<number>(0)
+  const [openProposalsValue, setOpenProposalsValue] = useState<number>(0)
   const [error, setError] = useState<string | null>(null)
+  const [hasApiKey, setHasApiKey] = useState<boolean>(true)
+
+  const overdueCount = useMemo(() => {
+    return tasksDueToday.filter((t) => t.due_date && dueLabel(t.due_date).overdue).length
+  }, [tasksDueToday])
 
   useEffect(() => {
     async function load() {
       try {
-        const [statsRes, tasksRes, alertsRes, pipelineRes] = await Promise.all([
-          window.electronAPI.dashboard.getStats(),
+        const [tasksRes, alertsRes, pipelineRes, projectsRes, proposalsRes] = await Promise.all([
           window.electronAPI.dashboard.getTasksDueToday(),
           window.electronAPI.dashboard.getFollowUpAlerts(),
           window.electronAPI.dashboard.getPipelineSnapshot(),
+          window.electronAPI.projects.getAll(),
+          window.electronAPI.proposals.getAll(),
         ])
 
-        if (statsRes.success && statsRes.data) setStats(statsRes.data as DashboardStats)
-        if (tasksRes.success && tasksRes.data) setTasksDue(tasksRes.data as Record<string, unknown>[])
-        if (alertsRes.success && alertsRes.data) setFollowUps(alertsRes.data as Record<string, unknown>[])
-        if (pipelineRes.success && pipelineRes.data) setPipeline(pipelineRes.data as PipelineStage[])
+        if (tasksRes.success && tasksRes.data) setTasksDueToday(tasksRes.data as TaskItem[])
+        if (alertsRes.success && alertsRes.data) setFollowUps(alertsRes.data as FollowUpContact[])
+        if (pipelineRes.success && pipelineRes.data) setPipelineStages(pipelineRes.data as PipelineStage[])
+
+        if (projectsRes.success && projectsRes.data) {
+          const projects = projectsRes.data as Record<string, unknown>[]
+          const active = projects.filter((p) => p.status === 'Active')
+          setActiveContractsValue(
+            active.reduce((sum, p) => {
+              const v = Number(p.contract_value)
+              return sum + (isNaN(v) ? 0 : v)
+            }, 0),
+          )
+          setActiveContractsCount(active.length)
+        }
+
+        if (proposalsRes.success && proposalsRes.data) {
+          const proposals = proposalsRes.data as Record<string, unknown>[]
+          const open = proposals.filter((p) => p.status !== 'Accepted' && p.status !== 'Rejected')
+          setOpenProposalsCount(open.length)
+          setOpenProposalsValue(
+            open.reduce((sum, p) => {
+              const v = Number(p.value || p.proposal_value || 0)
+              return sum + (isNaN(v) ? 0 : v)
+            }, 0),
+          )
+        }
+
+        // Check if API key is configured
+        try {
+          const settingsRes = await window.electronAPI.settings.get('airtable_api_key')
+          setHasApiKey(Boolean(settingsRes?.data))
+        } catch {
+          setHasApiKey(false)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
       }
@@ -46,122 +199,318 @@ export default function DashboardPage() {
     load()
   }, [])
 
-  const formatCurrency = (v: number) => `$${v.toLocaleString(undefined, { minimumFractionDigits: 0 })}`
-
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: 'var(--color-red)',
+          fontSize: 14,
+        }}
+      >
+        {error}
+      </div>
+    )
   }
 
+  const visibleTasks = tasksDueToday.slice(0, MAX_WIDGET_ROWS)
+  const visibleFollowUps = followUps.slice(0, MAX_WIDGET_ROWS)
+
   return (
-    <div className="space-y-6">
-      {/* Stat Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        <StatCard label="Contacts" value={stats?.contactCount ?? 0} />
-        <StatCard label="Companies" value={stats?.companyCount ?? 0} />
-        <StatCard label="Active Pipeline" value={stats?.activeOpportunities ?? 0} subtitle={stats ? formatCurrency(stats.totalPipelineValue) : undefined} />
-        <StatCard label="Active Tasks" value={stats?.activeTasks ?? 0} />
+    <div style={{ padding: 24, overflowY: 'auto', height: '100%', width: '100%' }}>
+      {/* Greeting */}
+      <div style={{ marginBottom: 20 }}>
+        <div
+          style={{
+            fontSize: 17,
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            marginBottom: 2,
+          }}
+        >
+          {getGreeting()}, Edward
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-secondary)' }}>{formatDate()}</div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        {/* Pipeline Snapshot */}
-        <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-          <h3 className="text-base font-semibold text-[var(--text-primary)] mb-3">Pipeline by Stage</h3>
-          {pipeline.length > 0 ? (() => {
-            const maxCount = Math.max(...pipeline.map(s => s.count))
-            return (
-              <div className="space-y-3">
-                {pipeline.map(stage => (
-                  <div key={stage.sales_stage}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <StatusBadge value={stage.sales_stage} />
-                        <span className="text-base text-[var(--text-tertiary)]">{stage.count} {stage.count === 1 ? 'deal' : 'deals'}</span>
-                      </div>
-                      <span className="text-base text-[var(--text-primary)] font-medium">
-                        {formatCurrency(stage.total_value)}
-                      </span>
-                    </div>
-                    <div className="h-2 bg-[var(--bg-window)] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[var(--color-accent)] rounded-full transition-all duration-500"
-                        style={{ width: `${maxCount > 0 ? (stage.count / maxCount) * 100 : 0}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          })() : (
-            <p className="text-base text-[var(--text-tertiary)]">No active pipeline data</p>
-          )}
-          {stats && stats.wonValue > 0 && (
-            <div className="mt-3 pt-3 border-t border-[var(--separator-opaque)] flex justify-between">
-              <span className="text-base text-[var(--text-tertiary)]">Total Won</span>
-              <span className="text-base text-[var(--color-green)] font-medium">{formatCurrency(stats.wonValue)}</span>
-            </div>
-          )}
-        </div>
+      {/* 4 Stat Cards — single grouped container */}
+      <div
+        style={{
+          background: 'var(--bg-grouped)',
+          borderRadius: 12,
+          overflow: 'hidden',
+          display: 'flex',
+          marginBottom: 16,
+          boxShadow: 'var(--shadow-sm)',
+        }}
+      >
+        <StatCard
+          icon={'\u{23F0}'}
+          value={tasksDueToday.length}
+          label="Tasks Due Today"
+          subtitle={overdueCount > 0 ? `${overdueCount} overdue` : undefined}
+          variant={tasksDueToday.length > 0 ? 'red' : 'default'}
+        />
+        <StatCard
+          icon={'\u{1F4DE}'}
+          value={followUps.length}
+          label="Follow-ups Due"
+          subtitle=">14 days silent"
+          variant={followUps.length > 0 ? 'red' : 'default'}
+        />
+        <StatCard
+          icon={'\u{1F4C4}'}
+          value={formatCurrency(activeContractsValue)}
+          label="Active Contracts"
+          subtitle={activeContractsCount > 0 ? `${activeContractsCount} contracts` : undefined}
+          variant="green"
+        />
+        <StatCard
+          icon={'\u{1F4CB}'}
+          value={openProposalsCount}
+          label="Open Proposals"
+          subtitle={openProposalsValue > 0 ? `${formatCurrency(openProposalsValue)} pending` : undefined}
+          variant="indigo"
+          isLast
+        />
+      </div>
 
+      {/* Two widgets side by side */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         {/* Tasks Due Today */}
-        <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-          <h3 className="text-base font-semibold text-[var(--text-primary)] mb-3">Tasks Due Today</h3>
-          {tasksDue.length > 0 ? (
-            <div className="space-y-2">
-              {tasksDue.map((t, i) => (
-                <div
-                  key={(t.id as string) || i}
-                  className="flex items-center justify-between cursor-default hover:bg-[var(--bg-hover)] -mx-1 px-1 rounded transition-colors"
-                  onClick={() => navigate(`/tasks/${t.id as string}/edit`)}
-                >
-                  <span className="text-base text-[var(--text-primary)]">{t.task as string}</span>
-                  <StatusBadge value={t.priority as string} />
-                </div>
-              ))}
-            </div>
+        <div style={{ background: 'var(--bg-grouped)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 14px',
+              borderBottom: '1px solid var(--separator)',
+            }}
+          >
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Tasks Due Today
+            </span>
+            <button
+              onClick={() => navigate('/tasks')}
+              style={{
+                fontSize: 12,
+                color: 'var(--color-accent)',
+                cursor: 'default',
+                background: 'none',
+                border: 'none',
+                fontFamily: 'inherit',
+              }}
+            >
+              View all
+            </button>
+          </div>
+          {visibleTasks.length === 0 ? (
+            <p
+              style={{
+                fontSize: 13,
+                color: 'var(--text-secondary)',
+                padding: '24px 0',
+                textAlign: 'center',
+              }}
+            >
+              No tasks due today
+            </p>
           ) : (
-            <p className="text-base text-[var(--text-tertiary)]">No tasks due today</p>
+            <div>
+              {visibleTasks.map((task, i) => {
+                const due = dueLabel(task.due_date)
+                return (
+                  <HoverRow key={task.id} isLast={i === visibleTasks.length - 1}>
+                    <div
+                      style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: '50%',
+                        border: '1.5px solid var(--text-secondary)',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {task.task || 'Untitled task'}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        flexShrink: 0,
+                        color: due.overdue ? 'var(--color-red)' : 'var(--text-secondary)',
+                      }}
+                    >
+                      {due.text}
+                    </span>
+                  </HoverRow>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Follow-up Alerts */}
+        <div style={{ background: 'var(--bg-grouped)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 14px',
+              borderBottom: '1px solid var(--separator)',
+            }}
+          >
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Follow-up Alerts
+            </span>
+            <button
+              onClick={() => navigate('/contacts')}
+              style={{
+                fontSize: 12,
+                color: 'var(--color-accent)',
+                cursor: 'default',
+                background: 'none',
+                border: 'none',
+                fontFamily: 'inherit',
+              }}
+            >
+              View all
+            </button>
+          </div>
+          {visibleFollowUps.length === 0 ? (
+            <p
+              style={{
+                fontSize: 13,
+                color: 'var(--text-secondary)',
+                padding: '24px 0',
+                textAlign: 'center',
+              }}
+            >
+              No follow-ups due
+            </p>
+          ) : (
+            <div>
+              {visibleFollowUps.map((contact, i) => {
+                const name = contact.contact_name || 'Unknown'
+                const days = contact.last_contact_date ? daysSince(contact.last_contact_date) : 0
+                const color = avatarColor(name)
+                const isDanger = days >= 21
+                return (
+                  <HoverRow key={contact.id} isLast={i === visibleFollowUps.length - 1}>
+                    <div
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: '50%',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        background: color.bg,
+                        color: color.fg,
+                      }}
+                    >
+                      {initials(name)}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {name}
+                    </span>
+                    {Boolean(contact.categorization) && (
+                      <span
+                        style={{
+                          fontSize: 11,
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                          background: 'var(--bg-hover)',
+                          color: 'var(--text-secondary)',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {contact.categorization}
+                      </span>
+                    )}
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        flexShrink: 0,
+                        color: isDanger ? 'var(--color-red)' : 'var(--color-orange)',
+                      }}
+                    >
+                      {days}d
+                    </span>
+                  </HoverRow>
+                )
+              })}
+            </div>
           )}
         </div>
       </div>
 
-      {/* Follow-Up Alerts */}
-      <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-        <h3 className="text-base font-semibold text-[var(--text-primary)] mb-3">
-          Follow-Up Alerts
-          <span className="ml-2 text-[var(--text-tertiary)] font-normal">30+ days since last contact</span>
-        </h3>
-        {followUps.length > 0 ? (
-          <div className="space-y-2">
-            {followUps.slice(0, 10).map((c, i) => (
-              <div
-                key={(c.id as string) || i}
-                className="flex items-center justify-between cursor-default hover:bg-[var(--bg-hover)] -mx-1 px-1 rounded transition-colors"
-                onClick={() => navigate(`/contacts/${c.id as string}`)}
-              >
-                <div>
-                  <span className="text-[var(--text-primary)]">{c.contact_name as string}</span>
-                  {Boolean(c.company) && <span className="text-[var(--text-tertiary)] ml-2">{c.company as string}</span>}
-                </div>
-                <span className="text-[var(--color-orange)]">
-                  Last: {c.last_contact_date as string}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-base text-[var(--text-tertiary)]">All contacts recently reached</p>
-        )}
-      </div>
-    </div>
-  )
-}
+      {/* Pipeline Snapshot */}
+      <PipelineWidget stages={pipelineStages} />
 
-function StatCard({ label, value, subtitle }: { label: string; value: number; subtitle?: string }) {
-  return (
-    <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-      <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider">{label}</p>
-      <p className="text-2xl font-semibold text-[var(--text-primary)] mt-1">{value}</p>
-      {subtitle && <p className="text-base text-[var(--text-secondary)] mt-0.5">{subtitle}</p>}
+      {/* Settings hint — only when API key is NOT configured */}
+      {!hasApiKey && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'var(--bg-secondary)',
+            borderRadius: 12,
+            padding: '10px 14px',
+            marginTop: 16,
+            fontSize: 12,
+            color: 'var(--text-secondary)',
+          }}
+        >
+          <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>Settings</span>
+          <span>: Add your Airtable API key to enable sync</span>
+        </div>
+      )}
     </div>
   )
 }

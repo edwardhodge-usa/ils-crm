@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM project — Airtable schema management, API integrations, and eventually a full Electron desktop CRM app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Airtable API (backend/data), Anthropic Claude API (AI features)
-- **Status**: Post-QA improvements in progress — bugs fixed, quick wins shipped, specialties added to list + detail views
+- **Status**: Full UI rebuild complete on `feature/rebuild-v2` — 17 tasks, Apple HIG-compliant design system, all views rebuilt. Awaiting user review then PR to main.
 - **Repo**: edwardhodge-usa/ils-crm
 - **Airtable Base**: ILS CRM (appYXbUdcmSwBoPFU)
 
@@ -87,10 +87,25 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-02-28** - Specialties in list pages: fetch specialties separately with useEffect, build `id→name` map, assign colors via deterministic hash (`hash % palette.length`) so same specialty always = same color
 **2026-02-28** - QA: Clicking Pipeline cards only drags, can't navigate to detail → Need to differentiate click vs drag gesture in @dnd-kit event handlers
 **2026-02-28** - GLOBAL RULE: Airtable is the single source of truth. Every app field MUST map to an Airtable field — no local-only data fields. When adding new fields: (1) check if it exists in Airtable, (2) create it if not, (3) add to field-maps.ts + converters.ts, (4) determine if it's a primary field or lookup from a linked record
+**2026-03-01** - Tailwind JIT limitation: CSS var() doesn't work reliably in arbitrary values (`shadow-[...]`, `z-[...]`, `rounded-[...]`) — use inline `style={}` for any CSS property that needs a design token. Never use Tailwind arbitrary values with CSS vars.
+**2026-03-01** - GLOBAL RULE: UI rebuild workflow — before writing ANY UI code: (1) read the approved mockup HTML, (2) read the database schema for field names, (3) verify framework config (tailwind.config, dark mode), (4) use inline styles not Tailwind arbitrary values for design tokens, (5) visually verify after each change
+**2026-03-01** - Apple HIG: `cursor-pointer` is a critical violation on macOS. Reset.css covers `button` but not `<label>` or custom interactive elements — add explicit `cursor-default` anywhere you'd normally write `cursor-pointer`
+**2026-03-01** - Always use `text-[var(--text-on-accent)]` for text on colored backgrounds (accent, red, green) — never raw `text-white`. In light mode `--text-primary` is dark grey and will fail contrast on colored buttons
+**2026-03-01** - With react-jsx transform, `React.ReactNode` as a type is a namespace error (`React` not in scope). Use `import type { ReactNode } from 'react'` and reference `ReactNode` directly
+**2026-03-01** - Page components inside flex parents (`<main class="flex-1 flex overflow-hidden">`) need explicit `width: '100%'` to fill available space — without it, content only sizes to intrinsic width
+**2026-03-01** - `--text-label` token is 42% opacity in dark mode — too faint for any readable content. Use `--text-secondary` (55%) as minimum for anything users need to read. Reserve `--text-label` only for purely decorative/optional hints
+**2026-03-01** - macOS scrollbars should be overlay-style (native). Don't force visible scrollbar thumbs with background color — use `background: transparent` on `::-webkit-scrollbar-thumb` and let macOS handle it
+**2026-03-01** - HIG sidebar active state: MUST use solid `--color-accent` bg + `--text-on-accent` (white) text. Never use translucent accent bg + accent-colored text for the selected item
+**2026-03-01** - ILS CRM readability standard: body text 14-15px (not strict HIG 13px), supporting text 12-13px, uppercase headers 11-12px. Edward finds strict HIG minimums too small on 1400×900 window
 **2026-02-28** - When promoting a table from read-only to full CRUD, always remove it from `READ_ONLY_TABLES` in sync-engine.ts — interactions was left in the set after CRUD was shipped, silently orphaning all locally-created interactions
 **2026-02-28** - Filtering linked records with `jsonString.includes(recordId)` causes false positives when one ID is a prefix of another → Always `JSON.parse()` the array first, then use `.includes()` on the array
 **2026-02-28** - `shell:openExternal` must validate URL scheme before calling — bad data from Airtable (e.g. `file://` in a LinkedIn URL field) would otherwise open local files → Allowlist `https://`, `http://`, `mailto:`, `tel:` only
 **2026-02-28** - SQLite `due_date = date('now')` fails silently when dates are stored as full ISO strings (`2026-02-28T00:00:00.000Z`) → Use `date(due_date) = date('now')` to strip the time component first
+**2026-03-02** - Tasks page mockup UX decisions: (1) Categories use colored dots for smart lists, colored swatches (small rectangles) for type filters, avatar circles for assignees — shape differentiates content type. (2) Detail pane uses inline click-to-edit (no Edit button) — hover highlights field values, click opens editor, auto-save on blur. (3) Type badges softened to rgba 0.10 alpha + font-weight 500 for system-integrated feel. (4) All 12 task types from Airtable schema shown (not just in-use ones), with dimmed "0" count for empty types
+**2026-03-02** - Mockup file: `/Users/EdwardHodge_1/Desktop/CLAUDE MOCKUPS/ils-crm-tasks-v2.html` — approved 4-column layout (App Sidebar 220px | Categories 210px | Task List 380px | Detail flex-1). Real Airtable data. HIG-audited (12 violations found and fixed). These patterns must be followed when implementing in Electron
+**2026-03-02** - Agent-based tech debt scans can report false positives (e.g. `checkbox()` "unused" when it's actually called via mapping type) → Always verify findings with Grep before deleting code
+**2026-03-02** - Airtable collaborator fields return `{id, email, name}` objects → Add `'collaborator'` converter type that extracts `.name`. Skip in `localToAirtable` (read-only like formula/rollup). 6 collaborator fields across 5 tables.
+**2026-03-03** - Badge text unreadable in dark mode (darker accessible text on dark tinted backgrounds) → Add `fgDark` property to all color maps with Apple bright dark-mode system colors. Use `useDarkMode()` hook + `isDark ? fgDark : fg`. Dark mode mapping: Blue→#409CFF, Green→#30D158, Orange→#FF9F0A, Red→#FF453A, Purple→#BF5AF2, Indigo→#5E5CE6, Teal→#40CBE0, Pink→#FF375F. Cross-component encoding: "bg|fg|fgDark" string format for specialty colors passed through props
 
 ## Key Commands
 
@@ -108,6 +123,104 @@ npm run package      # Package with electron-builder
 
 - Shared patterns: `@../_master/` (Electron, Tailwind, Vercel)
 - Global preferences: `~/CLAUDE.md`
+
+## Parallel Build Architecture
+
+### Strategy: Electron Primary, Swift Shadow
+
+Two apps sharing one Airtable base (`appYXbUdcmSwBoPFU`), same API key, same field IDs.
+
+| Layer | Electron (primary) | Swift (shadow) |
+|-------|-------------------|----------------|
+| UI framework | React 18 + React Router 6 | SwiftUI + NavigationSplitView |
+| Local cache | sql.js (SQLite in-memory) | SwiftData (backed by SQLite) |
+| Sync engine | `electron/airtable/sync-engine.ts` | `swift-app/.../Services/SyncEngine.swift` |
+| API client | `electron/airtable/client.ts` | `swift-app/.../Services/AirtableService.swift` (actor) |
+| Field maps | `electron/airtable/field-maps.ts` | `swift-app/.../Config/AirtableConfig.swift` |
+| Schema | `electron/database/schema.ts` (CREATE TABLE) | `@Model` classes in `swift-app/.../Models/` |
+| Converters | `electron/airtable/converters.ts` | TODO: Codable conformances on each Model |
+| IPC bridge | `preload.ts` contextBridge | N/A (no process boundary in native app) |
+| Shared schema | `/schema/*.json` (11 JSON Schema files with Airtable field IDs) | Same — both apps reference these |
+
+### Decision Protocol
+
+**STOP-AND-REPORT rule:** If any of these are encountered while working on the Swift build, **STOP immediately and report to the user** rather than silently working around it:
+
+1. **Missing Airtable field** — A field exists in Electron but has no Airtable field ID in `field-maps.ts` or `/schema/`
+2. **API limitation** — Airtable API doesn't support an operation the Swift app needs (e.g. formula field creation, view management)
+3. **Ambiguous sync behavior** — Unclear which app "wins" when both are running simultaneously against the same base
+4. **New Electron feature** — A feature was added to Electron that has no corresponding `/schema/` update or PARITY.md entry
+5. **Security concern** — Any pattern that would expose the API key, store credentials insecurely, or bypass URL scheme validation
+6. **Data model mismatch** — Swift model doesn't match the JSON Schema or Electron SQLite schema for the same table
+7. **Read-only table violation** — Attempting to push to Specialties or Portal Logs
+
+**Never invent workarounds.** The user is not a developer — silent workarounds create invisible bugs.
+
+### Translation Rules: Electron → Swift
+
+| Electron Pattern | Swift Equivalent | Notes |
+|-----------------|-----------------|-------|
+| `useState` / `useEffect` | `@State` / `.onAppear` / `.task` | |
+| `useEntityList(entity)` hook | `@Query` macro with sort/filter | SwiftData handles reactivity |
+| `useEntityForm(entity)` hook | `@Bindable` on `@Model` object | Two-way binding is native |
+| `window.electronAPI.entity.create()` | `context.insert(model)` | No IPC — direct SwiftData |
+| `window.electronAPI.entity.update()` | Mutate `@Model` properties directly | SwiftData auto-saves |
+| `window.electronAPI.entity.delete()` | `context.delete(model)` | |
+| React Router `MemoryRouter` | `NavigationSplitView` + `NavigationStack` | |
+| `<Sheet>` slide-in panel | `.sheet()` or `.inspector()` modifier | |
+| `CommandPalette` (Cmd+K) | `.searchable()` + `.searchScopes()` | |
+| `@dnd-kit` Kanban | `.draggable()` / `.dropDestination()` | Native DnD on macOS 13+ |
+| `contextBridge` / `preload.ts` | N/A | No process boundary |
+| `ipcMain.handle()` / `ipcRenderer.invoke()` | Direct function calls | No serialization needed |
+| Tailwind CSS utility classes | SwiftUI modifiers + system styles | Follow Apple HIG natively |
+| `tokens.css` design tokens | `Color(.systemBlue)` etc. | Use system semantic colors |
+| `isDev` console gating | `#if DEBUG` | Compile-time, not runtime |
+| `fuse.js` full-text search | `#Predicate` with `.localizedStandardContains()` | |
+| JSON-encoded arrays in SQLite | Native `[String]` arrays in SwiftData | SwiftData handles Codable |
+| `_pending_push INTEGER` flag | `isPendingPush: Bool` property | Same semantics |
+| `safeParseArray()` for linked IDs | Native array — no JSON parsing needed | SwiftData stores natively |
+
+### Sync Rules
+
+1. **Same Airtable base** — Both apps use `appYXbUdcmSwBoPFU` with the same PAT
+2. **Same sync architecture** — Push pending first, then pull. Airtable wins on conflict.
+3. **Same rate limit strategy** — 200ms stagger between table syncs (5 req/sec limit)
+4. **Same read-only tables** — Specialties and Portal Logs never push
+5. **Same field IDs** — All Airtable field IDs in `/schema/*.json` are the single source of truth
+6. **No simultaneous sync** — Do NOT run both apps' sync engines at the same time against the same base. One app syncs at a time.
+7. **API key storage** — Electron uses SQLite settings table. Swift MUST use Keychain (security improvement).
+8. **Cross-app sync lock** — Both apps write `/tmp/ils-crm-sync.lock` when syncing and delete it when done. Before starting sync, check if the lock file exists and is not stale (>120s old). This prevents Electron and Swift from syncing simultaneously against the same Airtable base.
+
+### Known Issues That Swift Must Also Respect
+
+From Lessons Learned (apply to both builds):
+
+1. **Emoji-prefixed select options** — Airtable select values have emoji prefixes (`🔴 High` not `High`). Always fetch from metadata API before creating/updating.
+2. **Linked record JSON arrays** — In Electron, stored as JSON strings. In Swift, native `[String]` arrays. But when converting Airtable API responses, use safe parsing (don't crash on malformed data).
+3. **`isSyncing` mutex** — Actor isolation in Swift handles this, but the SyncEngine must still guard `fullSync()` against re-entry.
+4. **Formula fields are read-only** — Never include `probabilityValue`, `framerPageUrl`, or `overdue` in create/update payloads.
+5. **Linked record filtering** — Never use string `.contains()` to match record IDs. Always compare against the parsed array. (In Swift, native array `.contains()` is already correct.)
+6. **URL scheme validation** — Only open `https://`, `http://`, `mailto:`, `tel:` URLs. Airtable data may contain `file://` URLs.
+7. **Interaction table is CRUD** — Was accidentally left as read-only in Electron. Ensure it's NOT in `readOnlyTables`.
+8. **Airtable batch limits** — Max 10 records per create/update/delete request.
+9. **ISO date comparisons** — Dates from Airtable are full ISO strings. SwiftData uses native `Date` type, so this is handled automatically (unlike the SQLite `date()` workaround in Electron).
+10. **Engagement type is multi-select** — Both Opportunities and Projects use `multipleSelects` for engagement type, NOT `singleSelect`.
+
+### Advancing the Swift Build
+
+When a new Electron feature ships, follow this protocol:
+
+1. **Update `/schema/`** — If new Airtable fields were added, update the corresponding JSON Schema file with field ID, type, and relationships
+2. **Update Swift Model** — Add the new property to the corresponding `@Model` class in `swift-app/.../Models/`
+3. **Update `PARITY.md`** — Set the Electron status to the new state and note what Swift needs
+4. **Update `AirtableConfig.swift`** — If new tables, read-only changes, or field ID additions
+5. **Implement the View** — Replace the stub/TODO with the actual SwiftUI implementation
+6. **Run the checklist:**
+   - [ ] Does the Swift model match the JSON Schema exactly?
+   - [ ] Are read-only fields (formula, lookup, rollup) excluded from push?
+   - [ ] Are select options fetched from metadata API (not hardcoded)?
+   - [ ] Is `isPendingPush` set correctly on save?
+   - [ ] Does the view follow Apple HIG (not Electron/web patterns)?
 
 ## Update Protocol
 

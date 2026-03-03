@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Opportunities",
+  "description": "Sales pipeline and deals. Tracks deal value, stage, probability, and engagement type. Core of the Pipeline/Kanban view.",
+  "airtable": {
+    "baseId": "appYXbUdcmSwBoPFU",
+    "tableId": "tblsalt5lmHlh4s7z",
+    "fieldCount": 23,
+    "syncMode": "full-crud",
+    "primaryField": "opportunityName"
+  },
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Airtable record ID"
+    },
+    "opportunityName": {
+      "type": "string",
+      "airtableFieldId": "fldsvZbiY3YFK2Ocp",
+      "airtableType": "singleLineText",
+      "primary": true
+    },
+    "referredBy": {
+      "type": "string",
+      "airtableFieldId": "fldZ3V2AL5IFj6W1G",
+      "airtableType": "singleLineText"
+    },
+    "notesAbout": {
+      "type": "string",
+      "airtableFieldId": "fldLZDfABWEJ9fCyZ",
+      "airtableType": "multilineText"
+    },
+    "contractMilestones": {
+      "type": "string",
+      "airtableFieldId": "fldLjPejA0TcYj8R8",
+      "airtableType": "multilineText"
+    },
+    "lossNotes": {
+      "type": "string",
+      "airtableFieldId": "fldVOzXUQ5lMYzcVp",
+      "airtableType": "multilineText"
+    },
+    "dealValue": {
+      "type": ["number", "null"],
+      "airtableFieldId": "fld1y3pUaljvn2nF5",
+      "airtableType": "currency"
+    },
+    "expectedCloseDate": {
+      "type": "string",
+      "format": "date",
+      "airtableFieldId": "fldpSYPc9Mf1hRhdU",
+      "airtableType": "date"
+    },
+    "nextMeetingDate": {
+      "type": "string",
+      "format": "date-time",
+      "airtableFieldId": "fld7ZbwNVRSKCOly8",
+      "airtableType": "dateTime"
+    },
+    "salesStage": {
+      "type": "string",
+      "airtableFieldId": "fldMV4ZUWb0h1pyPN",
+      "airtableType": "singleSelect",
+      "description": "Pipeline stage — drives Kanban column placement"
+    },
+    "probability": {
+      "type": "string",
+      "airtableFieldId": "fld4oRQmcZ3VaQeUP",
+      "airtableType": "singleSelect",
+      "description": "Options use numbered prefixes: '01 High', '02 Medium', etc. Use FIND() for matching."
+    },
+    "qualsType": {
+      "type": "string",
+      "airtableFieldId": "fldhJn8M3xeQYdPHG",
+      "airtableType": "singleSelect"
+    },
+    "leadSource": {
+      "type": "string",
+      "airtableFieldId": "fldDr4GsoxjnNmpo1",
+      "airtableType": "singleSelect"
+    },
+    "winLossReason": {
+      "type": "string",
+      "airtableFieldId": "fldEkMImrxZQMnuCJ",
+      "airtableType": "singleSelect"
+    },
+    "engagementType": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldYvZ8T1Iy7r91z5",
+      "airtableType": "multipleSelects",
+      "description": "Multi-select stored as JSON array in SQLite. NOTE: Airtable type is multipleSelects, NOT singleSelect."
+    },
+    "qualificationsSent": {
+      "type": "boolean",
+      "airtableFieldId": "flda4mTsRoIiFqVZL",
+      "airtableType": "checkbox"
+    },
+    "companyIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldYyFlO4LavZM5gI",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Companies",
+      "linkedTableId": "tblEauAm0ZYuMbHUa"
+    },
+    "associatedContactIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldit4f09UfFrzSUB",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Contacts",
+      "linkedTableId": "tbl9Q8m06ivkTYyvR"
+    },
+    "tasksIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldBGsrhhPk7egFL1",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Tasks",
+      "linkedTableId": "tblwEt5YsYDP22qrr"
+    },
+    "interactionsIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldyL4Obl1EfVvpVU",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Interactions",
+      "linkedTableId": "tblTUNClZpfFjhFVm"
+    },
+    "projectIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldrOFbZgxZ6izAla",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Projects",
+      "linkedTableId": "tbll416ZwFACYQSm4"
+    },
+    "proposalsIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldQNa9p8jAEnrZB2",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Proposals",
+      "linkedTableId": "tblODEy2pLlfrz0lz"
+    },
+    "probabilityValue": {
+      "type": ["number", "null"],
+      "airtableFieldId": "flda4MrS0FecCa4TO",
+      "airtableType": "formula",
+      "readOnly": true,
+      "description": "Formula field — uses FIND() to match '01 High', '02 Medium' prefixed values. Read-only."
+    },
+    "attachments": {
+      "type": "array",
+      "items": { "type": "object" },
+      "airtableFieldId": "fldVld8A8bfeyPnJG",
+      "airtableType": "multipleAttachments"
+    },
+    "_airtableModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_localModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_pendingPush": {
+      "type": "boolean"
+    }
+  }
+}

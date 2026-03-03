@@ -49,7 +49,7 @@ export default function TopBar() {
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
           </svg>
           Search
-          <kbd className="ml-1 text-[10px] text-[var(--text-tertiary)] font-mono">⌘K</kbd>
+          <kbd className="ml-1 text-[12px] text-[var(--text-tertiary)] font-mono">⌘K</kbd>
         </button>
       </div>
     </div>

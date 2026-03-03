@@ -33,14 +33,14 @@ export default function ConfirmDialog({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" onClick={onCancel}>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" onClick={onCancel}>
       <div className="absolute inset-0 bg-black/35" />
       <div
-        className="relative bg-[var(--bg-secondary)] rounded-xl border border-[var(--separator-opaque)] shadow-2xl w-[360px] p-5"
+        className="relative bg-[var(--bg-secondary)] rounded-[12px] border border-[var(--separator-opaque)] shadow-[var(--shadow-lg)] w-[360px] p-5"
         onClick={e => e.stopPropagation()}
       >
-        <h3 className="text-[15px] font-semibold text-[var(--text-primary)] mb-2">{title}</h3>
-        <p className="text-base text-[var(--text-secondary)] mb-5">{message}</p>
+        <h3 id="confirm-dialog-title" className="text-[15px] font-semibold text-[var(--text-primary)] mb-2">{title}</h3>
+        <p className="text-[13px] text-[var(--text-secondary)] mb-5">{message}</p>
         <div className="flex justify-end gap-2">
           <button
             onClick={onCancel}
@@ -50,7 +50,7 @@ export default function ConfirmDialog({
           </button>
           <button
             onClick={onConfirm}
-            className={`px-3 py-1.5 text-[var(--text-primary)] rounded-md transition-colors ${
+            className={`px-3 py-1.5 text-[var(--text-on-accent)] rounded-md transition-colors ${
               destructive
                 ? 'bg-[var(--color-red)] hover:bg-[var(--color-red)]'
                 : 'bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]'

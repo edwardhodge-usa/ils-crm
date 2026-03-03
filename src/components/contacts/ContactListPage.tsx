@@ -1,32 +1,40 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DataTable from '../shared/DataTable'
-import StatusBadge from '../shared/StatusBadge'
 import LoadingSpinner from '../shared/LoadingSpinner'
-import PrimaryButton from '../shared/PrimaryButton'
 import useEntityList from '../../hooks/useEntityList'
+import { ContactRow } from './ContactRow'
+import Contact360Page from './Contact360Page'
+import type { ContactListItem } from '@/types'
 
-const SPECIALTY_COLORS = [
-  'bg-[var(--color-accent)]/20 text-[var(--color-accent)]',
-  'bg-[var(--color-green)]/20 text-[var(--color-green)]',
-  'bg-[var(--color-purple)]/20 text-[var(--color-purple)]',
-  'bg-[var(--color-orange)]/20 text-[var(--color-orange)]',
-  'bg-[var(--color-teal)]/20 text-[var(--color-teal)]',
-  'bg-[var(--color-red)]/20 text-[var(--color-red)]',
-  'bg-[var(--color-pink)]/20 text-[var(--color-pink)]',
-  'bg-[var(--color-yellow)]/20 text-[var(--color-yellow)]',
+const SPECIALTY_COLORS_RAW = [
+  { bg: 'rgba(88,86,214,0.22)', fg: '#3634A3', fgDark: '#5E5CE6' },     // systemIndigo
+  { bg: 'rgba(52,199,89,0.22)', fg: '#248A3D', fgDark: '#30D158' },      // systemGreen
+  { bg: 'rgba(175,82,222,0.22)', fg: '#8944AB', fgDark: '#BF5AF2' },     // systemPurple
+  { bg: 'rgba(255,149,0,0.22)', fg: '#C93400', fgDark: '#FF9F0A' },      // systemOrange
+  { bg: 'rgba(48,176,199,0.22)', fg: '#0E7A8D', fgDark: '#40CBE0' },     // systemTeal
+  { bg: 'rgba(255,59,48,0.22)', fg: '#D70015', fgDark: '#FF453A' },      // systemRed
+  { bg: 'rgba(255,45,85,0.22)', fg: '#D30047', fgDark: '#FF375F' },      // systemPink
+  { bg: 'rgba(0,122,255,0.22)', fg: '#0055B3', fgDark: '#409CFF' },      // systemBlue
 ]
 
-function specialtyColor(name: string): string {
+function specialtyColor(name: string): { bg: string; fg: string; fgDark: string } {
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xfffff
-  return SPECIALTY_COLORS[hash % SPECIALTY_COLORS.length]
+  return SPECIALTY_COLORS_RAW[hash % SPECIALTY_COLORS_RAW.length]
+}
+
+function parseQualityRating(raw: string | null | undefined): number {
+  if (!raw) return 0
+  const n = parseInt(raw as string, 10)
+  return isNaN(n) ? 0 : Math.min(5, Math.max(0, n))
 }
 
 export default function ContactListPage() {
   const { data: contacts, loading, error } = useEntityList(() => window.electronAPI.contacts.getAll())
   const navigate = useNavigate()
   const [specialtyMap, setSpecialtyMap] = useState<Record<string, string>>({})
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     window.electronAPI.specialties.getAll().then(res => {
@@ -37,94 +45,139 @@ export default function ContactListPage() {
         }
         setSpecialtyMap(map)
       }
-    }).catch(() => { /* specialtyMap stays empty — specialty cells show "—" */ })
+    }).catch(() => {})
   }, [])
 
-  const columns = [
-    { key: 'contact_name', label: 'Name', width: '17%' },
-    { key: 'company', label: 'Company', width: '14%' },
-    {
-      key: 'categorization',
-      label: 'Category',
-      width: '10%',
-      render: (v: unknown) => <StatusBadge value={v as string} />,
-    },
-    { key: 'email', label: 'Email', width: '18%' },
-    { key: 'phone', label: 'Phone', width: '12%' },
-    {
-      key: 'specialties_ids',
-      label: 'Specialties',
-      width: '16%',
-      sortable: false,
-      render: (v: unknown) => {
-        if (!v) return <span className="text-[var(--text-placeholder)]">—</span>
-        try {
-          const ids = JSON.parse(v as string) as string[]
-          const names = ids.map(id => specialtyMap[id]).filter(Boolean)
-          if (names.length === 0) return <span className="text-[var(--text-placeholder)]">—</span>
-          return (
-            <div className="flex flex-wrap gap-1">
-              {names.slice(0, 2).map(name => (
-                <span key={name} className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${specialtyColor(name)}`}>
-                  {name}
-                </span>
-              ))}
-              {names.length > 2 && (
-                <span className="text-[10px] text-[var(--text-tertiary)]">+{names.length - 2}</span>
-              )}
-            </div>
-          )
-        } catch {
-          return <span className="text-[var(--text-placeholder)]">—</span>
-        }
-      },
-    },
-    {
-      key: 'tags',
-      label: 'Tags',
-      width: '13%',
-      sortable: false,
-      render: (v: unknown) => {
-        if (!v) return <span className="text-[var(--text-placeholder)]">—</span>
-        try {
-          const tags = JSON.parse(v as string) as string[]
-          return (
-            <div className="flex flex-wrap gap-1">
-              {tags.slice(0, 2).map(t => (
-                <span key={t} className="px-1.5 py-0.5 bg-[var(--separator-opaque)] rounded text-[10px] text-[var(--text-secondary)]">
-                  {t}
-                </span>
-              ))}
-              {tags.length > 2 && (
-                <span className="text-[10px] text-[var(--text-tertiary)]">+{tags.length - 2}</span>
-              )}
-            </div>
-          )
-        } catch {
-          return <span className="text-[var(--text-placeholder)]">—</span>
-        }
-      },
-    },
-  ]
+  function toListItem(row: Record<string, unknown>): ContactListItem {
+    const specialtyIds: string[] = (() => {
+      try {
+        const raw = row.specialties_ids as string | null
+        return raw ? (JSON.parse(raw) as string[]) : []
+      } catch {
+        return []
+      }
+    })()
+
+    const specialtyNames = specialtyIds.map(id => specialtyMap[id]).filter(Boolean)
+    const specialtyColors = specialtyNames.map(name => {
+      const c = specialtyColor(name)
+      return `${c.bg}|${c.fg}|${c.fgDark}`
+    })
+
+    const daysSinceContact: number | null = (() => {
+      const raw = row.days_since_contact ?? row.days_since_last_contact
+      if (raw === null || raw === undefined || raw === '') return null
+      const n = Number(raw)
+      return isNaN(n) ? null : n
+    })()
+
+    return {
+      id: row.id as string,
+      firstName: (row.first_name as string | null) ?? '',
+      lastName: (row.last_name as string | null) ?? '',
+      jobTitle: (row.job_title as string | null) ?? null,
+      companyName: (row.company as string | null) ?? null,
+      qualityRating: parseQualityRating(row.quality_rating as string | null),
+      specialtyNames,
+      specialtyColors,
+      daysSinceContact,
+    }
+  }
+
+  const filteredContacts: ContactListItem[] = (contacts as Record<string, unknown>[])
+    .map(toListItem)
+    .filter(c => {
+      if (!search.trim()) return true
+      const q = search.toLowerCase()
+      return (
+        `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
+        (c.companyName ?? '').toLowerCase().includes(q) ||
+        (c.jobTitle ?? '').toLowerCase().includes(q)
+      )
+    })
 
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
+    return <div className="flex items-center justify-center h-full w-full text-[var(--color-red)]">{error}</div>
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={contacts}
-      onRowClick={(row) => navigate(`/contacts/${row.id}`)}
-      searchKeys={['contact_name', 'company', 'email', 'categorization']}
-      emptyMessage="No contacts yet. Sync from Airtable in Settings."
-      actions={
-        <PrimaryButton onClick={() => navigate('/contacts/new')}>
-          + New Contact
-        </PrimaryButton>
-      }
-    />
+    <div className="flex h-full w-full overflow-hidden">
+
+      {/* List pane — 300px */}
+      <div className="w-[300px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
+
+        {/* Header: title + add button */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '12px 14px 10px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
+              Contacts
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {filteredContacts.length}
+            </span>
+          </div>
+          <button
+            onClick={() => navigate('/contacts/new')}
+            style={{
+              fontSize: 18, fontWeight: 400, lineHeight: 1,
+              width: 26, height: 26, borderRadius: 6,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'none', border: 'none', cursor: 'default',
+              color: 'var(--color-accent)', fontFamily: 'inherit',
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          >
+            +
+          </button>
+        </div>
+
+        {/* Search */}
+        <div style={{ padding: '8px 10px 6px', flexShrink: 0 }}>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search contacts…"
+            style={{
+              width: '100%', fontSize: 12, padding: '6px 12px',
+              borderRadius: 9999, border: 'none',
+              background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+              outline: 'none', fontFamily: 'inherit',
+            }}
+          />
+        </div>
+
+        {/* Contact list */}
+        <div className="flex-1 overflow-y-auto">
+          {filteredContacts.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-[13px] text-[var(--text-secondary)] px-4 text-center">
+              {search ? 'No contacts match your search.' : 'No contacts yet. Sync from Airtable in Settings.'}
+            </div>
+          ) : (
+            filteredContacts.map(contact => (
+              <ContactRow
+                key={contact.id}
+                contact={contact}
+                isSelected={selectedId === contact.id}
+                onClick={() => setSelectedId(contact.id)}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Detail panel — flex-1 (embedded Contact360) */}
+      <Contact360Page
+        contactId={selectedId}
+        onDeleted={() => setSelectedId(null)}
+      />
+    </div>
   )
 }

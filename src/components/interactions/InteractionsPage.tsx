@@ -24,10 +24,11 @@ export default function InteractionsPage() {
       render: (v: unknown) => <StatusBadge value={v as string} />,
     },
     { key: 'date', label: 'Date', width: '12%' },
+    { key: 'logged_by', label: 'Logged By', width: '12%' },
     {
       key: 'summary',
       label: 'Summary',
-      width: '30%',
+      width: '18%',
       sortable: false,
       render: (v: unknown) => {
         if (!v) return <span className="text-[var(--text-placeholder)]">—</span>

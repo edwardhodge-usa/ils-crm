@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Projects",
+  "description": "Active project tracking. Linked to Opportunities, Contacts, and Tasks.",
+  "airtable": {
+    "baseId": "appYXbUdcmSwBoPFU",
+    "tableId": "tbll416ZwFACYQSm4",
+    "fieldCount": 18,
+    "syncMode": "full-crud",
+    "primaryField": "projectName"
+  },
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Airtable record ID"
+    },
+    "projectName": {
+      "type": "string",
+      "airtableFieldId": "fldkrhZTZ6pFweiBx",
+      "airtableType": "singleLineText",
+      "primary": true
+    },
+    "location": {
+      "type": "string",
+      "airtableFieldId": "fldFwzNbpWAL9tV8R",
+      "airtableType": "singleLineText"
+    },
+    "description": {
+      "type": "string",
+      "airtableFieldId": "fldr8mgLCY9ISv4Bd",
+      "airtableType": "multilineText"
+    },
+    "keyMilestones": {
+      "type": "string",
+      "airtableFieldId": "fld19Ezi7Md5PPWxQ",
+      "airtableType": "multilineText"
+    },
+    "lessonsLearned": {
+      "type": "string",
+      "airtableFieldId": "fldKxqY5ZYIrCIOgU",
+      "airtableType": "multilineText"
+    },
+    "contractValue": {
+      "type": ["number", "null"],
+      "airtableFieldId": "fld4J4KCazP7C1IMC",
+      "airtableType": "currency"
+    },
+    "startDate": {
+      "type": "string",
+      "format": "date",
+      "airtableFieldId": "fldTOw6VgwsvJXW7O",
+      "airtableType": "date"
+    },
+    "targetCompletion": {
+      "type": "string",
+      "format": "date",
+      "airtableFieldId": "fldID5gpDgtmQDVUd",
+      "airtableType": "date"
+    },
+    "actualCompletion": {
+      "type": "string",
+      "format": "date",
+      "airtableFieldId": "fldKc3rU95N8sCDdg",
+      "airtableType": "date"
+    },
+    "status": {
+      "type": "string",
+      "airtableFieldId": "fld4Pv2FM3skC3chQ",
+      "airtableType": "singleSelect"
+    },
+    "engagementType": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fld5nII1Fq8N1LVEO",
+      "airtableType": "multipleSelects",
+      "description": "Multi-select stored as JSON array in SQLite"
+    },
+    "salesOpportunitiesIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldUKkazQiEmhIH4E",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Opportunities",
+      "linkedTableId": "tblsalt5lmHlh4s7z"
+    },
+    "clientIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldMMHrrBsAHvyQ0e",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Companies",
+      "linkedTableId": "tblEauAm0ZYuMbHUa"
+    },
+    "tasksIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldizOqFE6ParTzho",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Tasks",
+      "linkedTableId": "tblwEt5YsYDP22qrr"
+    },
+    "primaryContactIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fld5uAeJxjSB3WCqs",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Contacts",
+      "linkedTableId": "tbl9Q8m06ivkTYyvR"
+    },
+    "contactsIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "airtableFieldId": "fldTphE0ecQivlxxD",
+      "airtableType": "multipleRecordLinks",
+      "linkedTable": "Contacts",
+      "linkedTableId": "tbl9Q8m06ivkTYyvR"
+    },
+    "projectLead": {
+      "type": "string",
+      "airtableFieldId": "fldDKZQgxaaAej7mU",
+      "airtableType": "collaborator"
+    },
+    "projectFiles": {
+      "type": "array",
+      "items": { "type": "object" },
+      "airtableFieldId": "fld2qAFRKhP3v5js2",
+      "airtableType": "multipleAttachments"
+    },
+    "_airtableModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_localModifiedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "_pendingPush": {
+      "type": "boolean"
+    }
+  }
+}

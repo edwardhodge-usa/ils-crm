@@ -1,0 +1,606 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		024D905AD69C70469BB2802B /* Opportunity.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5AC5FD0C4B654A1AC21455 /* Opportunity.swift */; };
+		0945ADA4071C21E97B28C933 /* Specialty.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85AC6A57D105A7C7B62A7BD /* Specialty.swift */; };
+		141E801CD0E7D895A261D4AD /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F940D1601214B19B51F716 /* TasksView.swift */; };
+		1ACFC5383147C9326C6B6113 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */; };
+		1E022A0BD2BA8760C00B2ED4 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE314248FE2D8796FC6CF433 /* Project.swift */; };
+		2F2B540BE6651C6070BB48A6 /* Project+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C07D862A21FBBB8121DAE0 /* Project+Airtable.swift */; };
+		32A37AC7A71BCA3C59781505 /* PortalLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */; };
+		38AC88CA3F769FD350136A46 /* Proposal+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */; };
+		3B9FF2F195EB914F5F66299A /* Company+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */; };
+		3BA9C65768304F0629CA653C /* PortalLog+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */; };
+		3E13C992D90082BF5FF7E24B /* Interaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68503FBF62BB4C58531F734C /* Interaction.swift */; };
+		43DC7BE3CE7479FF375655DA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D766042D9087DFD6757ACB42 /* SettingsView.swift */; };
+		449038EC80DE762E7082426D /* AirtableService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0626CFBCA68B78CCAE3A5BD7 /* AirtableService.swift */; };
+		46290C16304DB96B19157EB4 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59EBB89A28F4676116D8A6D /* ProjectsView.swift */; };
+		4871C164B27F914BCC72CC9C /* PortalAccessRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48DD1C12C88BD4E268591904 /* PortalAccessRecord.swift */; };
+		4BDEC3D95BEB29FA215B7514 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0AD484B882AECF1ABE3213F /* DashboardView.swift */; };
+		4E29CF83F9440DEF732177F2 /* ImportedContact+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91E7DA8774A3960554DDDB99 /* ImportedContact+Airtable.swift */; };
+		51BEE4C3427A703E9EA4DE7E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DD07A3581FA6F5DB4CCD50E /* ContentView.swift */; };
+		5498D0C4CB1B1F07FFD985B3 /* PortalLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96E233D4EA498B4D591789D1 /* PortalLog.swift */; };
+		577D8DAFD2F517D9CB1FBE10 /* ProposalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20E951223991FB76B8FAB891 /* ProposalsView.swift */; };
+		5E3277207BAB0C745FF8D7F7 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A161B8DCBD0CDF39AAA10C /* SharedComponents.swift */; };
+		65C3E1A6C84B7EDD12D1DB4B /* ImportedContact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7890DD79DA9A6657609855 /* ImportedContact.swift */; };
+		7476753DF05C0CD03C7076FA /* Specialty+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABE86523821B3FCDB6E53E5 /* Specialty+Airtable.swift */; };
+		75B0F095EDA9A11DDD93DBAF /* Interaction+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1251BF67D5DE50CE8268415C /* Interaction+Airtable.swift */; };
+		77DA98C48FFAC15CB020819D /* ILSCRMApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93139863B859A2E429AC26CE /* ILSCRMApp.swift */; };
+		9249063E8DC1713631C37A1E /* CRMTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89C658F412AEC8BC5883E5EA /* CRMTask.swift */; };
+		9352236A6AD9AE0E2128BF50 /* ContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 931ED47893850975AFBC12A0 /* ContactsView.swift */; };
+		9713254A0C803B525DAA2471 /* AirtableRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CCE1AB0C14378553E982E80 /* AirtableRecord.swift */; };
+		A696ACC6AA8099D470D104DB /* SyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C683F26915642FCBFD399A /* SyncEngine.swift */; };
+		B129FFFF82792485422F535E /* ImportedContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49F9AFC3A3BFE5B1C86EAC7 /* ImportedContactsView.swift */; };
+		BCC0A608A777C24598E3D7DA /* AirtableConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B1B436042A8E098AF0ABA6 /* AirtableConfig.swift */; };
+		C552F943C9D54741C708C379 /* PortalAccessRecord+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AE64E65874DA7EEAD56BA2C /* PortalAccessRecord+Airtable.swift */; };
+		C5F8BD8560EF6CAA970BE5F2 /* Contact+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8D1B1FEA4C806594AAE1EA /* Contact+Airtable.swift */; };
+		D34B6650FD638F961DC425B6 /* CompaniesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED59216158DF4769EFB6BD74 /* CompaniesView.swift */; };
+		D419FF8EC2A4CE310A6A5FD8 /* Proposal.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A17675D518A087D5687C46 /* Proposal.swift */; };
+		D456DB1C39A4368CBFC3FD11 /* CRMTask+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4004166840F7FE3EEA205D /* CRMTask+Airtable.swift */; };
+		DA660DAB95967BFA6D23BFD6 /* PortalAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F65F8E51ACDA30BB96E73 /* PortalAccessView.swift */; };
+		DF15F7ABE93D042D8A704882 /* PipelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D16508BB0F462650F6DA3D4D /* PipelineView.swift */; };
+		E37235068B78D011C6790273 /* Company.swift in Sources */ = {isa = PBXBuildFile; fileRef = 649C44D1AA43D3C6B31DC0B2 /* Company.swift */; };
+		E5771CEA27AB55A6E7E40925 /* Contact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFC604A95E0A130C6EAFC7C /* Contact.swift */; };
+		ED94318657AEC4D283753738 /* InteractionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46488C4FC77689E54BDF129 /* InteractionsView.swift */; };
+		EDD1E4F8BEFDFDA9E424CC32 /* AirtableConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21E03C59B9A197E57E229F2B /* AirtableConvertible.swift */; };
+		FB6619F611CA54671C544752 /* Opportunity+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794C572B0816746F1F6DD1EF /* Opportunity+Airtable.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0626CFBCA68B78CCAE3A5BD7 /* AirtableService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirtableService.swift; sourceTree = "<group>"; };
+		08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalLogsView.swift; sourceTree = "<group>"; };
+		0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		115F65F8E51ACDA30BB96E73 /* PortalAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalAccessView.swift; sourceTree = "<group>"; };
+		1251BF67D5DE50CE8268415C /* Interaction+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Interaction+Airtable.swift"; sourceTree = "<group>"; };
+		1CCE1AB0C14378553E982E80 /* AirtableRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirtableRecord.swift; sourceTree = "<group>"; };
+		20E951223991FB76B8FAB891 /* ProposalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProposalsView.swift; sourceTree = "<group>"; };
+		21E03C59B9A197E57E229F2B /* AirtableConvertible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirtableConvertible.swift; sourceTree = "<group>"; };
+		2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PortalLog+Airtable.swift"; sourceTree = "<group>"; };
+		2DD07A3581FA6F5DB4CCD50E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		48DD1C12C88BD4E268591904 /* PortalAccessRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalAccessRecord.swift; sourceTree = "<group>"; };
+		4A4004166840F7FE3EEA205D /* CRMTask+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CRMTask+Airtable.swift"; sourceTree = "<group>"; };
+		4AE64E65874DA7EEAD56BA2C /* PortalAccessRecord+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PortalAccessRecord+Airtable.swift"; sourceTree = "<group>"; };
+		4CFC604A95E0A130C6EAFC7C /* Contact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Contact.swift; sourceTree = "<group>"; };
+		52B1B436042A8E098AF0ABA6 /* AirtableConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirtableConfig.swift; sourceTree = "<group>"; };
+		52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Proposal+Airtable.swift"; sourceTree = "<group>"; };
+		649C44D1AA43D3C6B31DC0B2 /* Company.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Company.swift; sourceTree = "<group>"; };
+		67C683F26915642FCBFD399A /* SyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncEngine.swift; sourceTree = "<group>"; };
+		68503FBF62BB4C58531F734C /* Interaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Interaction.swift; sourceTree = "<group>"; };
+		6ABE86523821B3FCDB6E53E5 /* Specialty+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Specialty+Airtable.swift"; sourceTree = "<group>"; };
+		71C07D862A21FBBB8121DAE0 /* Project+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Project+Airtable.swift"; sourceTree = "<group>"; };
+		794C572B0816746F1F6DD1EF /* Opportunity+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Opportunity+Airtable.swift"; sourceTree = "<group>"; };
+		7B7890DD79DA9A6657609855 /* ImportedContact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedContact.swift; sourceTree = "<group>"; };
+		7C8D1B1FEA4C806594AAE1EA /* Contact+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Contact+Airtable.swift"; sourceTree = "<group>"; };
+		89C658F412AEC8BC5883E5EA /* CRMTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRMTask.swift; sourceTree = "<group>"; };
+		91E7DA8774A3960554DDDB99 /* ImportedContact+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ImportedContact+Airtable.swift"; sourceTree = "<group>"; };
+		93139863B859A2E429AC26CE /* ILSCRMApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ILSCRMApp.swift; sourceTree = "<group>"; };
+		931ED47893850975AFBC12A0 /* ContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsView.swift; sourceTree = "<group>"; };
+		96E233D4EA498B4D591789D1 /* PortalLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalLog.swift; sourceTree = "<group>"; };
+		A1A161B8DCBD0CDF39AAA10C /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
+		A49F9AFC3A3BFE5B1C86EAC7 /* ImportedContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedContactsView.swift; sourceTree = "<group>"; };
+		A85AC6A57D105A7C7B62A7BD /* Specialty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Specialty.swift; sourceTree = "<group>"; };
+		AD5AC5FD0C4B654A1AC21455 /* Opportunity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Opportunity.swift; sourceTree = "<group>"; };
+		B46488C4FC77689E54BDF129 /* InteractionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractionsView.swift; sourceTree = "<group>"; };
+		B6A17675D518A087D5687C46 /* Proposal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Proposal.swift; sourceTree = "<group>"; };
+		C59EBB89A28F4676116D8A6D /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
+		C6F940D1601214B19B51F716 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
+		D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Company+Airtable.swift"; sourceTree = "<group>"; };
+		D16508BB0F462650F6DA3D4D /* PipelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineView.swift; sourceTree = "<group>"; };
+		D766042D9087DFD6757ACB42 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		DE314248FE2D8796FC6CF433 /* Project.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
+		E0AD484B882AECF1ABE3213F /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		ED59216158DF4769EFB6BD74 /* CompaniesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompaniesView.swift; sourceTree = "<group>"; };
+		F314F3062428983FA086B791 /* ILS CRM.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "ILS CRM.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		019076240016EF80C491DA72 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				D766042D9087DFD6757ACB42 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		0739AB8E2C362C728CA6CF61 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				649C44D1AA43D3C6B31DC0B2 /* Company.swift */,
+				4CFC604A95E0A130C6EAFC7C /* Contact.swift */,
+				89C658F412AEC8BC5883E5EA /* CRMTask.swift */,
+				7B7890DD79DA9A6657609855 /* ImportedContact.swift */,
+				68503FBF62BB4C58531F734C /* Interaction.swift */,
+				AD5AC5FD0C4B654A1AC21455 /* Opportunity.swift */,
+				48DD1C12C88BD4E268591904 /* PortalAccessRecord.swift */,
+				96E233D4EA498B4D591789D1 /* PortalLog.swift */,
+				DE314248FE2D8796FC6CF433 /* Project.swift */,
+				B6A17675D518A087D5687C46 /* Proposal.swift */,
+				A85AC6A57D105A7C7B62A7BD /* Specialty.swift */,
+				16EC5F4258AC125E81A84077 /* Converters */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		16EC5F4258AC125E81A84077 /* Converters */ = {
+			isa = PBXGroup;
+			children = (
+				D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */,
+				7C8D1B1FEA4C806594AAE1EA /* Contact+Airtable.swift */,
+				4A4004166840F7FE3EEA205D /* CRMTask+Airtable.swift */,
+				91E7DA8774A3960554DDDB99 /* ImportedContact+Airtable.swift */,
+				1251BF67D5DE50CE8268415C /* Interaction+Airtable.swift */,
+				794C572B0816746F1F6DD1EF /* Opportunity+Airtable.swift */,
+				4AE64E65874DA7EEAD56BA2C /* PortalAccessRecord+Airtable.swift */,
+				2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */,
+				71C07D862A21FBBB8121DAE0 /* Project+Airtable.swift */,
+				52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */,
+				6ABE86523821B3FCDB6E53E5 /* Specialty+Airtable.swift */,
+			);
+			path = Converters;
+			sourceTree = "<group>";
+		};
+		1FBB55DD65CFF405F6D13377 /* Proposals */ = {
+			isa = PBXGroup;
+			children = (
+				20E951223991FB76B8FAB891 /* ProposalsView.swift */,
+			);
+			path = Proposals;
+			sourceTree = "<group>";
+		};
+		339D803B4C8F401D46F93A87 /* ILS CRM */ = {
+			isa = PBXGroup;
+			children = (
+				93139863B859A2E429AC26CE /* ILSCRMApp.swift */,
+				EACADD712D74D61B157B995A /* Config */,
+				0739AB8E2C362C728CA6CF61 /* Models */,
+				536F00622C89ADBFEC53579C /* Services */,
+				5AB426CC5D26CEF2C1212276 /* Views */,
+			);
+			path = "ILS CRM";
+			sourceTree = "<group>";
+		};
+		3FAE8029604208A486DF1C10 /* Contacts */ = {
+			isa = PBXGroup;
+			children = (
+				931ED47893850975AFBC12A0 /* ContactsView.swift */,
+			);
+			path = Contacts;
+			sourceTree = "<group>";
+		};
+		495AB2326DEFF9F68C0C7703 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				A1A161B8DCBD0CDF39AAA10C /* SharedComponents.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		4A56914B3E3FFF4331958871 = {
+			isa = PBXGroup;
+			children = (
+				339D803B4C8F401D46F93A87 /* ILS CRM */,
+				AE72CAFF765D498C5278F9CE /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4DF14430D84B883019A56BB0 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				E0AD484B882AECF1ABE3213F /* DashboardView.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		536F00622C89ADBFEC53579C /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				21E03C59B9A197E57E229F2B /* AirtableConvertible.swift */,
+				1CCE1AB0C14378553E982E80 /* AirtableRecord.swift */,
+				0626CFBCA68B78CCAE3A5BD7 /* AirtableService.swift */,
+				0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */,
+				67C683F26915642FCBFD399A /* SyncEngine.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		5AB426CC5D26CEF2C1212276 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				2DD07A3581FA6F5DB4CCD50E /* ContentView.swift */,
+				D569B2B738B71B94E1B6745C /* Companies */,
+				3FAE8029604208A486DF1C10 /* Contacts */,
+				4DF14430D84B883019A56BB0 /* Dashboard */,
+				D690F441BF7CA5615EEA1105 /* ImportedContacts */,
+				813D021CA84C3CF558E5976A /* Interactions */,
+				5B036022E3871792F64A1134 /* Pipeline */,
+				F79B3624DB335DE732BBD914 /* Portal */,
+				6A233D1FFAD3C43BDFCEAB8C /* Projects */,
+				1FBB55DD65CFF405F6D13377 /* Proposals */,
+				019076240016EF80C491DA72 /* Settings */,
+				495AB2326DEFF9F68C0C7703 /* Shared */,
+				5CE19A53ECBEF830025AE7E0 /* Tasks */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		5B036022E3871792F64A1134 /* Pipeline */ = {
+			isa = PBXGroup;
+			children = (
+				D16508BB0F462650F6DA3D4D /* PipelineView.swift */,
+			);
+			path = Pipeline;
+			sourceTree = "<group>";
+		};
+		5CE19A53ECBEF830025AE7E0 /* Tasks */ = {
+			isa = PBXGroup;
+			children = (
+				C6F940D1601214B19B51F716 /* TasksView.swift */,
+			);
+			path = Tasks;
+			sourceTree = "<group>";
+		};
+		6A233D1FFAD3C43BDFCEAB8C /* Projects */ = {
+			isa = PBXGroup;
+			children = (
+				C59EBB89A28F4676116D8A6D /* ProjectsView.swift */,
+			);
+			path = Projects;
+			sourceTree = "<group>";
+		};
+		813D021CA84C3CF558E5976A /* Interactions */ = {
+			isa = PBXGroup;
+			children = (
+				B46488C4FC77689E54BDF129 /* InteractionsView.swift */,
+			);
+			path = Interactions;
+			sourceTree = "<group>";
+		};
+		AE72CAFF765D498C5278F9CE /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F314F3062428983FA086B791 /* ILS CRM.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D569B2B738B71B94E1B6745C /* Companies */ = {
+			isa = PBXGroup;
+			children = (
+				ED59216158DF4769EFB6BD74 /* CompaniesView.swift */,
+			);
+			path = Companies;
+			sourceTree = "<group>";
+		};
+		D690F441BF7CA5615EEA1105 /* ImportedContacts */ = {
+			isa = PBXGroup;
+			children = (
+				A49F9AFC3A3BFE5B1C86EAC7 /* ImportedContactsView.swift */,
+			);
+			path = ImportedContacts;
+			sourceTree = "<group>";
+		};
+		EACADD712D74D61B157B995A /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				52B1B436042A8E098AF0ABA6 /* AirtableConfig.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		F79B3624DB335DE732BBD914 /* Portal */ = {
+			isa = PBXGroup;
+			children = (
+				115F65F8E51ACDA30BB96E73 /* PortalAccessView.swift */,
+				08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */,
+			);
+			path = Portal;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4CDF06EFDDA8A408714299C4 /* ILS CRM */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 302AAD24925A787749ABD34C /* Build configuration list for PBXNativeTarget "ILS CRM" */;
+			buildPhases = (
+				AA2416BA9F42A3A943184DCB /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ILS CRM";
+			packageProductDependencies = (
+			);
+			productName = "ILS CRM";
+			productReference = F314F3062428983FA086B791 /* ILS CRM.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C559CE298287DA202E635C77 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = CCD07FC50E3B6BA1F6BC9F4D /* Build configuration list for PBXProject "ILS CRM" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 4A56914B3E3FFF4331958871;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4CDF06EFDDA8A408714299C4 /* ILS CRM */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AA2416BA9F42A3A943184DCB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BCC0A608A777C24598E3D7DA /* AirtableConfig.swift in Sources */,
+				EDD1E4F8BEFDFDA9E424CC32 /* AirtableConvertible.swift in Sources */,
+				9713254A0C803B525DAA2471 /* AirtableRecord.swift in Sources */,
+				449038EC80DE762E7082426D /* AirtableService.swift in Sources */,
+				D456DB1C39A4368CBFC3FD11 /* CRMTask+Airtable.swift in Sources */,
+				9249063E8DC1713631C37A1E /* CRMTask.swift in Sources */,
+				D34B6650FD638F961DC425B6 /* CompaniesView.swift in Sources */,
+				3B9FF2F195EB914F5F66299A /* Company+Airtable.swift in Sources */,
+				E37235068B78D011C6790273 /* Company.swift in Sources */,
+				C5F8BD8560EF6CAA970BE5F2 /* Contact+Airtable.swift in Sources */,
+				E5771CEA27AB55A6E7E40925 /* Contact.swift in Sources */,
+				9352236A6AD9AE0E2128BF50 /* ContactsView.swift in Sources */,
+				51BEE4C3427A703E9EA4DE7E /* ContentView.swift in Sources */,
+				4BDEC3D95BEB29FA215B7514 /* DashboardView.swift in Sources */,
+				77DA98C48FFAC15CB020819D /* ILSCRMApp.swift in Sources */,
+				4E29CF83F9440DEF732177F2 /* ImportedContact+Airtable.swift in Sources */,
+				65C3E1A6C84B7EDD12D1DB4B /* ImportedContact.swift in Sources */,
+				B129FFFF82792485422F535E /* ImportedContactsView.swift in Sources */,
+				75B0F095EDA9A11DDD93DBAF /* Interaction+Airtable.swift in Sources */,
+				3E13C992D90082BF5FF7E24B /* Interaction.swift in Sources */,
+				ED94318657AEC4D283753738 /* InteractionsView.swift in Sources */,
+				1ACFC5383147C9326C6B6113 /* KeychainService.swift in Sources */,
+				FB6619F611CA54671C544752 /* Opportunity+Airtable.swift in Sources */,
+				024D905AD69C70469BB2802B /* Opportunity.swift in Sources */,
+				DF15F7ABE93D042D8A704882 /* PipelineView.swift in Sources */,
+				C552F943C9D54741C708C379 /* PortalAccessRecord+Airtable.swift in Sources */,
+				4871C164B27F914BCC72CC9C /* PortalAccessRecord.swift in Sources */,
+				DA660DAB95967BFA6D23BFD6 /* PortalAccessView.swift in Sources */,
+				3BA9C65768304F0629CA653C /* PortalLog+Airtable.swift in Sources */,
+				5498D0C4CB1B1F07FFD985B3 /* PortalLog.swift in Sources */,
+				32A37AC7A71BCA3C59781505 /* PortalLogsView.swift in Sources */,
+				2F2B540BE6651C6070BB48A6 /* Project+Airtable.swift in Sources */,
+				1E022A0BD2BA8760C00B2ED4 /* Project.swift in Sources */,
+				46290C16304DB96B19157EB4 /* ProjectsView.swift in Sources */,
+				38AC88CA3F769FD350136A46 /* Proposal+Airtable.swift in Sources */,
+				D419FF8EC2A4CE310A6A5FD8 /* Proposal.swift in Sources */,
+				577D8DAFD2F517D9CB1FBE10 /* ProposalsView.swift in Sources */,
+				43DC7BE3CE7479FF375655DA /* SettingsView.swift in Sources */,
+				5E3277207BAB0C745FF8D7F7 /* SharedComponents.swift in Sources */,
+				7476753DF05C0CD03C7076FA /* Specialty+Airtable.swift in Sources */,
+				0945ADA4071C21E97B28C933 /* Specialty.swift in Sources */,
+				A696ACC6AA8099D470D104DB /* SyncEngine.swift in Sources */,
+				141E801CD0E7D895A261D4AD /* TasksView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		04E0D6A9BF16AF107302D332 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "-";
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.imaginelabstudios.ils-crm";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		23A8536E7C95BA2738222BB4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5;
+			};
+			name = Release;
+		};
+		53D247D4932A8920EA8B196D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5;
+			};
+			name = Debug;
+		};
+		FD50D22AE2E877C1D239F9EF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "-";
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.imaginelabstudios.ils-crm";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		302AAD24925A787749ABD34C /* Build configuration list for PBXNativeTarget "ILS CRM" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				04E0D6A9BF16AF107302D332 /* Debug */,
+				FD50D22AE2E877C1D239F9EF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CCD07FC50E3B6BA1F6BC9F4D /* Build configuration list for PBXProject "ILS CRM" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				53D247D4932A8920EA8B196D /* Debug */,
+				23A8536E7C95BA2738222BB4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = C559CE298287DA202E635C77 /* Project object */;
+}

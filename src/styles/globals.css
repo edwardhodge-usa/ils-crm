@@ -5,6 +5,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  button, [role="button"] { cursor: default; }
+  :root { color-scheme: light; }
+  .dark { color-scheme: dark; }
+  select { font-family: inherit; font-size: inherit; }
+}
+
 /* Window drag region for macOS titlebar */
 .window-drag {
   -webkit-app-region: drag;
@@ -36,8 +43,6 @@
 }
 
 /* Date picker icon adapts to color scheme */
-@media (prefers-color-scheme: dark) {
-  input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-  }
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }

@@ -221,13 +221,6 @@ export interface ImportedContact {
   related_crm_contact_ids: string | null
 }
 
-export interface Specialty {
-  id: string
-  specialty: string | null
-  imported_contacts_ids: string | null
-  contacts_ids: string | null
-}
-
 export interface PortalAccess {
   id: string
   name: string | null
@@ -270,6 +263,30 @@ export interface PortalLog {
   timestamp: string | null
 }
 
+// ─── View/List Types ─────────────────────────────────────────
+
+export interface DealItem {
+  id: string
+  dealName: string
+  companyName: string | null
+  value: number | null
+  probability: number | null
+  stage: 'Prospecting' | 'Qualified' | 'Proposal Sent' | 'Negotiation' | 'Closed Won'
+  daysInStage: number | null
+}
+
+export interface ContactListItem {
+  id: string
+  firstName: string
+  lastName: string
+  jobTitle: string | null
+  companyName: string | null
+  qualityRating: number          // 1-5, maps to 5-dot rating
+  specialtyNames: string[]       // display names from linked Specialties
+  specialtyColors: string[]      // one color per specialty (same length)
+  daysSinceContact: number | null
+}
+
 // ─── Sync Types ──────────────────────────────────────────────
 
 export interface SyncStatus {
@@ -280,34 +297,3 @@ export interface SyncStatus {
   error: string | null
 }
 
-// ─── UI Types ────────────────────────────────────────────────
-
-export type FieldType =
-  | 'text'
-  | 'textarea'
-  | 'richtext'
-  | 'email'
-  | 'phone'
-  | 'url'
-  | 'number'
-  | 'currency'
-  | 'date'
-  | 'datetime'
-  | 'singleSelect'
-  | 'multiSelect'
-  | 'checkbox'
-  | 'linkedRecord'
-  | 'readonly'
-  | 'attachment'
-  | 'collaborator'
-
-export interface FieldDef {
-  key: string
-  label: string
-  type: FieldType
-  airtableFieldId: string
-  options?: string[]
-  linkedTable?: string
-  readOnly?: boolean
-  section?: string
-}

@@ -1,49 +1,146 @@
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DataTable from '../shared/DataTable'
-import StatusBadge from '../shared/StatusBadge'
 import LoadingSpinner from '../shared/LoadingSpinner'
-import PrimaryButton from '../shared/PrimaryButton'
 import useEntityList from '../../hooks/useEntityList'
+import { CompanyRow } from './CompanyRow'
+import { CompanyDetail } from './CompanyDetail'
+
+interface CompanyListItem {
+  id: string
+  name: string
+  industry: string | null
+  type: string | null
+  contactCount: number
+}
+
+function toListItem(
+  row: Record<string, unknown>,
+  contactsData: Record<string, unknown>[]
+): CompanyListItem {
+  const id = row.id as string
+
+  // Count contacts linked to this company
+  const contactCount = contactsData.filter(c => {
+    const raw = c.companies_ids as string | null
+    if (!raw) return false
+    try {
+      const ids = JSON.parse(raw) as string[]
+      return ids.includes(id)
+    } catch {
+      return false
+    }
+  }).length
+
+  return {
+    id,
+    name: (row.company_name as string | null) || 'Unnamed Company',
+    industry: (row.industry as string | null) ?? null,
+    type: (row.type as string | null) ?? null,
+    contactCount,
+  }
+}
 
 export default function CompanyListPage() {
   const { data: companies, loading, error } = useEntityList(() => window.electronAPI.companies.getAll())
+  const { data: contactsData } = useEntityList(() => window.electronAPI.contacts.getAll())
   const navigate = useNavigate()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
-  const columns = [
-    { key: 'company_name', label: 'Company', width: '25%' },
-    {
-      key: 'type',
-      label: 'Type',
-      width: '15%',
-      render: (v: unknown) => <StatusBadge value={v as string} />,
-    },
-    { key: 'industry', label: 'Industry', width: '18%' },
-    { key: 'website', label: 'Website', width: '22%',
-      render: (v: unknown) => v ? (
-        <span className="text-[var(--color-accent)] truncate block">{v as string}</span>
-      ) : <span className="text-[var(--text-placeholder)]">—</span>,
-    },
-    { key: 'lead_source', label: 'Lead Source', width: '20%' },
-  ]
+  const filteredCompanies: CompanyListItem[] = useMemo(() => {
+    const items = (companies as Record<string, unknown>[]).map(row =>
+      toListItem(row, contactsData as Record<string, unknown>[])
+    )
+    if (!search.trim()) return items
+    const q = search.toLowerCase()
+    return items.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.industry ?? '').toLowerCase().includes(q) ||
+      (c.type ?? '').toLowerCase().includes(q)
+    )
+  }, [companies, contactsData, search])
 
   if (loading) return <LoadingSpinner />
 
   if (error) {
-    return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
+    return <div className="flex items-center justify-center h-full w-full text-[var(--color-red)]">{error}</div>
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={companies}
-      onRowClick={(row) => navigate(`/companies/${row.id}`)}
-      searchKeys={['company_name', 'industry', 'type']}
-      emptyMessage="No companies yet. Sync from Airtable in Settings."
-      actions={
-        <PrimaryButton onClick={() => navigate('/companies/new')}>
-          + New Company
-        </PrimaryButton>
-      }
-    />
+    <div className="flex h-full w-full overflow-hidden">
+      {/* List pane — 300px fixed */}
+      <div className="w-[300px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
+
+        {/* Header: entity name + count badge + add button */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '12px 14px 10px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
+              Companies
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {filteredCompanies.length}
+            </span>
+          </div>
+          <button
+            onClick={() => navigate('/companies/new')}
+            style={{
+              fontSize: 18, fontWeight: 400, lineHeight: 1,
+              width: 26, height: 26, borderRadius: 6,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'none', border: 'none', cursor: 'default',
+              color: 'var(--color-accent)', fontFamily: 'inherit',
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          >
+            +
+          </button>
+        </div>
+
+        {/* Search — pill shape */}
+        <div style={{ padding: '8px 10px 6px', flexShrink: 0 }}>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search companies…"
+            style={{
+              width: '100%', fontSize: 12, padding: '6px 12px',
+              borderRadius: 9999, border: 'none',
+              background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+              outline: 'none', fontFamily: 'inherit',
+            }}
+          />
+        </div>
+
+        {/* Company list */}
+        <div className="flex-1 overflow-y-auto">
+          {filteredCompanies.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-[13px] text-[var(--text-secondary)] px-4 text-center">
+              {search ? 'No companies match your search.' : 'No companies yet. Sync from Airtable in Settings.'}
+            </div>
+          ) : (
+            filteredCompanies.map(company => (
+              <CompanyRow
+                key={company.id}
+                company={company}
+                isSelected={selectedId === company.id}
+                onClick={() => setSelectedId(company.id)}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Detail panel — flex-1 */}
+      <CompanyDetail
+        companyId={selectedId}
+        onDeleted={() => setSelectedId(null)}
+      />
+    </div>
   )
 }

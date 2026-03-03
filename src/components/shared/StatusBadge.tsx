@@ -1,59 +1,90 @@
-const colorMap: Record<string, string> = {
+/**
+ * StatusBadge — renders a status/category label with tinted background.
+ * Uses Apple accessible darker text (light mode) and brighter text (dark mode).
+ */
+import useDarkMode from '../../hooks/useDarkMode'
+
+type BadgeSize = 'sm' | 'md'
+
+// Apple color pairs: text (light accessible) / textDark (dark mode bright) / bg
+const colorMap: Record<string, { text: string; textDark: string; bg: string }> = {
   // Task/Proposal status
-  'To Do': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
-  'In Progress': 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]',
-  'Waiting': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
-  'Completed': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
-  'Cancelled': 'bg-[var(--text-tertiary)]/20 text-[var(--text-tertiary)]',
-  'Draft': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
-  'Pending Approval': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
-  'Approved': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
-  'Rejected': 'bg-[var(--color-red)]/15 text-[var(--color-red)]',
-  'Sent to Client': 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]',
+  'To Do':             { text: '#636366',  textDark: '#98989D',  bg: 'rgba(142,142,147,0.22)' },
+  'In Progress':       { text: '#0055B3',  textDark: '#409CFF',  bg: 'rgba(0,122,255,0.22)' },
+  'Waiting':           { text: '#C93400',  textDark: '#FF9F0A',  bg: 'rgba(255,149,0,0.22)' },
+  'Completed':         { text: '#248A3D',  textDark: '#30D158',  bg: 'rgba(52,199,89,0.22)' },
+  'Cancelled':         { text: '#636366',  textDark: '#98989D',  bg: 'rgba(142,142,147,0.22)' },
+  'Draft':             { text: '#636366',  textDark: '#98989D',  bg: 'rgba(142,142,147,0.22)' },
+  'Pending Approval':  { text: '#C93400',  textDark: '#FF9F0A',  bg: 'rgba(255,149,0,0.22)' },
+  'Approved':          { text: '#248A3D',  textDark: '#30D158',  bg: 'rgba(52,199,89,0.22)' },
+  'Rejected':          { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
+  'Sent to Client':    { text: '#0055B3',  textDark: '#409CFF',  bg: 'rgba(0,122,255,0.22)' },
 
   // Pipeline stages
-  'Initial Contact': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
-  'Qualification': 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]',
-  'Meeting Scheduled': 'bg-[var(--color-indigo)]/15 text-[var(--color-indigo)]',
-  'Proposal Sent': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
-  'Negotiation': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
-  'Contract Sent': 'bg-[var(--color-purple)]/15 text-[var(--color-purple)]',
-  'Closed Won': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
-  'Closed Lost': 'bg-[var(--color-red)]/15 text-[var(--color-red)]',
-  'Future Client': 'bg-[var(--color-indigo)]/15 text-[var(--color-indigo)]',
+  'Initial Contact':   { text: '#0E7A8D',  textDark: '#40CBE0',  bg: 'rgba(48,176,199,0.22)' },
+  'Qualification':     { text: '#0055B3',  textDark: '#409CFF',  bg: 'rgba(0,122,255,0.22)' },
+  'Meeting Scheduled': { text: '#0E7A8D',  textDark: '#40CBE0',  bg: 'rgba(48,176,199,0.22)' },
+  'Proposal Sent':     { text: '#C93400',  textDark: '#FF9F0A',  bg: 'rgba(255,149,0,0.22)' },
+  'Negotiation':       { text: '#D30047',  textDark: '#FF375F',  bg: 'rgba(255,45,85,0.22)' },
+  'Contract Sent':     { text: '#8944AB',  textDark: '#BF5AF2',  bg: 'rgba(175,82,222,0.22)' },
+  'Closed Won':        { text: '#248A3D',  textDark: '#30D158',  bg: 'rgba(52,199,89,0.22)' },
+  'Closed Lost':       { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
+  'Future Client':     { text: '#0E7A8D',  textDark: '#40CBE0',  bg: 'rgba(48,176,199,0.22)' },
 
   // Categorization
-  'Lead': 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]',
-  'Customer': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
-  'Partner': 'bg-[var(--color-indigo)]/15 text-[var(--color-indigo)]',
-  'Vendor': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
-  'Talent': 'bg-[var(--color-purple)]/15 text-[var(--color-purple)]',
-  'Other': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
-  'Unknown': 'bg-[var(--text-tertiary)]/20 text-[var(--text-tertiary)]',
+  'Lead':              { text: '#0055B3',  textDark: '#409CFF',  bg: 'rgba(0,122,255,0.22)' },
+  'Customer':          { text: '#248A3D',  textDark: '#30D158',  bg: 'rgba(52,199,89,0.22)' },
+  'Partner':           { text: '#0E7A8D',  textDark: '#40CBE0',  bg: 'rgba(48,176,199,0.22)' },
+  'Vendor':            { text: '#C93400',  textDark: '#FF9F0A',  bg: 'rgba(255,149,0,0.22)' },
+  'Talent':            { text: '#8944AB',  textDark: '#BF5AF2',  bg: 'rgba(175,82,222,0.22)' },
+  'Other':             { text: '#636366',  textDark: '#98989D',  bg: 'rgba(142,142,147,0.22)' },
+  'Unknown':           { text: '#636366',  textDark: '#98989D',  bg: 'rgba(142,142,147,0.22)' },
 
   // Priority
-  'High': 'bg-[var(--color-red)]/15 text-[var(--color-red)]',
-  'Medium': 'bg-[var(--color-orange)]/15 text-[var(--color-orange)]',
-  'Low': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
+  'High':              { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
+  'Medium':            { text: '#C93400',  textDark: '#FF9F0A',  bg: 'rgba(255,149,0,0.22)' },
+  'Low':               { text: '#248A3D',  textDark: '#30D158',  bg: 'rgba(52,199,89,0.22)' },
 
   // Company type
-  'Active Client': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
-  'Prospect': 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]',
-  'Past Client': 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]',
+  'Active Client':     { text: '#248A3D',  textDark: '#30D158',  bg: 'rgba(52,199,89,0.22)' },
+  'Prospect':          { text: '#0055B3',  textDark: '#409CFF',  bg: 'rgba(0,122,255,0.22)' },
+  'Past Client':       { text: '#636366',  textDark: '#98989D',  bg: 'rgba(142,142,147,0.22)' },
 
   // Portal
-  'ACTIVE': 'bg-[var(--color-green)]/15 text-[var(--color-green)]',
-  'IN-ACTIVE': 'bg-[var(--text-tertiary)]/20 text-[var(--text-tertiary)]',
+  'Active':            { text: '#248A3D',  textDark: '#30D158',  bg: 'rgba(52,199,89,0.22)' },
+  'ACTIVE':            { text: '#248A3D',  textDark: '#30D158',  bg: 'rgba(52,199,89,0.22)' },
+  'Inactive':          { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
+  'IN-ACTIVE':         { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
 }
 
-const defaultColor = 'bg-[var(--text-tertiary)]/20 text-[var(--text-secondary)]'
+const defaultColors = { text: '#636366', textDark: '#98989D', bg: 'rgba(142,142,147,0.20)' }
 
-export default function StatusBadge({ value }: { value: string | null | undefined }) {
+interface StatusBadgeProps {
+  value: string | null | undefined
+  size?: BadgeSize
+}
+
+export default function StatusBadge({ value, size = 'sm' }: StatusBadgeProps) {
+  const isDark = useDarkMode()
   if (!value) return null
-  const color = colorMap[value] || defaultColor
+  const colors = colorMap[value] || defaultColors
+  const fontSize = size === 'sm' ? 11 : 13
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${color}`}>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '2px 6px',
+        borderRadius: 4,
+        fontSize,
+        fontWeight: 600,
+        lineHeight: 1.4,
+        color: isDark ? colors.textDark : colors.text,
+        background: colors.bg,
+        whiteSpace: 'nowrap',
+      }}
+    >
       {value}
     </span>
   )

@@ -10,21 +10,26 @@
     "build": "vite build && electron-builder --dir",
     "package": "tsc && vite build && electron-builder --mac",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/sortable": "^8.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "date-fns": "^3.2.0",
     "fuse.js": "^7.0.0",
     "lucide-react": "^0.303.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.0",
-    "sql.js": "^1.10.0",
-    "@dnd-kit/core": "^6.1.0",
-    "@dnd-kit/sortable": "^8.0.0",
-    "@dnd-kit/utilities": "^3.2.2"
+    "sql.js": "^1.10.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
     "@types/sql.js": "^1.4.9",
@@ -32,12 +37,14 @@
     "autoprefixer": "^10.4.16",
     "electron": "^28.1.0",
     "electron-builder": "^24.9.1",
+    "jsdom": "^28.1.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.10",
     "vite-plugin-electron": "^0.15.5",
-    "vite-plugin-electron-renderer": "^0.14.5"
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "vitest": "^4.0.18"
   },
   "build": {
     "appId": "com.imaginelabstudios.ils-crm",
@@ -50,7 +57,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["arm64", "x64"]
+          "arch": [
+            "arm64",
+            "x64"
+          ]
         }
       ],
       "hardenedRuntime": true,

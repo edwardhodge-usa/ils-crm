@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PortalLogs",
+  "description": "Portal activity logging. Written by imaginelab-portal (Next.js), read-only in the CRM. No push to Airtable.",
+  "airtable": {
+    "baseId": "appYXbUdcmSwBoPFU",
+    "tableId": "tblj70XPHI7wnUmxO",
+    "fieldCount": 12,
+    "syncMode": "read-only",
+    "primaryField": "id"
+  },
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Airtable record ID"
+    },
+    "autoId": {
+      "type": ["integer", "null"],
+      "airtableFieldId": "fldZ9kEv2VoSs6Zhm",
+      "airtableType": "autoNumber",
+      "primary": true,
+      "readOnly": true,
+      "description": "Auto-incrementing number (primary field)"
+    },
+    "clientEmail": {
+      "type": "string",
+      "format": "email",
+      "airtableFieldId": "fldbRGSVQ234FhLl5",
+      "airtableType": "singleLineText"
+    },
+    "clientName": {
+      "type": "string",
+      "airtableFieldId": "fld09uABu5pMflwqw",
+      "airtableType": "singleLineText"
+    },
+    "company": {
+      "type": "string",
+      "airtableFieldId": "fldHKPjjjj5qJ4jKj",
+      "airtableType": "singleLineText"
+    },
+    "ipAddress": {
+      "type": "string",
+      "airtableFieldId": "fldD4kj0jIVeJ7Xjn",
+      "airtableType": "singleLineText"
+    },
+    "city": {
+      "type": "string",
+      "airtableFieldId": "fldvJWb179RimoEVP",
+      "airtableType": "singleLineText"
+    },
+    "region": {
+      "type": "string",
+      "airtableFieldId": "fldW4wHM9wNIap0Vf",
+      "airtableType": "singleLineText"
+    },
+    "country": {
+      "type": "string",
+      "airtableFieldId": "fld2gGOgdCs4OZORY",
+      "airtableType": "singleLineText"
+    },
+    "userAgent": {
+      "type": "string",
+      "airtableFieldId": "fldKPYPCJ8a77TiSZ",
+      "airtableType": "singleLineText"
+    },
+    "claritySession": {
+      "type": "string",
+      "airtableFieldId": "fldlawC5fpW6SC7YJ",
+      "airtableType": "url"
+    },
+    "pageUrl": {
+      "type": "string",
+      "format": "uri",
+      "airtableFieldId": "fldA8GMWwQMthnnta",
+      "airtableType": "url"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "airtableFieldId": "fldtntKgWXKanYEWZ",
+      "airtableType": "dateTime"
+    },
+    "_airtableModifiedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "No _localModifiedAt or _pendingPush — this table is read-only"
+    }
+  }
+}

@@ -1,184 +1,535 @@
 import { useState, useEffect } from 'react'
 import { useSyncStatus } from '../../hooks/useSyncStatus'
+type PipelineMode = 'active-opps' | 'active-contracts' | 'combined-total'
 
-export default function SettingsPage() {
+// ────────────────────────────────────────────────────────────
+// Theme helpers — cooperate with App.tsx mediaQuery listener
+// ────────────────────────────────────────────────────────────
+type ThemeMode = 'system' | 'light' | 'dark'
+
+function getStoredTheme(): ThemeMode {
+  const stored = localStorage.getItem('theme-mode')
+  if (stored === 'light' || stored === 'dark' || stored === 'system') return stored
+  return 'system'
+}
+
+function applyTheme(mode: ThemeMode) {
+  if (mode === 'dark') {
+    document.documentElement.classList.add('dark')
+  } else if (mode === 'light') {
+    document.documentElement.classList.remove('dark')
+  } else {
+    // system — honour media query
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    document.documentElement.classList.toggle('dark', prefersDark)
+  }
+  localStorage.setItem('theme-mode', mode)
+}
+
+// ────────────────────────────────────────────────────────────
+// Section IDs
+// ────────────────────────────────────────────────────────────
+type SectionId = 'general' | 'sync' | 'appearance' | 'about'
+
+const SECTIONS: { id: SectionId; label: string }[] = [
+  { id: 'general', label: 'General' },
+  { id: 'sync', label: 'Sync' },
+  { id: 'appearance', label: 'Appearance' },
+  { id: 'about', label: 'About' },
+]
+
+// ────────────────────────────────────────────────────────────
+// Sub-components
+// ────────────────────────────────────────────────────────────
+
+function PrefRow({ label, children, isLast = false }: { label: string; children: React.ReactNode; isLast?: boolean }) {
+  return (
+    <div
+      className="flex items-center justify-between cursor-default"
+      style={{
+        minHeight: 36,
+        padding: '10px 14px',
+        borderBottom: isLast ? 'none' : '1px solid var(--separator)',
+      }}
+    >
+      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>{label}</span>
+      <div className="flex items-center gap-2">{children}</div>
+    </div>
+  )
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <p style={{
+      fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+      letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
+    }}>
+      {children}
+    </p>
+  )
+}
+
+function GroupedContainer({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      background: 'var(--bg-secondary)',
+      borderRadius: 12,
+      overflow: 'hidden',
+    }}>
+      {children}
+    </div>
+  )
+}
+
+function SettingsInput({
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  readOnly,
+}: {
+  type?: string
+  value: string
+  onChange?: (v: string) => void
+  placeholder?: string
+  readOnly?: boolean
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+      placeholder={placeholder}
+      readOnly={readOnly}
+      className="bg-[var(--bg-secondary)] border border-[var(--separator-strong)] rounded-[var(--radius-md)] px-3 py-1.5 text-[13px] text-[var(--text-primary)] placeholder-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)] transition-colors disabled:opacity-50 w-[260px]"
+    />
+  )
+}
+
+// Segmented control — 3 equal options
+function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[]
+  value: T
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="flex bg-[var(--bg-secondary)] border border-[var(--separator-strong)] rounded-[var(--radius-md)] p-0.5 gap-0.5">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={[
+            'px-3 py-1 rounded-[6px] text-[12px] font-medium transition-all duration-150 whitespace-nowrap',
+            value === opt.value
+              ? 'bg-[var(--color-accent)] text-[var(--text-on-accent)]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]',
+          ].join(' ')}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────
+// Section: General
+// ────────────────────────────────────────────────────────────
+function GeneralSection() {
   const [apiKey, setApiKey] = useState('')
   const [baseId, setBaseId] = useState('')
   const [showKey, setShowKey] = useState(false)
+  const [originalKey, setOriginalKey] = useState('')
+  const [originalBaseId, setOriginalBaseId] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
-  const { tables, isSyncing, forceSync, startSync, stopSync } = useSyncStatus()
 
   useEffect(() => {
-    async function loadSettings() {
+    async function load() {
       const keyResult = await window.electronAPI.settings.get('airtable_api_key')
-      if (keyResult.success && keyResult.data) setApiKey(keyResult.data)
-
+      if (keyResult.success && keyResult.data) {
+        setApiKey(keyResult.data)
+        setOriginalKey(keyResult.data)
+      }
       const baseResult = await window.electronAPI.settings.get('airtable_base_id')
-      if (baseResult.success && baseResult.data) setBaseId(baseResult.data)
+      if (baseResult.success && baseResult.data) {
+        setBaseId(baseResult.data)
+        setOriginalBaseId(baseResult.data)
+      }
     }
-    loadSettings()
+    load()
   }, [])
 
-  const handleSaveApiKey = async () => {
+  const hasChanges = apiKey !== originalKey || baseId !== originalBaseId
+
+  const handleSave = async () => {
     await window.electronAPI.settings.set('airtable_api_key', apiKey)
-    setSaveMessage('API key saved')
-    setTimeout(() => setSaveMessage(''), 2000)
+    await window.electronAPI.settings.set('airtable_base_id', baseId)
+    setOriginalKey(apiKey)
+    setOriginalBaseId(baseId)
+    setSaveMessage('Settings saved')
+    setTimeout(() => setSaveMessage(''), 2500)
   }
+
+  return (
+    <div>
+      <SectionHeader>Airtable Configuration</SectionHeader>
+
+      <GroupedContainer>
+        {/* API Key */}
+        <PrefRow label="API Key">
+          <div className="flex items-center gap-1.5">
+            <SettingsInput
+              type={showKey ? 'text' : 'password'}
+              value={apiKey}
+              onChange={setApiKey}
+              placeholder="pat…"
+            />
+            <button
+              onClick={() => setShowKey((v) => !v)}
+              className="cursor-default"
+              style={{
+                padding: '5px 10px',
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--separator-strong)',
+                borderRadius: 8,
+                fontSize: 12,
+                color: 'var(--text-secondary)',
+                fontFamily: 'inherit',
+                transition: 'background 150ms, color 150ms',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'var(--bg-hover)'
+                e.currentTarget.style.color = 'var(--text-primary)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'var(--bg-tertiary)'
+                e.currentTarget.style.color = 'var(--text-secondary)'
+              }}
+            >
+              {showKey ? 'Hide' : 'Show'}
+            </button>
+          </div>
+        </PrefRow>
+
+        {/* Base ID */}
+        <PrefRow label="Base ID" isLast>
+          <SettingsInput
+            value={baseId}
+            onChange={setBaseId}
+            placeholder="appXXXXXXXX"
+          />
+        </PrefRow>
+      </GroupedContainer>
+
+      {/* Save */}
+      <div style={{ paddingTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button
+          onClick={handleSave}
+          disabled={!hasChanges}
+          className="cursor-default disabled:opacity-40"
+          style={{
+            padding: '6px 16px',
+            background: 'var(--color-accent)',
+            color: 'var(--text-on-accent)',
+            fontSize: 13,
+            fontWeight: 500,
+            borderRadius: 8,
+            border: 'none',
+            fontFamily: 'inherit',
+            transition: 'background 150ms',
+          }}
+          onMouseEnter={e => { if (!hasChanges) return; e.currentTarget.style.background = 'var(--color-accent-hover)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-accent)' }}
+        >
+          Save Changes
+        </button>
+        {Boolean(saveMessage) && (
+          <span style={{ fontSize: 12, color: 'var(--color-green)' }}>{saveMessage}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────
+// Section: Sync
+// ────────────────────────────────────────────────────────────
+function SyncSection() {
+  const { tables, isSyncing, forceSync } = useSyncStatus()
+  const [syncMessage, setSyncMessage] = useState('')
+
+  // Derive last synced from most recent table sync
+  const lastSyncedAt = tables.reduce<string | null>((latest, t) => {
+    if (!t.last_sync_at) return latest
+    if (!latest) return t.last_sync_at
+    return t.last_sync_at > latest ? t.last_sync_at : latest
+  }, null)
 
   const handleForceSync = async () => {
     const result = await forceSync()
     if (!result.success) {
-      setSaveMessage(`Sync failed: ${result.error}`)
-      setTimeout(() => setSaveMessage(''), 4000)
+      setSyncMessage(`Sync failed: ${result.error ?? 'Unknown error'}`)
+      setTimeout(() => setSyncMessage(''), 5000)
     }
   }
 
   return (
-    <div className="max-w-2xl space-y-8">
-      {/* Airtable Configuration */}
-      <section>
-        <h2 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">Airtable Configuration</h2>
-        <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4 space-y-4">
-          <div>
-            <label className="block text-[var(--text-secondary)] mb-1.5">API Key</label>
-            <div className="flex gap-2">
-              <input
-                type={showKey ? 'text' : 'password'}
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="pat..."
-                className="flex-1 bg-[var(--bg-window)] border border-[var(--separator-opaque)] rounded-md px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--color-accent)] transition-colors"
-              />
-              <button
-                onClick={() => setShowKey(!showKey)}
-                className="px-3 py-2 bg-[var(--separator-opaque)] rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
-              >
-                {showKey ? 'Hide' : 'Show'}
-              </button>
-              <button
-                onClick={handleSaveApiKey}
-                className="px-4 py-2 bg-[var(--color-accent)] rounded-md text-[var(--text-primary)] font-medium hover:bg-[var(--color-accent-hover)] transition-colors"
-              >
-                Save
-              </button>
-            </div>
-          </div>
+    <div>
+      <SectionHeader>Sync Status</SectionHeader>
 
-          <div>
-            <label className="block text-[var(--text-secondary)] mb-1.5">Base ID</label>
-            <input
-              type="text"
-              value={baseId}
-              readOnly
-              className="w-full bg-[var(--bg-window)] border border-[var(--separator-opaque)] rounded-md px-3 py-2 text-[var(--text-tertiary)] cursor-not-allowed"
-            />
-          </div>
+      <GroupedContainer>
+        {/* Last synced */}
+        <PrefRow label="Last Synced">
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+            {isSyncing
+              ? 'Syncing…'
+              : lastSyncedAt
+              ? new Date(lastSyncedAt).toLocaleString()
+              : 'Never'}
+          </span>
+        </PrefRow>
 
-          {saveMessage && (
-            <p className={`text-base ${saveMessage.includes('failed') ? 'text-[var(--color-red)]' : 'text-[var(--color-green)]'}`}>
-              {saveMessage}
-            </p>
-          )}
-        </div>
-      </section>
-
-      {/* Sync Controls */}
-      <section>
-        <h2 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">Sync</h2>
-        <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4 space-y-4">
-          <div className="flex gap-2">
-            <button
-              onClick={handleForceSync}
-              disabled={isSyncing || !apiKey}
-              className="px-4 py-2 bg-[var(--color-accent)] rounded-md text-[var(--text-primary)] font-medium hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isSyncing ? 'Syncing...' : 'Force Sync Now'}
-            </button>
-            <button
-              onClick={startSync}
-              disabled={!apiKey}
-              className="px-4 py-2 bg-[var(--separator-opaque)] rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
-            >
-              Start Auto-Sync
-            </button>
-            <button
-              onClick={stopSync}
-              className="px-4 py-2 bg-[var(--separator-opaque)] rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
-            >
-              Stop
-            </button>
-          </div>
-
-          {isSyncing && (
-            <div className="flex items-center gap-2 text-[var(--color-accent)]">
+        {/* Force Sync button */}
+        <PrefRow label="Force Sync" isLast>
+          <button
+            onClick={handleForceSync}
+            disabled={isSyncing}
+            className="cursor-default disabled:opacity-40 flex items-center gap-2"
+            style={{
+              padding: '6px 16px',
+              background: 'var(--color-accent)',
+              color: 'var(--text-on-accent)',
+              fontSize: 13,
+              fontWeight: 500,
+              borderRadius: 8,
+              border: 'none',
+              fontFamily: 'inherit',
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => { if (!isSyncing) e.currentTarget.style.background = 'var(--color-accent-hover)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-accent)' }}
+          >
+            {isSyncing && (
               <svg className="w-3.5 h-3.5 spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
               </svg>
-              Syncing...
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+            {isSyncing ? 'Syncing…' : 'Sync Now'}
+          </button>
+        </PrefRow>
+      </GroupedContainer>
 
-      {/* Sync Status per Table */}
-      <section>
-        <h2 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">Table Status</h2>
-        <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[var(--separator-opaque)]">
-                <th className="text-left px-4 py-2 text-[var(--text-secondary)] font-medium">Table</th>
-                <th className="text-left px-4 py-2 text-[var(--text-secondary)] font-medium">Records</th>
-                <th className="text-left px-4 py-2 text-[var(--text-secondary)] font-medium">Last Sync</th>
-                <th className="text-left px-4 py-2 text-[var(--text-secondary)] font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tables.map((t) => (
-                <tr key={t.table_name} className="border-b border-[var(--separator-opaque)] last:border-b-0">
-                  <td className="px-4 py-2 text-[var(--text-primary)] capitalize">{t.table_name.replace(/_/g, ' ')}</td>
-                  <td className="px-4 py-2 text-[var(--text-secondary)]">{t.record_count}</td>
-                  <td className="px-4 py-2 text-[var(--text-secondary)]">
-                    {t.last_sync_at
-                      ? new Date(t.last_sync_at).toLocaleTimeString()
-                      : 'Never'}
-                  </td>
-                  <td className="px-4 py-2">
-                    <span className={`inline-flex items-center gap-1 ${
-                      t.status === 'error' ? 'text-[var(--color-red)]' :
-                      t.status === 'syncing' ? 'text-[var(--color-accent)]' :
-                      'text-[var(--color-green)]'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        t.status === 'error' ? 'bg-[var(--color-red)]' :
-                        t.status === 'syncing' ? 'bg-[var(--color-accent)]' :
-                        'bg-[var(--color-green)]'
-                      }`} />
-                      {t.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {tables.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-[var(--text-tertiary)]">
-                    No sync data yet. Configure API key and sync.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {Boolean(syncMessage) && (
+        <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-red)' }}>{syncMessage}</p>
+      )}
 
-      {/* App Info */}
-      <section>
-        <h2 className="text-[15px] font-semibold text-[var(--text-primary)] mb-4">About</h2>
-        <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-          <p className="text-base text-[var(--text-secondary)]">ILS CRM Desktop App v0.1.0</p>
-          <p className="text-base text-[var(--text-tertiary)] mt-1">ImagineLab Studios</p>
+      {/* Table status */}
+      {tables.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          <SectionHeader>Table Status</SectionHeader>
+          <GroupedContainer>
+            {tables.map((t, i) => (
+              <div
+                key={t.table_name}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 14px',
+                  minHeight: 36,
+                  fontSize: 12,
+                  borderBottom: i < tables.length - 1 ? '1px solid var(--separator)' : 'none',
+                }}
+              >
+                <span style={{ color: 'var(--text-primary)', textTransform: 'capitalize', flex: 1 }}>
+                  {t.table_name.replace(/_/g, ' ')}
+                </span>
+                <span style={{ color: 'var(--text-tertiary)', width: 80, textAlign: 'right' }}>
+                  {t.record_count} records
+                </span>
+                <span style={{ color: 'var(--text-tertiary)', width: 112, textAlign: 'right' }}>
+                  {t.last_sync_at ? new Date(t.last_sync_at).toLocaleTimeString() : 'Never'}
+                </span>
+                <span style={{
+                  marginLeft: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  width: 64,
+                  justifyContent: 'flex-end',
+                  color: t.status === 'error'
+                    ? 'var(--color-red)'
+                    : t.status === 'syncing'
+                    ? 'var(--color-accent)'
+                    : 'var(--color-green)',
+                }}>
+                  <span style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: t.status === 'error'
+                      ? 'var(--color-red)'
+                      : t.status === 'syncing'
+                      ? 'var(--color-accent)'
+                      : 'var(--color-green)',
+                  }} />
+                  {t.status}
+                </span>
+              </div>
+            ))}
+          </GroupedContainer>
         </div>
-      </section>
+      )}
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────
+// Section: Appearance
+// ────────────────────────────────────────────────────────────
+function AppearanceSection() {
+  const [themeMode, setThemeMode] = useState<ThemeMode>(getStoredTheme)
+
+  const [pipelineMode, setPipelineMode] = useState<PipelineMode>(() => {
+    const stored = localStorage.getItem('pipeline-mode')
+    if (stored === 'active-opps' || stored === 'active-contracts' || stored === 'combined-total') return stored
+    return 'active-opps'
+  })
+
+  const handleThemeChange = (mode: ThemeMode) => {
+    setThemeMode(mode)
+    applyTheme(mode)
+  }
+
+  const handlePipelineModeChange = (mode: PipelineMode) => {
+    setPipelineMode(mode)
+    localStorage.setItem('pipeline-mode', mode)
+  }
+
+  const themeOptions: { value: ThemeMode; label: string }[] = [
+    { value: 'system', label: 'System' },
+    { value: 'light', label: 'Light' },
+    { value: 'dark', label: 'Dark' },
+  ]
+
+  const pipelineOptions: { value: PipelineMode; label: string }[] = [
+    { value: 'active-opps', label: 'Active Opps' },
+    { value: 'active-contracts', label: 'Contracts' },
+    { value: 'combined-total', label: 'Combined' },
+  ]
+
+  return (
+    <div>
+      <SectionHeader>Display</SectionHeader>
+
+      <GroupedContainer>
+        <PrefRow label="Theme">
+          <SegmentedControl
+            options={themeOptions}
+            value={themeMode}
+            onChange={handleThemeChange}
+          />
+        </PrefRow>
+
+        <PrefRow label="Pipeline Widget" isLast>
+          <SegmentedControl
+            options={pipelineOptions}
+            value={pipelineMode}
+            onChange={handlePipelineModeChange}
+          />
+        </PrefRow>
+      </GroupedContainer>
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────
+// Section: About
+// ────────────────────────────────────────────────────────────
+function AboutSection() {
+  const [version, setVersion] = useState('1.0.0')
+
+  useEffect(() => {
+    window.electronAPI.app.getVersion().then((result) => {
+      if (result.success && result.data) setVersion(result.data)
+    }).catch(() => {
+      // Graceful fallback — keep '1.0.0'
+    })
+  }, [])
+
+  return (
+    <div>
+      <div className="py-6 flex flex-col items-start gap-1">
+        <p className="text-[24px] font-bold text-[var(--text-primary)] leading-tight">ILS CRM</p>
+        <p className="text-[13px] text-[var(--text-secondary)]">Version {version}</p>
+        <p className="text-[13px] text-[var(--text-tertiary)] mt-2">Built by Imagine Lab Studios</p>
+      </div>
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────
+// Main SettingsPage
+// ────────────────────────────────────────────────────────────
+export default function SettingsPage() {
+  const [activeSection, setActiveSection] = useState<SectionId>('general')
+
+  return (
+    <div className="flex flex-1 overflow-hidden">
+      {/* Left sidebar — 180px fixed */}
+      <div className="w-[180px] flex-shrink-0 bg-[var(--bg-sidebar)] border-r border-[var(--separator)] flex flex-col py-4 overflow-hidden">
+        <p className="px-4 pb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] select-none">
+          Settings
+        </p>
+        <nav className="flex flex-col gap-0.5">
+          {SECTIONS.map((section) => {
+            const isActive = activeSection === section.id
+            return (
+              <button
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                className="cursor-default"
+                style={{
+                  width: 'calc(100% - 16px)',
+                  margin: '0 8px',
+                  textAlign: 'left',
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  border: 'none',
+                  fontFamily: 'inherit',
+                  transition: 'background 150ms, color 150ms',
+                  background: isActive ? 'var(--color-accent)' : 'transparent',
+                  color: isActive ? 'var(--text-on-accent)' : 'var(--text-primary)',
+                }}
+                onMouseEnter={e => {
+                  if (!isActive) e.currentTarget.style.background = 'var(--bg-hover)'
+                }}
+                onMouseLeave={e => {
+                  if (!isActive) e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                {section.label}
+              </button>
+            )
+          })}
+        </nav>
+      </div>
+
+      {/* Right content — flex-1 */}
+      <div className="flex-1 overflow-y-auto px-8 py-6">
+        <div className="max-w-[600px]">
+          {activeSection === 'general' && <GeneralSection />}
+          {activeSection === 'sync' && <SyncSection />}
+          {activeSection === 'appearance' && <AppearanceSection />}
+          {activeSection === 'about' && <AboutSection />}
+        </div>
+      </div>
     </div>
   )
 }

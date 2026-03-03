@@ -1,28 +1,163 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import StatusBadge from '../shared/StatusBadge'
 import ConfirmDialog from '../shared/ConfirmDialog'
-import LinkedList from '../shared/LinkedList'
-import LoadingSpinner from '../shared/LoadingSpinner'
+import { Avatar } from '../shared/Avatar'
+import { EmptyState } from '../shared/EmptyState'
+import { ContactStats } from './ContactStats'
+import { interactionTypeIcon } from '../shared/icons/InteractionIcons'
+import { containsId } from '../../utils/linked-records'
+import useDarkMode from '../../hooks/useDarkMode'
 
-type Tab = 'overview' | 'opportunities' | 'tasks' | 'proposals' | 'interactions'
+interface Contact360Props {
+  /** When provided, use this ID instead of URL params (embedded split-pane mode) */
+  contactId?: string | null
+  /** Called after successful delete in embedded mode */
+  onDeleted?: () => void
+}
 
-export default function Contact360Page() {
-  const { id } = useParams()
+/* ── Section label above grouped containers ── */
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <div style={{
+      fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const,
+      letterSpacing: '0.06em', color: 'var(--text-secondary)',
+      margin: '16px 0 6px',
+    }}>
+      {children}
+    </div>
+  )
+}
+
+/* ── Apple-style form row inside a grouped container ── */
+function FormRow({
+  label,
+  children,
+  isLast = false,
+  isDropdown = false,
+  isLink = false,
+  onClick,
+}: {
+  label: string
+  children: React.ReactNode
+  isLast?: boolean
+  isDropdown?: boolean
+  isLink?: boolean
+  onClick?: () => void
+}) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '10px 14px', minHeight: 36,
+      borderBottom: isLast ? 'none' : '1px solid var(--separator)',
+    }}>
+      <span style={{
+        fontSize: 13, fontWeight: 400, color: 'var(--text-primary)',
+        flexShrink: 0, marginRight: 12,
+      }}>
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: 13, fontWeight: 400,
+          color: isLink ? '#007AFF' : 'var(--text-secondary)',
+          display: 'flex', alignItems: 'center', gap: 5,
+          cursor: 'default', borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
+          transition: 'background 150ms',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          minWidth: 0, textAlign: 'right' as const,
+          background: 'transparent', border: 'none', fontFamily: 'inherit',
+        }}
+        onClick={onClick}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+      >
+        {children}
+        {isDropdown && <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4, flexShrink: 0 }}>⌃</span>}
+      </span>
+    </div>
+  )
+}
+
+/* ── Linked record row (opportunities, interactions) ── */
+function LinkedRow({
+  icon,
+  iconBg,
+  iconColor,
+  title,
+  meta,
+  isLast = false,
+  onClick,
+}: {
+  icon: React.ReactNode
+  iconBg: string
+  iconColor: string
+  title: string
+  meta: string
+  isLast?: boolean
+  onClick?: () => void
+}) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '10px 14px', cursor: 'default',
+        borderBottom: isLast ? 'none' : '1px solid var(--separator)',
+        transition: 'background 150ms',
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+      onMouseLeave={e => e.currentTarget.style.background = ''}
+    >
+      <div style={{
+        width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 13, background: iconBg, color: iconColor,
+      }}>
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+          lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {title}
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
+          {meta}
+        </div>
+      </div>
+      <span style={{ fontSize: 14, color: 'var(--text-tertiary)', flexShrink: 0 }}>›</span>
+    </div>
+  )
+}
+
+export default function Contact360Page({ contactId, onDeleted }: Contact360Props = {}) {
+  const isDark = useDarkMode()
+  const { id: routeId } = useParams()
   const navigate = useNavigate()
+  const id = contactId ?? routeId
+  const isEmbedded = contactId !== undefined
+
   const [contact, setContact] = useState<Record<string, unknown> | null>(null)
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [linkedData, setLinkedData] = useState<Record<string, Record<string, unknown>[]>>({})
   const [specialtyNames, setSpecialtyNames] = useState<string[]>([])
   const [showDelete, setShowDelete] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!id) {
+      setContact(null)
+      setLinkedData({})
+      setSpecialtyNames([])
+      return
+    }
+
     async function load() {
-      if (!id) return
-      const result = await window.electronAPI.contacts.getById(id)
+      const result = await window.electronAPI.contacts.getById(id!)
       if (result.success && result.data) {
         setContact(result.data as Record<string, unknown>)
+      } else {
+        setContact(null)
       }
 
       // Load linked records for tabs + specialties
@@ -35,16 +170,6 @@ export default function Contact360Page() {
       ])
 
       const linked: Record<string, Record<string, unknown>[]> = {}
-
-      function containsId(idsJson: unknown, targetId: string): boolean {
-        if (!idsJson) return false
-        try {
-          const arr = JSON.parse(idsJson as string)
-          return Array.isArray(arr) && arr.includes(targetId)
-        } catch {
-          return false
-        }
-      }
 
       if (opps.success && opps.data) {
         linked.opportunities = (opps.data as Record<string, unknown>[]).filter(o =>
@@ -74,9 +199,9 @@ export default function Contact360Page() {
 
       // Resolve specialty names from IDs
       if (specialtiesRes.success && specialtiesRes.data && result.data) {
-        const contact = result.data as Record<string, unknown>
+        const contactData = result.data as Record<string, unknown>
         try {
-          const ids: string[] = JSON.parse((contact.specialties_ids as string) || '[]')
+          const ids: string[] = JSON.parse((contactData.specialties_ids as string) || '[]')
           const allSpecialties = specialtiesRes.data as Record<string, unknown>[]
           const names = allSpecialties
             .filter(s => ids.includes(s.id as string))
@@ -89,272 +214,311 @@ export default function Contact360Page() {
     load()
   }, [id])
 
-  if (!contact) return <LoadingSpinner />
+  // Empty state when no contact selected
+  if (!id || !contact) {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden" style={{ background: 'var(--bg-window)', borderLeft: '1px solid var(--separator)' }}>
+        <EmptyState title="Select a contact" subtitle="Choose a contact from the list to view details" />
+      </div>
+    )
+  }
 
-  const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: 'overview', label: 'Overview', count: 0 },
-    { key: 'opportunities', label: 'Opportunities', count: linkedData.opportunities?.length ?? 0 },
-    { key: 'tasks', label: 'Tasks', count: linkedData.tasks?.length ?? 0 },
-    { key: 'proposals', label: 'Proposals', count: linkedData.proposals?.length ?? 0 },
-    { key: 'interactions', label: 'Interactions', count: linkedData.interactions?.length ?? 0 },
+  const openOpps = linkedData.opportunities || []
+  const interactions = linkedData.interactions || []
+  const meetingCount = interactions.filter(i => i.type === 'Meeting').length
+
+  let daysSince: number | string = '—'
+  if (contact.last_contact_date) {
+    const lastDate = new Date(contact.last_contact_date as string)
+    if (!isNaN(lastDate.getTime())) {
+      const diffMs = Date.now() - lastDate.getTime()
+      daysSince = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    }
+  }
+
+  const stats = [
+    { label: 'Open Opps', value: openOpps.length },
+    { label: 'Meetings', value: meetingCount },
+    { label: 'Days Since', value: daysSince },
   ]
 
-  return (
-    <div className="space-y-6">
-      {/* Back button */}
-      <button
-        onClick={() => navigate('/contacts')}
-        className="flex items-center gap-1 text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
-      >
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m15 18-6-6 6-6" />
-        </svg>
-        Contacts
-      </button>
+  const fullName = (contact.contact_name as string) ||
+    [contact.first_name, contact.last_name].filter(Boolean).join(' ') ||
+    'Unnamed Contact'
 
-      {/* Header Card */}
-      <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-5">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-[var(--text-primary)]">
-              {contact.contact_name as string || 'Unnamed Contact'}
-            </h2>
-            <div className="flex items-center gap-3 mt-1.5 text-[var(--text-secondary)]">
-              {Boolean(contact.job_title) && <span>{contact.job_title as string}</span>}
-              {Boolean(contact.job_title) && Boolean(contact.company) && <span>at</span>}
-              {Boolean(contact.company) && (() => {
-                let companyId: string | null = null
-                try {
-                  const ids = JSON.parse(contact.companies_ids as string || '[]')
-                  if (Array.isArray(ids) && ids.length > 0) companyId = ids[0]
-                } catch { /* not linked */ }
-                return companyId ? (
-                  <button
-                    onClick={() => navigate(`/companies/${companyId}`)}
-                    className="text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
-                  >
-                    {contact.company as string}
-                  </button>
-                ) : (
-                  <span className="text-[var(--text-primary)]">{contact.company as string}</span>
-                )
-              })()}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <StatusBadge value={contact.categorization as string} />
-            <button
-              onClick={() => navigate(`/contacts/${id}/edit`)}
-              className="px-2.5 py-1 text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:bg-[var(--color-accent)]/20 transition-colors"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => setShowDelete(true)}
-              className="px-2.5 py-1 text-[var(--color-red)] bg-[var(--color-red)]/15 rounded-md hover:bg-[var(--color-red)]/20 transition-colors"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
+  /* ── Determine which Contact Info fields exist ── */
+  const contactInfoFields: { label: string; value: string; isLink?: boolean; onClick?: () => void }[] = []
+  if (contact.email) contactInfoFields.push({
+    label: 'Email', value: contact.email as string, isLink: true,
+    onClick: () => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`),
+  })
+  if (contact.mobile_phone) contactInfoFields.push({ label: 'Mobile', value: contact.mobile_phone as string })
+  if (contact.phone) contactInfoFields.push({ label: 'Phone', value: contact.phone as string })
+  if (contact.linkedin_url) contactInfoFields.push({
+    label: 'LinkedIn',
+    value: (contact.linkedin_url as string)
+      .replace('https://www.linkedin.com/in/', '')
+      .replace('https://linkedin.com/in/', ''),
+    isLink: true,
+    onClick: () => window.electronAPI.shell.openExternal(contact.linkedin_url as string),
+  })
 
-        <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-[var(--separator-opaque)]">
-          {Boolean(contact.email) && (
-            <div>
-              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Email</p>
-              <button
-                onClick={() => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`)}
-                className="text-base text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors text-left"
-              >
-                {contact.email as string}
-              </button>
-            </div>
-          )}
-          {Boolean(contact.phone) && (
-            <div>
-              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Phone</p>
-              <button
-                onClick={() => window.electronAPI.shell.openExternal(`tel:${contact.phone as string}`)}
-                className="text-base text-[var(--text-primary)] hover:text-[var(--color-accent)] transition-colors text-left"
-              >
-                {contact.phone as string}
-              </button>
-            </div>
-          )}
-          {Boolean(contact.linkedin_url) && (
-            <div>
-              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">LinkedIn</p>
-              <button
-                onClick={() => window.electronAPI.shell.openExternal(contact.linkedin_url as string)}
-                className="text-base text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors truncate block max-w-full text-left"
-              >
-                {contact.linkedin_url as string}
-              </button>
-            </div>
-          )}
-          {Boolean(contact.industry) && (
-            <div>
-              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Industry</p>
-              <p className="text-base text-[var(--text-primary)]">{contact.industry as string}</p>
-            </div>
-          )}
-          {Boolean(contact.lead_source) && (
-            <div>
-              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Lead Source</p>
-              <p className="text-base text-[var(--text-primary)]">{contact.lead_source as string}</p>
-            </div>
-          )}
-          {Boolean(contact.last_contact_date) && (
-            <div>
-              <p className="text-base text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Last Contact</p>
-              <p className="text-base text-[var(--text-primary)]">{contact.last_contact_date as string}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-[var(--separator-opaque)] flex gap-0">
-        {tabs.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-              activeTab === tab.key
-                ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
-                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
+  /* ── CRM Info fields ── */
+  const crmInfoFields: { label: string; value: React.ReactNode; isDropdown?: boolean }[] = []
+  if (contact.categorization) crmInfoFields.push({
+    label: 'Category',
+    value: (
+      <span style={{
+        fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
+        background: 'rgba(118,118,128,0.12)', color: 'var(--text-secondary)',
+      }}>
+        {contact.categorization as string}
+      </span>
+    ),
+    isDropdown: true,
+  })
+  if (contact.event_tags) crmInfoFields.push({
+    label: 'Event Tags',
+    value: contact.event_tags as string,
+    isDropdown: true,
+  })
+  if (specialtyNames.length > 0) crmInfoFields.push({
+    label: 'Specialty',
+    value: (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
+        {specialtyNames.map((name: string) => (
+          <span
+            key={name}
+            style={{
+              fontSize: 11, fontWeight: 600, padding: '2px 8px',
+              borderRadius: 4, background: 'rgba(0,122,255,0.22)',
+              color: isDark ? '#409CFF' : '#0055B3',
+            }}
           >
-            {tab.label}
-            {tab.count > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 bg-[var(--separator-opaque)] rounded-full text-[10px]">{tab.count}</span>
-            )}
-          </button>
+            {name}
+          </span>
         ))}
       </div>
+    ),
+  })
 
-      {/* Tab Content */}
-      {activeTab === 'overview' && (
-        <div className="grid grid-cols-2 gap-6">
-          {/* Address */}
-          {(Boolean(contact.address_line) || Boolean(contact.city)) && (
-            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-base font-medium text-[var(--text-secondary)] mb-2">Address</h3>
-              <p className="text-base text-[var(--text-primary)]">
-                {[contact.address_line, contact.city, contact.state, contact.country]
-                  .filter(Boolean)
-                  .join(', ')}
-              </p>
-            </div>
-          )}
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: 'var(--bg-window)', borderLeft: '1px solid var(--separator)' }}>
 
-          {/* Notes */}
-          {Boolean(contact.notes) && (
-            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-base font-medium text-[var(--text-secondary)] mb-2">Notes</h3>
-              <p className="text-base text-[var(--text-primary)] whitespace-pre-wrap">{contact.notes as string}</p>
-            </div>
-          )}
+      {/* Scrollable content */}
+      <div className="flex-1" style={{ overflowY: 'auto', padding: '24px 28px' }}>
 
-          {/* Rate Info */}
-          {Boolean(contact.rate_info) && (
-            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-base font-medium text-[var(--text-secondary)] mb-2">Rate Info</h3>
-              <p className="text-base text-[var(--text-primary)] whitespace-pre-wrap">{contact.rate_info as string}</p>
-            </div>
-          )}
-
-          {/* Specialties */}
-          {specialtyNames.length > 0 && (
-            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4 col-span-2">
-              <h3 className="text-base font-medium text-[var(--text-secondary)] mb-2">Specialties</h3>
-              <div className="flex flex-wrap gap-2">
-                {specialtyNames.map(name => (
-                  <span key={name} className="px-2.5 py-1 bg-[var(--separator-opaque)] rounded-full text-[var(--text-primary)]">
-                    {name}
-                  </span>
-                ))}
+        {/* ── 1. Hero section ── */}
+        <div style={{ padding: '0 0 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <Avatar name={fullName} size={50} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2, letterSpacing: '-0.3px' }}>
+                {fullName}
               </div>
+              {(Boolean(contact.job_title) || Boolean(contact.company)) && (
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
+                  {contact.job_title as string}
+                  {Boolean(contact.job_title) && Boolean(contact.company) ? ' · ' : ''}
+                  {contact.company as string}
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
-          {/* Partner Info */}
-          {(Boolean(contact.partner_status) || Boolean(contact.partner_type)) && (
-            <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-base font-medium text-[var(--text-secondary)] mb-2">Partner/Vendor</h3>
-              <div className="space-y-1">
-                {Boolean(contact.partner_type) && <p className="text-[var(--text-primary)]">Type: {contact.partner_type as string}</p>}
-                {Boolean(contact.partner_status) && <p className="text-[var(--text-primary)]">Status: {contact.partner_status as string}</p>}
-                {Boolean(contact.quality_rating) && <p className="text-[var(--text-primary)]">Quality: {contact.quality_rating as string}</p>}
-                {Boolean(contact.reliability_rating) && <p className="text-[var(--text-primary)]">Reliability: {contact.reliability_rating as string}</p>}
-              </div>
-            </div>
-          )}
+          {/* Action buttons: Email, Call, LinkedIn — Apple Contacts tinted button style */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+            {Boolean(contact.email) && (
+              <button
+                onClick={() => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`)}
+                style={{
+                  fontSize: 12, fontWeight: 500, color: '#007AFF',
+                  background: 'rgba(0,122,255,0.10)', border: 'none', cursor: 'default',
+                  borderRadius: 8, padding: '6px 14px', fontFamily: 'inherit',
+                  transition: 'background 150ms',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.18)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,122,255,0.10)'}
+              >
+                Email
+              </button>
+            )}
+            {Boolean(contact.phone || contact.mobile_phone) && (
+              <button
+                onClick={() => {
+                  const num = (contact.mobile_phone || contact.phone) as string
+                  window.electronAPI.shell.openExternal(`tel:${num}`)
+                }}
+                style={{
+                  fontSize: 12, fontWeight: 500, color: '#34C759',
+                  background: 'rgba(52,199,89,0.10)', border: 'none', cursor: 'default',
+                  borderRadius: 8, padding: '6px 14px', fontFamily: 'inherit',
+                  transition: 'background 150ms',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(52,199,89,0.18)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(52,199,89,0.10)'}
+              >
+                Call
+              </button>
+            )}
+            {Boolean(contact.linkedin_url) && (
+              <button
+                onClick={() => window.electronAPI.shell.openExternal(contact.linkedin_url as string)}
+                style={{
+                  fontSize: 12, fontWeight: 500, color: '#0A66C2',
+                  background: 'rgba(10,102,194,0.10)', border: 'none', cursor: 'default',
+                  borderRadius: 8, padding: '6px 14px', fontFamily: 'inherit',
+                  transition: 'background 150ms',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(10,102,194,0.18)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(10,102,194,0.10)'}
+              >
+                LinkedIn
+              </button>
+            )}
+          </div>
         </div>
-      )}
 
-      {activeTab === 'opportunities' && (
-        <LinkedList
-          items={linkedData.opportunities || []}
-          nameKey="opportunity_name"
-          statusKey="sales_stage"
-          extraKey="deal_value"
-          extraLabel="Deal Value"
-          extraRender={(v) => v ? `$${Number(v).toLocaleString()}` : null}
-          onItemClick={(item) => navigate(`/pipeline/${item.id}/edit`)}
-          emptyMessage="No linked opportunities"
-        />
-      )}
+        {/* ── 2. Stats strip ── */}
+        <ContactStats stats={stats} />
 
-      {activeTab === 'tasks' && (
-        <LinkedList
-          items={linkedData.tasks || []}
-          nameKey="task"
-          statusKey="status"
-          extraKey="due_date"
-          extraLabel="Due"
-          onItemClick={(item) => navigate(`/tasks/${item.id}/edit`)}
-          emptyMessage="No linked tasks"
-        />
-      )}
+        {/* ── 3. Contact Info — grouped form rows ── */}
+        {contactInfoFields.length > 0 && (
+          <>
+            <SectionLabel>Contact Info</SectionLabel>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+              {contactInfoFields.map((field, idx) => (
+                <FormRow
+                  key={field.label}
+                  label={field.label}
+                  isLast={idx === contactInfoFields.length - 1}
+                  isLink={field.isLink}
+                  onClick={field.onClick}
+                >
+                  {field.value}
+                </FormRow>
+              ))}
+            </div>
+          </>
+        )}
 
-      {activeTab === 'proposals' && (
-        <LinkedList
-          items={linkedData.proposals || []}
-          nameKey="proposal_name"
-          statusKey="status"
-          onItemClick={(item) => navigate(`/proposals/${item.id}/edit`)}
-          emptyMessage="No linked proposals"
-        />
-      )}
+        {/* ── 4. CRM Info — grouped form rows ── */}
+        {crmInfoFields.length > 0 && (
+          <>
+            <SectionLabel>CRM Info</SectionLabel>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+              {crmInfoFields.map((field, idx) => (
+                <FormRow
+                  key={field.label}
+                  label={field.label}
+                  isLast={idx === crmInfoFields.length - 1}
+                  isDropdown={field.isDropdown}
+                >
+                  {field.value}
+                </FormRow>
+              ))}
+            </div>
+          </>
+        )}
 
-      {activeTab === 'interactions' && (
-        <LinkedList
-          items={linkedData.interactions || []}
-          nameKey="subject"
-          statusKey="type"
-          extraKey="date"
-          extraLabel="Date"
-          onItemClick={(item) => navigate(`/interactions/${item.id}/edit`)}
-          emptyMessage="No interactions logged yet"
-        />
-      )}
+        {/* ── 5. Opportunities — linked records ── */}
+        <SectionLabel>Opportunities</SectionLabel>
+        {openOpps.length === 0 ? (
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0', marginBottom: 16 }}>
+            No open opportunities
+          </div>
+        ) : (
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+            {openOpps.slice(0, 5).map((opp, idx) => (
+              <LinkedRow
+                key={opp.id as string}
+                icon={
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                  </svg>
+                }
+                iconBg="rgba(175,82,222,0.22)"
+                iconColor="#AF52DE"
+                title={(opp.opportunity_name as string) || '—'}
+                meta={`${opp.deal_value ? `$${Number(opp.deal_value).toLocaleString()}` : '—'}${Boolean(opp.sales_stage) ? ` · ${opp.sales_stage as string}` : ''}`}
+                isLast={idx === Math.min(openOpps.length, 5) - 1}
+                onClick={() => navigate(`/pipeline/${opp.id as string}/edit`)}
+              />
+            ))}
+          </div>
+        )}
 
+        {/* ── 6. Interactions — linked records ── */}
+        <SectionLabel>Interactions</SectionLabel>
+        {interactions.length === 0 ? (
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0', marginBottom: 16 }}>
+            No interactions yet
+          </div>
+        ) : (
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+            {interactions.slice(0, 5).map((interaction, idx) => (
+              <LinkedRow
+                key={interaction.id as string}
+                icon={interactionTypeIcon(interaction.type as string)}
+                iconBg="rgba(118,118,128,0.22)"
+                iconColor="var(--text-secondary)"
+                title={(interaction.type as string) || (interaction.subject as string) || 'Interaction'}
+                meta={`${interaction.date as string || '—'}${Boolean(interaction.summary) ? ` · ${(interaction.summary as string).slice(0, 50)}` : ''}`}
+                isLast={idx === Math.min(interactions.length, 5) - 1}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* ── 7. Delete button — destructive, at bottom ── */}
+        <div style={{ marginTop: 8, marginBottom: 24 }}>
+          <button
+            onClick={() => setShowDelete(true)}
+            style={{
+              fontSize: 13, fontWeight: 400, padding: '8px 0',
+              color: 'var(--color-red)', background: 'none',
+              border: 'none', cursor: 'default', fontFamily: 'inherit',
+              transition: 'opacity 150ms',
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          >
+            Delete Contact
+          </button>
+        </div>
+
+      </div>
+
+      {/* Error banner */}
       {deleteError && (
-        <div className="flex items-center justify-between bg-[var(--color-red)]/15 border border-[var(--color-red)]/30 rounded-lg px-4 py-3 text-[var(--color-red)]">
-          <span>{deleteError}</span>
-          <button onClick={() => setDeleteError(null)} className="ml-4 hover:text-[var(--text-primary)] transition-colors">✕</button>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.3)',
+          padding: '10px 16px', color: 'var(--color-red)',
+        }}>
+          <span style={{ fontSize: 13 }}>{deleteError}</span>
+          <button
+            onClick={() => setDeleteError(null)}
+            style={{ marginLeft: 16, color: 'inherit', background: 'none', border: 'none', cursor: 'default', fontFamily: 'inherit' }}
+          >
+            ✕
+          </button>
         </div>
       )}
 
       <ConfirmDialog
         open={showDelete}
         title="Delete Contact"
-        message={`Are you sure you want to delete "${contact.contact_name as string}"? This cannot be undone.`}
+        message={`Are you sure you want to delete "${fullName}"? This cannot be undone.`}
         onConfirm={async () => {
           const result = await window.electronAPI.contacts.delete(id!)
           if (result.success) {
-            navigate('/contacts')
+            if (isEmbedded && onDeleted) {
+              onDeleted()
+            } else {
+              navigate('/contacts')
+            }
           } else {
             setShowDelete(false)
             setDeleteError(result.error || 'Delete failed — please try again')

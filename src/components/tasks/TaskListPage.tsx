@@ -52,7 +52,7 @@ export default function TaskListPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
       <FilterTabs
         tabs={STATUS_TABS}
         activeTab={activeTab}
