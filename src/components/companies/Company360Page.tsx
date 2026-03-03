@@ -176,7 +176,7 @@ export default function Company360Page() {
         <div className="grid grid-cols-2 gap-6">
           {(Boolean(company.address) || Boolean(company.city)) && (
             <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Address</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">Address</h3>
               <p className="text-[13px] text-[var(--text-primary)]">
                 {[company.address, company.city, company.state_region, company.country]
                   .filter(Boolean)
@@ -187,14 +187,14 @@ export default function Company360Page() {
 
           {Boolean(company.notes) && (
             <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Notes</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">Notes</h3>
               <p className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap">{company.notes as string}</p>
             </div>
           )}
 
           {Boolean(company.company_description) && (
             <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-              <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2">Description</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">Description</h3>
               <p className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap">{company.company_description as string}</p>
             </div>
           )}

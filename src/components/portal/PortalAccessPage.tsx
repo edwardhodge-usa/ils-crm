@@ -187,7 +187,7 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
 
         {/* Details */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
             Details
           </div>
           <div className="space-y-1.5">
@@ -209,7 +209,7 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
         {/* Recent portal log entries */}
         {relatedLogs.length > 0 && (
           <div className="px-4 py-3">
-            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
               Recent Visits
             </div>
             {relatedLogs.slice(0, 5).map((log, i) => {

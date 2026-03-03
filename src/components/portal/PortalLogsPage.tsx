@@ -137,13 +137,13 @@ export default function PortalLogsPage() {
 
       {/* Column headers */}
       <div className="flex items-center gap-3 px-4 py-1.5 border-b border-[var(--separator)] bg-[var(--bg-secondary)] flex-shrink-0">
-        <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] w-[140px] flex-shrink-0">
+        <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] w-[140px] flex-shrink-0">
           Time
         </span>
-        <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] w-[140px] flex-shrink-0">
+        <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] w-[140px] flex-shrink-0">
           Client
         </span>
-        <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] flex-1">
+        <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] flex-1">
           Page
         </span>
       </div>

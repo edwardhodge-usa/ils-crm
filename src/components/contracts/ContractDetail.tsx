@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '../shared/EmptyState'
 import StatusBadge from '../shared/StatusBadge'
 import { ContactStats } from '../contacts/ContactStats'
+import { firstId } from '../../utils/linked-records'
 
 interface ContractDetailProps {
   contractId: string | null
@@ -27,16 +28,6 @@ export function ContractDetail({ contractId, contractData }: ContractDetailProps
       setContact(null)
       setCompany(null)
       setOpportunity(null)
-
-      function firstId(idsJson: unknown): string | null {
-        if (!idsJson) return null
-        try {
-          const arr = JSON.parse(idsJson as string)
-          return Array.isArray(arr) && arr.length > 0 ? (arr[0] as string) : null
-        } catch {
-          return null
-        }
-      }
 
       const contactId = firstId(contractData!.contact_ids) ?? firstId(contractData!.contacts_ids)
       const companyId = firstId(contractData!.company_ids) ?? firstId(contractData!.companies_ids)
@@ -117,7 +108,7 @@ export function ContractDetail({ contractId, contractData }: ContractDetailProps
 
         {/* 3. Linked Contact + Company + Opportunity */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
             Related
           </div>
           {Boolean(contactName) && (
@@ -161,7 +152,7 @@ export function ContractDetail({ contractId, contractData }: ContractDetailProps
         {/* 4. Notes */}
         {Boolean(notes) && (
           <div className="px-4 py-3">
-            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
               Notes
             </div>
             <div className="text-[12px] text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">

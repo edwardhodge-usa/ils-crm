@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ConfirmDialog from '../shared/ConfirmDialog'
 import { Avatar } from '../shared/Avatar'
-import { StageBadge } from '../shared/StageBadge'
 import { EmptyState } from '../shared/EmptyState'
 import { ContactStats } from './ContactStats'
-import type { Stage } from '../shared/StageBadge'
+import { PencilIcon } from '../shared/icons/PencilIcon'
+import { interactionTypeIcon } from '../shared/icons/InteractionIcons'
+import { containsId } from '../../utils/linked-records'
 
 interface Contact360Props {
   /** When provided, use this ID instead of URL params (embedded split-pane mode) */
@@ -52,16 +53,6 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
       ])
 
       const linked: Record<string, Record<string, unknown>[]> = {}
-
-      function containsId(idsJson: unknown, targetId: string): boolean {
-        if (!idsJson) return false
-        try {
-          const arr = JSON.parse(idsJson as string)
-          return Array.isArray(arr) && arr.includes(targetId)
-        } catch {
-          return false
-        }
-      }
 
       if (opps.success && opps.data) {
         linked.opportunities = (opps.data as Record<string, unknown>[]).filter(o =>
@@ -161,20 +152,24 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button
             onClick={() => navigate(`/contacts/${id}/edit`)}
+            title="Edit contact"
             style={{
-              padding: '4px 10px', fontSize: 12, fontWeight: 500,
-              color: 'var(--color-accent)', background: 'var(--color-accent-translucent)',
-              borderRadius: 6, border: 'none', cursor: 'default', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 28, height: 28, borderRadius: 6, border: 'none', cursor: 'default',
+              background: 'none', color: 'var(--text-tertiary)', transition: 'color 150ms',
             }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
           >
-            Edit
+            <PencilIcon />
           </button>
           <button
             onClick={() => setShowDelete(true)}
             style={{
-              padding: '4px 10px', fontSize: 12, fontWeight: 500,
-              color: 'var(--color-red)', background: 'rgba(255,59,48,0.15)',
-              borderRadius: 6, border: 'none', cursor: 'default', fontFamily: 'inherit',
+              fontSize: 12, fontWeight: 500, padding: '4px 12px', borderRadius: 8,
+              color: 'var(--color-red)', background: 'none',
+              border: 'none', cursor: 'default', fontFamily: 'inherit',
+              transition: 'background 150ms',
             }}
           >
             Delete
@@ -183,10 +178,10 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" style={{ padding: '0 18px' }}>
 
         {/* 1. Hero block */}
-        <div style={{ padding: '18px 18px 14px', borderBottom: '1px solid var(--separator)' }}>
+        <div style={{ padding: '18px 0 14px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 13 }}>
             <Avatar name={fullName} size={50} />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -206,9 +201,9 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
                     <span
                       key={name}
                       style={{
-                        fontSize: 11, fontWeight: 600, padding: '2px 8px',
+                        fontSize: 11, fontWeight: 500, padding: '2px 8px',
                         borderRadius: 4, background: 'var(--color-accent-translucent)',
-                        color: 'var(--color-accent)',
+                        color: 'var(--color-accent)', opacity: 0.85,
                       }}
                     >
                       {name}
@@ -230,11 +225,12 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
                 key={action.label}
                 onClick={action.onClick}
                 style={{
-                  flex: 1, padding: '6px 12px', fontSize: 12, fontWeight: 600,
-                  borderRadius: 6, border: 'none', cursor: 'default', fontFamily: 'inherit',
-                  whiteSpace: 'nowrap', transition: 'opacity 150ms',
+                  flex: 1, padding: '6px 12px', fontSize: 12, fontWeight: 500,
+                  borderRadius: 8, border: 'none', cursor: 'default', fontFamily: 'inherit',
+                  whiteSpace: 'nowrap', transition: 'background 150ms',
                   background: action.primary ? 'var(--color-accent)' : 'var(--bg-secondary)',
                   color: action.primary ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+                  minHeight: 24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
                 {action.label}
@@ -246,132 +242,164 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
         {/* 2. Stats strip */}
         <ContactStats stats={stats} />
 
-        {/* 3. Contact Info section */}
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--separator)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', marginBottom: 8 }}>
+        {/* 3. Contact Info — Apple form rows */}
+        <div style={{ marginTop: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
             Contact Info
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
             {Boolean(contact.email) && (
-              <button
-                onClick={() => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`)}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'default', fontFamily: 'inherit', textAlign: 'left' }}
-              >
-                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12 }}>✉</span>
-                {contact.email as string}
-              </button>
-            )}
-            {Boolean(contact.mobile_phone) && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-primary)' }}>
-                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12 }}>📱</span>
-                {contact.mobile_phone as string}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Email</span>
+                <button
+                  onClick={() => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`)}
+                  style={{ fontSize: 13, color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'default', fontFamily: 'inherit', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}
+                >
+                  {contact.email as string}
+                </button>
               </div>
             )}
-            {Boolean(contact.phone) && !contact.mobile_phone && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-primary)' }}>
-                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12 }}>📞</span>
-                {contact.phone as string}
+            {Boolean(contact.mobile_phone) && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Mobile</span>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{contact.mobile_phone as string}</span>
+              </div>
+            )}
+            {Boolean(contact.phone) && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Phone</span>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{contact.phone as string}</span>
               </div>
             )}
             {Boolean(contact.linkedin_url) && (
-              <button
-                onClick={() => window.electronAPI.shell.openExternal(contact.linkedin_url as string)}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'default', fontFamily: 'inherit', textAlign: 'left' }}
-              >
-                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12, fontWeight: 700 }}>in</span>
-                {(contact.linkedin_url as string)
-                  .replace('https://www.linkedin.com/in/', '')
-                  .replace('https://linkedin.com/in/', '')}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>LinkedIn</span>
+                <button
+                  onClick={() => window.electronAPI.shell.openExternal(contact.linkedin_url as string)}
+                  style={{ fontSize: 13, color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'default', fontFamily: 'inherit', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}
+                >
+                  {(contact.linkedin_url as string)
+                    .replace('https://www.linkedin.com/in/', '')
+                    .replace('https://linkedin.com/in/', '')}
+                </button>
+              </div>
             )}
             {Boolean(contact.categorization) && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12 }}>◈</span>
-                <span style={{
-                  fontSize: 11, fontWeight: 600, padding: '2px 8px',
-                  borderRadius: 4, background: 'var(--bg-secondary)', color: 'var(--text-secondary)',
-                }}>
-                  {contact.categorization as string}
-                </span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Category</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{
+                    fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
+                    background: 'rgba(118,118,128,0.12)', color: 'var(--text-secondary)',
+                  }}>
+                    {contact.categorization as string}
+                  </span>
+                  <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4 }}>⌃</span>
+                </div>
               </div>
             )}
             {Boolean(contact.event_tags) && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                <span style={{ color: 'var(--text-tertiary)', width: 18, textAlign: 'center', fontSize: 12 }}>📍</span>
-                {contact.event_tags as string}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', minHeight: 36 }}>
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Event Tags</span>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{contact.event_tags as string}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* 4. Open Opportunities */}
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--separator)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', marginBottom: 8 }}>
+        {/* 4. Open Opportunities — linked records container */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
             Open Opportunities
           </div>
           {openOpps.length === 0 ? (
-            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No open opportunities</div>
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0' }}>No open opportunities</div>
           ) : (
-            openOpps.slice(0, 3).map(opp => (
-              <div
-                key={opp.id as string}
-                onClick={() => navigate(`/pipeline/${opp.id as string}/edit`)}
-                style={{
-                  padding: '10px 12px', borderRadius: 8, marginBottom: 6, cursor: 'default',
-                  background: 'var(--bg-tertiary)', border: '1px solid var(--separator)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {(opp.opportunity_name as string) || '—'}
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {openOpps.slice(0, 3).map((opp, idx) => (
+                <div
+                  key={opp.id as string}
+                  onClick={() => navigate(`/pipeline/${opp.id as string}/edit`)}
+                  className="cursor-default"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 14px',
+                    borderBottom: idx < Math.min(openOpps.length, 3) - 1 ? '1px solid var(--separator)' : undefined,
+                    transition: 'background 150ms',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}
+                >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, background: 'rgba(191,90,242,0.10)', color: '#BF5AF2',
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></svg>
                   </div>
-                  {Boolean(opp.sales_stage) && <StageBadge stage={opp.sales_stage as Stage} />}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {(opp.opportunity_name as string) || '—'}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
+                      {opp.deal_value ? `$${Number(opp.deal_value).toLocaleString()}` : '—'}
+                      {Boolean(opp.sales_stage) && ` · ${opp.sales_stage as string}`}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>›</span>
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginTop: 3 }}>
-                  {opp.deal_value ? `$${Number(opp.deal_value).toLocaleString()}` : '—'}
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
 
-        {/* 5. Recent Interactions */}
-        <div style={{ padding: '14px 18px' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', marginBottom: 8 }}>
+        {/* 5. Recent Interactions — linked records container */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
             Recent Interactions
           </div>
           {interactions.length === 0 ? (
-            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No interactions yet</div>
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0' }}>No interactions yet</div>
           ) : (
-            interactions.slice(0, 3).map(interaction => (
-              <div
-                key={interaction.id as string}
-                style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--separator)' }}
-              >
-                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', width: 20, textAlign: 'center', flexShrink: 0 }}>
-                  {interaction.type === 'Call' ? '📞' :
-                   interaction.type === 'Meeting' ? '👥' :
-                   interaction.type === 'Email' ? '✉' : '💬'}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
-                      {(interaction.type as string) || (interaction.subject as string) || 'Interaction'}
-                    </span>
-                    <span style={{ fontSize: 12, color: 'var(--text-tertiary)', flexShrink: 0 }}>
-                      {interaction.date as string}
-                    </span>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {interactions.slice(0, 3).map((interaction, idx) => (
+                <div
+                  key={interaction.id as string}
+                  className="cursor-default"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 14px',
+                    borderBottom: idx < Math.min(interactions.length, 3) - 1 ? '1px solid var(--separator)' : undefined,
+                    transition: 'background 150ms',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}
+                >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--text-secondary)', background: 'rgba(118,118,128,0.10)',
+                  }}>
+                    {interactionTypeIcon(interaction.type as string)}
                   </div>
-                  {Boolean(interaction.summary) && (
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {interaction.summary as string}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {(interaction.type as string) || (interaction.subject as string) || 'Interaction'}
                     </div>
-                  )}
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
+                      {interaction.date as string}
+                      {Boolean(interaction.summary) && ` · ${(interaction.summary as string).slice(0, 50)}`}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>›</span>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
+
+        {/* Bottom spacer */}
+        <div style={{ height: 16 }} />
 
       </div>
 

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '../shared/EmptyState'
 import StatusBadge from '../shared/StatusBadge'
 import { ContactStats } from '../contacts/ContactStats'
+import { PencilIcon } from '../shared/icons/PencilIcon'
+import { containsId } from '../../utils/linked-records'
 
 interface ProjectDetailProps {
   projectId: string | null
@@ -35,16 +37,6 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
 
       if (projectRes.success && projectRes.data) {
         setProject(projectRes.data as Record<string, unknown>)
-      }
-
-      function containsId(idsJson: unknown, targetId: string): boolean {
-        if (!idsJson) return false
-        try {
-          const arr = JSON.parse(idsJson as string)
-          return Array.isArray(arr) && arr.includes(targetId)
-        } catch {
-          return false
-        }
       }
 
       if (contactsRes.success && contactsRes.data) {
@@ -107,9 +99,10 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         </div>
         <button
           onClick={() => navigate(`/projects/${projectId}/edit`)}
-          className="px-2.5 py-1 text-[12px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:opacity-80 transition-opacity cursor-default"
+          title="Edit project"
+          className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors cursor-default"
         >
-          Edit
+          <PencilIcon />
         </button>
       </div>
 
@@ -134,7 +127,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
 
         {/* 3. Key dates */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
             Timeline
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -155,7 +148,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
 
         {/* 4. Linked Contacts */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
             Contacts
           </div>
           {contacts.length === 0 ? (
@@ -186,7 +179,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
 
         {/* 5. Linked Opportunities */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
             Opportunities
           </div>
           {opps.length === 0 ? (
@@ -214,7 +207,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         {/* 6. Notes */}
         {(Boolean(description) || Boolean(keyMilestones)) && (
           <div className="px-4 py-3">
-            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
               Notes
             </div>
             {Boolean(description) && (

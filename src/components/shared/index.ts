@@ -1,8 +1,4 @@
-export { Badge } from './Badge'
-export type { BadgeVariant } from './Badge'
 export { StageBadge } from './StageBadge'
 export type { Stage } from './StageBadge'
-export { RatingDots } from './RatingDots'
-export { Avatar } from './Avatar'
 export { EmptyState } from './EmptyState'
 export { Sheet } from './Sheet'

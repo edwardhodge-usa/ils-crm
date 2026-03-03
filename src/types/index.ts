@@ -221,13 +221,6 @@ export interface ImportedContact {
   related_crm_contact_ids: string | null
 }
 
-export interface Specialty {
-  id: string
-  specialty: string | null
-  imported_contacts_ids: string | null
-  contacts_ids: string | null
-}
-
 export interface PortalAccess {
   id: string
   name: string | null
@@ -304,34 +297,3 @@ export interface SyncStatus {
   error: string | null
 }
 
-// ─── UI Types ────────────────────────────────────────────────
-
-export type FieldType =
-  | 'text'
-  | 'textarea'
-  | 'richtext'
-  | 'email'
-  | 'phone'
-  | 'url'
-  | 'number'
-  | 'currency'
-  | 'date'
-  | 'datetime'
-  | 'singleSelect'
-  | 'multiSelect'
-  | 'checkbox'
-  | 'linkedRecord'
-  | 'readonly'
-  | 'attachment'
-  | 'collaborator'
-
-export interface FieldDef {
-  key: string
-  label: string
-  type: FieldType
-  airtableFieldId: string
-  options?: string[]
-  linkedTable?: string
-  readOnly?: boolean
-  section?: string
-}

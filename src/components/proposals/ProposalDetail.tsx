@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '../shared/EmptyState'
 import StatusBadge from '../shared/StatusBadge'
 import { ContactStats } from '../contacts/ContactStats'
+import { PencilIcon } from '../shared/icons/PencilIcon'
+import { firstId } from '../../utils/linked-records'
 
 interface ProposalDetailProps {
   proposalId: string | null
@@ -31,16 +33,6 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
       if (proposalRes.success && proposalRes.data) {
         const p = proposalRes.data as Record<string, unknown>
         setProposal(p)
-
-        function firstId(idsJson: unknown): string | null {
-          if (!idsJson) return null
-          try {
-            const arr = JSON.parse(idsJson as string)
-            return Array.isArray(arr) && arr.length > 0 ? (arr[0] as string) : null
-          } catch {
-            return null
-          }
-        }
 
         const contactId = firstId(p.contact_ids) ?? firstId(p.contacts_ids)
         const companyId = firstId(p.company_ids) ?? firstId(p.companies_ids)
@@ -108,9 +100,10 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
         </div>
         <button
           onClick={() => navigate(`/proposals/${proposalId}/edit`)}
-          className="px-2.5 py-1 text-[12px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:opacity-80 transition-opacity cursor-default"
+          title="Edit proposal"
+          className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors cursor-default"
         >
-          Edit
+          <PencilIcon />
         </button>
       </div>
 
@@ -132,7 +125,7 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
 
         {/* 3. Linked Contact + Company */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
             Related
           </div>
           {Boolean(contactName) && (
@@ -165,7 +158,7 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
         {/* 4. Notes */}
         {Boolean(notes) && (
           <div className="px-4 py-3">
-            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
               Notes
             </div>
             <div className="text-[12px] text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">

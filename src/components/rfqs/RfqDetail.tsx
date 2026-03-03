@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '../shared/EmptyState'
 import StatusBadge from '../shared/StatusBadge'
 import { ContactStats } from '../contacts/ContactStats'
+import { firstId } from '../../utils/linked-records'
 
 interface RfqDetailProps {
   rfqId: string | null
@@ -24,16 +25,6 @@ export function RfqDetail({ rfqId, rfqData }: RfqDetailProps) {
     async function load() {
       setContact(null)
       setCompany(null)
-
-      function firstId(idsJson: unknown): string | null {
-        if (!idsJson) return null
-        try {
-          const arr = JSON.parse(idsJson as string)
-          return Array.isArray(arr) && arr.length > 0 ? (arr[0] as string) : null
-        } catch {
-          return null
-        }
-      }
 
       const contactId = firstId(rfqData!.contact_ids) ?? firstId(rfqData!.contacts_ids)
       const companyId = firstId(rfqData!.company_ids) ?? firstId(rfqData!.companies_ids)
@@ -108,7 +99,7 @@ export function RfqDetail({ rfqId, rfqData }: RfqDetailProps) {
 
         {/* 3. Linked Contact + Company */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
             Related
           </div>
           {Boolean(contactName) && (
@@ -141,7 +132,7 @@ export function RfqDetail({ rfqId, rfqData }: RfqDetailProps) {
         {/* 4. Notes */}
         {Boolean(notes) && (
           <div className="px-4 py-3">
-            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
               Notes
             </div>
             <div className="text-[12px] text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">

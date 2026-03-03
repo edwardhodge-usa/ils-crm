@@ -1,14 +1,14 @@
 import type { ContactListItem } from '@/types'
 
 const AVATAR_COLORS = [
-  { bg: 'rgba(52,211,153,0.18)', fg: '#34D399' },
-  { bg: 'rgba(99,102,241,0.18)', fg: '#818CF8' },
-  { bg: 'rgba(251,146,60,0.18)', fg: '#FB923C' },
-  { bg: 'rgba(244,63,94,0.18)', fg: '#F43F5E' },
-  { bg: 'rgba(56,189,248,0.18)', fg: '#38BDF8' },
-  { bg: 'rgba(168,85,247,0.18)', fg: '#A855F7' },
-  { bg: 'rgba(245,158,11,0.18)', fg: '#F59E0B' },
-  { bg: 'rgba(16,185,129,0.18)', fg: '#10B981' },
+  { bg: 'rgba(52,211,153,0.12)', fg: '#34D399' },
+  { bg: 'rgba(99,102,241,0.12)', fg: '#818CF8' },
+  { bg: 'rgba(251,146,60,0.12)', fg: '#FB923C' },
+  { bg: 'rgba(244,63,94,0.12)', fg: '#F43F5E' },
+  { bg: 'rgba(56,189,248,0.12)', fg: '#38BDF8' },
+  { bg: 'rgba(168,85,247,0.12)', fg: '#A855F7' },
+  { bg: 'rgba(245,158,11,0.12)', fg: '#F59E0B' },
+  { bg: 'rgba(16,185,129,0.12)', fg: '#10B981' },
 ]
 
 function avatarColor(name: string) {
@@ -100,7 +100,7 @@ export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
             {specialtyNames[0] && (
               <span style={{
-                fontSize: 10, fontWeight: 600, padding: '1px 6px',
+                fontSize: 10, fontWeight: 500, padding: '1px 6px',
                 borderRadius: 4, flexShrink: 0,
                 background: 'var(--color-accent-translucent)', color: 'var(--color-accent)',
               }}>
@@ -109,11 +109,11 @@ export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
             )}
             {daysSinceContact !== null && daysSinceContact !== undefined && (
               <span style={{
-                fontSize: 10, fontWeight: 600, padding: '2px 6px',
+                fontSize: 10, fontWeight: 500, padding: '2px 6px',
                 borderRadius: 4, flexShrink: 0, marginLeft: 'auto',
                 background: daysColor === 'var(--color-accent)'
                   ? 'var(--color-accent-translucent)'
-                  : daysColor === 'var(--color-orange)' ? 'rgba(255,159,10,0.15)' : 'rgba(255,59,48,0.15)',
+                  : daysColor === 'var(--color-orange)' ? 'rgba(255,159,10,0.10)' : 'rgba(255,59,48,0.10)',
                 color: daysColor,
                 whiteSpace: 'nowrap',
               }}>

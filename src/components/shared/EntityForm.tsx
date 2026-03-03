@@ -117,15 +117,19 @@ export default function EntityForm({
       {/* Sections */}
       {Array.from(sections.entries()).map(([sectionName, sectionFields]) => (
         <div key={sectionName} className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--separator-opaque)] p-4">
-          <h3 className="text-[13px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-4">{sectionName}</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {sectionFields.map(field => (
-              <FieldRenderer
-                key={field.key}
-                field={field}
-                value={values[field.key]}
-                onChange={(v) => setValue(field.key, v)}
-              />
+          <h3 className="text-[13px] font-medium text-[var(--text-secondary)] mb-4">{sectionName}</h3>
+          <div className="flex flex-col">
+            {sectionFields.map((field, idx) => (
+              <div key={field.key}>
+                <FieldRenderer
+                  field={field}
+                  value={values[field.key]}
+                  onChange={(v) => setValue(field.key, v)}
+                />
+                {idx < sectionFields.length - 1 && (
+                  <div className="border-b border-[var(--separator)] my-0" />
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -143,24 +147,23 @@ function FieldRenderer({
   value: unknown
   onChange: (v: unknown) => void
 }) {
-  const baseInputClass =
-    'w-full bg-[var(--bg-window)] border border-[var(--separator-opaque)] rounded-md px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none focus:border-[var(--color-accent)] transition-colors'
+  const labelClass = 'text-[13px] font-normal text-[var(--text-primary)] flex-shrink-0'
 
   if (field.type === 'readonly') {
     return (
-      <div className={field.type === 'readonly' ? 'col-span-2' : ''}>
-        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
-        <p className="text-[13px] text-[var(--text-secondary)] px-3 py-2">{(value as string) || '—'}</p>
+      <div className="flex items-center justify-between min-h-[36px] py-1.5">
+        <label className={labelClass}>{field.label}</label>
+        <p className="text-[13px] text-[var(--text-secondary)]">{(value as string) || '—'}</p>
       </div>
     )
   }
 
   if (field.type === 'textarea') {
     return (
-      <div className="col-span-2">
-        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+      <div className="py-2">
+        <label className={`${labelClass} block mb-1`}>{field.label}</label>
         <textarea
-          className={`${baseInputClass} min-h-[80px] resize-y`}
+          className={`w-full bg-[var(--bg-window)] border border-[var(--separator-opaque)] rounded-md px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none focus:border-[var(--color-accent)] transition-colors min-h-[80px] resize-y text-left`}
           value={(value as string) || ''}
           onChange={e => onChange(e.target.value)}
           placeholder={field.placeholder}
@@ -171,32 +174,35 @@ function FieldRenderer({
 
   if (field.type === 'checkbox') {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between min-h-[36px] py-1.5">
+        <label className={labelClass}>{field.label}</label>
         <input
           type="checkbox"
           checked={Boolean(value)}
           onChange={e => onChange(e.target.checked)}
           className="w-4 h-4 rounded border-[var(--separator-opaque)] bg-[var(--bg-window)] text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
         />
-        <label className="text-[13px] text-[var(--text-primary)]">{field.label}</label>
       </div>
     )
   }
 
   if (field.type === 'singleSelect') {
     return (
-      <div>
-        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
-        <select
-          className={baseInputClass}
-          value={(value as string) || ''}
-          onChange={e => onChange(e.target.value || null)}
-        >
-          <option value="">— Select —</option>
-          {field.options?.map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
+      <div className="flex items-center justify-between min-h-[36px] py-1.5">
+        <label className={labelClass}>{field.label}</label>
+        <div className="relative flex items-center">
+          <select
+            className="appearance-none bg-transparent border-none text-[13px] text-[var(--text-primary)] outline-none cursor-default pr-5 text-right"
+            value={(value as string) || ''}
+            onChange={e => onChange(e.target.value || null)}
+          >
+            <option value="">— Select —</option>
+            {field.options?.map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+          <span className="absolute right-0 text-[10px] text-[var(--text-tertiary)] pointer-events-none">⌃</span>
+        </div>
       </div>
     )
   }
@@ -211,8 +217,8 @@ function FieldRenderer({
     })()
 
     return (
-      <div className="col-span-2">
-        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+      <div className="py-2">
+        <label className={`${labelClass} block mb-1`}>{field.label}</label>
         <div className="flex flex-wrap gap-1.5">
           {field.options?.map(opt => {
             const isSelected = selected.includes(opt)
@@ -243,13 +249,13 @@ function FieldRenderer({
 
   if (field.type === 'currency') {
     return (
-      <div>
-        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">$</span>
+      <div className="flex items-center justify-between min-h-[36px] py-1.5">
+        <label className={labelClass}>{field.label}</label>
+        <div className="relative flex items-center">
+          <span className="text-[var(--text-tertiary)] mr-1 text-[13px]">$</span>
           <input
             type="number"
-            className={`${baseInputClass} pl-7`}
+            className="bg-transparent border-none text-[13px] text-[var(--text-primary)] outline-none w-[120px] text-right"
             value={value != null ? String(value) : ''}
             onChange={e => onChange(e.target.value ? Number(e.target.value) : null)}
             placeholder="0"
@@ -261,11 +267,11 @@ function FieldRenderer({
 
   if (field.type === 'number') {
     return (
-      <div>
-        <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+      <div className="flex items-center justify-between min-h-[36px] py-1.5">
+        <label className={labelClass}>{field.label}</label>
         <input
           type="number"
-          className={baseInputClass}
+          className="bg-transparent border-none text-[13px] text-[var(--text-primary)] outline-none w-[120px] text-right"
           value={value != null ? String(value) : ''}
           onChange={e => onChange(e.target.value ? Number(e.target.value) : null)}
           placeholder={field.placeholder}
@@ -283,11 +289,11 @@ function FieldRenderer({
     'text'
 
   return (
-    <div>
-      <label className="block text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{field.label}</label>
+    <div className="flex items-center justify-between min-h-[36px] py-1.5">
+      <label className={labelClass}>{field.label}</label>
       <input
         type={inputType}
-        className={baseInputClass}
+        className="bg-transparent border-none text-[13px] text-[var(--text-primary)] outline-none flex-1 ml-4 text-right min-w-0"
         value={(value as string) || ''}
         onChange={e => onChange(e.target.value || null)}
         placeholder={field.placeholder}

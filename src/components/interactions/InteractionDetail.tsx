@@ -1,19 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '../shared/EmptyState'
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function typeIcon(type: string | null): string {
-  if (!type) return '📝'
-  const t = type.toLowerCase()
-  if (t.includes('phone') || t.includes('call')) return '📞'
-  if (t.includes('meeting') || t.includes('lunch') || t.includes('dinner') || t.includes('conference')) return '👥'
-  if (t.includes('email')) return '✉️'
-  if (t.includes('virtual')) return '💻'
-  if (t.includes('note')) return '📝'
-  return '💬'
-}
+import { PencilIcon } from '../shared/icons/PencilIcon'
+import { interactionTypeIcon } from '../shared/icons/InteractionIcons'
 
 function formatDate(raw: string | null): string {
   if (!raw) return '—'
@@ -85,7 +74,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
   const contactName = (interaction.contact_name as string | null) ??
                       (interaction.contact      as string | null) ?? null
 
-  const icon    = typeIcon(type)
+  const icon    = interactionTypeIcon(type, 20)
   const dateStr = formatDate(date)
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -97,9 +86,10 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
       <div className="flex items-center justify-end px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
         <button
           onClick={() => navigate(`/interactions/${interactionId}/edit`)}
-          className="px-2.5 py-1 text-[12px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:opacity-80 transition-opacity cursor-default"
+          title="Edit interaction"
+          className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors cursor-default"
         >
-          Edit
+          <PencilIcon />
         </button>
       </div>
 
@@ -109,7 +99,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
         {/* Hero: type icon + label + date */}
         <div className="px-4 pt-4 pb-3 border-b border-[var(--separator)]">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[24px] leading-none">{icon}</span>
+            <span className="text-[var(--text-tertiary)] flex-shrink-0" style={{ width: 24, height: 24 }}>{icon}</span>
             <div className="flex-1 min-w-0">
               <div className="text-[18px] font-bold text-[var(--text-primary)] leading-tight">
                 {type ?? 'Interaction'}
@@ -129,11 +119,11 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
         {/* Contact chip */}
         {Boolean(contactName) && (
           <div className="px-4 py-3 border-b border-[var(--separator)]">
-            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-1.5">
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-1.5">
               Contact
             </div>
             <span className="inline-flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1 rounded-full bg-[var(--color-accent-translucent)] text-[var(--color-accent)] leading-none">
-              <span className="text-[10px]">👤</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
               {contactName}
             </span>
           </div>
@@ -142,7 +132,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
         {/* Duration (if present) */}
         {Boolean(duration) && (
           <div className="px-4 py-3 border-b border-[var(--separator)]">
-            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-1">
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-1">
               Duration
             </div>
             <div className="text-[13px] text-[var(--text-primary)]">
@@ -154,7 +144,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
         {/* Summary / Notes */}
         {Boolean(summary) && (
           <div className="px-4 py-3 border-b border-[var(--separator)]">
-            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-1.5">
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-1.5">
               Summary
             </div>
             <div className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed">
@@ -166,7 +156,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
         {/* Next steps */}
         {Boolean(next_steps) && (
           <div className="px-4 py-3 border-b border-[var(--separator)]">
-            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-1.5">
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-1.5">
               Next Steps
             </div>
             <div className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed">

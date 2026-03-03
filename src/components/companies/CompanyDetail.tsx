@@ -4,6 +4,8 @@ import { EmptyState } from '../shared/EmptyState'
 import { StageBadge } from '../shared/StageBadge'
 import { ContactStats } from '../contacts/ContactStats'
 import ConfirmDialog from '../shared/ConfirmDialog'
+import { PencilIcon } from '../shared/icons/PencilIcon'
+import { containsId } from '../../utils/linked-records'
 import type { Stage } from '../shared/StageBadge'
 
 interface CompanyDetailProps {
@@ -40,16 +42,6 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
 
       if (companyRes.success && companyRes.data) {
         setCompany(companyRes.data as Record<string, unknown>)
-      }
-
-      function containsId(idsJson: unknown, targetId: string): boolean {
-        if (!idsJson) return false
-        try {
-          const arr = JSON.parse(idsJson as string)
-          return Array.isArray(arr) && arr.includes(targetId)
-        } catch {
-          return false
-        }
       }
 
       if (contactsRes.success && contactsRes.data) {
@@ -113,9 +105,10 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => navigate(`/companies/${companyId}/edit`)}
-            className="px-2.5 py-1 text-[12px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-translucent)] rounded-md hover:opacity-80 transition-opacity cursor-default"
+            title="Edit company"
+            className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors cursor-default"
           >
-            Edit
+            <PencilIcon />
           </button>
           <button
             onClick={() => setShowDelete(true)}
@@ -153,7 +146,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
 
         {/* 3. Linked Contacts */}
         <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
             Contacts
           </div>
           {contacts.length === 0 ? (
@@ -196,7 +189,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
 
         {/* 4. Open Opportunities */}
         <div className="px-4 py-3">
-          <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
             Open Opportunities
           </div>
           {openOpps.length === 0 ? (

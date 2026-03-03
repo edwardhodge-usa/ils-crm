@@ -3,18 +3,36 @@ interface FormFieldProps {
   htmlFor?: string
   children: React.ReactNode
   className?: string
+  /** Use vertical layout for wide children like textarea or multiSelect */
+  stacked?: boolean
 }
 
-export function FormField({ label, htmlFor, children, className = '' }: FormFieldProps) {
+export function FormField({ label, htmlFor, children, className = '', stacked = false }: FormFieldProps) {
+  if (stacked) {
+    return (
+      <div className={`flex flex-col gap-1 ${className}`}>
+        <label
+          htmlFor={htmlFor}
+          className="text-[13px] font-normal text-[var(--text-primary)]"
+        >
+          {label}
+        </label>
+        {children}
+      </div>
+    )
+  }
+
   return (
-    <div className={`flex flex-col gap-1 ${className}`}>
+    <div className={`flex items-center justify-between min-h-[36px] ${className}`}>
       <label
         htmlFor={htmlFor}
-        className="text-[12px] font-semibold uppercase tracking-[0.05em] text-[var(--text-secondary)]"
+        className="text-[13px] font-normal text-[var(--text-primary)] flex-shrink-0"
       >
         {label}
       </label>
-      {children}
+      <div className="flex-1 flex justify-end ml-4 min-w-0">
+        {children}
+      </div>
     </div>
   )
 }

@@ -53,7 +53,7 @@ function PrefRow({ label, children }: { label: string; children: React.ReactNode
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-3">
+    <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-3">
       {children}
     </p>
   )
@@ -405,7 +405,7 @@ export default function SettingsPage() {
     <div className="flex flex-1 overflow-hidden">
       {/* Left sidebar — 180px fixed */}
       <div className="w-[180px] flex-shrink-0 bg-[var(--bg-sidebar)] border-r border-[var(--separator)] flex flex-col py-4 overflow-hidden">
-        <p className="px-4 pb-3 text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] select-none">
+        <p className="px-4 pb-3 text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] select-none">
           Settings
         </p>
         <nav className="flex flex-col gap-0.5 px-2">

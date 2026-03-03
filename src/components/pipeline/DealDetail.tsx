@@ -137,7 +137,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
 
           {/* Details section */}
           <div className="px-4 py-3 border-b border-[var(--separator)] flex-shrink-0">
-            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">Details</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">Details</div>
             <div className="flex flex-col gap-1.5 text-[12px]">
               {Boolean(deal.expected_close_date) && (
                 <div className="flex justify-between">
@@ -162,7 +162,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
 
           {/* Open Tasks section */}
           <div className="px-4 py-3 flex-1 overflow-y-auto">
-            <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[var(--text-secondary)] mb-2">Tasks</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">Tasks</div>
             {linkedTasks.length === 0 ? (
               <div className="text-[12px] text-[var(--text-tertiary)] italic">No tasks</div>
             ) : (

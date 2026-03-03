@@ -220,7 +220,7 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{
             fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.07em', color: 'var(--text-secondary)', marginBottom: 8,
+            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
           }}>
             Review Action
           </div>
@@ -267,7 +267,7 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{
             fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.07em', color: 'var(--text-secondary)', marginBottom: 8,
+            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
           }}>
             Details
           </div>
@@ -298,7 +298,7 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
           <div style={{ padding: '14px 16px' }}>
             <div style={{
               fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.07em', color: 'var(--text-secondary)', marginBottom: 8,
+              letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
             }}>
               Notes
             </div>
