@@ -140,19 +140,25 @@ function SegmentedControl<T extends string>({
 // Section: General
 // ────────────────────────────────────────────────────────────
 function GeneralSection() {
+  const [currentUser, setCurrentUser] = useState<{ id: string | null; name: string | null; email: string | null } | null>(null)
   const [apiKey, setApiKey] = useState('')
   const [baseId, setBaseId] = useState('')
-  const [showKey, setShowKey] = useState(false)
-  const [originalKey, setOriginalKey] = useState('')
   const [originalBaseId, setOriginalBaseId] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
+
+  useEffect(() => {
+    window.electronAPI.auth.getCurrentUser().then(result => {
+      if (result.success && result.data) {
+        setCurrentUser({ id: result.data.id, name: result.data.name, email: result.data.email })
+      }
+    })
+  }, [])
 
   useEffect(() => {
     async function load() {
       const keyResult = await window.electronAPI.settings.get('airtable_api_key')
       if (keyResult.success && keyResult.data) {
         setApiKey(keyResult.data)
-        setOriginalKey(keyResult.data)
       }
       const baseResult = await window.electronAPI.settings.get('airtable_base_id')
       if (baseResult.success && baseResult.data) {
@@ -163,33 +169,117 @@ function GeneralSection() {
     load()
   }, [])
 
-  const hasChanges = apiKey !== originalKey || baseId !== originalBaseId
+  const hasChanges = baseId !== originalBaseId
 
   const handleSave = async () => {
-    await window.electronAPI.settings.set('airtable_api_key', apiKey)
     await window.electronAPI.settings.set('airtable_base_id', baseId)
-    setOriginalKey(apiKey)
     setOriginalBaseId(baseId)
     setSaveMessage('Settings saved')
     setTimeout(() => setSaveMessage(''), 2500)
   }
 
+  const handleChangeToken = async () => {
+    await window.electronAPI.auth.signOut()
+    window.location.reload()
+  }
+
   return (
     <div>
+      {/* Your Account */}
+      <div style={{ marginBottom: 24 }}>
+        <SectionHeader>Your Account</SectionHeader>
+        <GroupedContainer>
+          {/* Name */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            minHeight: 36,
+            padding: '10px 14px',
+            borderBottom: '1px solid var(--separator)',
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flex: 1 }}>Name</span>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+              {currentUser?.name || '\u2014'}
+            </span>
+          </div>
+
+          {/* Email */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            minHeight: 36,
+            padding: '10px 14px',
+            borderBottom: '1px solid var(--separator)',
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flex: 1 }}>Email</span>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+              {currentUser?.email || '\u2014'}
+            </span>
+          </div>
+
+          {/* Airtable User ID */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            minHeight: 36,
+            padding: '10px 14px',
+            borderBottom: '1px solid var(--separator)',
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flex: 1 }}>Airtable User ID</span>
+            <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-tertiary)' }}>
+              {currentUser?.id || '\u2014'}
+            </span>
+          </div>
+
+          {/* Sign Out */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            minHeight: 36,
+            padding: '10px 14px',
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flex: 1 }}>Session</span>
+            <button
+              onClick={async () => {
+                await window.electronAPI.auth.signOut()
+                window.location.reload()
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--color-red)',
+                cursor: 'default',
+                padding: '2px 8px',
+                borderRadius: 4,
+                fontFamily: 'inherit',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 59, 48, 0.08)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+            >
+              Sign Out
+            </button>
+          </div>
+        </GroupedContainer>
+      </div>
+
       <SectionHeader>Airtable Configuration</SectionHeader>
 
       <GroupedContainer>
-        {/* API Key */}
+        {/* API Key — read-only, masked */}
         <PrefRow label="API Key">
           <div className="flex items-center gap-1.5">
-            <SettingsInput
-              type={showKey ? 'text' : 'password'}
-              value={apiKey}
-              onChange={setApiKey}
-              placeholder="pat…"
-            />
+            <span style={{
+              fontSize: 13,
+              fontWeight: 400,
+              color: 'var(--text-secondary)',
+              letterSpacing: '0.1em',
+            }}>
+              {apiKey ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : '\u2014'}
+            </span>
             <button
-              onClick={() => setShowKey((v) => !v)}
+              onClick={handleChangeToken}
               className="cursor-default"
               style={{
                 padding: '5px 10px',
@@ -210,7 +300,7 @@ function GeneralSection() {
                 e.currentTarget.style.color = 'var(--text-secondary)'
               }}
             >
-              {showKey ? 'Hide' : 'Show'}
+              Change Token
             </button>
           </div>
         </PrefRow>

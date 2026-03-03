@@ -16,6 +16,12 @@ interface ElectronAPI {
     getVersion: () => Promise<{ success: boolean; data: string }>
     getPaths: () => Promise<{ success: boolean; data: { userData: string; appPath: string } }>
   }
+  auth: {
+    validatePat: (apiKey: string) => Promise<{ success: boolean; data?: { id: string; email?: string }; error?: string }>
+    getCurrentUser: () => Promise<{ success: boolean; data?: { id: string | null; name: string | null; email: string | null; hasApiKey: boolean }; error?: string }>
+    saveUser: (user: { id: string; name: string; email: string; apiKey: string; baseId: string }) => Promise<{ success: boolean; error?: string }>
+    signOut: () => Promise<{ success: boolean; error?: string }>
+  }
   settings: {
     get: (key: string) => Promise<{ success: boolean; data?: string; error?: string }>
     set: (key: string, value: string) => Promise<{ success: boolean; error?: string }>

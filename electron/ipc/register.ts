@@ -6,6 +6,8 @@ import { getAll, getById, getSetting, setSetting, getAllSyncStatuses } from '../
 import { getDashboardStats, getTasksDueToday, getFollowUpAlerts, getPipelineSnapshot } from '../database/queries/dashboard'
 import { searchAll } from '../database/queries/search'
 import { fullSync, createRecord, updateRecord, deleteRemoteRecord, refreshRecord, startPolling, stopPolling } from '../airtable/sync-engine'
+import { whoami } from '../airtable/client'
+import { getDatabase, saveDatabase } from '../database/init'
 
 // ─── Helper: register CRUD for an entity ─────────────────────
 
@@ -295,6 +297,57 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
     } catch (error) {
       console.error('[IPC] app:getPaths failed:', String(error))
       return { success: false, error: String(error) }
+    }
+  })
+
+  // ─── Auth ───────────────────────────────────────────────────
+
+  ipcMain.handle('auth:validate-pat', async (_e, apiKey: string) => {
+    try {
+      const user = await whoami(apiKey)
+      return { success: true, data: user }
+    } catch (error) {
+      return { success: false, error: (error as Error).message }
+    }
+  })
+
+  ipcMain.handle('auth:get-current-user', async () => {
+    try {
+      return {
+        success: true,
+        data: {
+          id: getSetting('user_id'),
+          name: getSetting('user_name'),
+          email: getSetting('user_email'),
+          hasApiKey: !!getSetting('airtable_api_key'),
+        },
+      }
+    } catch (error) {
+      return { success: false, error: (error as Error).message }
+    }
+  })
+
+  ipcMain.handle('auth:save-user', async (_e, user: { id: string; name: string; email: string; apiKey: string; baseId: string }) => {
+    try {
+      setSetting('user_id', user.id)
+      setSetting('user_name', user.name)
+      setSetting('user_email', user.email)
+      setSetting('airtable_api_key', user.apiKey)
+      setSetting('airtable_base_id', user.baseId)
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: (error as Error).message }
+    }
+  })
+
+  ipcMain.handle('auth:sign-out', async () => {
+    try {
+      const db = getDatabase()
+      db.run(`DELETE FROM settings WHERE key IN ('user_id', 'user_name', 'user_email', 'airtable_api_key')`)
+      saveDatabase()
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: (error as Error).message }
     }
   })
 }

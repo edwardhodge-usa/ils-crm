@@ -132,6 +132,7 @@ function HoverRow({
 export default function DashboardPage() {
   const navigate = useNavigate()
 
+  const [userName, setUserName] = useState('there')
   const [tasksDueToday, setTasksDueToday] = useState<TaskItem[]>([])
   const [followUps, setFollowUps] = useState<FollowUpContact[]>([])
   const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([])
@@ -145,6 +146,15 @@ export default function DashboardPage() {
   const overdueCount = useMemo(() => {
     return tasksDueToday.filter((t) => t.due_date && dueLabel(t.due_date).overdue).length
   }, [tasksDueToday])
+
+  useEffect(() => {
+    window.electronAPI.auth.getCurrentUser().then(result => {
+      if (result.success && result.data?.name) {
+        const firstName = result.data.name.split(' ')[0]
+        setUserName(firstName)
+      }
+    })
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -231,7 +241,7 @@ export default function DashboardPage() {
             marginBottom: 2,
           }}
         >
-          {getGreeting()}, Edward
+          {getGreeting()}, {userName}
         </div>
         <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-secondary)' }}>{formatDate()}</div>
       </div>

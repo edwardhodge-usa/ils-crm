@@ -1,4 +1,5 @@
 import { app, BrowserWindow, nativeTheme, systemPreferences } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import { initDatabase, closeDatabase } from './database/init'
 import { registerAllHandlers } from './ipc/register'
@@ -87,6 +88,14 @@ app.whenReady().then(async () => {
   registerAllHandlers(() => mainWindow)
 
   createWindow()
+
+  // Auto-update (production only)
+  if (!isDev) {
+    autoUpdater.checkForUpdatesAndNotify()
+    autoUpdater.on('update-available', () => console.log('[AutoUpdater] Update available'))
+    autoUpdater.on('update-downloaded', () => console.log('[AutoUpdater] Update downloaded — will install on restart'))
+    autoUpdater.on('error', (err) => console.error('[AutoUpdater] Error:', err.message))
+  }
 
   // Auto-start sync if API key is configured
   const apiKey = getSetting('airtable_api_key')

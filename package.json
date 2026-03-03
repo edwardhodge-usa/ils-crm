@@ -24,6 +24,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.0",
+    "electron-updater": "^6.1.0",
     "sql.js": "^1.10.0"
   },
   "devDependencies": {
@@ -80,6 +81,11 @@
         "from": "node_modules/sql.js/dist/sql-wasm.wasm",
         "to": "sql-wasm.wasm"
       }
-    ]
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "edwardhodge-usa",
+      "repo": "ils-crm"
+    }
   }
 }

@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/layout/Layout'
+import OnboardingPage from './components/onboarding/OnboardingPage'
 import SettingsPage from './components/settings/SettingsPage'
 import DashboardPage from './components/dashboard/DashboardPage'
 import ContactListPage from './components/contacts/ContactListPage'
@@ -29,6 +30,9 @@ import PortalLogsPage from './components/portal/PortalLogsPage'
 import CommandPalette from './components/layout/CommandPalette'
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null) // null = loading
+
+  // Theme initialization (runs regardless of auth state)
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
 
@@ -55,11 +59,36 @@ export default function App() {
     return () => mq.removeEventListener('change', applySystem)
   }, [])
 
+  // Check auth state on mount
+  useEffect(() => {
+    window.electronAPI.auth.getCurrentUser().then(result => {
+      setIsAuthenticated(result.success && result.data?.hasApiKey === true)
+    })
+  }, [])
+
+  // Loading state — blank window with matching background
+  if (isAuthenticated === null) {
+    return <div style={{ width: '100%', height: '100vh', background: 'var(--bg-window)' }} />
+  }
+
+  // Not authenticated — show onboarding
+  if (!isAuthenticated) {
+    return (
+      <OnboardingPage onComplete={() => {
+        setIsAuthenticated(true)
+        // Trigger initial sync after onboarding
+        window.electronAPI.sync.forceSync()
+        window.electronAPI.sync.start()
+      }} />
+    )
+  }
+
+  // Authenticated — normal app
   return (
     <MemoryRouter>
       <CommandPalette />
       <Routes>
-        <Route element={<Layout />}>
+        <Route element={<Layout onSignOut={() => setIsAuthenticated(false)} />}>
           <Route path="/" element={<DashboardPage />} />
 
           {/* Contacts */}

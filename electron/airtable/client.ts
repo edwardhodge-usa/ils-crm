@@ -220,3 +220,22 @@ export async function batchDelete(
     }
   }
 }
+
+// ─── User Identity ─────────────────────────────────────────────
+
+export interface AirtableUser {
+  id: string
+  email?: string
+  scopes?: string[]
+}
+
+export async function whoami(apiKey: string): Promise<AirtableUser> {
+  const response = await fetch('https://api.airtable.com/v0/meta/whoami', {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  })
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`Airtable whoami failed: ${response.status} - ${errorText}`)
+  }
+  return response.json() as Promise<AirtableUser>
+}

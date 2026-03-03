@@ -3,7 +3,15 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import { NEW_ROUTES } from '../../config/routes'
 
-export default function Layout() {
+export interface LayoutOutletContext {
+  onSignOut: () => void
+}
+
+interface LayoutProps {
+  onSignOut?: () => void
+}
+
+export default function Layout({ onSignOut }: LayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -27,7 +35,7 @@ export default function Layout() {
     <div className="flex h-screen overflow-hidden bg-[var(--bg-window)]">
       <Sidebar />
       <main className="flex-1 flex overflow-hidden">
-        <Outlet />
+        <Outlet context={{ onSignOut: onSignOut ?? (() => {}) } satisfies LayoutOutletContext} />
       </main>
     </div>
   )

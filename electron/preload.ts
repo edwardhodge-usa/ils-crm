@@ -25,6 +25,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPaths: () => ipcRenderer.invoke('app:getPaths'),
   },
 
+  // Auth
+  auth: {
+    validatePat: (apiKey: string) => ipcRenderer.invoke('auth:validate-pat', apiKey),
+    getCurrentUser: () => ipcRenderer.invoke('auth:get-current-user'),
+    saveUser: (user: { id: string; name: string; email: string; apiKey: string; baseId: string }) =>
+      ipcRenderer.invoke('auth:save-user', user),
+    signOut: () => ipcRenderer.invoke('auth:sign-out'),
+  },
+
   // Settings
   settings: {
     get: (key: string) => ipcRenderer.invoke('settings:get', key),
