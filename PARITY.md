@@ -1,7 +1,7 @@
 # ILS CRM — Feature Parity Tracker
 
 > Electron (primary) vs Swift (shadow build)
-> Updated: 2026-03-02
+> Updated: 2026-03-02 (Wave 2: sync engine + settings)
 
 ## Status Key
 - **Done** — Fully implemented and working
@@ -18,12 +18,14 @@
 |---------|----------------|--------------|-------|
 | App entry point | Done | Stub | `main.ts` → `ILSCRMApp.swift` |
 | SwiftData / sql.js container | Done | Stub | Schema defined, no data flow yet |
-| Airtable REST client | Done | Stub | `client.ts` → `AirtableService.swift` (actor) |
-| Sync engine (push-first, pull) | Done | Stub | `sync-engine.ts` → `SyncEngine.swift` |
-| Airtable field maps | Done | Stub | `field-maps.ts` → `AirtableConfig.swift` (table IDs only, no per-field maps yet) |
+| Airtable REST client | Done | Done | `client.ts` → `AirtableService.swift` (actor) — full CRUD + batch + metadata |
+| Sync engine (push-first, pull) | Done | Done | `sync-engine.ts` → `SyncEngine.swift` — pullTable + pushPendingChanges + fullSync |
+| Airtable field maps | Done | Done | `field-maps.ts` → `AirtableConfig.swift` (table IDs, sync order, read-only set) |
 | Bidirectional converters | Done | Done | `converters.ts` → `AirtableConvertible` protocol + 11 converter extensions |
-| Polling (60s interval) | Done | Stub | Method exists, no actual sync logic |
-| isSyncing mutex | Done | Stub | Actor + syncLock flag in place |
+| AirtableSyncable protocol | N/A | Done | Generic sync via `pullTable<T>` / `pushTable<T>` with type-safe model access |
+| Model sync properties | Done | Done | All 11 models have `isPendingPush: Bool` + `airtableModifiedAt: Date?` |
+| Polling (60s interval) | Done | Done | `startPolling()` / `stopPolling()` — configurable interval |
+| isSyncing mutex | Done | Done | `syncLock` flag + cross-app lock guard |
 | Cross-app sync lock (/tmp) | Done | Done | Both apps check `/tmp/ils-crm-sync.lock` before syncing |
 | Keychain API key storage | N/A | Done | Electron uses SQLite; Swift uses macOS Keychain (security improvement) |
 | Xcode project (xcodegen) | N/A | Done | `project.yml` → `ILS CRM.xcodeproj` via xcodegen |
@@ -34,17 +36,17 @@
 
 | Table | Electron Status | Swift Status | Notes |
 |-------|----------------|--------------|-------|
-| Contacts (57 fields) | Done | Stub | `@Model` with all fields, no Codable/converter |
-| Companies (24 fields) | Done | Stub | |
-| Opportunities (23 fields) | Done | Stub | engagementType correctly typed as [String] |
-| Projects (18 fields) | Done | Stub | |
-| Proposals (13+4 fields) | Done | Stub | 4 migrated fields included |
-| Tasks (12 fields) | Done | Stub | Named `CRMTask` to avoid Swift.Task conflict |
-| Interactions (9 fields) | Done | Stub | Correctly marked as CRUD (not read-only) |
-| Imported Contacts (48 fields) | Done | Stub | |
-| Specialties (3 fields) | Done | Stub | Read-only, no isPendingPush |
-| Portal Access (37 fields) | Done | Stub | 12 lookup + 1 formula marked read-only |
-| Portal Logs (12 fields) | Done | Stub | Read-only, no isPendingPush |
+| Contacts (57 fields) | Done | Done | `@Model` + converter + sync properties + AirtableSyncable |
+| Companies (24 fields) | Done | Done | `@Model` + converter + sync properties + AirtableSyncable |
+| Opportunities (23 fields) | Done | Done | engagementType correctly typed as [String] |
+| Projects (18 fields) | Done | Done | `@Model` + converter + sync properties + AirtableSyncable |
+| Proposals (13+4 fields) | Done | Done | 4 migrated fields included |
+| Tasks (12 fields) | Done | Done | Named `CRMTask` to avoid Swift.Task conflict |
+| Interactions (9 fields) | Done | Done | Correctly marked as CRUD (not read-only) |
+| Imported Contacts (48 fields) | Done | Done | `@Model` + converter + sync properties + AirtableSyncable |
+| Specialties (3 fields) | Done | Done | Read-only (never pushes), has isPendingPush for protocol |
+| Portal Access (37 fields) | Done | Done | 12 lookup + 1 formula marked read-only |
+| Portal Logs (12 fields) | Done | Done | Read-only (never pushes), has isPendingPush for protocol |
 
 ## Navigation & Layout
 
@@ -166,12 +168,13 @@
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| API key input | Done | Stub | Electron: SQLite. Swift: Keychain (improvement) |
-| Base ID configuration | Done | Stub | |
-| Sync interval control | Done | Stub | Slider in Swift stub |
+| API key input | Done | Done | SecureField + Keychain save/load via KeychainService |
+| Base ID configuration | Done | Done | @AppStorage with default from AirtableConfig.baseId |
+| Sync interval control | Done | Done | Picker: 30s / 60s / 120s / Off — auto-starts/stops polling |
 | Theme toggle | Done | TODO | |
-| Force Sync button | Done | Stub | Button exists, wired to SyncEngine |
-| Last sync display | Done | Stub | |
+| Force Sync button | Done | Done | Calls syncEngine.forceSync(), disabled while syncing |
+| Last sync display | Done | Done | Shows timestamp or "Never synced" + syncing spinner |
+| Sync error display | Done | Done | Red error text section when syncError is set |
 
 ## Shared Components
 
@@ -205,14 +208,14 @@
 | Operation | Electron Status | Swift Status | Notes |
 |-----------|----------------|--------------|-------|
 | Full CRUD (8 entities) | Done | TODO | Context.insert/delete + model mutation |
-| Read-only sync (Specialties) | Done | TODO | Pull only, no push |
-| Read-only sync (Portal Logs) | Done | TODO | Pull only, no push |
+| Read-only sync (Specialties) | Done | Done | Pull only, skipped by pushPendingChanges via readOnlyTables |
+| Read-only sync (Portal Logs) | Done | Done | Pull only, skipped by pushPendingChanges via readOnlyTables |
 | Imported Contacts approve/reject | Done | TODO | Set onboardingStatus + push |
 | Dashboard aggregation queries | Done | TODO | `dashboard.ts` → SwiftData `#Predicate` + `FetchDescriptor` |
-| Airtable metadata fetch (select options) | Done | Stub | `fetchFieldMetadata()` exists in AirtableService |
-| Batch create (10/req) | Done | Stub | `batchCreate()` exists |
-| Batch update (10/req) | Done | Stub | `batchUpdate()` exists |
-| Batch delete (10/req) | Done | Stub | `batchDelete()` exists |
+| Airtable metadata fetch (select options) | Done | Done | `fetchFieldMetadata()` in AirtableService actor |
+| Batch create (10/req) | Done | Done | `batchCreate()` — used by pushTable with chunked batches |
+| Batch update (10/req) | Done | Done | `batchUpdate()` — used by pushTable with chunked batches |
+| Batch delete (10/req) | Done | Done | `batchDelete()` in AirtableService actor |
 | shell:openExternal (URL validation) | Done | TODO | Swift: `NSWorkspace.shared.open()` with scheme check |
 
 ## Platform Features
@@ -232,8 +235,8 @@
 
 | Category | Electron Done | Swift Done | Swift Stub | Swift TODO |
 |----------|--------------|------------|------------|------------|
-| Architecture | 10 | 4 | 7 | 2 |
-| Data Models | 11 | 0 | 11 | 0 |
+| Architecture | 10 | 12 | 1 | 0 |
+| Data Models | 11 | 11 | 0 | 0 |
 | Navigation | 6 | 0 | 2 | 4 |
 | Dashboard | 6 | 0 | 1 | 5 |
 | Contacts | 8 | 0 | 3 | 5 |
@@ -245,13 +248,13 @@
 | Interactions | 5 | 0 | 2 | 3 |
 | Imported Contacts | 4 | 0 | 1 | 3 |
 | Portal | 4 | 0 | 2 | 2 |
-| Settings | 6 | 0 | 4 | 2 |
+| Settings | 6 | 6 | 0 | 1 |
 | Shared Components | 14 | 0 | 5 | 9 |
 | Search & Commands | 3 | 0 | 0 | 3 |
-| Data Operations | 10 | 0 | 4 | 6 |
+| Data Operations | 10 | 6 | 0 | 4 |
 | Platform | 3 | 0 | 0 | 3 |
-| **TOTAL** | **121** | **4** | **56** | **61** |
+| **TOTAL** | **121** | **35** | **30** | **57** |
 
-Swift scaffold provides **56 stubs** (46%) with files and placeholder UI.
-**61 features** (50%) need implementation from scratch.
-**4 features** are fully done in Swift: converters, sync lock, Keychain storage, xcodegen project.
+Swift now has **35 features done** (29%) — up from 4.
+Key milestones completed: full sync engine (push-first-then-pull), all 11 data models with sync properties + converters, Settings with Keychain API key storage, batch CRUD operations, polling, cross-app sync lock.
+**30 stubs** remain with placeholder UI, **57 features** need implementation from scratch.

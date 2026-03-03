@@ -145,6 +145,7 @@ export function createSchema(db: SqlJsDatabase): void {
       contacts_ids TEXT,
       projects_ids TEXT,
       proposal_ids TEXT,
+      assigned_to TEXT,
       _airtable_modified_at TEXT,
       _local_modified_at TEXT,
       _pending_push INTEGER DEFAULT 0
@@ -160,10 +161,6 @@ export function createSchema(db: SqlJsDatabase): void {
       client_feedback TEXT,
       performance_metrics TEXT,
       notes TEXT,
-      scope_summary TEXT,
-      proposed_value REAL,
-      date_sent TEXT,
-      valid_until TEXT,
       status TEXT,
       template_used TEXT,
       approval_status TEXT,
@@ -176,17 +173,6 @@ export function createSchema(db: SqlJsDatabase): void {
       _pending_push INTEGER DEFAULT 0
     )
   `)
-
-  // ─── Proposals: migration for existing databases ───────
-  const proposalMigrations = [
-    'ALTER TABLE proposals ADD COLUMN scope_summary TEXT',
-    'ALTER TABLE proposals ADD COLUMN proposed_value REAL',
-    'ALTER TABLE proposals ADD COLUMN date_sent TEXT',
-    'ALTER TABLE proposals ADD COLUMN valid_until TEXT',
-  ]
-  for (const sql of proposalMigrations) {
-    try { db.run(sql) } catch { /* column already exists */ }
-  }
 
   // ─── Projects ──────────────────────────────────────────
   db.run(`
@@ -208,6 +194,7 @@ export function createSchema(db: SqlJsDatabase): void {
       tasks_ids TEXT,
       primary_contact_ids TEXT,
       contacts_ids TEXT,
+      project_lead TEXT,
       _airtable_modified_at TEXT,
       _local_modified_at TEXT,
       _pending_push INTEGER DEFAULT 0
@@ -226,6 +213,7 @@ export function createSchema(db: SqlJsDatabase): void {
       direction TEXT,
       contacts_ids TEXT,
       sales_opportunities_ids TEXT,
+      logged_by TEXT,
       _airtable_modified_at TEXT,
       _local_modified_at TEXT,
       _pending_push INTEGER DEFAULT 0
@@ -282,6 +270,8 @@ export function createSchema(db: SqlJsDatabase): void {
       sync_to_contacts INTEGER DEFAULT 0,
       specialties_ids TEXT,
       related_crm_contact_ids TEXT,
+      imported_by TEXT,
+      assigned_admin TEXT,
       _airtable_modified_at TEXT,
       _local_modified_at TEXT,
       _pending_push INTEGER DEFAULT 0
@@ -325,6 +315,14 @@ export function createSchema(db: SqlJsDatabase): void {
       services_interested_in TEXT,
       contact_ids TEXT,
       framer_page_url TEXT,
+      assignee TEXT,
+      contact_industry_lookup TEXT,
+      contact_tags_lookup TEXT,
+      contact_website_lookup TEXT,
+      contact_address_line_lookup TEXT,
+      contact_city_lookup TEXT,
+      contact_state_lookup TEXT,
+      contact_country_lookup TEXT,
       _airtable_modified_at TEXT,
       _local_modified_at TEXT,
       _pending_push INTEGER DEFAULT 0
@@ -340,6 +338,26 @@ export function createSchema(db: SqlJsDatabase): void {
     'ALTER TABLE portal_access ADD COLUMN contact_job_title_lookup TEXT',
   ]
   for (const sql of portalAccessMigrations) {
+    try { db.run(sql) } catch { /* column already exists */ }
+  }
+
+  // ─── Field Audit: add missing sync columns ──────────
+  const fieldAuditMigrations = [
+    'ALTER TABLE tasks ADD COLUMN assigned_to TEXT',
+    'ALTER TABLE projects ADD COLUMN project_lead TEXT',
+    'ALTER TABLE interactions ADD COLUMN logged_by TEXT',
+    'ALTER TABLE imported_contacts ADD COLUMN imported_by TEXT',
+    'ALTER TABLE imported_contacts ADD COLUMN assigned_admin TEXT',
+    'ALTER TABLE portal_access ADD COLUMN assignee TEXT',
+    'ALTER TABLE portal_access ADD COLUMN contact_industry_lookup TEXT',
+    'ALTER TABLE portal_access ADD COLUMN contact_tags_lookup TEXT',
+    'ALTER TABLE portal_access ADD COLUMN contact_website_lookup TEXT',
+    'ALTER TABLE portal_access ADD COLUMN contact_address_line_lookup TEXT',
+    'ALTER TABLE portal_access ADD COLUMN contact_city_lookup TEXT',
+    'ALTER TABLE portal_access ADD COLUMN contact_state_lookup TEXT',
+    'ALTER TABLE portal_access ADD COLUMN contact_country_lookup TEXT',
+  ]
+  for (const sql of fieldAuditMigrations) {
     try { db.run(sql) } catch { /* column already exists */ }
   }
 

@@ -19,6 +19,7 @@ interface TaskItem {
   sales_opportunities_ids: string | null
   projects_ids: string | null
   proposal_ids: string | null
+  assigned_to: string | null
 }
 
 type Section = 'overdue' | 'today' | 'upcoming' | 'waiting' | 'nodate'
@@ -100,6 +101,7 @@ function toTaskItem(row: Record<string, unknown>): TaskItem {
     sales_opportunities_ids: (row.sales_opportunities_ids as string | null) ?? null,
     projects_ids:  (row.projects_ids as string | null) ?? null,
     proposal_ids:  (row.proposal_ids as string | null) ?? null,
+    assigned_to:   (row.assigned_to as string | null) ?? null,
   }
 }
 
@@ -542,12 +544,19 @@ function TaskDetail({ task, onComplete, onDelete, onNavigateEdit }: TaskDetailPr
           </div>
         </div>
         {/* Type */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', minHeight: 36 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
           <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Type</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             {typeBadge}
             <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4 }}>⌃</span>
           </div>
+        </div>
+        {/* Assigned To */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', minHeight: 36 }}>
+          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Assigned To</span>
+          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+            {task.assigned_to ?? '—'}
+          </span>
         </div>
       </div>
 

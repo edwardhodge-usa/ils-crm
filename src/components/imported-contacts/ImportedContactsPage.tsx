@@ -164,6 +164,8 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
   const status = (contact.onboarding_status as string | null) ?? null
   const categorization = (contact.categorization as string | null) ?? null
   const notes = (contact.note as string | null) ?? null
+  const importedBy = (contact.imported_by as string | null) ?? null
+  const assignedAdmin = (contact.assigned_admin as string | null) ?? null
 
   const isAlreadyReviewed = status === 'Approved' || status === 'Rejected'
   const color = avatarColor(name)
@@ -175,6 +177,8 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
     { label: 'Phone', value: phone },
     { label: 'Source', value: source },
     { label: 'Imported', value: formatDate(importDate) || null },
+    { label: 'Imported By', value: importedBy },
+    { label: 'Admin', value: assignedAdmin },
   ]
 
   return (

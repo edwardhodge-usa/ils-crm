@@ -143,10 +143,8 @@ final class SyncEngine {
                 tableStatus[tableId] = TableSyncStatus(status: .syncing)
 
                 do {
-                    let records = try await service.fetchAllRecords(tableId: tableId)
-                    // TODO: Convert Airtable records → SwiftData models using field converters
-                    // This is where converters.ts logic maps to Swift Codable transforms
-                    tableStatus[tableId]?.recordCount = records.count
+                    let count = try await pullTableByType(tableId: tableId, service: service)
+                    tableStatus[tableId]?.recordCount = count
                     tableStatus[tableId]?.status = .complete
                     tableStatus[tableId]?.lastSync = Date()
                 } catch {
@@ -164,6 +162,129 @@ final class SyncEngine {
         }
     }
 
+    // MARK: - Pull Table (Airtable → SwiftData)
+
+    /// Pulls all records from a single Airtable table and reconciles with local SwiftData models.
+    /// Mirrors: sync-engine.ts → pullTable()
+    ///
+    /// Conflict resolution (same as Electron):
+    /// - Record exists locally AND is NOT isPendingPush → overwrite from Airtable (Airtable wins)
+    /// - Record exists locally AND IS isPendingPush → skip (preserve local changes)
+    /// - Record in Airtable but not local → create via T.from(record:context:) and insert
+    /// - Record in local but not Airtable AND NOT isPendingPush → delete (Airtable is source of truth)
+    /// - Record in local but not Airtable AND IS isPendingPush → keep (hasn't been pushed yet)
+    ///
+    /// Uses delete-and-reinsert for updates since converters only have `from(record:)` (no `update(from:)`).
+    /// This is safe because SwiftData's @Attribute(.unique) on `id` handles identity correctly,
+    /// and we explicitly delete before insert to avoid unique constraint violations.
+    ///
+    /// - Parameters:
+    ///   - type: The SwiftData model type conforming to AirtableSyncable
+    ///   - tableId: The Airtable table ID to pull from
+    ///   - service: The AirtableService actor instance
+    /// - Returns: The number of records pulled from Airtable
+    @discardableResult
+    private func pullTable<T: AirtableSyncable>(
+        _ type: T.Type,
+        tableId: String,
+        service: AirtableService
+    ) async throws -> Int {
+        let context = ModelContext(modelContainer)
+
+        // 1. Fetch all records from Airtable
+        let rawRecords = try await service.fetchAllRecords(tableId: tableId)
+        let airtableRecords = AirtableRecord.fromArray(dicts: rawRecords)
+
+        // 2. Get existing local records and build O(1) lookup by Airtable ID
+        let descriptor = FetchDescriptor<T>()
+        let localRecords = (try? context.fetch(descriptor)) ?? []
+
+        var localById: [String: T] = [:]
+        for local in localRecords {
+            localById[local.id] = local
+        }
+
+        // 3. Track which Airtable IDs we see (for orphan detection)
+        var seenIds = Set<String>()
+
+        // 4. Process each Airtable record
+        for record in airtableRecords {
+            seenIds.insert(record.id)
+
+            if let existing = localById[record.id] {
+                // Record exists locally
+                if existing.isPendingPush {
+                    // Skip — local changes waiting to be pushed. Don't overwrite.
+                    continue
+                }
+
+                // Airtable wins: delete old, insert fresh from Airtable data
+                context.delete(existing)
+                let updated = T.from(record: record, context: context)
+                updated.airtableModifiedAt = Date()
+                context.insert(updated)
+            } else {
+                // New record from Airtable — create locally
+                let newModel = T.from(record: record, context: context)
+                newModel.airtableModifiedAt = Date()
+                context.insert(newModel)
+            }
+        }
+
+        // 5. Delete local records that no longer exist in Airtable
+        //    EXCEPT records with isPendingPush (they haven't been pushed yet)
+        for local in localRecords {
+            if !seenIds.contains(local.id) {
+                if local.isPendingPush {
+                    // Keep — hasn't been pushed to Airtable yet
+                    continue
+                }
+                context.delete(local)
+            }
+        }
+
+        // 6. Save context
+        try context.save()
+
+        return airtableRecords.count
+    }
+
+    // MARK: - Pull Dispatcher (Table ID → Model Type)
+
+    /// Routes a table ID to the correct generic pullTable<T> invocation.
+    /// Mirrors: sync-engine.ts → TABLE_NAME_TO_ID / TABLE_CONVERTERS dispatch.
+    ///
+    /// This is necessary because Swift generics are resolved at compile time,
+    /// so we need an explicit switch to map each runtime table ID to its model type.
+    private func pullTableByType(tableId: String, service: AirtableService) async throws -> Int {
+        switch tableId {
+        case AirtableConfig.Tables.contacts:
+            return try await pullTable(Contact.self, tableId: tableId, service: service)
+        case AirtableConfig.Tables.companies:
+            return try await pullTable(Company.self, tableId: tableId, service: service)
+        case AirtableConfig.Tables.opportunities:
+            return try await pullTable(Opportunity.self, tableId: tableId, service: service)
+        case AirtableConfig.Tables.projects:
+            return try await pullTable(Project.self, tableId: tableId, service: service)
+        case AirtableConfig.Tables.proposals:
+            return try await pullTable(Proposal.self, tableId: tableId, service: service)
+        case AirtableConfig.Tables.tasks:
+            return try await pullTable(CRMTask.self, tableId: tableId, service: service)
+        case AirtableConfig.Tables.interactions:
+            return try await pullTable(Interaction.self, tableId: tableId, service: service)
+        case AirtableConfig.Tables.importedContacts:
+            return try await pullTable(ImportedContact.self, tableId: tableId, service: service)
+        case AirtableConfig.Tables.specialties:
+            return try await pullTable(Specialty.self, tableId: tableId, service: service)
+        case AirtableConfig.Tables.portalAccess:
+            return try await pullTable(PortalAccessRecord.self, tableId: tableId, service: service)
+        case AirtableConfig.Tables.portalLogs:
+            return try await pullTable(PortalLog.self, tableId: tableId, service: service)
+        default:
+            throw SyncError.unknownTable(tableId)
+        }
+    }
+
     // MARK: - Push Pending Changes
 
     /// Pushes all locally-modified records (isPendingPush = true) to Airtable.
@@ -176,16 +297,142 @@ final class SyncEngine {
     private func pushPendingChanges(service: AirtableService) async throws {
         let context = ModelContext(modelContainer)
 
-        // TODO: For each CRUD table, fetch records where isPendingPush == true
-        // For each pending record:
-        //   1. Convert SwiftData model → Airtable fields (exclude formula/lookup/rollup)
-        //   2. If record has no Airtable ID → batchCreate
-        //   3. If record has Airtable ID → batchUpdate
-        //   4. On success, set isPendingPush = false
-        //   5. On 422 error, check if it's INVALID_MULTIPLE_CHOICE_OPTIONS
-        //      (emoji prefix mismatch) and log detailed error
+        // Push each CRUD table in sync order (skip read-only: Specialties, Portal Logs).
+        // Each call is wrapped in do/catch so one table failure doesn't abort the rest.
+        // Mirrors: sync-engine.ts → pushTable() called for each table in SYNC_ORDER.
 
-        _ = context // suppress unused warning until implemented
+        await pushTable(Contact.self, context: context, service: service)
+        await pushTable(Company.self, context: context, service: service)
+        await pushTable(Opportunity.self, context: context, service: service)
+        await pushTable(Project.self, context: context, service: service)
+        await pushTable(Proposal.self, context: context, service: service)
+        await pushTable(CRMTask.self, context: context, service: service)
+        await pushTable(Interaction.self, context: context, service: service)
+        await pushTable(ImportedContact.self, context: context, service: service)
+        await pushTable(PortalAccessRecord.self, context: context, service: service)
+
+        // Save all changes (isPendingPush = false, updated IDs from creates) in one batch
+        try context.save()
+    }
+
+    // MARK: - Push Helpers
+
+    /// Generic push for a single table. Fetches pending records, splits into
+    /// creates vs updates, sends to Airtable, and marks as pushed on success.
+    ///
+    /// - **Creates:** records whose `id` is empty or starts with "local-" (no Airtable ID yet)
+    /// - **Updates:** records whose `id` starts with "rec" (valid Airtable record ID)
+    ///
+    /// Airtable constraints:
+    /// - Max 10 records per batch request
+    /// - 200ms stagger between batch requests to stay under 5 req/sec rate limit
+    ///
+    /// On create success, the model's `id` is NOT updated here because SwiftData's
+    /// @Attribute(.unique) makes `id` effectively immutable once inserted. Instead,
+    /// we delete the local-ID model and insert a fresh one with the real Airtable ID.
+    /// This matches the delete-and-reinsert pattern from pullTable().
+    private func pushTable<T: AirtableSyncable>(
+        _ type: T.Type,
+        context: ModelContext,
+        service: AirtableService
+    ) async {
+        let tableId = T.airtableTableId
+
+        // Skip read-only tables (Specialties, Portal Logs)
+        guard !AirtableConfig.readOnlyTables.contains(tableId) else { return }
+
+        do {
+            // Fetch ALL records and filter to isPendingPush in memory.
+            // SwiftData #Predicate requires concrete types at compile time,
+            // so we filter in Swift to keep the generic constraint clean.
+            // Record counts are small (< 100 per table) so this is fine.
+            let descriptor = FetchDescriptor<T>()
+            let allRecords = (try? context.fetch(descriptor)) ?? []
+            let pending = allRecords.filter { $0.isPendingPush }
+
+            guard !pending.isEmpty else { return }
+
+            // Separate creates (no Airtable ID) from updates (has Airtable ID)
+            var toCreate: [T] = []
+            var toUpdate: [T] = []
+
+            for record in pending {
+                let recordId = record.id
+                if recordId.isEmpty || recordId.hasPrefix("local-") {
+                    toCreate.append(record)
+                } else {
+                    // Has an Airtable ID (starts with "rec") or some other format — update
+                    toUpdate.append(record)
+                }
+            }
+
+            // ── Batch Create (max 10 per request) ──
+
+            if !toCreate.isEmpty {
+                let fieldsList = toCreate.map { $0.toAirtableFields() }
+
+                for (chunkIndex, chunk) in fieldsList.chunked(into: 10).enumerated() {
+                    // Rate limit stagger between batch requests
+                    if chunkIndex > 0 {
+                        try? await Task.sleep(nanoseconds: AirtableConfig.tableSyncStaggerMs)
+                    }
+
+                    let created = try await service.batchCreate(tableId: tableId, records: chunk)
+
+                    // Match created records back to local models by position within chunk.
+                    // Airtable returns records in the same order they were submitted.
+                    let chunkStartIndex = chunkIndex * 10
+                    for (i, createdDict) in created.enumerated() {
+                        let localIndex = chunkStartIndex + i
+                        guard localIndex < toCreate.count else { break }
+
+                        guard let airtableRecord = AirtableRecord.from(dict: createdDict) else {
+                            continue
+                        }
+
+                        let localModel = toCreate[localIndex]
+
+                        // SwiftData @Attribute(.unique) var id can't be mutated safely.
+                        // Delete the local-ID model, then insert a fresh one with the
+                        // real Airtable ID — same delete-and-reinsert pattern as pullTable.
+                        context.delete(localModel)
+                        let newModel = T.from(record: airtableRecord, context: context)
+                        newModel.isPendingPush = false
+                        newModel.airtableModifiedAt = Date()
+                        context.insert(newModel)
+                    }
+                }
+            }
+
+            // ── Batch Update (max 10 per request) ──
+
+            if !toUpdate.isEmpty {
+                let updatePayloads: [(id: String, fields: [String: Any])] = toUpdate.map { record in
+                    (id: record.id, fields: record.toAirtableFields())
+                }
+
+                for (chunkIndex, chunk) in updatePayloads.chunked(into: 10).enumerated() {
+                    // Rate limit stagger between batch requests
+                    if chunkIndex > 0 {
+                        try? await Task.sleep(nanoseconds: AirtableConfig.tableSyncStaggerMs)
+                    }
+
+                    try await service.batchUpdate(tableId: tableId, records: chunk)
+                }
+
+                // Mark all updated records as pushed
+                for record in toUpdate {
+                    record.isPendingPush = false
+                    record.airtableModifiedAt = Date()
+                }
+            }
+        } catch {
+            // Log error but don't abort push for other tables.
+            // Common failure: 422 INVALID_MULTIPLE_CHOICE_OPTIONS (emoji prefix mismatch).
+            // This means a select option value like "High" was sent but Airtable expects
+            // "🔴 High". The converters should handle this, but log details for debugging.
+            print("[SyncEngine] Push failed for table \(tableId): \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Polling
@@ -216,5 +463,48 @@ final class SyncEngine {
     @MainActor
     func forceSync() async {
         await fullSync()
+    }
+}
+
+// MARK: - AirtableSyncable Protocol
+
+/// Combines AirtableConvertible + PersistentModel with the sync metadata properties
+/// that all 11 models share: `id`, `isPendingPush`, and `airtableModifiedAt`.
+///
+/// This protocol lets `pullTable<T>()` access these properties generically without
+/// resorting to key-value coding or runtime casts. Every @Model class in the project
+/// already has these properties — the extensions below just declare the conformance.
+protocol AirtableSyncable: AirtableConvertible, PersistentModel {
+    var id: String { get }
+    var isPendingPush: Bool { get set }
+    var airtableModifiedAt: Date? { get set }
+}
+
+// MARK: - AirtableSyncable Conformances (all 11 model types)
+
+// Each model already has `id: String`, `isPendingPush: Bool`, and
+// `airtableModifiedAt: Date?` — these extensions just declare the protocol match.
+extension Contact: AirtableSyncable {}
+extension Company: AirtableSyncable {}
+extension Opportunity: AirtableSyncable {}
+extension Project: AirtableSyncable {}
+extension Proposal: AirtableSyncable {}
+extension CRMTask: AirtableSyncable {}
+extension Interaction: AirtableSyncable {}
+extension ImportedContact: AirtableSyncable {}
+extension Specialty: AirtableSyncable {}
+extension PortalAccessRecord: AirtableSyncable {}
+extension PortalLog: AirtableSyncable {}
+
+// MARK: - Sync Errors
+
+enum SyncError: LocalizedError {
+    case unknownTable(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .unknownTable(let tableId):
+            return "Unknown table ID in sync order: \(tableId)"
+        }
     }
 }

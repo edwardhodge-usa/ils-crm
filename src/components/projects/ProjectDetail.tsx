@@ -83,6 +83,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
   const description = (project.description as string | null) ?? null
   const keyMilestones = (project.key_milestones as string | null) ?? null
   const location = (project.location as string | null) ?? null
+  const projectLead = (project.project_lead as string | null) ?? null
 
   const stats = [
     { label: 'Contacts', value: contacts.length },
@@ -125,24 +126,42 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         {/* 2. Stats strip */}
         <ContactStats stats={stats} />
 
-        {/* 3. Key dates */}
-        <div className="px-4 py-3 border-b border-[var(--separator)]">
-          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
-            Timeline
+        {/* 3. Project details — Apple HIG form rows */}
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', margin: '12px 16px' }}>
+          {/* Project Lead */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Project Lead</span>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+              {projectLead ?? '—'}
+            </span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <div className="text-[12px] text-[var(--text-tertiary)] mb-0.5">Start Date</div>
-              <div className="text-[12px] font-medium text-[var(--text-primary)]">
-                {startDate || '—'}
-              </div>
-            </div>
-            <div>
-              <div className="text-[12px] text-[var(--text-tertiary)] mb-0.5">End Date</div>
-              <div className="text-[12px] font-medium text-[var(--text-primary)]">
-                {endDate || '—'}
-              </div>
-            </div>
+          {/* Start Date */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Start Date</span>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+              {startDate || '—'}
+            </span>
+          </div>
+          {/* End Date */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>End Date</span>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+              {endDate || '—'}
+            </span>
+          </div>
+          {/* Status */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Status</span>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+              {status || '—'}
+            </span>
+          </div>
+          {/* Contract Value */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', minHeight: 36 }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Contract Value</span>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+              {contractValue ? `$${contractValue.toLocaleString()}` : '—'}
+            </span>
           </div>
         </div>
 

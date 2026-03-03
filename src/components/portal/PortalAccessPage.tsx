@@ -108,6 +108,18 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
   const leadSource = (record.lead_source as string | null) ?? null
   const dateAdded = record.date_added ?? null
   const pageAddress = (record.page_address as string | null) ?? null
+  const assignee = (record.assignee as string | null) ?? null
+  const contactIndustry = (record.contact_industry_lookup as string | null) ?? null
+  const contactTags = (record.contact_tags_lookup as string | null) ?? null
+  const contactWebsite = (record.contact_website_lookup as string | null) ?? null
+  const contactJobTitle = (record.contact_job_title_lookup as string | null) ?? null
+  // Combine address parts into one line
+  const contactAddress = [
+    record.contact_address_line_lookup,
+    record.contact_city_lookup,
+    record.contact_state_lookup,
+    record.contact_country_lookup,
+  ].filter(Boolean).join(', ') || null
 
   // Filter logs related to this record by email match (best available join key)
   const relatedLogs = email
@@ -135,7 +147,13 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
   const fields: Array<{ label: string; value: string | null }> = [
     { label: 'Email', value: email },
     { label: 'Company', value: company },
+    { label: 'Job Title', value: contactJobTitle },
+    { label: 'Industry', value: contactIndustry },
+    { label: 'Tags', value: contactTags },
+    { label: 'Website', value: contactWebsite },
+    { label: 'Address', value: contactAddress },
     { label: 'Lead Source', value: leadSource },
+    { label: 'Assignee', value: assignee },
     { label: 'Added', value: formatDate(dateAdded) || null },
     { label: 'Portal Page', value: pageAddress },
   ]

@@ -75,9 +75,6 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
 
   const proposalName = (proposal.proposal_name as string) || 'Unnamed Proposal'
   const status = (proposal.status as string | null) ?? null
-  const value = proposal.proposed_value ? Number(proposal.proposed_value) : null
-  const dateSent = (proposal.date_sent as string | null) ?? null
-  const validUntil = (proposal.valid_until as string | null) ?? null
   const notes = (proposal.notes as string | null) ?? null
 
   const contactName = contact
@@ -85,10 +82,14 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
     : null
   const companyName = company ? (company.company_name as string) || null : null
 
+  const version = (proposal.version as string | null) ?? null
+  const templateUsed = (proposal.template_used as string | null) ?? null
+  const approvalStatus = (proposal.approval_status as string | null) ?? null
+
   const stats = [
-    { label: 'Value', value: value ? `$${value.toLocaleString()}` : '—' },
-    { label: 'Sent', value: dateSent || '—' },
-    { label: 'Expires', value: validUntil || '—' },
+    { label: 'Version', value: version || '—' },
+    { label: 'Template', value: templateUsed || '—' },
+    { label: 'Approval', value: approvalStatus || '—' },
   ]
 
   return (

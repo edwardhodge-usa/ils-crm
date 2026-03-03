@@ -68,7 +68,7 @@ function cleanSelectValue(value: unknown): string | null {
 interface FieldMapping {
   local: string
   airtable: string
-  type: 'text' | 'number' | 'linked' | 'multiSelect' | 'singleSelect' | 'checkbox' | 'readonly'
+  type: 'text' | 'number' | 'linked' | 'multiSelect' | 'singleSelect' | 'checkbox' | 'readonly' | 'collaborator'
 }
 
 function airtableToLocal(
@@ -102,6 +102,10 @@ function airtableToLocal(
       case 'readonly':
         result[m.local] = val != null ? (typeof val === 'number' ? val : str(val)) : null
         break
+      case 'collaborator':
+        result[m.local] = (val && typeof val === 'object' && 'name' in (val as Record<string, unknown>))
+          ? String((val as Record<string, string>).name) || null : null
+        break
     }
   }
 
@@ -115,7 +119,7 @@ function localToAirtable(
   const fields: Record<string, unknown> = {}
 
   for (const m of mappings) {
-    if (m.type === 'readonly') continue // Skip formula/rollup/lookup
+    if (m.type === 'readonly' || m.type === 'collaborator') continue // Skip formula/rollup/lookup/collaborator
     const val = record[m.local]
     if (val === undefined) continue
 
@@ -269,6 +273,7 @@ const TASK_MAPPINGS: FieldMapping[] = [
   { local: 'contacts_ids', airtable: TASKS.contacts, type: 'linked' },
   { local: 'projects_ids', airtable: TASKS.projects, type: 'linked' },
   { local: 'proposal_ids', airtable: TASKS.proposal, type: 'linked' },
+  { local: 'assigned_to', airtable: TASKS.assignedTo, type: 'collaborator' },
 ]
 
 // ─── Proposals ───────────────────────────────────────────────
@@ -307,6 +312,7 @@ const PROJECT_MAPPINGS: FieldMapping[] = [
   { local: 'tasks_ids', airtable: PROJECTS.tasks, type: 'linked' },
   { local: 'primary_contact_ids', airtable: PROJECTS.primaryContact, type: 'linked' },
   { local: 'contacts_ids', airtable: PROJECTS.contacts, type: 'linked' },
+  { local: 'project_lead', airtable: PROJECTS.projectLead, type: 'collaborator' },
 ]
 
 // ─── Interactions ────────────────────────────────────────────
@@ -320,6 +326,7 @@ const INTERACTION_MAPPINGS: FieldMapping[] = [
   { local: 'direction', airtable: INTERACTIONS.direction, type: 'singleSelect' },
   { local: 'contacts_ids', airtable: INTERACTIONS.contacts, type: 'linked' },
   { local: 'sales_opportunities_ids', airtable: INTERACTIONS.salesOpportunities, type: 'linked' },
+  { local: 'logged_by', airtable: INTERACTIONS.loggedBy, type: 'collaborator' },
 ]
 
 // ─── Imported Contacts ───────────────────────────────────────
@@ -371,6 +378,8 @@ const IMPORTED_CONTACT_MAPPINGS: FieldMapping[] = [
   { local: 'sync_to_contacts', airtable: IMPORTED_CONTACTS.syncToContacts, type: 'checkbox' },
   { local: 'specialties_ids', airtable: IMPORTED_CONTACTS.specialties, type: 'linked' },
   { local: 'related_crm_contact_ids', airtable: IMPORTED_CONTACTS.relatedCrmContact, type: 'linked' },
+  { local: 'imported_by', airtable: IMPORTED_CONTACTS.importedBy, type: 'collaborator' },
+  { local: 'assigned_admin', airtable: IMPORTED_CONTACTS.assignedAdmin, type: 'collaborator' },
 ]
 
 // ─── Specialties ─────────────────────────────────────────────
@@ -411,6 +420,14 @@ const PORTAL_ACCESS_MAPPINGS: FieldMapping[] = [
   { local: 'contact_email_lookup', airtable: PORTAL_ACCESS.contactEmail, type: 'readonly' },
   { local: 'contact_phone_lookup', airtable: PORTAL_ACCESS.contactPhone, type: 'readonly' },
   { local: 'contact_job_title_lookup', airtable: PORTAL_ACCESS.contactJobTitle, type: 'readonly' },
+  { local: 'assignee', airtable: PORTAL_ACCESS.assignee, type: 'collaborator' },
+  { local: 'contact_industry_lookup', airtable: PORTAL_ACCESS.contactIndustry, type: 'readonly' },
+  { local: 'contact_tags_lookup', airtable: PORTAL_ACCESS.contactTags, type: 'readonly' },
+  { local: 'contact_website_lookup', airtable: PORTAL_ACCESS.contactWebsite, type: 'readonly' },
+  { local: 'contact_address_line_lookup', airtable: PORTAL_ACCESS.contactAddressLine, type: 'readonly' },
+  { local: 'contact_city_lookup', airtable: PORTAL_ACCESS.contactCity, type: 'readonly' },
+  { local: 'contact_state_lookup', airtable: PORTAL_ACCESS.contactState, type: 'readonly' },
+  { local: 'contact_country_lookup', airtable: PORTAL_ACCESS.contactCountry, type: 'readonly' },
 ]
 
 // ─── Portal Logs ─────────────────────────────────────────────

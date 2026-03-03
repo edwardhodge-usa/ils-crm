@@ -5,7 +5,7 @@ import SwiftData
 /// Airtable table: tblj70XPHI7wnUmxO
 ///
 /// READ-ONLY. Written by imaginelab-portal (Next.js), consumed here.
-/// No isPendingPush or localModifiedAt.
+/// isPendingPush included for schema consistency but never set true.
 @Model
 final class PortalLog {
     @Attribute(.unique) var id: String
@@ -23,9 +23,9 @@ final class PortalLog {
     var pageUrl: String?          // fldA8GMWwQMthnnta
     var timestamp: Date?          // fldtntKgWXKanYEWZ
 
-    // Sync Metadata (read-only — no push fields)
+    // Sync Metadata
+    var isPendingPush: Bool = false
     var airtableModifiedAt: Date?
-    // No isPendingPush — read-only table
 
     init(id: String) {
         self.id = id
