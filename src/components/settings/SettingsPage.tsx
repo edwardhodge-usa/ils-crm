@@ -198,7 +198,7 @@ function GeneralSection() {
             borderBottom: '1px solid var(--separator)',
           }}>
             <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flex: 1 }}>Name</span>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
               {currentUser?.name || '\u2014'}
             </span>
           </div>
@@ -212,7 +212,7 @@ function GeneralSection() {
             borderBottom: '1px solid var(--separator)',
           }}>
             <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flex: 1 }}>Email</span>
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
               {currentUser?.email || '\u2014'}
             </span>
           </div>
@@ -226,7 +226,7 @@ function GeneralSection() {
             borderBottom: '1px solid var(--separator)',
           }}>
             <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flex: 1 }}>Airtable User ID</span>
-            <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-tertiary)' }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
               {currentUser?.id || '\u2014'}
             </span>
           </div>
@@ -438,10 +438,10 @@ function SyncSection() {
                 <span style={{ color: 'var(--text-primary)', textTransform: 'capitalize', flex: 1 }}>
                   {t.table_name.replace(/_/g, ' ')}
                 </span>
-                <span style={{ color: 'var(--text-tertiary)', width: 80, textAlign: 'right' }}>
+                <span style={{ color: 'var(--text-secondary)', width: 80, textAlign: 'right' }}>
                   {t.record_count} records
                 </span>
-                <span style={{ color: 'var(--text-tertiary)', width: 112, textAlign: 'right' }}>
+                <span style={{ color: 'var(--text-secondary)', width: 112, textAlign: 'right' }}>
                   {t.last_sync_at ? new Date(t.last_sync_at).toLocaleTimeString() : 'Never'}
                 </span>
                 <span style={{

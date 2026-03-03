@@ -59,7 +59,7 @@ function FormRow({
       <span
         style={{
           fontSize: 13, fontWeight: 400,
-          color: isLink ? '#007AFF' : 'var(--text-secondary)',
+          color: isLink ? 'var(--color-accent)' : 'var(--text-primary)',
           display: 'flex', alignItems: 'center', gap: 5,
           cursor: 'default', borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
           transition: 'background 150ms',
@@ -332,7 +332,7 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
               <button
                 onClick={() => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`)}
                 style={{
-                  fontSize: 12, fontWeight: 500, color: '#007AFF',
+                  fontSize: 12, fontWeight: 500, color: 'var(--color-accent)',
                   background: 'rgba(0,122,255,0.10)', border: 'none', cursor: 'default',
                   borderRadius: 8, padding: '6px 14px', fontFamily: 'inherit',
                   transition: 'background 150ms',
@@ -350,7 +350,7 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
                   window.electronAPI.shell.openExternal(`tel:${num}`)
                 }}
                 style={{
-                  fontSize: 12, fontWeight: 500, color: '#34C759',
+                  fontSize: 12, fontWeight: 500, color: 'var(--color-green)',
                   background: 'rgba(52,199,89,0.10)', border: 'none', cursor: 'default',
                   borderRadius: 8, padding: '6px 14px', fontFamily: 'inherit',
                   transition: 'background 150ms',
@@ -424,7 +424,7 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
         {/* ── 5. Opportunities — linked records ── */}
         <SectionLabel>Opportunities</SectionLabel>
         {openOpps.length === 0 ? (
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0', marginBottom: 16 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0', marginBottom: 16 }}>
             No open opportunities
           </div>
         ) : (
@@ -452,7 +452,7 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
         {/* ── 6. Interactions — linked records ── */}
         <SectionLabel>Interactions</SectionLabel>
         {interactions.length === 0 ? (
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0', marginBottom: 16 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0', marginBottom: 16 }}>
             No interactions yet
           </div>
         ) : (

@@ -101,7 +101,7 @@ export default function EntityForm({
           <button
             type="submit"
             disabled={saving}
-            className="px-3 py-1.5 text-[var(--text-primary)] bg-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40"
+            className="px-3 py-1.5 text-[var(--text-on-accent)] bg-[var(--color-accent)] rounded-md hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>

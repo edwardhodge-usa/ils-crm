@@ -83,7 +83,7 @@ function FormRow({
             style={{
               fontSize: 13,
               fontWeight: 400,
-              color: 'var(--text-secondary)',
+              color: 'var(--text-primary)',
               whiteSpace: multiline ? 'pre-wrap' : 'nowrap',
               lineHeight: multiline ? '20px' : '16px',
               textAlign: multiline ? 'left' : 'right',
@@ -165,7 +165,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
             height: '100%',
           }}
         >
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Loading...</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Loading...</div>
         </div>
       </div>
     )

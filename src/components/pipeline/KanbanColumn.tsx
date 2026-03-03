@@ -95,7 +95,7 @@ export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: Kan
         {deals.length === 0 && (
           <div
             className="text-center"
-            style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '16px 0' }}
+            style={{ fontSize: 12, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '16px 0' }}
           >
             No deals
           </div>

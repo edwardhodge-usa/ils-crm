@@ -85,7 +85,7 @@ export function ContractDetail({ contractId, contractData }: ContractDetailProps
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
-        <div className="text-[12px] text-[var(--text-tertiary)] truncate">
+        <div className="text-[13px] text-[var(--text-secondary)] truncate">
           {contractName}
         </div>
       </div>
@@ -117,8 +117,8 @@ export function ContractDetail({ contractId, contractData }: ContractDetailProps
               onClick={() => contact && navigate(`/contacts/${contact.id as string}`)}
             >
               <div className="flex-1 min-w-0">
-                <div className="text-[12px] text-[var(--text-tertiary)] mb-0.5">Contact</div>
-                <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{contactName}</div>
+                <div className="text-[13px] text-[var(--text-secondary)] mb-0.5">Contact</div>
+                <div className="text-[13px] font-medium text-[var(--text-primary)] truncate">{contactName}</div>
               </div>
             </div>
           )}
@@ -128,8 +128,8 @@ export function ContractDetail({ contractId, contractData }: ContractDetailProps
               onClick={() => company && navigate(`/companies/${company.id as string}`)}
             >
               <div className="flex-1 min-w-0">
-                <div className="text-[12px] text-[var(--text-tertiary)] mb-0.5">Company</div>
-                <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{companyName}</div>
+                <div className="text-[13px] text-[var(--text-secondary)] mb-0.5">Company</div>
+                <div className="text-[13px] font-medium text-[var(--text-primary)] truncate">{companyName}</div>
               </div>
             </div>
           )}
@@ -139,13 +139,13 @@ export function ContractDetail({ contractId, contractData }: ContractDetailProps
               onClick={() => opportunity && navigate(`/pipeline/${opportunity.id as string}/edit`)}
             >
               <div className="flex-1 min-w-0">
-                <div className="text-[12px] text-[var(--text-tertiary)] mb-0.5">Opportunity</div>
-                <div className="text-[12px] font-medium text-[var(--text-primary)] truncate">{oppName}</div>
+                <div className="text-[13px] text-[var(--text-secondary)] mb-0.5">Opportunity</div>
+                <div className="text-[13px] font-medium text-[var(--text-primary)] truncate">{oppName}</div>
               </div>
             </div>
           )}
           {!contactName && !companyName && !oppName && (
-            <div className="text-[12px] text-[var(--text-tertiary)] italic">No linked records</div>
+            <div className="text-[13px] text-[var(--text-secondary)] italic">No linked records</div>
           )}
         </div>
 
@@ -155,7 +155,7 @@ export function ContractDetail({ contractId, contractData }: ContractDetailProps
             <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
               Notes
             </div>
-            <div className="text-[12px] text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
+            <div className="text-[13px] text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed">
               {notes}
             </div>
           </div>

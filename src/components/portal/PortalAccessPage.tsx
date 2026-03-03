@@ -186,7 +186,7 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
-        <div className="text-[12px] text-[var(--text-tertiary)] truncate">
+        <div className="text-[12px] text-[var(--text-secondary)] truncate">
           {name}
         </div>
         {Boolean(status) && <StatusBadge value={status} />}
@@ -226,14 +226,14 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
               borderBottom: '1px solid var(--separator)',
             }}>
               <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>Total Visits</span>
-              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>{logCount}</span>
+              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{logCount}</span>
             </div>
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               minHeight: 36, padding: '10px 14px',
             }}>
               <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>Last Activity</span>
-              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>{lastActivity ?? '---'}</span>
+              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>{lastActivity ?? '---'}</span>
             </div>
           </div>
         </div>
@@ -263,7 +263,7 @@ function PortalAccessDetail({ record, logs }: DetailProps) {
                   {label}
                 </span>
                 <span style={{
-                  fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)',
+                  fontSize: 13, fontWeight: 400, color: 'var(--text-primary)',
                   textAlign: 'right', maxWidth: '60%',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>

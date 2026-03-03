@@ -142,13 +142,13 @@ interface CategoriesPaneProps {
 
 function CategoriesPane({ active, onSelect, counts, typeCounts }: CategoriesPaneProps) {
   const smartLists: { key: CategoryFilter; label: string; color: string }[] = [
-    { key: 'all',       label: 'All Tasks',  color: '#007AFF' },
-    { key: 'overdue',   label: 'Overdue',    color: '#FF3B30' },
-    { key: 'today',     label: 'Today',      color: '#FF9500' },
-    { key: 'upcoming',  label: 'Scheduled',  color: '#30B0C7' },
+    { key: 'all',       label: 'All Tasks',  color: 'var(--color-accent)' },
+    { key: 'overdue',   label: 'Overdue',    color: 'var(--color-red)' },
+    { key: 'today',     label: 'Today',      color: 'var(--color-orange)' },
+    { key: 'upcoming',  label: 'Scheduled',  color: 'var(--color-teal)' },
     { key: 'nodate',    label: 'No Date',    color: '#8E8E93' },
-    { key: 'waiting',   label: 'Waiting',    color: '#FFCC00' },
-    { key: 'completed', label: 'Completed',  color: '#34C759' },
+    { key: 'waiting',   label: 'Waiting',    color: 'var(--color-yellow)' },
+    { key: 'completed', label: 'Completed',  color: 'var(--color-green)' },
   ]
 
   return (
@@ -237,7 +237,7 @@ function CategoriesPane({ active, onSelect, counts, typeCounts }: CategoriesPane
           </div>
         )
       })}
-      <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 12px 8px', lineHeight: 1.3 }}>
+      <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 12px 8px', lineHeight: 1.3 }}>
         Auto-populated from Airtable
       </div>
     </div>
@@ -387,7 +387,7 @@ interface TaskDetailProps {
 function TaskDetail({ task, isDark, onComplete, onDelete, onNavigateEdit }: TaskDetailProps) {
   if (!task) {
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
         Select a task to view details
       </div>
     )
@@ -538,7 +538,7 @@ function TaskDetail({ task, isDark, onComplete, onDelete, onNavigateEdit }: Task
           <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Due Date</span>
           <span style={{
             fontSize: 13, fontWeight: 400,
-            color: task.due_date && task.due_date < todayStr() && !completed ? 'var(--color-red)' : 'var(--text-secondary)',
+            color: task.due_date && task.due_date < todayStr() && !completed ? 'var(--color-red)' : 'var(--text-primary)',
           }}>
             {formatDetailDate(task.due_date)}
           </span>
@@ -570,7 +570,7 @@ function TaskDetail({ task, isDark, onComplete, onDelete, onNavigateEdit }: Task
         {/* Assigned To */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', minHeight: 36 }}>
           <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Assigned To</span>
-          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
             {task.assigned_to ?? '—'}
           </span>
         </div>
@@ -772,7 +772,7 @@ export default function TasksPage() {
                   />
                   {!isCollapsed && (
                     tasks.length === 0 ? (
-                      <div style={{ padding: '8px 14px 12px', fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                      <div style={{ padding: '8px 14px 12px', fontSize: 12, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
                         No tasks
                       </div>
                     ) : (
@@ -795,7 +795,7 @@ export default function TasksPage() {
           ) : (
             // Flat list (filtered by category)
             filteredTasks.length === 0 ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 13, color: 'var(--text-tertiary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 13, color: 'var(--text-secondary)' }}>
                 No tasks
               </div>
             ) : (

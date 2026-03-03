@@ -35,7 +35,7 @@ function FormRow({
       }}
     >
       <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>{label}</span>
-      <span className="flex items-center gap-1" style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+      <span className="flex items-center gap-1" style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
         {value || '—'}
         {chevron && <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 2 }}>⌃</span>}
       </span>
@@ -272,7 +272,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
                 }}
               >
                 <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>Lead Source</span>
-                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
                   {deal.lead_source as string}
                 </span>
               </div>
@@ -296,7 +296,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
                 <div style={{
                   padding: '10px 14px',
                   fontSize: 13,
-                  color: 'var(--text-tertiary)',
+                  color: 'var(--text-secondary)',
                   fontStyle: 'italic',
                 }}>
                   No linked tasks
@@ -372,7 +372,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
       ) : (
         /* Loading state while data fetches */
         <div className="flex-1 flex items-center justify-center">
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Loading...</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Loading...</div>
         </div>
       )}
     </div>

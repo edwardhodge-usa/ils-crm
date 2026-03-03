@@ -223,7 +223,7 @@ export default function Company360Page() {
           </div>
           {contacts.length === 0 ? (
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-              <div style={{ padding: '14px', textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)' }}>
+              <div style={{ padding: '14px', textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
                 No contacts
               </div>
             </div>
@@ -274,7 +274,7 @@ export default function Company360Page() {
           </div>
           {opportunities.length === 0 ? (
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-              <div style={{ padding: '14px', textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)' }}>
+              <div style={{ padding: '14px', textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
                 No opportunities
               </div>
             </div>
@@ -302,7 +302,7 @@ export default function Company360Page() {
                     <div style={{
                       width: 28, height: 28, borderRadius: 7, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, background: 'rgba(175,82,222,0.22)', color: '#AF52DE',
+                      fontSize: 13, background: 'rgba(175,82,222,0.22)', color: 'var(--color-purple)',
                     }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></svg>
                     </div>
@@ -339,7 +339,7 @@ export default function Company360Page() {
           </div>
           {projects.length === 0 ? (
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-              <div style={{ padding: '14px', textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)' }}>
+              <div style={{ padding: '14px', textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
                 No projects
               </div>
             </div>
@@ -365,7 +365,7 @@ export default function Company360Page() {
                     <div style={{
                       width: 28, height: 28, borderRadius: 7, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, background: 'rgba(52,199,89,0.10)', color: '#34C759',
+                      fontSize: 13, background: 'rgba(52,199,89,0.10)', color: 'var(--color-green)',
                     }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
                     </div>
@@ -488,7 +488,7 @@ export default function Company360Page() {
 
     if (visibleRows.length === 0) {
       return (
-        <div style={{ padding: '14px', textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)' }}>
+        <div style={{ padding: '14px', textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
           No company info
         </div>
       )
@@ -530,7 +530,7 @@ function FormRow({ label, value, isDropdown, isLink, isLast }: {
         <span
           style={{
             fontSize: 13, fontWeight: 400,
-            color: isLink ? 'var(--color-accent)' : 'var(--text-secondary)',
+            color: isLink ? 'var(--color-accent)' : 'var(--text-primary)',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
             background: hovered ? 'var(--bg-hover)' : 'transparent',

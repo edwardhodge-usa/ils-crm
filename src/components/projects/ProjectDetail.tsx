@@ -128,7 +128,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
             {Boolean(status) && <StatusBadge value={status} />}
             {Boolean(location) && (
-              <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{location}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{location}</span>
             )}
           </div>
         </div>
@@ -143,7 +143,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
           </div>
           <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
             {visibleRows.length === 0 ? (
-              <div style={{ padding: 14, textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)' }}>
+              <div style={{ padding: 14, textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
                 No project info
               </div>
             ) : (
@@ -166,7 +166,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             Contacts
           </div>
           {contacts.length === 0 ? (
-            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0' }}>No linked contacts</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0' }}>No linked contacts</div>
           ) : (
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
               {contacts.slice(0, 3).map((c, idx) => {
@@ -212,7 +212,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             Opportunities
           </div>
           {opps.length === 0 ? (
-            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0' }}>No linked opportunities</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0' }}>No linked opportunities</div>
           ) : (
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
               {opps.slice(0, 3).map((o, idx) => (
@@ -254,14 +254,14 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             </div>
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', padding: '10px 14px' }}>
               {Boolean(description) && (
-                <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                <div style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
                   {description}
                 </div>
               )}
               {Boolean(keyMilestones) && (
                 <>
-                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8, marginBottom: 2, fontWeight: 500 }}>Key Milestones</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 8, marginBottom: 2, fontWeight: 500 }}>Key Milestones</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
                     {keyMilestones}
                   </div>
                 </>
@@ -299,7 +299,7 @@ function DetailFormRow({ label, value, isDropdown, isLast }: {
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
         <span
           style={{
-            fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)',
+            fontSize: 13, fontWeight: 400, color: 'var(--text-primary)',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
             background: hovered ? 'var(--bg-hover)' : 'transparent',

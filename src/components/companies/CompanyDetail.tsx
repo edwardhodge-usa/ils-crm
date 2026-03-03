@@ -133,7 +133,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '10px 16px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
       }}>
-        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{companyName}</span>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{companyName}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button
             onClick={() => navigate(`/companies/${companyId}/edit`)}
@@ -188,7 +188,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
                   </span>
                 )}
                 {Boolean(location) && (
-                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
                     {Boolean(industry) ? '· ' : ''}{location}
                   </span>
                 )}
@@ -252,7 +252,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
             Contacts
           </div>
           {contacts.length === 0 ? (
-            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0' }}>No linked contacts</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0' }}>No linked contacts</div>
           ) : (
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
               {contacts.slice(0, 5).map((c, idx) => {
@@ -307,7 +307,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
             Open Opportunities
           </div>
           {openOpps.length === 0 ? (
-            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0' }}>No open opportunities</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0' }}>No open opportunities</div>
           ) : (
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
               {openOpps.slice(0, 3).map((opp, idx) => {
@@ -330,7 +330,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
                     <div style={{
                       width: 28, height: 28, borderRadius: 7, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, background: 'rgba(175,82,222,0.22)', color: '#AF52DE',
+                      fontSize: 13, background: 'rgba(175,82,222,0.22)', color: 'var(--color-purple)',
                     }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></svg>
                     </div>
@@ -415,7 +415,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
 
     if (visibleRows.length === 0) {
       return (
-        <div style={{ padding: '14px', textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)' }}>
+        <div style={{ padding: '14px', textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
           No company info
         </div>
       )
@@ -457,7 +457,7 @@ function DetailFormRow({ label, value, isDropdown, isLink, isLast }: {
         <span
           style={{
             fontSize: 13, fontWeight: 400,
-            color: isLink ? 'var(--color-accent)' : 'var(--text-secondary)',
+            color: isLink ? 'var(--color-accent)' : 'var(--text-primary)',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
             background: hovered ? 'var(--bg-hover)' : 'transparent',

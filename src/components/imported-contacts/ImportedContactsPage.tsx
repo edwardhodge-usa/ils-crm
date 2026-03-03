@@ -134,7 +134,7 @@ function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
           )}
           {Boolean(source) && (
             <span style={{
-              fontSize: 10,
+              fontSize: 11,
               padding: '1px 6px',
               borderRadius: 9999,
               background: 'rgba(88,86,214,0.10)',
@@ -207,7 +207,7 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '10px 16px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
       }}>
-        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{name}</span>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{name}</span>
         {Boolean(status) && <StatusBadge value={status} />}
       </div>
 
@@ -247,7 +247,7 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
             Review Action
           </div>
           {isAlreadyReviewed ? (
-            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
               Already {status?.toLowerCase()}. Use the buttons below to change the decision.
             </div>
           ) : (
@@ -312,7 +312,7 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
                   {label}
                 </span>
                 <span style={{
-                  fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)',
+                  fontSize: 13, fontWeight: 400, color: 'var(--text-primary)',
                   textAlign: 'right', maxWidth: '60%',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
@@ -334,7 +334,7 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
             </div>
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', padding: '10px 14px' }}>
               <p style={{
-                fontSize: 13, color: 'var(--text-secondary)',
+                fontSize: 13, color: 'var(--text-primary)',
                 lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0,
               }}>
                 {notes}

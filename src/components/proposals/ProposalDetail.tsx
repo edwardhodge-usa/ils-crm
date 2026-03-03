@@ -172,7 +172,7 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
             Related
           </div>
           {visibleLinkedRows.length === 0 ? (
-            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '4px 0' }}>No linked contact or company</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0' }}>No linked contact or company</div>
           ) : (
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
               {visibleLinkedRows.map((row, idx) => (
@@ -217,7 +217,7 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
               Notes
             </div>
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', padding: '10px 14px' }}>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+              <div style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
                 {notes}
               </div>
             </div>
@@ -253,7 +253,7 @@ function DetailFormRow({ label, value, isDropdown, isLast }: {
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
         <span
           style={{
-            fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)',
+            fontSize: 13, fontWeight: 400, color: 'var(--text-primary)',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
             background: hovered ? 'var(--bg-hover)' : 'transparent',

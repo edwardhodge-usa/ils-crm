@@ -58,11 +58,11 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '8px 12px',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 400,
     color: 'var(--text-primary)',
     background: 'var(--bg-input, var(--bg-tertiary))',
-    border: '1px solid var(--separator)',
+    border: '1px solid var(--separator-strong)',
     borderRadius: 6,
     outline: 'none',
     cursor: 'default',
@@ -92,7 +92,7 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
           <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
             Welcome
           </div>
-          <div style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-secondary)' }}>
             Connect your Airtable account to get started
           </div>
         </div>
@@ -107,14 +107,14 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
           {/* Name */}
           <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--separator)' }}>
             <label style={{ display: 'flex', alignItems: 'center', minHeight: 28, cursor: 'default' }}>
-              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', width: 100, flexShrink: 0 }}>
+              <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-primary)', width: 100, flexShrink: 0 }}>
                 Your Name
               </span>
               <input
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Edward Hodge"
+                placeholder="First Last"
                 style={inputStyle}
                 autoFocus
               />
@@ -124,7 +124,7 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
           {/* Email */}
           <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--separator)' }}>
             <label style={{ display: 'flex', alignItems: 'center', minHeight: 28, cursor: 'default' }}>
-              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', width: 100, flexShrink: 0 }}>
+              <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-primary)', width: 100, flexShrink: 0 }}>
                 Email
               </span>
               <input
@@ -140,7 +140,7 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
           {/* PAT */}
           <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--separator)' }}>
             <label style={{ display: 'flex', alignItems: 'center', minHeight: 28, cursor: 'default' }}>
-              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', width: 100, flexShrink: 0 }}>
+              <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-primary)', width: 100, flexShrink: 0 }}>
                 API Token
               </span>
               <div style={{ position: 'relative', flex: 1 }}>
@@ -161,7 +161,7 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
                     transform: 'translateY(-50%)',
                     background: 'none',
                     border: 'none',
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 500,
                     color: 'var(--color-accent)',
                     cursor: 'default',
@@ -172,7 +172,7 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
                 </button>
               </div>
             </label>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4, paddingLeft: 100 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, paddingLeft: 100 }}>
               Create at airtable.com/create/tokens — needs data.records:read, data.records:write, and schema.bases:read scopes
             </div>
           </div>
@@ -180,7 +180,7 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
           {/* Base ID */}
           <div style={{ padding: '10px 14px' }}>
             <label style={{ display: 'flex', alignItems: 'center', minHeight: 28, cursor: 'default' }}>
-              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', width: 100, flexShrink: 0 }}>
+              <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-primary)', width: 100, flexShrink: 0 }}>
                 Base ID
               </span>
               <input
@@ -190,7 +190,7 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
                 style={inputStyle}
               />
             </label>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4, paddingLeft: 100 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, paddingLeft: 100 }}>
               ILS CRM base ID — don't change unless instructed
             </div>
           </div>
@@ -219,13 +219,12 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
             padding: '10px 16px',
             fontSize: 14,
             fontWeight: 600,
-            color: 'var(--text-on-accent)',
+            color: canSubmit ? 'var(--text-on-accent)' : 'var(--text-tertiary)',
             background: canSubmit ? 'var(--color-accent)' : 'var(--bg-tertiary)',
             border: 'none',
             borderRadius: 8,
             cursor: 'default',
-            opacity: canSubmit ? 1 : 0.5,
-            transition: 'background 150ms, opacity 150ms',
+            transition: 'background 150ms, color 150ms',
           }}
         >
           {isValidating ? 'Connecting...' : 'Connect'}
