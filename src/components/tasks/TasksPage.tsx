@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import useEntityList from '../../hooks/useEntityList'
+import useDarkMode from '../../hooks/useDarkMode'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,28 +34,28 @@ const TASK_TYPES = [
   'Send Proposal', 'Internal Review', 'Project', 'Travel',
 ] as const
 
-const TYPE_COLORS: Record<string, { bg: string; fg: string }> = {
-  'Schedule Meeting':     { bg: 'rgba(100,210,255,0.10)', fg: '#64D2FF' },
-  'Send Qualifications':  { bg: 'rgba(10,132,255,0.10)',  fg: '#0A84FF' },
-  'Follow-up Email':      { bg: 'rgba(191,90,242,0.10)',  fg: '#BF5AF2' },
-  'Follow-up Call':       { bg: 'rgba(52,211,153,0.10)',   fg: '#34D399' },
-  'Other':                { bg: 'rgba(118,118,128,0.10)',  fg: 'var(--text-secondary)' },
-  'Presentation Deck':    { bg: 'rgba(255,159,10,0.10)',   fg: '#FF9F0A' },
-  'Research':             { bg: 'rgba(255,55,95,0.10)',    fg: '#FF375F' },
-  'Administrative':       { bg: 'rgba(94,92,230,0.10)',    fg: '#5E5CE6' },
-  'Send Proposal':        { bg: 'rgba(90,200,250,0.10)',   fg: '#5AC8FA' },
-  'Internal Review':      { bg: 'rgba(255,149,0,0.10)',    fg: '#FF9500' },
-  'Project':              { bg: 'rgba(52,199,89,0.10)',    fg: '#34C759' },
-  'Travel':               { bg: 'rgba(255,69,58,0.10)',    fg: '#FF453A' },
+const TYPE_COLORS: Record<string, { bg: string; fg: string; fgDark: string }> = {
+  'Schedule Meeting':     { bg: 'rgba(48,176,199,0.22)',   fg: '#0E7A8D', fgDark: '#40CBE0' },
+  'Send Qualifications':  { bg: 'rgba(0,122,255,0.22)',    fg: '#0055B3', fgDark: '#409CFF' },
+  'Follow-up Email':      { bg: 'rgba(175,82,222,0.22)',   fg: '#8944AB', fgDark: '#BF5AF2' },
+  'Follow-up Call':       { bg: 'rgba(52,199,89,0.22)',    fg: '#248A3D', fgDark: '#30D158' },
+  'Other':                { bg: 'rgba(142,142,147,0.22)',  fg: '#636366', fgDark: '#98989D' },
+  'Presentation Deck':    { bg: 'rgba(255,149,0,0.22)',    fg: '#C93400', fgDark: '#FF9F0A' },
+  'Research':             { bg: 'rgba(255,45,85,0.22)',    fg: '#D30047', fgDark: '#FF375F' },
+  'Administrative':       { bg: 'rgba(88,86,214,0.22)',    fg: '#3634A3', fgDark: '#5E5CE6' },
+  'Send Proposal':        { bg: 'rgba(50,173,230,0.22)',   fg: '#0071A4', fgDark: '#64D2FF' },
+  'Internal Review':      { bg: 'rgba(162,132,94,0.22)',   fg: '#7C6545', fgDark: '#AC8E68' },
+  'Project':              { bg: 'rgba(0,199,190,0.22)',    fg: '#0C817B', fgDark: '#63E6E2' },
+  'Travel':               { bg: 'rgba(255,59,48,0.22)',    fg: '#D70015', fgDark: '#FF453A' },
 }
 
 const TYPE_SWATCH_COLORS: Record<string, string> = {
-  'Schedule Meeting': '#64D2FF', 'Send Qualifications': '#0A84FF',
-  'Follow-up Email': '#BF5AF2', 'Follow-up Call': '#30D158',
-  'Other': '#8E8E93', 'Presentation Deck': '#FF9F0A',
-  'Research': '#FF375F', 'Administrative': '#5E5CE6',
-  'Send Proposal': '#5AC8FA', 'Internal Review': '#FF9500',
-  'Project': '#34C759', 'Travel': '#FF453A',
+  'Schedule Meeting': '#30B0C7', 'Send Qualifications': '#007AFF',
+  'Follow-up Email': '#AF52DE', 'Follow-up Call': '#34C759',
+  'Other': '#8E8E93', 'Presentation Deck': '#FF9500',
+  'Research': '#FF2D55', 'Administrative': '#5856D6',
+  'Send Proposal': '#32ADE6', 'Internal Review': '#A2845E',
+  'Project': '#00C7BE', 'Travel': '#FF3B30',
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -141,13 +142,13 @@ interface CategoriesPaneProps {
 
 function CategoriesPane({ active, onSelect, counts, typeCounts }: CategoriesPaneProps) {
   const smartLists: { key: CategoryFilter; label: string; color: string }[] = [
-    { key: 'all',       label: 'All Tasks',  color: '#0A84FF' },
-    { key: 'overdue',   label: 'Overdue',    color: '#FF453A' },
-    { key: 'today',     label: 'Today',      color: '#FF9F0A' },
-    { key: 'upcoming',  label: 'Scheduled',  color: '#64D2FF' },
+    { key: 'all',       label: 'All Tasks',  color: '#007AFF' },
+    { key: 'overdue',   label: 'Overdue',    color: '#FF3B30' },
+    { key: 'today',     label: 'Today',      color: '#FF9500' },
+    { key: 'upcoming',  label: 'Scheduled',  color: '#30B0C7' },
     { key: 'nodate',    label: 'No Date',    color: '#8E8E93' },
-    { key: 'waiting',   label: 'Waiting',    color: '#FFD60A' },
-    { key: 'completed', label: 'Completed',  color: '#30D158' },
+    { key: 'waiting',   label: 'Waiting',    color: '#FFCC00' },
+    { key: 'completed', label: 'Completed',  color: '#34C759' },
   ]
 
   return (
@@ -185,7 +186,7 @@ function CategoriesPane({ active, onSelect, counts, typeCounts }: CategoriesPane
             </span>
             <span style={{
               fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 9999, flexShrink: 0,
-              background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--bg-secondary)',
+              background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--bg-tertiary)',
               color: isActive ? 'var(--text-on-accent)' : 'var(--text-secondary)',
             }}>
               {count}
@@ -227,7 +228,7 @@ function CategoriesPane({ active, onSelect, counts, typeCounts }: CategoriesPane
             </span>
             <span style={{
               fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 9999, flexShrink: 0,
-              background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--bg-secondary)',
+              background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--bg-tertiary)',
               color: isActive ? 'var(--text-on-accent)' : 'var(--text-secondary)',
               opacity: count === 0 ? 0.4 : 1,
             }}>
@@ -271,7 +272,7 @@ function SectionHeader({ label, count, icon, iconColor, labelColor, collapsed, o
       <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: labelColor || 'var(--text-secondary)', flex: 1 }}>
         {label}
       </span>
-      <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', background: 'var(--bg-secondary)', padding: '1px 6px', borderRadius: 9999 }}>
+      <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', background: 'var(--bg-tertiary)', padding: '1px 6px', borderRadius: 9999 }}>
         {count}
       </span>
       <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>
@@ -287,11 +288,12 @@ interface TaskRowProps {
   task: TaskItem
   section: Section
   isSelected: boolean
+  isDark: boolean
   onSelect: () => void
   onComplete: () => void
 }
 
-function TaskRow({ task, section, isSelected, onSelect, onComplete }: TaskRowProps) {
+function TaskRow({ task, section, isSelected, isDark, onSelect, onComplete }: TaskRowProps) {
   const due = formatDue(task.due_date, section)
   const completed = isCompleted(task)
   const borderColor = completed ? 'var(--color-green)' : priorityBorderColor(task.priorityClean)
@@ -359,9 +361,9 @@ function TaskRow({ task, section, isSelected, onSelect, onComplete }: TaskRowPro
           )}
           {typeColor && task.type && (
             <span style={{
-              fontSize: 10, fontWeight: 500, padding: '2px 6px',
-              borderRadius: 4, flexShrink: 0, opacity: 0.85,
-              background: typeColor.bg, color: typeColor.fg,
+              fontSize: 11, fontWeight: 600, padding: '2px 6px',
+              borderRadius: 4, flexShrink: 0,
+              background: typeColor.bg, color: isDark ? typeColor.fgDark : typeColor.fg,
             }}>
               {task.type}
             </span>
@@ -376,12 +378,13 @@ function TaskRow({ task, section, isSelected, onSelect, onComplete }: TaskRowPro
 
 interface TaskDetailProps {
   task: TaskItem | null
+  isDark: boolean
   onComplete: (id: string) => void
   onDelete: (id: string) => void
   onNavigateEdit: (id: string) => void
 }
 
-function TaskDetail({ task, onComplete, onDelete, onNavigateEdit }: TaskDetailProps) {
+function TaskDetail({ task, isDark, onComplete, onDelete, onNavigateEdit }: TaskDetailProps) {
   if (!task) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
@@ -411,34 +414,47 @@ function TaskDetail({ task, onComplete, onDelete, onNavigateEdit }: TaskDetailPr
     return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
-  // Priority badge
+  // Priority badge — Apple style: filled circle + bold colored text
+  const priText = task.priorityClean === 'High'
+    ? (isDark ? '#FF453A' : '#D70015')
+    : task.priorityClean === 'Medium'
+      ? (isDark ? '#FF9F0A' : '#C93400')
+      : 'var(--text-secondary)'
   const priorityBadge = task.priorityClean ? (
     <span style={{
-      fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
+      fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
       display: 'inline-flex', alignItems: 'center', gap: 5,
-      background: task.priorityClean === 'High' ? 'rgba(255,69,58,0.12)' : task.priorityClean === 'Medium' ? 'rgba(255,159,10,0.12)' : 'rgba(118,118,128,0.12)',
-      color: task.priorityClean === 'High' ? 'var(--color-red)' : task.priorityClean === 'Medium' ? 'var(--color-orange)' : 'var(--text-secondary)',
+      background: task.priorityClean === 'High' ? 'rgba(255,59,48,0.22)' : task.priorityClean === 'Medium' ? 'rgba(255,149,0,0.22)' : 'rgba(142,142,147,0.22)',
+      color: priText,
     }}>
-      <span style={{ width: 10, height: 10, borderRadius: '50%', border: `1.5px solid ${priorityBorderColor(task.priorityClean)}`, flexShrink: 0 }} />
+      <span style={{ width: 8, height: 8, borderRadius: '50%', background: priorityBorderColor(task.priorityClean), flexShrink: 0 }} />
       {task.priorityClean}
     </span>
   ) : <span style={{ color: 'var(--text-secondary)' }}>—</span>
 
-  // Status badge
-  const statusBadge = task.status ? (
+  // Status badge — per-status colors matching StatusBadge
+  const statusColors: Record<string, { bg: string; fg: string; fgDark: string }> = {
+    'To Do':        { bg: 'rgba(142,142,147,0.22)', fg: '#636366', fgDark: '#98989D' },
+    'In Progress':  { bg: 'rgba(0,122,255,0.22)',    fg: '#0055B3', fgDark: '#409CFF' },
+    'Waiting':      { bg: 'rgba(255,149,0,0.22)',    fg: '#C93400', fgDark: '#FF9F0A' },
+    'Completed':    { bg: 'rgba(52,199,89,0.22)',    fg: '#248A3D', fgDark: '#30D158' },
+    'Cancelled':    { bg: 'rgba(142,142,147,0.22)', fg: '#636366', fgDark: '#98989D' },
+  }
+  const sc = task.status ? (statusColors[task.status] ?? { bg: 'rgba(0,122,255,0.22)', fg: '#0055B3', fgDark: '#409CFF' }) : null
+  const statusBadge = task.status && sc ? (
     <span style={{
-      fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
-      background: 'rgba(10,132,255,0.12)', color: 'var(--color-accent)',
+      fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
+      background: sc.bg, color: isDark ? sc.fgDark : sc.fg,
     }}>
       {task.status}
     </span>
   ) : <span style={{ color: 'var(--text-secondary)' }}>—</span>
 
-  // Type badge
+  // Type badge — Apple system colors with dark mode variants
   const typeBadge = task.type && typeColor ? (
     <span style={{
-      fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
-      background: typeColor.bg, color: typeColor.fg,
+      fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
+      background: typeColor.bg, color: isDark ? typeColor.fgDark : typeColor.fg,
     }}>
       {task.type}
     </span>
@@ -580,6 +596,7 @@ function TaskDetail({ task, onComplete, onDelete, onNavigateEdit }: TaskDetailPr
 
 export default function TasksPage() {
   const navigate = useNavigate()
+  const isDark = useDarkMode()
   const { data: rawTasks, loading, error, reload } = useEntityList(() => window.electronAPI.tasks.getAll())
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -765,6 +782,7 @@ export default function TasksPage() {
                           task={t}
                           section={key}
                           isSelected={t.id === selectedId}
+                          isDark={isDark}
                           onSelect={() => setSelectedId(t.id)}
                           onComplete={() => handleComplete(t.id)}
                         />
@@ -789,6 +807,7 @@ export default function TasksPage() {
                     task={t}
                     section={section === 'complete' ? 'upcoming' : section}
                     isSelected={t.id === selectedId}
+                    isDark={isDark}
                     onSelect={() => setSelectedId(t.id)}
                     onComplete={() => handleComplete(t.id)}
                   />
@@ -802,6 +821,7 @@ export default function TasksPage() {
       {/* Task Detail pane */}
       <TaskDetail
         task={selectedTask}
+        isDark={isDark}
         onComplete={handleComplete}
         onDelete={handleDelete}
         onNavigateEdit={id => navigate(`/tasks/${id}/edit`)}

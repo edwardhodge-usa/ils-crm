@@ -6,26 +6,27 @@ import { PencilIcon } from '../shared/icons/PencilIcon'
 import { Avatar } from '../shared/Avatar'
 import { containsId } from '../../utils/linked-records'
 import { ContactStats } from '../contacts/ContactStats'
+import useDarkMode from '../../hooks/useDarkMode'
 
-/** Stage badge colors for opportunities */
-const STAGE_COLORS: Record<string, { bg: string; fg: string }> = {
-  'Prospecting': { bg: 'rgba(90,200,250,0.10)', fg: '#5AC8FA' },
-  'Qualified': { bg: 'rgba(52,199,89,0.10)', fg: '#34C759' },
-  'Proposal Sent': { bg: 'rgba(175,82,222,0.10)', fg: '#AF52DE' },
-  'Negotiation': { bg: 'rgba(255,149,0,0.10)', fg: '#FF9500' },
-  'Closed Won': { bg: 'rgba(52,199,89,0.10)', fg: '#34C759' },
-  'Closed Lost': { bg: 'rgba(255,59,48,0.10)', fg: '#FF3B30' },
+/** Stage badge colors for opportunities — Apple system colors */
+const STAGE_COLORS: Record<string, { bg: string; fg: string; fgDark: string }> = {
+  'Prospecting': { bg: 'rgba(48,176,199,0.22)', fg: '#0E7A8D', fgDark: '#40CBE0' },
+  'Qualified': { bg: 'rgba(52,199,89,0.22)', fg: '#248A3D', fgDark: '#30D158' },
+  'Proposal Sent': { bg: 'rgba(175,82,222,0.22)', fg: '#8944AB', fgDark: '#BF5AF2' },
+  'Negotiation': { bg: 'rgba(255,149,0,0.22)', fg: '#C93400', fgDark: '#FF9F0A' },
+  'Closed Won': { bg: 'rgba(52,199,89,0.22)', fg: '#248A3D', fgDark: '#30D158' },
+  'Closed Lost': { bg: 'rgba(255,59,48,0.22)', fg: '#D70015', fgDark: '#FF453A' },
 }
 
 const ICON_COLORS = [
-  { bg: 'rgba(99,102,241,0.12)', fg: '#818CF8' },
-  { bg: 'rgba(52,211,153,0.12)', fg: '#34D399' },
-  { bg: 'rgba(251,146,60,0.12)', fg: '#FB923C' },
-  { bg: 'rgba(56,189,248,0.12)', fg: '#38BDF8' },
-  { bg: 'rgba(168,85,247,0.12)', fg: '#A855F7' },
-  { bg: 'rgba(244,63,94,0.12)', fg: '#F43F5E' },
-  { bg: 'rgba(245,158,11,0.12)', fg: '#F59E0B' },
-  { bg: 'rgba(16,185,129,0.12)', fg: '#10B981' },
+  { bg: 'rgba(0,122,255,0.22)', fg: '#007AFF' },       // systemBlue
+  { bg: 'rgba(52,199,89,0.22)', fg: '#34C759' },        // systemGreen
+  { bg: 'rgba(255,149,0,0.22)', fg: '#FF9500' },        // systemOrange
+  { bg: 'rgba(255,45,85,0.22)', fg: '#FF2D55' },        // systemPink
+  { bg: 'rgba(175,82,222,0.22)', fg: '#AF52DE' },       // systemPurple
+  { bg: 'rgba(88,86,214,0.22)', fg: '#5856D6' },        // systemIndigo
+  { bg: 'rgba(255,59,48,0.22)', fg: '#FF3B30' },        // systemRed
+  { bg: 'rgba(48,176,199,0.22)', fg: '#30B0C7' },       // systemTeal
 ]
 
 function iconColor(name: string) {
@@ -40,6 +41,7 @@ interface CompanyDetailProps {
 }
 
 export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
+  const isDark = useDarkMode()
   const navigate = useNavigate()
   const [company, setCompany] = useState<Record<string, unknown> | null>(null)
   const [contacts, setContacts] = useState<Record<string, unknown>[]>([])
@@ -310,7 +312,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
               {openOpps.slice(0, 3).map((opp, idx) => {
                 const stage = (opp.sales_stage as string | null) ?? null
-                const stageColor = stage ? (STAGE_COLORS[stage] || { bg: 'rgba(118,118,128,0.10)', fg: 'var(--text-secondary)' }) : null
+                const stageColor = stage ? (STAGE_COLORS[stage] || { bg: 'rgba(118,118,128,0.10)', fg: 'var(--text-secondary)', fgDark: 'var(--text-secondary)' }) : null
                 return (
                   <div
                     key={opp.id as string}
@@ -328,7 +330,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
                     <div style={{
                       width: 28, height: 28, borderRadius: 7, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, background: 'rgba(191,90,242,0.10)', color: '#BF5AF2',
+                      fontSize: 13, background: 'rgba(175,82,222,0.22)', color: '#AF52DE',
                     }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></svg>
                     </div>
@@ -344,7 +346,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
                     {Boolean(stage) && stageColor && (
                       <span style={{
                         fontSize: 10, fontWeight: 500, padding: '2px 7px',
-                        borderRadius: 4, background: stageColor.bg, color: stageColor.fg,
+                        borderRadius: 4, background: stageColor.bg, color: isDark ? stageColor.fgDark : stageColor.fg,
                         flexShrink: 0, opacity: 0.85,
                       }}>
                         {stage}

@@ -1,12 +1,14 @@
+import useDarkMode from '../../hooks/useDarkMode'
+
 const ICON_COLORS = [
-  { bg: 'rgba(99,102,241,0.12)', fg: '#818CF8' },
-  { bg: 'rgba(52,211,153,0.12)', fg: '#34D399' },
-  { bg: 'rgba(251,146,60,0.12)', fg: '#FB923C' },
-  { bg: 'rgba(56,189,248,0.12)', fg: '#38BDF8' },
-  { bg: 'rgba(168,85,247,0.12)', fg: '#A855F7' },
-  { bg: 'rgba(244,63,94,0.12)', fg: '#F43F5E' },
-  { bg: 'rgba(245,158,11,0.12)', fg: '#F59E0B' },
-  { bg: 'rgba(16,185,129,0.12)', fg: '#10B981' },
+  { bg: 'rgba(0,122,255,0.22)', fg: '#007AFF', fgText: '#0055B3', fgTextDark: '#409CFF' },       // systemBlue
+  { bg: 'rgba(52,199,89,0.22)', fg: '#34C759', fgText: '#248A3D', fgTextDark: '#30D158' },        // systemGreen
+  { bg: 'rgba(255,149,0,0.22)', fg: '#FF9500', fgText: '#C93400', fgTextDark: '#FF9F0A' },        // systemOrange
+  { bg: 'rgba(255,45,85,0.22)', fg: '#FF2D55', fgText: '#D30047', fgTextDark: '#FF375F' },        // systemPink
+  { bg: 'rgba(175,82,222,0.22)', fg: '#AF52DE', fgText: '#8944AB', fgTextDark: '#BF5AF2' },       // systemPurple
+  { bg: 'rgba(88,86,214,0.22)', fg: '#5856D6', fgText: '#3634A3', fgTextDark: '#5E5CE6' },        // systemIndigo
+  { bg: 'rgba(255,59,48,0.22)', fg: '#FF3B30', fgText: '#D70015', fgTextDark: '#FF453A' },        // systemRed
+  { bg: 'rgba(48,176,199,0.22)', fg: '#30B0C7', fgText: '#0E7A8D', fgTextDark: '#40CBE0' },       // systemTeal
 ]
 
 function iconColor(name: string) {
@@ -28,6 +30,7 @@ interface CompanyRowProps {
 }
 
 export function CompanyRow({ company, isSelected, onClick }: CompanyRowProps) {
+  const isDark = useDarkMode()
   const { name, industry, type, contactCount } = company
   const color = iconColor(name)
   const categoryLabel = industry || type || null
@@ -70,10 +73,10 @@ export function CompanyRow({ company, isSelected, onClick }: CompanyRowProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
           {Boolean(categoryLabel) && (
             <span style={{
-              fontSize: 11, fontWeight: 500, padding: '1px 6px',
-              borderRadius: 4, lineHeight: 1.4, opacity: 0.85,
-              background: `rgba(${hexToRgb(color.fg)},0.10)`,
-              color: color.fg,
+              fontSize: 11, fontWeight: 600, padding: '1px 6px',
+              borderRadius: 4, lineHeight: 1.4,
+              background: `rgba(${hexToRgb(color.fg)},0.22)`,
+              color: isDark ? color.fgTextDark : color.fgText,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               maxWidth: 140,
             }}>
@@ -95,7 +98,7 @@ export function CompanyRow({ company, isSelected, onClick }: CompanyRowProps) {
   )
 }
 
-/** Convert a hex color like #818CF8 to "129,140,248" for rgba() */
+/** Convert a hex color like #007AFF to "0,122,255" for rgba() */
 function hexToRgb(hex: string): string {
   const h = hex.replace('#', '')
   const r = parseInt(h.substring(0, 2), 16)

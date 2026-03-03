@@ -47,6 +47,6 @@ function variantStyle(variant: BadgeVariant): { color: string; background: strin
     case 'won':
       return { color: 'var(--stage-won)', background: 'var(--stage-won-bg)' }
     default:
-      return { color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }
+      return { color: 'var(--text-secondary)', background: 'var(--bg-tertiary)' }
   }
 }

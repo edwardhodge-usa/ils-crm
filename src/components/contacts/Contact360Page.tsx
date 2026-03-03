@@ -6,6 +6,7 @@ import { EmptyState } from '../shared/EmptyState'
 import { ContactStats } from './ContactStats'
 import { interactionTypeIcon } from '../shared/icons/InteractionIcons'
 import { containsId } from '../../utils/linked-records'
+import useDarkMode from '../../hooks/useDarkMode'
 
 interface Contact360Props {
   /** When provided, use this ID instead of URL params (embedded split-pane mode) */
@@ -58,7 +59,7 @@ function FormRow({
       <span
         style={{
           fontSize: 13, fontWeight: 400,
-          color: isLink ? 'var(--color-accent)' : 'var(--text-secondary)',
+          color: isLink ? '#007AFF' : 'var(--text-secondary)',
           display: 'flex', alignItems: 'center', gap: 5,
           cursor: 'default', borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
           transition: 'background 150ms',
@@ -131,6 +132,7 @@ function LinkedRow({
 }
 
 export default function Contact360Page({ contactId, onDeleted }: Contact360Props = {}) {
+  const isDark = useDarkMode()
   const { id: routeId } = useParams()
   const navigate = useNavigate()
   const id = contactId ?? routeId
@@ -288,9 +290,9 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
           <span
             key={name}
             style={{
-              fontSize: 11, fontWeight: 500, padding: '2px 8px',
-              borderRadius: 4, background: 'rgba(88,86,214,0.10)',
-              color: 'var(--color-accent)', opacity: 0.85,
+              fontSize: 11, fontWeight: 600, padding: '2px 8px',
+              borderRadius: 4, background: 'rgba(0,122,255,0.22)',
+              color: isDark ? '#409CFF' : '#0055B3',
             }}
           >
             {name}
@@ -324,19 +326,19 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
             </div>
           </div>
 
-          {/* Action buttons: Email, Call, LinkedIn — ghost style */}
-          <div style={{ display: 'flex', gap: 6, marginTop: 14 }}>
+          {/* Action buttons: Email, Call, LinkedIn — Apple Contacts tinted button style */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
             {Boolean(contact.email) && (
               <button
                 onClick={() => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`)}
                 style={{
-                  fontSize: 12, fontWeight: 500, color: 'var(--color-accent)',
-                  background: 'transparent', border: 'none', cursor: 'default',
-                  borderRadius: 8, padding: '4px 8px', fontFamily: 'inherit',
+                  fontSize: 12, fontWeight: 500, color: '#007AFF',
+                  background: 'rgba(0,122,255,0.10)', border: 'none', cursor: 'default',
+                  borderRadius: 8, padding: '6px 14px', fontFamily: 'inherit',
                   transition: 'background 150ms',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.18)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,122,255,0.10)'}
               >
                 Email
               </button>
@@ -348,13 +350,13 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
                   window.electronAPI.shell.openExternal(`tel:${num}`)
                 }}
                 style={{
-                  fontSize: 12, fontWeight: 500, color: 'var(--color-accent)',
-                  background: 'transparent', border: 'none', cursor: 'default',
-                  borderRadius: 8, padding: '4px 8px', fontFamily: 'inherit',
+                  fontSize: 12, fontWeight: 500, color: '#34C759',
+                  background: 'rgba(52,199,89,0.10)', border: 'none', cursor: 'default',
+                  borderRadius: 8, padding: '6px 14px', fontFamily: 'inherit',
                   transition: 'background 150ms',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(52,199,89,0.18)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(52,199,89,0.10)'}
               >
                 Call
               </button>
@@ -363,13 +365,13 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
               <button
                 onClick={() => window.electronAPI.shell.openExternal(contact.linkedin_url as string)}
                 style={{
-                  fontSize: 12, fontWeight: 500, color: 'var(--color-accent)',
-                  background: 'transparent', border: 'none', cursor: 'default',
-                  borderRadius: 8, padding: '4px 8px', fontFamily: 'inherit',
+                  fontSize: 12, fontWeight: 500, color: '#0A66C2',
+                  background: 'rgba(10,102,194,0.10)', border: 'none', cursor: 'default',
+                  borderRadius: 8, padding: '6px 14px', fontFamily: 'inherit',
                   transition: 'background 150ms',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(10,102,194,0.18)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(10,102,194,0.10)'}
               >
                 LinkedIn
               </button>
@@ -384,7 +386,7 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
         {contactInfoFields.length > 0 && (
           <>
             <SectionLabel>Contact Info</SectionLabel>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
               {contactInfoFields.map((field, idx) => (
                 <FormRow
                   key={field.label}
@@ -404,7 +406,7 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
         {crmInfoFields.length > 0 && (
           <>
             <SectionLabel>CRM Info</SectionLabel>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
               {crmInfoFields.map((field, idx) => (
                 <FormRow
                   key={field.label}
@@ -426,7 +428,7 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
             No open opportunities
           </div>
         ) : (
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
             {openOpps.slice(0, 5).map((opp, idx) => (
               <LinkedRow
                 key={opp.id as string}
@@ -436,8 +438,8 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
                     <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
                   </svg>
                 }
-                iconBg="rgba(191,90,242,0.10)"
-                iconColor="#BF5AF2"
+                iconBg="rgba(175,82,222,0.22)"
+                iconColor="#AF52DE"
                 title={(opp.opportunity_name as string) || '—'}
                 meta={`${opp.deal_value ? `$${Number(opp.deal_value).toLocaleString()}` : '—'}${Boolean(opp.sales_stage) ? ` · ${opp.sales_stage as string}` : ''}`}
                 isLast={idx === Math.min(openOpps.length, 5) - 1}
@@ -454,12 +456,12 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
             No interactions yet
           </div>
         ) : (
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
             {interactions.slice(0, 5).map((interaction, idx) => (
               <LinkedRow
                 key={interaction.id as string}
                 icon={interactionTypeIcon(interaction.type as string)}
-                iconBg="rgba(118,118,128,0.10)"
+                iconBg="rgba(118,118,128,0.22)"
                 iconColor="var(--text-secondary)"
                 title={(interaction.type as string) || (interaction.subject as string) || 'Interaction'}
                 meta={`${interaction.date as string || '—'}${Boolean(interaction.summary) ? ` · ${(interaction.summary as string).slice(0, 50)}` : ''}`}

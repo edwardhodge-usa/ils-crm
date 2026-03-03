@@ -19,7 +19,7 @@ interface DealCardProps {
 export function DealCard({ deal, isSelected, onClick }: DealCardProps) {
   const { dealName, companyName, value, probability, stage } = deal
   const [hovered, setHovered] = useState(false)
-  const badgeColors = STAGE_BADGE_COLORS[stage] ?? { bg: 'var(--bg-secondary)', text: 'var(--text-secondary)' }
+  const badgeColors = STAGE_BADGE_COLORS[stage] ?? { bg: 'var(--bg-tertiary)', text: 'var(--text-secondary)' }
 
   return (
     <div
@@ -68,12 +68,11 @@ export function DealCard({ deal, isSelected, onClick }: DealCardProps) {
         <span
           style={{
             fontSize: 10,
-            fontWeight: 500,
+            fontWeight: 600,
             color: badgeColors.text,
             background: badgeColors.bg,
             padding: '2px 6px',
             borderRadius: 4,
-            opacity: 0.85,
             lineHeight: 1.2,
           }}
         >

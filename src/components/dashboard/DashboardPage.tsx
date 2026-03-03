@@ -80,12 +80,12 @@ function initials(name: string): string {
 }
 
 const AVATAR_COLORS = [
-  { bg: 'rgba(52,211,153,0.2)', fg: '#34D399' },
-  { bg: 'rgba(251,146,60,0.2)', fg: '#FB923C' },
-  { bg: 'rgba(99,102,241,0.2)', fg: '#9C99FF' },
-  { bg: 'rgba(244,63,94,0.2)', fg: '#F43F5E' },
-  { bg: 'rgba(56,189,248,0.2)', fg: '#38BDF8' },
-  { bg: 'rgba(168,85,247,0.2)', fg: '#A855F7' },
+  { bg: 'rgba(0,122,255,0.18)', fg: '#007AFF' },       // systemBlue
+  { bg: 'rgba(52,199,89,0.18)', fg: '#34C759' },        // systemGreen
+  { bg: 'rgba(255,149,0,0.18)', fg: '#FF9500' },        // systemOrange
+  { bg: 'rgba(255,45,85,0.18)', fg: '#FF2D55' },        // systemPink
+  { bg: 'rgba(175,82,222,0.18)', fg: '#AF52DE' },       // systemPurple
+  { bg: 'rgba(88,86,214,0.18)', fg: '#5856D6' },        // systemIndigo
 ]
 
 function avatarColor(name: string) {
@@ -239,11 +239,12 @@ export default function DashboardPage() {
       {/* 4 Stat Cards — single grouped container */}
       <div
         style={{
-          background: 'var(--bg-secondary)',
+          background: 'var(--bg-grouped)',
           borderRadius: 12,
           overflow: 'hidden',
           display: 'flex',
           marginBottom: 16,
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
         <StatCard
@@ -280,7 +281,7 @@ export default function DashboardPage() {
       {/* Two widgets side by side */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         {/* Tasks Due Today */}
-        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg-grouped)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
           <div
             style={{
               display: 'flex',
@@ -371,7 +372,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Follow-up Alerts */}
-        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg-grouped)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
           <div
             style={{
               display: 'flex',

@@ -7,17 +7,17 @@ import Contact360Page from './Contact360Page'
 import type { ContactListItem } from '@/types'
 
 const SPECIALTY_COLORS_RAW = [
-  { bg: 'rgba(88,86,214,0.10)', fg: '#5856D6' },
-  { bg: 'rgba(52,199,89,0.10)', fg: '#34C759' },
-  { bg: 'rgba(175,82,222,0.10)', fg: '#AF52DE' },
-  { bg: 'rgba(255,149,0,0.10)', fg: '#FF9500' },
-  { bg: 'rgba(90,200,250,0.10)', fg: '#5AC8FA' },
-  { bg: 'rgba(255,59,48,0.10)', fg: '#FF3B30' },
-  { bg: 'rgba(255,45,85,0.10)', fg: '#FF2D55' },
-  { bg: 'rgba(255,204,0,0.10)', fg: '#FFCC00' },
+  { bg: 'rgba(88,86,214,0.22)', fg: '#3634A3', fgDark: '#5E5CE6' },     // systemIndigo
+  { bg: 'rgba(52,199,89,0.22)', fg: '#248A3D', fgDark: '#30D158' },      // systemGreen
+  { bg: 'rgba(175,82,222,0.22)', fg: '#8944AB', fgDark: '#BF5AF2' },     // systemPurple
+  { bg: 'rgba(255,149,0,0.22)', fg: '#C93400', fgDark: '#FF9F0A' },      // systemOrange
+  { bg: 'rgba(48,176,199,0.22)', fg: '#0E7A8D', fgDark: '#40CBE0' },     // systemTeal
+  { bg: 'rgba(255,59,48,0.22)', fg: '#D70015', fgDark: '#FF453A' },      // systemRed
+  { bg: 'rgba(255,45,85,0.22)', fg: '#D30047', fgDark: '#FF375F' },      // systemPink
+  { bg: 'rgba(0,122,255,0.22)', fg: '#0055B3', fgDark: '#409CFF' },      // systemBlue
 ]
 
-function specialtyColor(name: string): { bg: string; fg: string } {
+function specialtyColor(name: string): { bg: string; fg: string; fgDark: string } {
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xfffff
   return SPECIALTY_COLORS_RAW[hash % SPECIALTY_COLORS_RAW.length]
@@ -61,7 +61,7 @@ export default function ContactListPage() {
     const specialtyNames = specialtyIds.map(id => specialtyMap[id]).filter(Boolean)
     const specialtyColors = specialtyNames.map(name => {
       const c = specialtyColor(name)
-      return `${c.bg}|${c.fg}`
+      return `${c.bg}|${c.fg}|${c.fgDark}`
     })
 
     const daysSinceContact: number | null = (() => {

@@ -9,32 +9,33 @@
   --color-accent-text: #4847B8;
 
   /* ── Backgrounds — Light ── */
-  --bg-window: rgba(246,246,246,0.85);
-  --bg-sidebar: rgba(235,235,235,0.80);
-  --bg-toolbar: rgba(246,246,246,0.90);
-  --bg-card: rgba(0,0,0,0.04);
-  --bg-input: rgba(0,0,0,0.04);
-  --bg-hover: rgba(0,0,0,0.06);
+  --bg-window: #F2F2F7;
+  --bg-sidebar: #E5E5EA;
+  --bg-toolbar: rgba(246,246,246,0.95);
+  --bg-card: #FFFFFF;
+  --bg-input: rgba(118,118,128,0.08);
+  --bg-hover: rgba(0,0,0,0.04);
   --bg-sheet: #FFFFFF;
-  --bg-secondary: rgba(118,118,128,0.12);
+  --bg-secondary: #FFFFFF;
   --bg-tertiary: rgba(118,118,128,0.08);
   --bg-selected: var(--color-accent-translucent);
-  --bg-selected-blur: rgba(0,0,0,0.10);
+  --bg-selected-blur: rgba(0,0,0,0.08);
   --bg-glass: rgba(246,246,246,0.75);
+  --bg-grouped: #FFFFFF;
 
-  /* ── Text — Light (all verified WCAG AA) ── */
+  /* ── Text — Light (Apple label colors: base 60,60,67) ── */
   --text-primary: rgba(0,0,0,0.85);
-  --text-secondary: rgba(0,0,0,0.60);
-  --text-tertiary: rgba(0,0,0,0.55);
-  --text-label: rgba(0,0,0,0.52);
-  --text-placeholder: rgba(0,0,0,0.32);
+  --text-secondary: rgba(60,60,67,0.60);
+  --text-tertiary: rgba(60,60,67,0.46);
+  --text-label: rgba(60,60,67,0.40);
+  --text-placeholder: rgba(60,60,67,0.30);
   --text-on-accent: #ffffff;
   --text-link: var(--color-accent);
 
   /* ── Separators ── */
-  --separator: rgba(0,0,0,0.10);
-  --separator-strong: rgba(0,0,0,0.12);
-  --separator-opaque: #d1d1d6;
+  --separator: rgba(60,60,67,0.12);
+  --separator-strong: rgba(60,60,67,0.18);
+  --separator-opaque: #C6C6C8;
 
   /* ── Semantic Colors (Light) ── */
   --color-red: #FF3B30;
@@ -43,12 +44,12 @@
   --color-yellow: #FFCC00;
   --color-purple: #AF52DE;
   --color-pink: #FF2D55;
-  --color-teal: #5AC8FA;
+  --color-teal: #30B0C7;
   --color-indigo: #5856D6;
 
   /* ── Stage colors — Light (text on tinted badge bg) ── */
-  --stage-prospecting: #006A96;
-  --stage-prospecting-bg: rgba(90,200,250,0.15);
+  --stage-prospecting: #1A8FA8;
+  --stage-prospecting-bg: rgba(48,176,199,0.15);
   --stage-qualified: #4847A8;
   --stage-qualified-bg: rgba(88,86,214,0.15);
   --stage-proposal: #A04B00;
@@ -138,6 +139,7 @@
   --bg-selected: var(--color-accent-translucent);
   --bg-selected-blur: rgba(255,255,255,0.10);
   --bg-glass: rgba(30,30,30,0.75);
+  --bg-grouped: rgba(118,118,128,0.20);
 
   --text-primary: rgba(255,255,255,0.92);
   --text-secondary: rgba(255,255,255,0.65);
@@ -156,11 +158,11 @@
   --color-yellow: #FFD60A;
   --color-purple: #BF5AF2;
   --color-pink: #FF375F;
-  --color-teal: #64D2FF;
+  --color-teal: #40CBE0;
   --color-indigo: #5E5CE6;
 
-  --stage-prospecting: #5AC8FA;
-  --stage-prospecting-bg: rgba(90,200,250,0.15);
+  --stage-prospecting: #40CBE0;
+  --stage-prospecting-bg: rgba(48,176,199,0.15);
   --stage-qualified: #A5A3FF;
   --stage-qualified-bg: rgba(94,92,230,0.15);
   --stage-proposal: #FF9500;

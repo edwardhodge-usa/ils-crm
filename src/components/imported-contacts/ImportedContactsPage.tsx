@@ -11,12 +11,12 @@ const STATUS_TABS = ['All', 'Review', 'Approved', 'Rejected', 'Needs Info', 'Dup
 type StatusTab = typeof STATUS_TABS[number]
 
 const AVATAR_COLORS = [
-  { bg: 'rgba(99,102,241,0.18)', fg: '#818CF8' },
-  { bg: 'rgba(52,211,153,0.18)', fg: '#34D399' },
-  { bg: 'rgba(251,146,60,0.18)', fg: '#FB923C' },
-  { bg: 'rgba(56,189,248,0.18)', fg: '#38BDF8' },
-  { bg: 'rgba(168,85,247,0.18)', fg: '#A855F7' },
-  { bg: 'rgba(244,63,94,0.18)', fg: '#F43F5E' },
+  { bg: 'rgba(0,122,255,0.18)', fg: '#007AFF' },       // systemBlue
+  { bg: 'rgba(52,199,89,0.18)', fg: '#34C759' },        // systemGreen
+  { bg: 'rgba(255,149,0,0.18)', fg: '#FF9500' },        // systemOrange
+  { bg: 'rgba(255,45,85,0.18)', fg: '#FF2D55' },        // systemPink
+  { bg: 'rgba(175,82,222,0.18)', fg: '#AF52DE' },       // systemPurple
+  { bg: 'rgba(88,86,214,0.18)', fg: '#5856D6' },        // systemIndigo
 ]
 
 function avatarColor(name: string) {
@@ -439,14 +439,14 @@ export default function ImportedContactsPage() {
                     border: 'none',
                     fontFamily: 'inherit',
                     transition: 'background 150ms',
-                    background: isActive ? 'var(--color-accent)' : 'var(--bg-secondary)',
+                    background: isActive ? 'var(--color-accent)' : 'var(--bg-tertiary)',
                     color: isActive ? 'var(--text-on-accent)' : 'var(--text-primary)',
                   }}
                   onMouseEnter={e => {
                     if (!isActive) e.currentTarget.style.background = 'var(--bg-hover)'
                   }}
                   onMouseLeave={e => {
-                    if (!isActive) e.currentTarget.style.background = isActive ? 'var(--color-accent)' : 'var(--bg-secondary)'
+                    if (!isActive) e.currentTarget.style.background = isActive ? 'var(--color-accent)' : 'var(--bg-tertiary)'
                   }}
                 >
                   {tab}

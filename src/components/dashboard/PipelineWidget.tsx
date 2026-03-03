@@ -20,10 +20,33 @@ function formatCurrency(v: number): string {
   return `$${v.toLocaleString()}`
 }
 
+// Map stage names to their token-based colors
+const STAGE_BAR_COLORS: Record<string, string> = {
+  '01 Prospecting': 'var(--color-teal)',
+  '02 Qualified': 'var(--color-indigo)',
+  '03 Proposal Sent': 'var(--color-orange)',
+  '04 Negotiation': 'var(--color-pink)',
+  '05 Closed Won': 'var(--color-green)',
+  'Closed Won': 'var(--color-green)',
+}
+
+function stageBarColor(stageName: string): string {
+  // Try exact match first, then partial
+  if (STAGE_BAR_COLORS[stageName]) return STAGE_BAR_COLORS[stageName]
+  const lower = stageName.toLowerCase()
+  if (lower.includes('prospect')) return 'var(--color-teal)'
+  if (lower.includes('qualif')) return 'var(--color-indigo)'
+  if (lower.includes('proposal')) return 'var(--color-orange)'
+  if (lower.includes('negot')) return 'var(--color-pink)'
+  if (lower.includes('won') || lower.includes('closed')) return 'var(--color-green)'
+  return 'var(--color-accent)'
+}
+
 function PipelineRow({ stage, maxCount, isLast }: { stage: PipelineStage; maxCount: number; isLast: boolean }) {
   const [hovered, setHovered] = useState(false)
   const barPct = maxCount > 0 ? (stage.count / maxCount) * 100 : 0
-  const isWon = stage.sales_stage === 'Closed Won'
+  const isWon = stage.sales_stage.toLowerCase().includes('won') || stage.sales_stage === 'Closed Won'
+  const barColor = stageBarColor(stage.sales_stage)
 
   return (
     <div
@@ -54,14 +77,14 @@ function PipelineRow({ stage, maxCount, isLast }: { stage: PipelineStage; maxCou
       >
         {isWon ? 'Won \u2713' : stage.sales_stage}
       </span>
-      <div style={{ flex: 1, height: 5, background: 'var(--bg-hover)', borderRadius: 3, overflow: 'hidden' }}>
+      <div style={{ flex: 1, height: 6, background: 'var(--separator)', borderRadius: 3, overflow: 'hidden' }}>
         <div
           style={{
             height: '100%',
             borderRadius: 3,
             width: `${barPct}%`,
-            background: 'linear-gradient(90deg, #5856D6, #9C99FF)',
-            opacity: isWon ? 0.45 : 1,
+            background: barColor,
+            opacity: isWon ? 0.5 : 0.85,
             transition: 'width 400ms cubic-bezier(0.25,0.46,0.45,0.94)',
           }}
         />
@@ -92,9 +115,10 @@ export default function PipelineWidget({ stages }: PipelineWidgetProps) {
   return (
     <div
       style={{
-        background: 'var(--bg-secondary)',
+        background: 'var(--bg-grouped)',
         borderRadius: 12,
         overflow: 'hidden',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       {/* Section header */}

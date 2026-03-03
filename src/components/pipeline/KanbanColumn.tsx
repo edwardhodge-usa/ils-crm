@@ -2,11 +2,11 @@ import type { DealItem } from '@/types'
 import { DealCard } from './DealCard'
 
 const STAGE_COLORS: Record<string, string> = {
-  'Prospecting': 'var(--stage-prospecting)',
-  'Qualified': 'var(--stage-qualified)',
-  'Proposal Sent': 'var(--stage-proposal)',
-  'Negotiation': 'var(--stage-negotiation)',
-  'Closed Won': 'var(--stage-won)',
+  'Prospecting': 'var(--color-teal)',
+  'Qualified': 'var(--color-indigo)',
+  'Proposal Sent': 'var(--color-orange)',
+  'Negotiation': 'var(--color-pink)',
+  'Closed Won': 'var(--color-green)',
 }
 
 interface KanbanColumnProps {
@@ -50,7 +50,7 @@ export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: Kan
             fontSize: 10,
             fontWeight: 500,
             color: 'var(--text-secondary)',
-            background: 'var(--bg-secondary)',
+            background: 'var(--bg-tertiary)',
             padding: '2px 6px',
             borderRadius: 9999,
             lineHeight: 1,

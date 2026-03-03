@@ -40,7 +40,7 @@ function TabButton({
     ? 'var(--color-accent)'
     : hovered
       ? 'var(--bg-hover)'
-      : 'var(--bg-secondary)'
+      : 'var(--bg-tertiary)'
   const color = isActive ? 'var(--text-on-accent)' : 'var(--text-primary)'
 
   return (

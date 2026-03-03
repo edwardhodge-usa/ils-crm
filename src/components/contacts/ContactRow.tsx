@@ -1,14 +1,15 @@
 import type { ContactListItem } from '@/types'
+import useDarkMode from '../../hooks/useDarkMode'
 
 const AVATAR_COLORS = [
-  { bg: 'rgba(52,211,153,0.12)', fg: '#34D399' },
-  { bg: 'rgba(99,102,241,0.12)', fg: '#818CF8' },
-  { bg: 'rgba(251,146,60,0.12)', fg: '#FB923C' },
-  { bg: 'rgba(244,63,94,0.12)', fg: '#F43F5E' },
-  { bg: 'rgba(56,189,248,0.12)', fg: '#38BDF8' },
-  { bg: 'rgba(168,85,247,0.12)', fg: '#A855F7' },
-  { bg: 'rgba(245,158,11,0.12)', fg: '#F59E0B' },
-  { bg: 'rgba(16,185,129,0.12)', fg: '#10B981' },
+  { bg: 'rgba(0,122,255,0.22)', fg: '#007AFF' },       // systemBlue
+  { bg: 'rgba(52,199,89,0.22)', fg: '#34C759' },        // systemGreen
+  { bg: 'rgba(255,149,0,0.22)', fg: '#FF9500' },        // systemOrange
+  { bg: 'rgba(255,45,85,0.22)', fg: '#FF2D55' },        // systemPink
+  { bg: 'rgba(175,82,222,0.22)', fg: '#AF52DE' },       // systemPurple
+  { bg: 'rgba(88,86,214,0.22)', fg: '#5856D6' },        // systemIndigo
+  { bg: 'rgba(255,59,48,0.22)', fg: '#FF3B30' },        // systemRed
+  { bg: 'rgba(48,176,199,0.22)', fg: '#30B0C7' },       // systemTeal
 ]
 
 function avatarColor(name: string) {
@@ -46,13 +47,15 @@ export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
     ? daysSinceContact >= 21 ? 'var(--color-red)' : daysSinceContact >= 14 ? 'var(--color-orange)' : 'var(--color-accent)'
     : undefined
 
-  // Parse specialty color from "bg|fg" encoded string
-  function parseSpecColor(encoded: string | undefined): { bg: string; fg: string } {
+  const isDark = useDarkMode()
+
+  // Parse specialty color from "bg|fg|fgDark" encoded string
+  function parseSpecColor(encoded: string | undefined): { bg: string; fg: string; fgDark: string } {
     if (!encoded || !encoded.includes('|')) {
-      return { bg: 'rgba(88,86,214,0.10)', fg: '#5856D6' }
+      return { bg: 'rgba(88,86,214,0.22)', fg: '#3634A3', fgDark: '#5E5CE6' }
     }
-    const [bg, fg] = encoded.split('|')
-    return { bg, fg }
+    const parts = encoded.split('|')
+    return { bg: parts[0], fg: parts[1], fgDark: parts[2] || parts[1] }
   }
 
   return (
@@ -111,9 +114,9 @@ export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
               const sc = parseSpecColor(specialtyColors[0])
               return (
                 <span style={{
-                  fontSize: 10, fontWeight: 500, padding: '1px 6px',
-                  borderRadius: 4, flexShrink: 0, opacity: 0.85,
-                  background: sc.bg, color: sc.fg,
+                  fontSize: 11, fontWeight: 600, padding: '1px 6px',
+                  borderRadius: 4, flexShrink: 0,
+                  background: sc.bg, color: isDark ? sc.fgDark : sc.fg,
                 }}>
                   {specialtyNames[0]}
                 </span>
@@ -121,9 +124,8 @@ export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
             })()}
             {daysSinceContact !== null && daysSinceContact !== undefined && (
               <span style={{
-                fontSize: 10, fontWeight: 500, padding: '2px 6px',
+                fontSize: 10, fontWeight: 600, padding: '2px 6px',
                 borderRadius: 4, flexShrink: 0, marginLeft: 'auto',
-                opacity: 0.85,
                 background: daysColor === 'var(--color-accent)'
                   ? 'rgba(88,86,214,0.10)'
                   : daysColor === 'var(--color-orange)' ? 'rgba(255,159,10,0.10)' : 'rgba(255,59,48,0.10)',
