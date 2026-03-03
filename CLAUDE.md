@@ -104,6 +104,7 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-02** - Tasks page mockup UX decisions: (1) Categories use colored dots for smart lists, colored swatches (small rectangles) for type filters, avatar circles for assignees — shape differentiates content type. (2) Detail pane uses inline click-to-edit (no Edit button) — hover highlights field values, click opens editor, auto-save on blur. (3) Type badges softened to rgba 0.10 alpha + font-weight 500 for system-integrated feel. (4) All 12 task types from Airtable schema shown (not just in-use ones), with dimmed "0" count for empty types
 **2026-03-02** - Mockup file: `/Users/EdwardHodge_1/Desktop/CLAUDE MOCKUPS/ils-crm-tasks-v2.html` — approved 4-column layout (App Sidebar 220px | Categories 210px | Task List 380px | Detail flex-1). Real Airtable data. HIG-audited (12 violations found and fixed). These patterns must be followed when implementing in Electron
 **2026-03-02** - Agent-based tech debt scans can report false positives (e.g. `checkbox()` "unused" when it's actually called via mapping type) → Always verify findings with Grep before deleting code
+**2026-03-02** - Airtable collaborator fields return `{id, email, name}` objects → Add `'collaborator'` converter type that extracts `.name`. Skip in `localToAirtable` (read-only like formula/rollup). 6 collaborator fields across 5 tables.
 
 ## Key Commands
 
