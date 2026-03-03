@@ -101,6 +101,8 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-02-28** - Filtering linked records with `jsonString.includes(recordId)` causes false positives when one ID is a prefix of another → Always `JSON.parse()` the array first, then use `.includes()` on the array
 **2026-02-28** - `shell:openExternal` must validate URL scheme before calling — bad data from Airtable (e.g. `file://` in a LinkedIn URL field) would otherwise open local files → Allowlist `https://`, `http://`, `mailto:`, `tel:` only
 **2026-02-28** - SQLite `due_date = date('now')` fails silently when dates are stored as full ISO strings (`2026-02-28T00:00:00.000Z`) → Use `date(due_date) = date('now')` to strip the time component first
+**2026-03-02** - Tasks page mockup UX decisions: (1) Categories use colored dots for smart lists, colored swatches (small rectangles) for type filters, avatar circles for assignees — shape differentiates content type. (2) Detail pane uses inline click-to-edit (no Edit button) — hover highlights field values, click opens editor, auto-save on blur. (3) Type badges softened to rgba 0.10 alpha + font-weight 500 for system-integrated feel. (4) All 12 task types from Airtable schema shown (not just in-use ones), with dimmed "0" count for empty types
+**2026-03-02** - Mockup file: `/Users/EdwardHodge_1/Desktop/CLAUDE MOCKUPS/ils-crm-tasks-v2.html` — approved 4-column layout (App Sidebar 220px | Categories 210px | Task List 380px | Detail flex-1). Real Airtable data. HIG-audited (12 violations found and fixed). These patterns must be followed when implementing in Electron
 
 ## Key Commands
 
