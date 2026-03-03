@@ -84,6 +84,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
   const keyMilestones = (project.key_milestones as string | null) ?? null
   const location = (project.location as string | null) ?? null
   const projectLead = (project.project_lead as string | null) ?? null
+  const engagementType = formatMultiSelect(project.engagement_type)
 
   const stats = [
     { label: 'Contacts', value: contacts.length },
@@ -96,6 +97,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
     { label: 'Start Date', value: startDate },
     { label: 'End Date', value: endDate },
     { label: 'Status', value: status, isDropdown: true },
+    { label: 'Engagement Type', value: engagementType, isDropdown: true },
     { label: 'Contract Value', value: contractValue ? `$${contractValue.toLocaleString()}` : null },
   ]
 
@@ -276,6 +278,17 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
       </div>
     </div>
   )
+}
+
+/** Parse a multiSelect JSON array into a comma-separated string */
+function formatMultiSelect(raw: unknown): string | null {
+  if (!raw) return null
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed.join(', ')
+  } catch { /* not JSON */ }
+  const str = String(raw)
+  return str && str !== '[]' ? str : null
 }
 
 /** A single Apple-style form row for the detail pane */

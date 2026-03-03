@@ -275,7 +275,7 @@ export default function DashboardPage() {
           icon={'\u{1F4C4}'}
           value={formatCurrency(activeContractsValue)}
           label="Active Contracts"
-          subtitle={activeContractsCount > 0 ? `${activeContractsCount} contracts` : undefined}
+          subtitle={activeContractsCount > 0 ? `${activeContractsCount} contract${activeContractsCount === 1 ? '' : 's'}` : undefined}
           variant="green"
         />
         <StatCard
