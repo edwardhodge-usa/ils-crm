@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM project — Airtable schema management, API integrations, and eventually a full Electron desktop CRM app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Airtable API (backend/data), Anthropic Claude API (AI features)
-- **Status**: Full UI rebuild complete on `feature/rebuild-v2` — 17 tasks, Apple HIG-compliant design system, all views rebuilt. Awaiting user review then PR to main.
+- **Status**: v1.1.1 — MVP with app licensing, auto-updates, multi-user deployment. On main.
 - **Repo**: edwardhodge-usa/ils-crm
 - **Airtable Base**: ILS CRM (appYXbUdcmSwBoPFU)
 
