@@ -3,8 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '../shared/EmptyState'
 import StatusBadge from '../shared/StatusBadge'
 import { ContactStats } from '../contacts/ContactStats'
-import { PencilIcon } from '../shared/icons/PencilIcon'
+import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import { containsId } from '../../utils/linked-records'
+
+const PROJECT_EDITABLE_FIELDS: EditableField[] = [
+  { key: 'project_lead', label: 'Project Lead', type: 'readonly' },
+  { key: 'start_date', label: 'Start Date', type: 'date' },
+  { key: 'target_completion', label: 'End Date', type: 'date' },
+  { key: 'status', label: 'Status', type: 'singleSelect',
+    options: ['Kickoff', 'Discovery', 'Concept Development', 'Design Development', 'Production', 'Installation', 'Opening/Launch', 'Closeout', 'Complete', 'On Hold', 'Cancelled', 'Strategy'] },
+  { key: 'engagement_type', label: 'Engagement Type', type: 'multiSelect',
+    options: ['Strategy/Consulting', 'Design/Concept Development', 'Production/Fabrication Oversight', 'Opening/Operations Support'] },
+  { key: 'contract_value', label: 'Contract Value', type: 'currency' },
+  { key: 'location', label: 'Location', type: 'text' },
+]
 
 interface ProjectDetailProps {
   projectId: string | null
@@ -77,31 +89,14 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
 
   const projectName = (project.project_name as string) || 'Unnamed Project'
   const status = (project.status as string | null) ?? null
-  const startDate = (project.start_date as string | null) ?? null
-  const endDate = (project.target_completion as string | null) ?? (project.actual_completion as string | null) ?? null
-  const contractValue = project.contract_value ? Number(project.contract_value) : null
-  const description = (project.description as string | null) ?? null
-  const keyMilestones = (project.key_milestones as string | null) ?? null
   const location = (project.location as string | null) ?? null
-  const projectLead = (project.project_lead as string | null) ?? null
-  const engagementType = formatMultiSelect(project.engagement_type)
+  const contractValue = project.contract_value ? Number(project.contract_value) : null
 
   const stats = [
     { label: 'Contacts', value: contacts.length },
     { label: 'Opportunities', value: opps.length },
     { label: 'Value', value: contractValue ? `$${contractValue.toLocaleString()}` : '—' },
   ]
-
-  const infoRows: { label: string; value: string | null; isDropdown?: boolean }[] = [
-    { label: 'Project Lead', value: projectLead },
-    { label: 'Start Date', value: startDate },
-    { label: 'End Date', value: endDate },
-    { label: 'Status', value: status, isDropdown: true },
-    { label: 'Engagement Type', value: engagementType, isDropdown: true },
-    { label: 'Contract Value', value: contractValue ? `$${contractValue.toLocaleString()}` : null },
-  ]
-
-  const visibleRows = infoRows.filter(r => Boolean(r.value))
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
@@ -110,13 +105,6 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         <div className="text-[12px] text-[var(--text-tertiary)] truncate">
           {projectName}
         </div>
-        <button
-          onClick={() => navigate(`/projects/${projectId}/edit`)}
-          title="Edit project"
-          className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors cursor-default"
-        >
-          <PencilIcon />
-        </button>
       </div>
 
       {/* Scrollable content */}
@@ -138,27 +126,25 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         {/* 2. Stats strip */}
         <ContactStats stats={stats} />
 
-        {/* 3. Project details — Apple HIG form rows */}
+        {/* 3. Project details — Editable form rows */}
         <div style={{ marginTop: 16, marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
             Project Info
           </div>
           <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            {visibleRows.length === 0 ? (
-              <div style={{ padding: 14, textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
-                No project info
-              </div>
-            ) : (
-              visibleRows.map((row, idx) => (
-                <DetailFormRow
-                  key={row.label}
-                  label={row.label}
-                  value={row.value!}
-                  isDropdown={row.isDropdown}
-                  isLast={idx === visibleRows.length - 1}
-                />
-              ))
-            )}
+            {PROJECT_EDITABLE_FIELDS.map((field, idx) => (
+              <EditableFormRow
+                key={field.key}
+                field={field}
+                value={(project as Record<string, unknown>)[field.key]}
+                isLast={idx === PROJECT_EDITABLE_FIELDS.length - 1}
+                onSave={async (key, val) => {
+                  await window.electronAPI.projects.update(projectId!, { [key]: val })
+                  const res = await window.electronAPI.projects.getById(projectId!)
+                  if (res.success && res.data) setProject(res.data as Record<string, unknown>)
+                }}
+              />
+            ))}
           </div>
         </div>
 
@@ -249,83 +235,36 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         </div>
 
         {/* 6. Notes */}
-        {(Boolean(description) || Boolean(keyMilestones)) && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
-              Notes
-            </div>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', padding: '10px 14px' }}>
-              {Boolean(description) && (
-                <div style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-                  {description}
-                </div>
-              )}
-              {Boolean(keyMilestones) && (
-                <>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 8, marginBottom: 2, fontWeight: 500 }}>Key Milestones</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-                    {keyMilestones}
-                  </div>
-                </>
-              )}
-            </div>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+            Notes
           </div>
-        )}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            <EditableFormRow
+              field={{ key: 'description', label: 'Description', type: 'textarea' }}
+              value={project.description}
+              onSave={async (key, val) => {
+                await window.electronAPI.projects.update(projectId!, { [key]: val })
+                const res = await window.electronAPI.projects.getById(projectId!)
+                if (res.success && res.data) setProject(res.data as Record<string, unknown>)
+              }}
+            />
+            <EditableFormRow
+              field={{ key: 'key_milestones', label: 'Key Milestones', type: 'textarea' }}
+              value={project.key_milestones}
+              isLast
+              onSave={async (key, val) => {
+                await window.electronAPI.projects.update(projectId!, { [key]: val })
+                const res = await window.electronAPI.projects.getById(projectId!)
+                if (res.success && res.data) setProject(res.data as Record<string, unknown>)
+              }}
+            />
+          </div>
+        </div>
 
         {/* Bottom spacer */}
         <div style={{ height: 16 }} />
 
-      </div>
-    </div>
-  )
-}
-
-/** Parse a multiSelect JSON array into a comma-separated string */
-function formatMultiSelect(raw: unknown): string | null {
-  if (!raw) return null
-  try {
-    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed.join(', ')
-  } catch { /* not JSON */ }
-  const str = String(raw)
-  return str && str !== '[]' ? str : null
-}
-
-/** A single Apple-style form row for the detail pane */
-function DetailFormRow({ label, value, isDropdown, isLast }: {
-  label: string
-  value: string
-  isDropdown?: boolean
-  isLast?: boolean
-}) {
-  const [hovered, setHovered] = useState(false)
-
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '10px 14px', minHeight: 36,
-      borderBottom: isLast ? undefined : '1px solid var(--separator)',
-    }}>
-      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>
-        {label}
-      </span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-        <span
-          style={{
-            fontSize: 13, fontWeight: 400, color: 'var(--text-primary)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
-            background: hovered ? 'var(--bg-hover)' : 'transparent',
-            transition: 'background 150ms',
-          }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-        >
-          {value}
-        </span>
-        {isDropdown && (
-          <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4, flexShrink: 0 }}>⌃</span>
-        )}
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import { StageProgress } from './StageProgress'
 
 interface DealDetailProps {
@@ -6,42 +7,23 @@ interface DealDetailProps {
   onClose: () => void
 }
 
-/** A single form row in the grouped container */
-function FormRow({
-  label,
-  value,
-  chevron = false,
-}: {
-  label: string
-  value: string
-  chevron?: boolean
-}) {
-  const [hovered, setHovered] = useState(false)
-
-  return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '10px 14px',
-        minHeight: 36,
-        borderBottom: '1px solid var(--separator)',
-        background: hovered ? 'var(--bg-hover)' : 'transparent',
-        transition: 'background 150ms',
-        cursor: 'default',
-      }}
-    >
-      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>{label}</span>
-      <span className="flex items-center gap-1" style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
-        {value || '—'}
-        {chevron && <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 2 }}>⌃</span>}
-      </span>
-    </div>
-  )
-}
+const DEAL_EDITABLE_FIELDS: EditableField[] = [
+  { key: 'sales_stage', label: 'Stage', type: 'singleSelect',
+    options: ['Qualification', 'Meeting Scheduled', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost', 'Initial Contact', 'Contract Sent', 'Development', 'Investment', 'Future Client'] },
+  { key: 'deal_value', label: 'Value', type: 'currency' },
+  { key: 'probability', label: 'Probability', type: 'singleSelect',
+    options: ['Cold', 'Low', '02 Medium', '01 High', '04 FUTURE ROADMAP'] },
+  { key: 'expected_close_date', label: 'Close Date', type: 'date' },
+  { key: 'engagement_type', label: 'Engagement Type', type: 'multiSelect',
+    options: ['Strategy/Consulting', 'Design/Concept Development', 'Production/Fabrication Oversight', 'Opening/Operations Support', 'Executive Producing'] },
+  { key: 'quals_type', label: 'Quals Type', type: 'singleSelect',
+    options: ['Standard Capabilities Deck', 'Customized Quals', 'Both'] },
+  { key: 'lead_source', label: 'Lead Source', type: 'singleSelect',
+    options: ['Referral', 'Inbound - Website', 'Inbound - LinkedIn', 'Inbound - Conference/Event', 'Outbound Prospecting', 'Past Relationship', 'Other', 'Partnership'] },
+  { key: 'referred_by', label: 'Referred By', type: 'text' },
+  { key: 'next_meeting_date', label: 'Next Meeting', type: 'date' },
+  { key: 'qualifications_sent', label: 'Quals Sent', type: 'checkbox' },
+]
 
 /** Status badge for tasks */
 function TaskStatusBadge({ status }: { status: string }) {
@@ -132,16 +114,6 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
     }
   }, [dealId, deal])
 
-  // Format engagement type (multiSelect — may be JSON array)
-  function formatEngagementType(raw: unknown): string {
-    if (!raw) return '—'
-    try {
-      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
-      if (Array.isArray(parsed)) return parsed.join(', ')
-    } catch { /* not JSON */ }
-    return String(raw)
-  }
-
   return (
     <div
       className="absolute top-0 right-0 bottom-0 flex flex-col"
@@ -194,7 +166,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
 
             {/* Action buttons */}
             <div className="flex gap-2" style={{ marginTop: 16 }}>
-              {['Log Activity', 'Edit Deal', 'Email'].map(label => (
+              {['Log Activity', 'Email'].map(label => (
                 <button
                   key={label}
                   className="flex-1"
@@ -225,74 +197,19 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
 
           {/* Grouped container — deal fields */}
           <div style={{ margin: '0 12px 16px', background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            <FormRow
-              label="Stage"
-              value={(deal.sales_stage as string) || '—'}
-              chevron
-            />
-            <FormRow
-              label="Value"
-              value={deal.deal_value != null ? `$${Number(deal.deal_value).toLocaleString()}` : '—'}
-            />
-            <FormRow
-              label="Probability"
-              value={deal.probability_value != null ? `${deal.probability_value as number}%` : '—'}
-            />
-            <FormRow
-              label="Close Date"
-              value={(deal.expected_close_date as string) || '—'}
-            />
-            {Boolean(deal.contact_name) && (
-              <FormRow
-                label="Contact"
-                value={deal.contact_name as string}
+            {DEAL_EDITABLE_FIELDS.map((field, idx) => (
+              <EditableFormRow
+                key={field.key}
+                field={field}
+                value={(deal as Record<string, unknown>)[field.key]}
+                isLast={idx === DEAL_EDITABLE_FIELDS.length - 1}
+                onSave={async (key, val) => {
+                  await window.electronAPI.opportunities.update(deal.id as string, { [key]: val })
+                  const res = await window.electronAPI.opportunities.getById(deal.id as string)
+                  if (res.success && res.data) setDeal(res.data as Record<string, unknown>)
+                }}
               />
-            )}
-            <FormRow
-              label="Engagement Type"
-              value={formatEngagementType(deal.engagement_type)}
-              chevron
-            />
-            {Boolean(deal.quals_type) && (
-              <FormRow
-                label="Type"
-                value={deal.quals_type as string}
-                chevron
-              />
-            )}
-            {Boolean(deal.lead_source) && (
-              <FormRow
-                label="Lead Source"
-                value={deal.lead_source as string}
-              />
-            )}
-            {Boolean(deal.referred_by) && (
-              <FormRow
-                label="Referred By"
-                value={deal.referred_by as string}
-              />
-            )}
-            {Boolean(deal.next_meeting_date) && (
-              <FormRow
-                label="Next Meeting"
-                value={deal.next_meeting_date as string}
-              />
-            )}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '10px 14px',
-                minHeight: 36,
-                cursor: 'default',
-              }}
-            >
-              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>Quals Sent</span>
-              <span style={{ fontSize: 13, fontWeight: 400, color: deal.qualifications_sent ? 'var(--color-green)' : 'var(--text-secondary)' }}>
-                {deal.qualifications_sent ? 'Yes' : 'No'}
-              </span>
-            </div>
+            ))}
           </div>
 
           {/* Tasks section */}
@@ -347,24 +264,6 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
 
           {/* Action buttons at bottom */}
           <div className="flex gap-2" style={{ padding: '8px 12px 20px' }}>
-            <button
-              className="flex-1"
-              style={{
-                padding: '8px 0',
-                fontSize: 13,
-                fontWeight: 500,
-                color: 'var(--text-on-accent)',
-                background: 'var(--color-accent)',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'default',
-                transition: 'opacity 150ms',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.opacity = '0.85' }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
-            >
-              Edit
-            </button>
             <button
               className="flex-1"
               style={{

@@ -6,6 +6,26 @@ import { containsId } from '../../utils/linked-records'
 import { Avatar } from '../shared/Avatar'
 import { CompanyLogo } from '../shared/CompanyLogo'
 import useDarkMode from '../../hooks/useDarkMode'
+import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
+
+const COMPANY_EDITABLE_FIELDS: EditableField[] = [
+  { key: 'type', label: 'Type', type: 'singleSelect',
+    options: ['Prospect', 'Active Client', 'Past Client', 'Partner', 'Vendor', 'Other'] },
+  { key: 'industry', label: 'Industry', type: 'singleSelect',
+    options: ['Hospitality', 'Entertainment/Attractions', 'Corporate/Brand', 'Retail', 'Real Estate/Development', 'F&B', 'Technology', 'Other', 'Culture', 'Sports', 'Cruise', 'Hospitality/Casino', 'Consulting', 'Theme Parks', 'Entertainment', 'Marketing', 'Design', 'Education', 'Real Estate', 'Media'] },
+  { key: 'company_size', label: 'Size', type: 'singleSelect',
+    options: ['1-10', '11-50', '51-200', '201-500', '501-1000', '1001-5000', '5000+'] },
+  { key: 'lead_source', label: 'Lead Source', type: 'singleSelect',
+    options: ['Referral', 'Inbound - Website', 'Inbound - LinkedIn', 'Inbound - Conference/Event', 'Outbound Prospecting', 'Past Relationship', 'Other', 'Wynn Entertainment'] },
+  { key: 'website', label: 'Website', type: 'text', isLink: true },
+  { key: 'address', label: 'Address', type: 'text' },
+  { key: 'city', label: 'City', type: 'text' },
+  { key: 'state_region', label: 'State/Region', type: 'text' },
+  { key: 'country', label: 'Country', type: 'text' },
+  { key: 'annual_revenue', label: 'Annual Revenue', type: 'text' },
+  { key: 'founding_year', label: 'Founded', type: 'number' },
+  { key: 'referred_by', label: 'Referred By', type: 'text' },
+]
 
 /** Stage badge colors for opportunities — Apple system colors */
 const STAGE_COLORS: Record<string, { bg: string; fg: string; fgDark: string }> = {
@@ -92,17 +112,9 @@ export default function Company360Page() {
 
   const companyName = (company.company_name as string) || 'Unnamed Company'
   const industry = (company.industry as string | null) ?? null
-  const companyType = (company.type as string | null) ?? null
-  const category = (company.category as string | null) ?? null
   const website = (company.website as string | null) ?? null
   const linkedInUrl = (company.linkedin_url as string | null) ?? null
   const phone = (company.phone as string | null) ?? null
-  const address = [company.address, company.city, company.state_region, company.country]
-    .filter(Boolean)
-    .join(', ') || null
-  const companySize = (company.company_size as string | null) ?? null
-  const annualRevenue = (company.annual_revenue as string | null) ?? null
-  const leadSource = (company.lead_source as string | null) ?? null
 
   const contacts = linkedData.contacts || []
   const opportunities = linkedData.opportunities || []
@@ -376,12 +388,24 @@ export default function Company360Page() {
         </div>
 
         {/* COMPANY INFO grouped container */}
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ margin: '16px 0' }}>
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
             Company Info
           </div>
           <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            {renderInfoRows()}
+            {COMPANY_EDITABLE_FIELDS.map((field, idx) => (
+              <EditableFormRow
+                key={field.key}
+                field={field}
+                value={(company as Record<string, unknown>)[field.key]}
+                isLast={idx === COMPANY_EDITABLE_FIELDS.length - 1}
+                onSave={async (key, val) => {
+                  await window.electronAPI.companies.update(id!, { [key]: val })
+                  const res = await window.electronAPI.companies.getById(id!)
+                  if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+                }}
+              />
+            ))}
           </div>
         </div>
 
@@ -556,33 +580,33 @@ export default function Company360Page() {
           )}
         </div>
 
-        {/* Notes section */}
-        {Boolean(company.notes) && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
-              Notes
-            </div>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', padding: '10px 14px' }}>
-              <div style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-                {company.notes as string}
-              </div>
-            </div>
+        {/* Notes section — editable */}
+        <div style={{ margin: '16px 0' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+            Notes
           </div>
-        )}
-
-        {/* Description section */}
-        {Boolean(company.company_description) && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
-              Description
-            </div>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', padding: '10px 14px' }}>
-              <div style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-                {company.company_description as string}
-              </div>
-            </div>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            <EditableFormRow
+              field={{ key: 'company_description', label: 'Description', type: 'textarea' }}
+              value={company.company_description}
+              onSave={async (key, val) => {
+                await window.electronAPI.companies.update(id!, { [key]: val })
+                const res = await window.electronAPI.companies.getById(id!)
+                if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+              }}
+            />
+            <EditableFormRow
+              field={{ key: 'notes', label: 'Notes', type: 'textarea' }}
+              value={company.notes}
+              isLast
+              onSave={async (key, val) => {
+                await window.electronAPI.companies.update(id!, { [key]: val })
+                const res = await window.electronAPI.companies.getById(id!)
+                if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+              }}
+            />
           </div>
-        )}
+        </div>
 
         {/* Delete button — destructive, at bottom */}
         <div style={{ marginTop: 24, marginBottom: 24 }}>
@@ -638,83 +662,4 @@ export default function Company360Page() {
     </div>
   )
 
-  /** Render Company Info form rows inside grouped container */
-  function renderInfoRows() {
-    const rows: { label: string; value: string | null; isDropdown?: boolean; isLink?: boolean }[] = [
-      { label: 'Website', value: website, isLink: true },
-      { label: 'LinkedIn', value: linkedInUrl, isLink: true },
-      { label: 'Phone', value: phone, isLink: true },
-      { label: 'Address', value: address },
-      { label: 'Industry', value: industry, isDropdown: true },
-      { label: 'Type', value: companyType, isDropdown: true },
-      { label: 'Category', value: category, isDropdown: true },
-      { label: 'Size', value: companySize },
-      { label: 'Annual Revenue', value: annualRevenue },
-      { label: 'Lead Source', value: leadSource },
-    ]
-
-    // Filter to only rows that have values
-    const visibleRows = rows.filter(r => Boolean(r.value))
-
-    if (visibleRows.length === 0) {
-      return (
-        <div style={{ padding: '14px', textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
-          No company info
-        </div>
-      )
-    }
-
-    return visibleRows.map((row, idx) => (
-      <FormRow
-        key={row.label}
-        label={row.label}
-        value={row.value!}
-        isDropdown={row.isDropdown}
-        isLink={row.isLink}
-        isLast={idx === visibleRows.length - 1}
-      />
-    ))
-  }
-}
-
-/** A single Apple-style form row */
-function FormRow({ label, value, isDropdown, isLink, isLast }: {
-  label: string
-  value: string
-  isDropdown?: boolean
-  isLink?: boolean
-  isLast?: boolean
-}) {
-  const [hovered, setHovered] = useState(false)
-
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '10px 14px', minHeight: 36,
-      borderBottom: isLast ? undefined : '1px solid var(--separator)',
-    }}>
-      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>
-        {label}
-      </span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-        <span
-          style={{
-            fontSize: 13, fontWeight: 400,
-            color: isLink ? 'var(--color-accent)' : 'var(--text-primary)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
-            background: hovered ? 'var(--bg-hover)' : 'transparent',
-            transition: 'background 150ms',
-          }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-        >
-          {value}
-        </span>
-        {isDropdown && (
-          <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4, flexShrink: 0 }}>⌃</span>
-        )}
-      </div>
-    </div>
-  )
 }

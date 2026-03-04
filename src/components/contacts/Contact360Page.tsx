@@ -4,9 +4,50 @@ import ConfirmDialog from '../shared/ConfirmDialog'
 import { Avatar } from '../shared/Avatar'
 import { EmptyState } from '../shared/EmptyState'
 import { ContactStats } from './ContactStats'
+import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import { interactionTypeIcon } from '../shared/icons/InteractionIcons'
 import { containsId } from '../../utils/linked-records'
-import useDarkMode from '../../hooks/useDarkMode'
+
+const CONTACT_INFO_FIELDS: EditableField[] = [
+  { key: 'job_title', label: 'Title', type: 'text' },
+  { key: 'company', label: 'Company', type: 'text' },
+  { key: 'email', label: 'Email', type: 'text', isLink: true },
+  { key: 'phone', label: 'Phone', type: 'text' },
+  { key: 'mobile_phone', label: 'Mobile', type: 'text' },
+  { key: 'work_phone', label: 'Work Phone', type: 'text' },
+  { key: 'linkedin_url', label: 'LinkedIn', type: 'text', isLink: true },
+  { key: 'website', label: 'Website', type: 'text', isLink: true },
+  { key: 'city', label: 'City', type: 'text' },
+  { key: 'state', label: 'State', type: 'text' },
+  { key: 'country', label: 'Country', type: 'text' },
+]
+
+const CONTACT_CRM_FIELDS: EditableField[] = [
+  { key: 'categorization', label: 'Categorization', type: 'singleSelect',
+    options: ['Lead', 'Customer', 'Partner', 'Other', 'Unknown', 'Vendor', 'Talent'] },
+  { key: 'industry', label: 'Industry', type: 'singleSelect',
+    options: ['Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing', 'Real Estate', 'Consulting', 'Other', 'Hospitality', 'Logistics', 'Fitness', 'Legal', 'Media', 'Design', 'Venture Capital', 'Retail', 'Entertainment'] },
+  { key: 'lead_source', label: 'Lead Source', type: 'singleSelect',
+    options: ['Referral', 'Website', 'Inbound', 'Outbound', 'Event', 'Social Media', 'Other', 'LinkedIn', 'Cold Call'] },
+  { key: 'qualification_status', label: 'Qualification', type: 'singleSelect',
+    options: ['New', 'Contacted', 'Qualified', 'Unqualified', 'Nurturing'] },
+  { key: 'tags', label: 'Tags', type: 'multiSelect',
+    options: ['VIP', 'Investor', 'Speaker', 'Press', 'Influencer', 'Board Member', 'Advisor'] },
+  { key: 'lead_score', label: 'Lead Score', type: 'number' },
+  { key: 'last_contact_date', label: 'Last Contact', type: 'date' },
+]
+
+const CONTACT_PARTNER_FIELDS: EditableField[] = [
+  { key: 'partner_type', label: 'Partner Type', type: 'singleSelect',
+    options: ['Fabricator', 'AV/Lighting', 'Scenic/Set Builder', 'Architect', 'Interior Designer', 'Graphic Designer', 'F&B Consultant', 'Tech/Interactive', 'Operations Consultant', 'Production Company', 'Freelancer/Individual', 'Other', 'Client'] },
+  { key: 'partner_status', label: 'Partner Status', type: 'singleSelect',
+    options: ['Active - Preferred', 'Active', 'Inactive', 'Do Not Use'] },
+  { key: 'quality_rating', label: 'Quality', type: 'singleSelect',
+    options: ['⭐⭐⭐⭐⭐ Excellent', '⭐⭐⭐⭐ Good', '⭐⭐⭐ Average', '⭐⭐ Below Average', '⭐ Poor'] },
+  { key: 'reliability_rating', label: 'Reliability', type: 'singleSelect',
+    options: ['⭐⭐⭐⭐⭐ Excellent', '⭐⭐⭐⭐ Good', '⭐⭐⭐ Average', '⭐⭐ Below Average', '⭐ Poor'] },
+  { key: 'rate_info', label: 'Rate Info', type: 'text' },
+]
 
 interface Contact360Props {
   /** When provided, use this ID instead of URL params (embedded split-pane mode) */
@@ -24,56 +65,6 @@ function SectionLabel({ children }: { children: string }) {
       margin: '16px 0 6px',
     }}>
       {children}
-    </div>
-  )
-}
-
-/* ── Apple-style form row inside a grouped container ── */
-function FormRow({
-  label,
-  children,
-  isLast = false,
-  isDropdown = false,
-  isLink = false,
-  onClick,
-}: {
-  label: string
-  children: React.ReactNode
-  isLast?: boolean
-  isDropdown?: boolean
-  isLink?: boolean
-  onClick?: () => void
-}) {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '10px 14px', minHeight: 36,
-      borderBottom: isLast ? 'none' : '1px solid var(--separator)',
-    }}>
-      <span style={{
-        fontSize: 13, fontWeight: 400, color: 'var(--text-primary)',
-        flexShrink: 0, marginRight: 12,
-      }}>
-        {label}
-      </span>
-      <span
-        style={{
-          fontSize: 13, fontWeight: 400,
-          color: isLink ? 'var(--color-accent)' : 'var(--text-primary)',
-          display: 'flex', alignItems: 'center', gap: 5,
-          cursor: 'default', borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
-          transition: 'background 150ms',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          minWidth: 0, textAlign: 'right' as const,
-          background: 'transparent', border: 'none', fontFamily: 'inherit',
-        }}
-        onClick={onClick}
-        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-      >
-        {children}
-        {isDropdown && <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4, flexShrink: 0 }}>⌃</span>}
-      </span>
     </div>
   )
 }
@@ -132,7 +123,6 @@ function LinkedRow({
 }
 
 export default function Contact360Page({ contactId, onDeleted }: Contact360Props = {}) {
-  const isDark = useDarkMode()
   const { id: routeId } = useParams()
   const navigate = useNavigate()
   const id = contactId ?? routeId
@@ -140,9 +130,6 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
 
   const [contact, setContact] = useState<Record<string, unknown> | null>(null)
   const [linkedData, setLinkedData] = useState<Record<string, Record<string, unknown>[]>>({})
-  const [specialtyNames, setSpecialtyNames] = useState<string[]>([])
-  const [companyName, setCompanyName] = useState<string | null>(null)
-  const [companyId, setCompanyId] = useState<string | null>(null)
   const [showDelete, setShowDelete] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [showPhotoMenu, setShowPhotoMenu] = useState(false)
@@ -197,13 +184,18 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
     setPhotoLoading(false)
   }
 
+  const handleFieldSave = async (key: string, val: unknown) => {
+    const targetId = contactId || id
+    if (!targetId) return
+    await window.electronAPI.contacts.update(targetId, { [key]: val })
+    const res = await window.electronAPI.contacts.getById(targetId)
+    if (res.success && res.data) setContact(res.data as Record<string, unknown>)
+  }
+
   useEffect(() => {
     if (!id) {
       setContact(null)
       setLinkedData({})
-      setSpecialtyNames([])
-      setCompanyName(null)
-      setCompanyId(null)
       return
     }
 
@@ -215,13 +207,12 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
         setContact(null)
       }
 
-      // Load linked records for tabs + specialties
-      const [opps, tasks, proposals, interactions, specialtiesRes] = await Promise.all([
+      // Load linked records for tabs
+      const [opps, tasks, proposals, interactions] = await Promise.all([
         window.electronAPI.opportunities.getAll(),
         window.electronAPI.tasks.getAll(),
         window.electronAPI.proposals.getAll(),
         window.electronAPI.interactions.getAll(),
-        window.electronAPI.specialties.getAll(),
       ])
 
       const linked: Record<string, Record<string, unknown>[]> = {}
@@ -251,41 +242,6 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
       }
 
       setLinkedData(linked)
-
-      // Resolve specialty names from IDs
-      if (specialtiesRes.success && specialtiesRes.data && result.data) {
-        const contactData = result.data as Record<string, unknown>
-        try {
-          const ids: string[] = JSON.parse((contactData.specialties_ids as string) || '[]')
-          const allSpecialties = specialtiesRes.data as Record<string, unknown>[]
-          const names = allSpecialties
-            .filter(s => ids.includes(s.id as string))
-            .map(s => s.specialty as string)
-            .filter(Boolean)
-          setSpecialtyNames(names)
-        } catch { /* ignore parse errors */ }
-      }
-
-      // Resolve linked company name
-      if (result.data) {
-        const contactData = result.data as Record<string, unknown>
-        try {
-          const cIds: string[] = JSON.parse((contactData.companies_ids as string) || '[]')
-          if (cIds.length > 0) {
-            setCompanyId(cIds[0])
-            const compRes = await window.electronAPI.companies.getById(cIds[0])
-            if (compRes.success && compRes.data) {
-              setCompanyName((compRes.data as Record<string, unknown>).company_name as string || null)
-            }
-          } else {
-            setCompanyId(null)
-            setCompanyName(null)
-          }
-        } catch {
-          setCompanyId(null)
-          setCompanyName(null)
-        }
-      }
     }
     load()
   }, [id])
@@ -321,142 +277,6 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
   const fullName = (contact.contact_name as string) ||
     [contact.first_name, contact.last_name].filter(Boolean).join(' ') ||
     'Unnamed Contact'
-
-  /* ── Determine which Contact Info fields exist ── */
-  const contactInfoFields: { label: string; value: string; isLink?: boolean; onClick?: () => void }[] = []
-  if (companyName) contactInfoFields.push({
-    label: 'Company', value: companyName, isLink: true,
-    onClick: () => companyId && navigate(`/companies/${companyId}`),
-  })
-  if (contact.email) contactInfoFields.push({
-    label: 'Email', value: contact.email as string, isLink: true,
-    onClick: () => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`),
-  })
-  if (contact.mobile_phone) contactInfoFields.push({ label: 'Mobile', value: contact.mobile_phone as string })
-  if (contact.phone) contactInfoFields.push({ label: 'Phone', value: contact.phone as string })
-  if (contact.linkedin_url) contactInfoFields.push({
-    label: 'LinkedIn',
-    value: (contact.linkedin_url as string)
-      .replace('https://www.linkedin.com/in/', '')
-      .replace('https://linkedin.com/in/', ''),
-    isLink: true,
-    onClick: () => window.electronAPI.shell.openExternal(contact.linkedin_url as string),
-  })
-
-  /* ── CRM Info fields ── */
-  const crmInfoFields: { label: string; value: React.ReactNode; isDropdown?: boolean }[] = []
-  if (contact.categorization) crmInfoFields.push({
-    label: 'Category',
-    value: (
-      <span style={{
-        fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
-        background: 'rgba(118,118,128,0.12)', color: 'var(--text-secondary)',
-      }}>
-        {contact.categorization as string}
-      </span>
-    ),
-    isDropdown: true,
-  })
-  if (contact.event_tags) crmInfoFields.push({
-    label: 'Event Tags',
-    value: contact.event_tags as string,
-    isDropdown: true,
-  })
-  if (contact.qualification_status) crmInfoFields.push({
-    label: 'Qualification',
-    value: (
-      <span style={{
-        fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
-        background: 'rgba(118,118,128,0.12)', color: 'var(--text-secondary)',
-      }}>
-        {contact.qualification_status as string}
-      </span>
-    ),
-    isDropdown: true,
-  })
-  if (contact.client_type) crmInfoFields.push({
-    label: 'Client Type',
-    value: (
-      <span style={{
-        fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
-        background: 'rgba(118,118,128,0.12)', color: 'var(--text-secondary)',
-      }}>
-        {contact.client_type as string}
-      </span>
-    ),
-    isDropdown: true,
-  })
-  if (contact.onboarding_status) crmInfoFields.push({
-    label: 'Onboarding',
-    value: (
-      <span style={{
-        fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
-        background: 'rgba(118,118,128,0.12)', color: 'var(--text-secondary)',
-      }}>
-        {contact.onboarding_status as string}
-      </span>
-    ),
-    isDropdown: true,
-  })
-  if (contact.import_source) crmInfoFields.push({
-    label: 'Import Source',
-    value: (
-      <span style={{
-        fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
-        background: 'rgba(118,118,128,0.12)', color: 'var(--text-secondary)',
-      }}>
-        {contact.import_source as string}
-      </span>
-    ),
-    isDropdown: true,
-  })
-  // Tags (multiSelect)
-  const tags: string[] = (() => {
-    try {
-      const raw = contact.tags
-      if (!raw) return []
-      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
-      return Array.isArray(parsed) ? parsed : []
-    } catch { return [] }
-  })()
-  if (tags.length > 0) crmInfoFields.push({
-    label: 'Tags',
-    value: (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
-        {tags.map((tag: string) => (
-          <span
-            key={tag}
-            style={{
-              fontSize: 11, fontWeight: 600, padding: '2px 8px',
-              borderRadius: 4, background: 'rgba(175,82,222,0.22)',
-              color: isDark ? '#BF5AF2' : '#8944AB',
-            }}
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
-    ),
-  })
-  if (specialtyNames.length > 0) crmInfoFields.push({
-    label: 'Specialty',
-    value: (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
-        {specialtyNames.map((name: string) => (
-          <span
-            key={name}
-            style={{
-              fontSize: 11, fontWeight: 600, padding: '2px 8px',
-              borderRadius: 4, background: 'rgba(0,122,255,0.22)',
-              color: isDark ? '#409CFF' : '#0055B3',
-            }}
-          >
-            {name}
-          </span>
-        ))}
-      </div>
-    ),
-  })
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden" style={{ background: 'var(--bg-window)', borderLeft: '1px solid var(--separator)' }}>
@@ -647,44 +467,58 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
         {/* ── 2. Stats strip ── */}
         <ContactStats stats={stats} />
 
-        {/* ── 3. Contact Info — grouped form rows ── */}
-        {contactInfoFields.length > 0 && (
-          <>
-            <SectionLabel>Contact Info</SectionLabel>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
-              {contactInfoFields.map((field, idx) => (
-                <FormRow
-                  key={field.label}
-                  label={field.label}
-                  isLast={idx === contactInfoFields.length - 1}
-                  isLink={field.isLink}
-                  onClick={field.onClick}
-                >
-                  {field.value}
-                </FormRow>
-              ))}
-            </div>
-          </>
-        )}
+        {/* ── 3. Contact Info — editable form rows ── */}
+        <SectionLabel>Contact Info</SectionLabel>
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+          {CONTACT_INFO_FIELDS.map((field, idx) => (
+            <EditableFormRow
+              key={field.key}
+              field={field}
+              value={(contact as Record<string, unknown>)[field.key]}
+              isLast={idx === CONTACT_INFO_FIELDS.length - 1}
+              onSave={handleFieldSave}
+            />
+          ))}
+        </div>
 
-        {/* ── 4. CRM Info — grouped form rows ── */}
-        {crmInfoFields.length > 0 && (
-          <>
-            <SectionLabel>CRM Info</SectionLabel>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
-              {crmInfoFields.map((field, idx) => (
-                <FormRow
-                  key={field.label}
-                  label={field.label}
-                  isLast={idx === crmInfoFields.length - 1}
-                  isDropdown={field.isDropdown}
-                >
-                  {field.value}
-                </FormRow>
-              ))}
-            </div>
-          </>
-        )}
+        {/* ── 4. CRM Info — editable form rows ── */}
+        <SectionLabel>CRM Info</SectionLabel>
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+          {CONTACT_CRM_FIELDS.map((field, idx) => (
+            <EditableFormRow
+              key={field.key}
+              field={field}
+              value={(contact as Record<string, unknown>)[field.key]}
+              isLast={idx === CONTACT_CRM_FIELDS.length - 1}
+              onSave={handleFieldSave}
+            />
+          ))}
+        </div>
+
+        {/* ── 4b. Partner / Vendor — editable form rows ── */}
+        <SectionLabel>Partner / Vendor</SectionLabel>
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+          {CONTACT_PARTNER_FIELDS.map((field, idx) => (
+            <EditableFormRow
+              key={field.key}
+              field={field}
+              value={(contact as Record<string, unknown>)[field.key]}
+              isLast={idx === CONTACT_PARTNER_FIELDS.length - 1}
+              onSave={handleFieldSave}
+            />
+          ))}
+        </div>
+
+        {/* ── 4c. Notes — editable ── */}
+        <SectionLabel>Notes</SectionLabel>
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+          <EditableFormRow
+            field={{ key: 'notes', label: 'Notes', type: 'textarea' }}
+            value={contact.notes}
+            isLast
+            onSave={handleFieldSave}
+          />
+        </div>
 
         {/* ── 5. Opportunities — linked records ── */}
         <SectionLabel>Opportunities</SectionLabel>

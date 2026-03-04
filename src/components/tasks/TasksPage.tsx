@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
+import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import useEntityList from '../../hooks/useEntityList'
 import useDarkMode from '../../hooks/useDarkMode'
 
@@ -57,6 +58,17 @@ const TYPE_SWATCH_COLORS: Record<string, string> = {
   'Send Proposal': '#32ADE6', 'Internal Review': '#A2845E',
   'Project': '#00C7BE', 'Travel': '#FF3B30',
 }
+
+const TASK_EDITABLE_FIELDS: EditableField[] = [
+  { key: 'due_date', label: 'Due Date', type: 'date' },
+  { key: 'priority', label: 'Priority', type: 'singleSelect',
+    options: ['🔴 High', '🟡 Medium', '🟢 Low'] },
+  { key: 'status', label: 'Status', type: 'singleSelect',
+    options: ['To Do', 'In Progress', 'Waiting', 'Completed', 'Cancelled'] },
+  { key: 'type', label: 'Type', type: 'singleSelect',
+    options: ['Administrative', 'Follow-up Call', 'Follow-up Email', 'Internal Review', 'Other', 'Presentation Deck', 'Research', 'Schedule Meeting', 'Send Proposal', 'Send Qualifications'] },
+  { key: 'assigned_to', label: 'Assigned To', type: 'readonly' },
+]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -378,13 +390,12 @@ function TaskRow({ task, section, isSelected, isDark, onSelect, onComplete }: Ta
 
 interface TaskDetailProps {
   task: TaskItem | null
-  isDark: boolean
   onComplete: (id: string) => void
   onDelete: (id: string) => void
-  onNavigateEdit: (id: string) => void
+  onReload: () => void
 }
 
-function TaskDetail({ task, isDark, onComplete, onDelete, onNavigateEdit }: TaskDetailProps) {
+function TaskDetail({ task, onComplete, onDelete, onReload }: TaskDetailProps) {
   if (!task) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
@@ -395,9 +406,7 @@ function TaskDetail({ task, isDark, onComplete, onDelete, onNavigateEdit }: Task
 
   const completed = isCompleted(task)
   const borderColor = completed ? 'var(--color-green)' : priorityBorderColor(task.priorityClean)
-  const typeColor = task.type ? TYPE_COLORS[task.type] : null
 
-  // Calculate overdue days
   let overdueLabel = ''
   if (task.due_date && !completed) {
     const today = new Date()
@@ -407,58 +416,6 @@ function TaskDetail({ task, isDark, onComplete, onDelete, onNavigateEdit }: Task
     if (diffDays > 0) overdueLabel = `Overdue by ${diffDays} day${diffDays === 1 ? '' : 's'}`
     else if (diffDays === 0) overdueLabel = 'Due today'
   }
-
-  const formatDetailDate = (raw: string | null) => {
-    if (!raw) return '—'
-    const [y, m, d] = raw.split('-').map(Number)
-    return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  }
-
-  // Priority badge — Apple style: filled circle + bold colored text
-  const priText = task.priorityClean === 'High'
-    ? (isDark ? '#FF453A' : '#D70015')
-    : task.priorityClean === 'Medium'
-      ? (isDark ? '#FF9F0A' : '#C93400')
-      : 'var(--text-secondary)'
-  const priorityBadge = task.priorityClean ? (
-    <span style={{
-      fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      background: task.priorityClean === 'High' ? 'rgba(255,59,48,0.22)' : task.priorityClean === 'Medium' ? 'rgba(255,149,0,0.22)' : 'rgba(142,142,147,0.22)',
-      color: priText,
-    }}>
-      <span style={{ width: 8, height: 8, borderRadius: '50%', background: priorityBorderColor(task.priorityClean), flexShrink: 0 }} />
-      {task.priorityClean}
-    </span>
-  ) : <span style={{ color: 'var(--text-secondary)' }}>—</span>
-
-  // Status badge — per-status colors matching StatusBadge
-  const statusColors: Record<string, { bg: string; fg: string; fgDark: string }> = {
-    'To Do':        { bg: 'rgba(142,142,147,0.22)', fg: '#636366', fgDark: '#98989D' },
-    'In Progress':  { bg: 'rgba(0,122,255,0.22)',    fg: '#0055B3', fgDark: '#409CFF' },
-    'Waiting':      { bg: 'rgba(255,149,0,0.22)',    fg: '#C93400', fgDark: '#FF9F0A' },
-    'Completed':    { bg: 'rgba(52,199,89,0.22)',    fg: '#248A3D', fgDark: '#30D158' },
-    'Cancelled':    { bg: 'rgba(142,142,147,0.22)', fg: '#636366', fgDark: '#98989D' },
-  }
-  const sc = task.status ? (statusColors[task.status] ?? { bg: 'rgba(0,122,255,0.22)', fg: '#0055B3', fgDark: '#409CFF' }) : null
-  const statusBadge = task.status && sc ? (
-    <span style={{
-      fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
-      background: sc.bg, color: isDark ? sc.fgDark : sc.fg,
-    }}>
-      {task.status}
-    </span>
-  ) : <span style={{ color: 'var(--text-secondary)' }}>—</span>
-
-  // Type badge — Apple system colors with dark mode variants
-  const typeBadge = task.type && typeColor ? (
-    <span style={{
-      fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
-      background: typeColor.bg, color: isDark ? typeColor.fgDark : typeColor.fg,
-    }}>
-      {task.type}
-    </span>
-  ) : <span style={{ color: 'var(--text-secondary)' }}>—</span>
 
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '24px 28px' }}>
@@ -506,18 +463,6 @@ function TaskDetail({ task, isDark, onComplete, onDelete, onNavigateEdit }: Task
             </button>
           )}
           <button
-            onClick={() => onNavigateEdit(task.id)}
-            title="Edit task"
-            style={{
-              fontSize: 12, fontWeight: 500, padding: '4px 12px', borderRadius: 8,
-              background: 'var(--bg-secondary)', color: 'var(--text-primary)',
-              border: 'none', cursor: 'default', minHeight: 24,
-              display: 'inline-flex', alignItems: 'center', transition: 'background 150ms',
-            }}
-          >
-            Edit
-          </button>
-          <button
             onClick={() => onDelete(task.id)}
             style={{
               fontSize: 12, fontWeight: 500, padding: '4px 12px', borderRadius: 8,
@@ -531,62 +476,34 @@ function TaskDetail({ task, isDark, onComplete, onDelete, onNavigateEdit }: Task
         </div>
       </div>
 
-      {/* Apple form rows */}
       <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
-        {/* Due Date */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
-          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Due Date</span>
-          <span style={{
-            fontSize: 13, fontWeight: 400,
-            color: task.due_date && task.due_date < todayStr() && !completed ? 'var(--color-red)' : 'var(--text-primary)',
-          }}>
-            {formatDetailDate(task.due_date)}
-          </span>
-        </div>
-        {/* Priority */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
-          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Priority</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            {priorityBadge}
-            <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4 }}>⌃</span>
-          </div>
-        </div>
-        {/* Status */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
-          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Status</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            {statusBadge}
-            <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4 }}>⌃</span>
-          </div>
-        </div>
-        {/* Type */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--separator)', minHeight: 36 }}>
-          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Type</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            {typeBadge}
-            <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4 }}>⌃</span>
-          </div>
-        </div>
-        {/* Assigned To */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', minHeight: 36 }}>
-          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>Assigned To</span>
-          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
-            {task.assigned_to ?? '—'}
-          </span>
-        </div>
+        {TASK_EDITABLE_FIELDS.map((field, idx) => (
+          <EditableFormRow
+            key={field.key}
+            field={field}
+            value={task[field.key as keyof TaskItem]}
+            isLast={idx === TASK_EDITABLE_FIELDS.length - 1}
+            onSave={async (key, val) => {
+              await window.electronAPI.tasks.update(task.id, { [key]: val })
+              onReload()
+            }}
+          />
+        ))}
       </div>
 
-      {/* Notes */}
       <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
         Notes
       </div>
-      <div style={{
-        background: 'var(--bg-secondary)', borderRadius: 12, padding: '10px 12px',
-        minHeight: 60, fontSize: 13, lineHeight: 1.5, marginBottom: 16,
-        color: task.notes ? 'var(--text-primary)' : 'var(--text-tertiary)',
-        fontStyle: task.notes ? 'normal' : 'italic',
-      }}>
-        {task.notes || 'No notes added yet.'}
+      <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+        <EditableFormRow
+          field={{ key: 'notes', label: '', type: 'textarea' }}
+          value={task.notes}
+          isLast
+          onSave={async (key, val) => {
+            await window.electronAPI.tasks.update(task.id, { [key]: val })
+            onReload()
+          }}
+        />
       </div>
     </div>
   )
@@ -821,10 +738,9 @@ export default function TasksPage() {
       {/* Task Detail pane */}
       <TaskDetail
         task={selectedTask}
-        isDark={isDark}
         onComplete={handleComplete}
         onDelete={handleDelete}
-        onNavigateEdit={id => navigate(`/tasks/${id}/edit`)}
+        onReload={reload}
       />
     </div>
   )
