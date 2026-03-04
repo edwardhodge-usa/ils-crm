@@ -47,6 +47,8 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
       return
     }
 
+    let cancelled = false
+
     async function load() {
       setCompany(null)
       setContacts([])
@@ -61,6 +63,8 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
         window.electronAPI.projects.getAll(),
         window.electronAPI.proposals.getAll(),
       ])
+
+      if (cancelled) return
 
       if (companyRes.success && companyRes.data) {
         setCompany(companyRes.data as Record<string, unknown>)
@@ -102,9 +106,17 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
         )
         setProposals(linked)
       }
+
+      // Background refresh from Airtable for latest data
+      window.electronAPI.companies.refresh(companyId!).then(freshRes => {
+        if (!cancelled && freshRes.success && freshRes.data) {
+          setCompany(freshRes.data as Record<string, unknown>)
+        }
+      })
     }
 
     load()
+    return () => { cancelled = true }
   }, [companyId])
 
   // Close logo popover on outside click

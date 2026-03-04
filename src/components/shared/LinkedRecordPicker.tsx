@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import type { FormFieldDef } from './EntityForm'
 import CreateRecordSheet from './CreateRecordSheet'
+import { parseIds } from '../../utils/linked-records'
 
 interface LinkedRecordPickerProps {
   entityApi: { getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }> }
@@ -55,19 +56,7 @@ export default function LinkedRecordPicker({
   const canCreate = Boolean(onCreate) || hasModalCreate
 
   // Parse current linked IDs
-  const linkedIds: string[] = (() => {
-    if (!value) return []
-    if (Array.isArray(value)) return value as string[]
-    if (typeof value === 'string') {
-      try {
-        const parsed = JSON.parse(value)
-        return Array.isArray(parsed) ? parsed : []
-      } catch {
-        return []
-      }
-    }
-    return []
-  })()
+  const linkedIds = parseIds(value)
 
   function buildLabel(r: Record<string, unknown>): string {
     const primary = r[labelField]

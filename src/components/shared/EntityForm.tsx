@@ -152,8 +152,8 @@ export function FieldRenderer({
   value: unknown
   onChange: (v: unknown) => void
   /** When provided, linked record "+ Create" triggers this instead of simple inline create.
-   *  Called with (entityName, labelField, searchText). Used by CreateRecordSheet for split-pane. */
-  onLinkedRecordCreate?: (entityName: string, labelField: string, searchText: string) => void
+   *  Called with (fieldKey, entityName, labelField, searchText). Used by CreateRecordSheet for split-pane. */
+  onLinkedRecordCreate?: (fieldKey: string, entityName: string, labelField: string, searchText: string) => void
 }) {
   const labelClass = 'text-[13px] font-normal text-[var(--text-primary)] flex-shrink-0'
 
@@ -263,7 +263,7 @@ export function FieldRenderer({
     // If parent provides onLinkedRecordCreate, use that for split-pane sub-creation
     const handleCreate = onLinkedRecordCreate
       ? async (name: string): Promise<string | null> => {
-          onLinkedRecordCreate(field.entityName!, field.labelField!, name)
+          onLinkedRecordCreate(field.key, field.entityName!, field.labelField!, name)
           return null // signal: don't link yet, the sub-create pane will handle it
         }
       : async (name: string): Promise<string | null> => {

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import PrimaryButton from '../shared/PrimaryButton'
+import { GroupedSectionHeader } from '../shared/GroupedSectionHeader'
 import useEntityList from '../../hooks/useEntityList'
 import { ProposalRow } from './ProposalRow'
 import { ProposalDetail } from './ProposalDetail'
@@ -12,6 +13,7 @@ interface ProposalListItem {
   status: string | null
   value: number | null
   companyName: string | null
+  modifiedAt: string | null
 }
 
 function toListItem(row: Record<string, unknown>): ProposalListItem {
@@ -21,6 +23,7 @@ function toListItem(row: Record<string, unknown>): ProposalListItem {
     status: (row.status as string | null) ?? null,
     value: row.proposed_value ? Number(row.proposed_value) : null,
     companyName: (row.company_name as string | null) ?? (row.client_company as string | null) ?? null,
+    modifiedAt: (row._airtable_modified_at as string) || null,
   }
 }
 
@@ -55,8 +58,7 @@ export default function ProposalListPage() {
         sorted.sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
         break
       case 'newest':
-        // id order as proxy (Airtable IDs are chronological)
-        sorted.sort((a, b) => b.id.localeCompare(a.id))
+        sorted.sort((a, b) => (b.modifiedAt ?? '').localeCompare(a.modifiedAt ?? ''))
         break
     }
     return sorted
@@ -132,22 +134,7 @@ export default function ProposalListPage() {
             }
             return Array.from(groups.entries()).map(([label, items]) => (
               <div key={label}>
-                <div style={{
-                  position: 'sticky', top: 0, zIndex: 1,
-                  padding: '18px 12px 6px',
-                  fontSize: 11, fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-primary)',
-                  background: 'var(--bg-window)',
-                  borderBottom: '0.5px solid var(--separator)',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                }}>
-                  <span>{label.toUpperCase()}</span>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>
-                    {items.length}
-                  </span>
-                </div>
+                <GroupedSectionHeader label={label} count={items.length} />
                 {items.map(proposal => (
                   <ProposalRow
                     key={proposal.id}

@@ -91,10 +91,26 @@ app.whenReady().then(async () => {
 
   // Auto-update (production only)
   if (!isDev) {
+    autoUpdater.autoDownload = true
+    autoUpdater.autoInstallOnAppQuit = true
     autoUpdater.checkForUpdatesAndNotify()
-    autoUpdater.on('update-available', () => console.log('[AutoUpdater] Update available'))
-    autoUpdater.on('update-downloaded', () => console.log('[AutoUpdater] Update downloaded — will install on restart'))
-    autoUpdater.on('error', (err) => console.error('[AutoUpdater] Error:', err.message))
+
+    autoUpdater.on('update-available', (info) => {
+      mainWindow?.webContents.send('updater:status', { status: 'available', version: info.version })
+    })
+    autoUpdater.on('download-progress', (progressObj) => {
+      mainWindow?.webContents.send('updater:status', { status: 'downloading', percent: progressObj.percent })
+    })
+    autoUpdater.on('update-downloaded', (info) => {
+      mainWindow?.webContents.send('updater:status', { status: 'ready', version: info.version })
+    })
+    autoUpdater.on('error', (err) => {
+      console.error('[AutoUpdater] Error:', err.message)
+      mainWindow?.webContents.send('updater:status', { status: 'error', message: err.message })
+    })
+
+    // Re-check every 4 hours
+    setInterval(() => autoUpdater.checkForUpdatesAndNotify(), 4 * 60 * 60 * 1000)
   }
 
   // Auto-start sync if API key is configured

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
+import { GroupedSectionHeader } from '../shared/GroupedSectionHeader'
 import useEntityList from '../../hooks/useEntityList'
 import { ContactRow } from './ContactRow'
 import Contact360Page from './Contact360Page'
@@ -107,6 +108,7 @@ export default function ContactListPage() {
       specialtyNames,
       specialtyColors,
       daysSinceContact,
+      modifiedAt: (row._airtable_modified_at as string) || null,
     }
   }
 
@@ -129,7 +131,7 @@ export default function ContactListPage() {
         sorted.sort((a, b) => (a.companyName ?? '').localeCompare(b.companyName ?? ''))
         break
       case 'newest':
-        sorted.sort((a, b) => b.id.localeCompare(a.id))
+        sorted.sort((a, b) => (b.modifiedAt ?? '').localeCompare(a.modifiedAt ?? ''))
         break
     }
     return sorted
@@ -236,22 +238,7 @@ export default function ContactListPage() {
             }
             return Array.from(groups.entries()).map(([label, items]) => (
               <div key={label}>
-                <div style={{
-                  position: 'sticky', top: 0, zIndex: 1,
-                  padding: '18px 12px 6px',
-                  fontSize: 11, fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-primary)',
-                  background: 'var(--bg-window)',
-                  borderBottom: '0.5px solid var(--separator)',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                }}>
-                  <span>{label.toUpperCase()}</span>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>
-                    {items.length}
-                  </span>
-                </div>
+                <GroupedSectionHeader label={label} count={items.length} />
                 {items.map(contact => (
                   <ContactRow
                     key={contact.id}

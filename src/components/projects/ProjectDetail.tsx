@@ -52,15 +52,26 @@ export function ProjectDetail({ projectId, leadOptions }: ProjectDetailProps) {
       return
     }
 
+    let cancelled = false
+
     async function load() {
       setProject(null)
       const projectRes = await window.electronAPI.projects.getById(projectId!)
+      if (cancelled) return
       if (projectRes.success && projectRes.data) {
         setProject(projectRes.data as Record<string, unknown>)
       }
+
+      // Background refresh from Airtable for latest data
+      window.electronAPI.projects.refresh(projectId!).then(freshRes => {
+        if (!cancelled && freshRes.success && freshRes.data) {
+          setProject(freshRes.data as Record<string, unknown>)
+        }
+      })
     }
 
     load()
+    return () => { cancelled = true }
   }, [projectId])
 
   if (!projectId) {

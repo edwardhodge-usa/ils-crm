@@ -290,6 +290,7 @@ export interface ContactListItem {
   specialtyNames: string[]       // display names from linked Specialties
   specialtyColors: string[]      // one color per specialty (same length)
   daysSinceContact: number | null
+  modifiedAt: string | null
 }
 
 // ─── Sync Types ──────────────────────────────────────────────

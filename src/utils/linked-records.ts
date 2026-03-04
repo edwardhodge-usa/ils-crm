@@ -1,3 +1,18 @@
+/** Parse a value (null, array, or JSON string) into an array of ID strings */
+export function parseIds(val: unknown): string[] {
+  if (!val) return []
+  if (Array.isArray(val)) return val as string[]
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
 /** Check if a JSON-encoded array of IDs contains a specific ID */
 export function containsId(idsJson: unknown, targetId: string): boolean {
   if (!idsJson) return false

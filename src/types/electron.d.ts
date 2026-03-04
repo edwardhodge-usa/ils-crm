@@ -4,6 +4,7 @@ interface EntityAPI {
   create: (fields: Record<string, unknown>) => Promise<{ success: boolean; data?: string; error?: string }>
   update: (id: string, fields: Record<string, unknown>) => Promise<{ success: boolean; error?: string }>
   delete: (id: string) => Promise<{ success: boolean; error?: string }>
+  refresh: (id: string) => Promise<{ success: boolean; data?: unknown; error?: string }>
 }
 
 interface ReadOnlyEntityAPI {
@@ -33,6 +34,11 @@ interface ElectronAPI {
     getStatus: () => Promise<{ success: boolean; data?: unknown }>
     onProgress: (cb: (status: unknown) => void) => void
     removeProgressListener: () => void
+  }
+  updater: {
+    onStatus: (cb: (status: { status: string; version?: string; percent?: number; message?: string }) => void) => void
+    install: () => Promise<{ success: boolean; error?: string }>
+    removeStatusListener: () => void
   }
   contacts: EntityAPI
   companies: EntityAPI

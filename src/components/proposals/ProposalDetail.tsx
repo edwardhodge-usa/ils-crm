@@ -35,15 +35,26 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
       return
     }
 
+    let cancelled = false
+
     async function load() {
       setProposal(null)
       const proposalRes = await window.electronAPI.proposals.getById(proposalId!)
+      if (cancelled) return
       if (proposalRes.success && proposalRes.data) {
         setProposal(proposalRes.data as Record<string, unknown>)
       }
+
+      // Background refresh from Airtable for latest data
+      window.electronAPI.proposals.refresh(proposalId!).then(freshRes => {
+        if (!cancelled && freshRes.success && freshRes.data) {
+          setProposal(freshRes.data as Record<string, unknown>)
+        }
+      })
     }
 
     load()
+    return () => { cancelled = true }
   }, [proposalId])
 
   const handleFieldSave = useCallback(async (key: string, val: unknown) => {

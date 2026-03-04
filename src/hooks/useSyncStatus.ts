@@ -45,6 +45,10 @@ export function useSyncStatus() {
         refreshStatus()
         setTimeout(() => setIsSyncing(false), 500)
       }
+
+      if (p.phase === 'complete') {
+        window.dispatchEvent(new Event('sync-complete'))
+      }
     })
 
     return () => {
@@ -54,14 +58,11 @@ export function useSyncStatus() {
 
   const forceSync = useCallback(async () => {
     setIsSyncing(true)
-    try {
-      const result = await window.electronAPI.sync.forceSync()
-      await refreshStatus()
-      return result
-    } finally {
-      setIsSyncing(false)
-    }
-  }, [refreshStatus])
+    const result = await window.electronAPI.sync.forceSync()
+    // Don't set isSyncing=false here — the progress listener handles it
+    // when it receives phase='complete', preventing double-set flicker
+    return result
+  }, [])
 
   const startSync = useCallback(async () => {
     await window.electronAPI.sync.start()

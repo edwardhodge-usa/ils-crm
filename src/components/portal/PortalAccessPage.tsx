@@ -6,6 +6,8 @@ import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import LinkedRecordPicker from '../shared/LinkedRecordPicker'
 import useEntityList from '../../hooks/useEntityList'
 import { CONTACT_CREATE_FIELDS } from '../../config/create-fields'
+import { parseIds } from '../../utils/linked-records'
+import { GroupedSectionHeader } from '../shared/GroupedSectionHeader'
 
 /** Resolve the first linked contact's photo and company logo */
 function useLinkedImages(record: Record<string, unknown> | null) {
@@ -21,11 +23,7 @@ function useLinkedImages(record: Record<string, unknown> | null) {
 
     async function load() {
       // 1. Get linked contact photo
-      const rawIds = record!.contact_ids
-      let contactIds: string[] = []
-      try {
-        contactIds = typeof rawIds === 'string' ? JSON.parse(rawIds) : Array.isArray(rawIds) ? rawIds : []
-      } catch { /* empty */ }
+      const contactIds = parseIds(record!.contact_ids)
 
       if (contactIds.length > 0) {
         const res = await window.electronAPI.contacts.getById(contactIds[0])
@@ -34,11 +32,7 @@ function useLinkedImages(record: Record<string, unknown> | null) {
           if (contact.contact_photo_url) setContactPhotoUrl(contact.contact_photo_url as string)
 
           // 2. Get company logo from the contact's company link
-          const companyRaw = contact.company_ids ?? contact.companies_ids
-          let companyIds: string[] = []
-          try {
-            companyIds = typeof companyRaw === 'string' ? JSON.parse(companyRaw) : Array.isArray(companyRaw) ? companyRaw : []
-          } catch { /* empty */ }
+          const companyIds = parseIds(contact.company_ids ?? contact.companies_ids)
 
           if (companyIds.length > 0) {
             const compRes = await window.electronAPI.companies.getById(companyIds[0])
@@ -67,7 +61,7 @@ function useLinkedImages(record: Record<string, unknown> | null) {
 
     load()
     return () => { cancelled = true }
-  }, [record?.id, record?.contact_ids]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [record?.id])
 
   return { contactPhotoUrl, companyLogoUrl }
 }
@@ -702,6 +696,16 @@ export default function PortalAccessPage() {
     }).catch(() => { /* logs stay empty */ })
   }, [])
 
+  // Background refresh selected record from Airtable for latest data
+  useEffect(() => {
+    if (!selectedId) return
+    let cancelled = false
+    window.electronAPI.portalAccess.refresh(selectedId).then(() => {
+      if (!cancelled) reload()
+    })
+    return () => { cancelled = true }
+  }, [selectedId, reload])
+
   const filtered = useMemo(() => {
     let list = records as Record<string, unknown>[]
     if (search.trim()) {
@@ -810,22 +814,7 @@ export default function PortalAccessPage() {
             }
             return Array.from(groups.entries()).map(([label, items]) => (
               <div key={label}>
-                <div style={{
-                  position: 'sticky', top: 0, zIndex: 1,
-                  padding: '18px 12px 6px',
-                  fontSize: 11, fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-primary)',
-                  background: 'var(--bg-window)',
-                  borderBottom: '0.5px solid var(--separator)',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                }}>
-                  <span>{label.startsWith('No ') ? label : label.toUpperCase()}</span>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>
-                    {items.length}
-                  </span>
-                </div>
+                <GroupedSectionHeader label={label} count={items.length} />
                 {items.map(record => (
                   <PortalAccessRow
                     key={record.id as string}

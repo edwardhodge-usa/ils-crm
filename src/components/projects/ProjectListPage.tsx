@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import PrimaryButton from '../shared/PrimaryButton'
+import { GroupedSectionHeader } from '../shared/GroupedSectionHeader'
 import useEntityList from '../../hooks/useEntityList'
 import { ProjectRow } from './ProjectRow'
 import { ProjectDetail } from './ProjectDetail'
@@ -11,6 +12,7 @@ interface ProjectListItem {
   name: string
   status: string | null
   companyName: string | null
+  modifiedAt: string | null
 }
 
 function toListItem(row: Record<string, unknown>): ProjectListItem {
@@ -19,6 +21,7 @@ function toListItem(row: Record<string, unknown>): ProjectListItem {
     name: (row.project_name as string | null) || 'Unnamed Project',
     status: (row.status as string | null) ?? null,
     companyName: (row.company_name as string | null) ?? (row.client_company as string | null) ?? null,
+    modifiedAt: (row._airtable_modified_at as string) || null,
   }
 }
 
@@ -50,7 +53,7 @@ export default function ProjectListPage() {
         sorted.sort((a, b) => (a.status ?? '').localeCompare(b.status ?? ''))
         break
       case 'newest':
-        sorted.sort((a, b) => b.id.localeCompare(a.id))
+        sorted.sort((a, b) => (b.modifiedAt ?? '').localeCompare(a.modifiedAt ?? ''))
         break
     }
     return sorted
@@ -134,22 +137,7 @@ export default function ProjectListPage() {
             }
             return Array.from(groups.entries()).map(([label, items]) => (
               <div key={label}>
-                <div style={{
-                  position: 'sticky', top: 0, zIndex: 1,
-                  padding: '18px 12px 6px',
-                  fontSize: 11, fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-primary)',
-                  background: 'var(--bg-window)',
-                  borderBottom: '0.5px solid var(--separator)',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                }}>
-                  <span>{label.toUpperCase()}</span>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>
-                    {items.length}
-                  </span>
-                </div>
+                <GroupedSectionHeader label={label} count={items.length} />
                 {items.map(project => (
                   <ProjectRow
                     key={project.id}

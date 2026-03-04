@@ -1,10 +1,18 @@
+import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useSyncStatus } from '../../hooks/useSyncStatus'
 import { ROUTE_TITLES } from '../../config/routes'
 
 export default function TopBar() {
   const location = useLocation()
-  const { isSyncing, progress } = useSyncStatus()
+  const { isSyncing, progress, forceSync } = useSyncStatus()
+  const [version, setVersion] = useState('')
+
+  useEffect(() => {
+    window.electronAPI.app.getVersion().then(result => {
+      if (result.success) setVersion(result.data)
+    })
+  }, [])
 
   const title = ROUTE_TITLES[location.pathname] ??
     Object.entries(ROUTE_TITLES).find(([path]) =>
@@ -18,8 +26,13 @@ export default function TopBar() {
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Sync indicator */}
-        <div className="flex items-center gap-1.5">
+        {/* Sync indicator — click to force sync */}
+        <button
+          aria-label={isSyncing ? 'Syncing in progress' : 'Force sync'}
+          disabled={isSyncing}
+          onClick={() => { if (!isSyncing) forceSync() }}
+          className="flex items-center gap-1.5 px-2 py-1 rounded-md border-none bg-transparent cursor-default hover:bg-[var(--bg-hover)] disabled:hover:bg-transparent transition-colors"
+        >
           {isSyncing ? (
             <>
               <svg className="w-3 h-3 text-[var(--color-accent)] spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -35,7 +48,7 @@ export default function TopBar() {
               <span className="text-[var(--text-tertiary)]">Synced</span>
             </>
           )}
-        </div>
+        </button>
 
         {/* Search button */}
         <button
@@ -51,6 +64,13 @@ export default function TopBar() {
           Search
           <kbd className="ml-1 text-[12px] text-[var(--text-tertiary)] font-mono">⌘K</kbd>
         </button>
+
+        {/* Version label */}
+        {version && (
+          <span className="text-[11px] text-[var(--text-tertiary)] font-mono">
+            v{version}
+          </span>
+        )}
       </div>
     </div>
   )

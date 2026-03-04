@@ -28,6 +28,8 @@ import InteractionForm from './components/interactions/InteractionForm'
 import PortalAccessPage from './components/portal/PortalAccessPage'
 import PortalLogsPage from './components/portal/PortalLogsPage'
 import CommandPalette from './components/layout/CommandPalette'
+import ErrorBoundary from './components/shared/ErrorBoundary'
+import UpdateBanner from './components/layout/UpdateBanner'
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null) // null = loading
@@ -85,67 +87,70 @@ export default function App() {
 
   // Authenticated — normal app
   return (
-    <MemoryRouter>
-      <CommandPalette />
-      <Routes>
-        <Route element={<Layout onSignOut={() => setIsAuthenticated(false)} />}>
-          <Route path="/" element={<DashboardPage />} />
+    <ErrorBoundary>
+      <UpdateBanner />
+      <MemoryRouter>
+        <CommandPalette />
+        <Routes>
+          <Route element={<Layout onSignOut={() => setIsAuthenticated(false)} />}>
+            <Route path="/" element={<DashboardPage />} />
 
-          {/* Contacts */}
-          <Route path="/contacts" element={<ContactListPage />} />
-          <Route path="/contacts/new" element={<ContactForm />} />
-          <Route path="/contacts/:id" element={<Contact360Page />} />
-          <Route path="/contacts/:id/edit" element={<ContactForm />} />
+            {/* Contacts */}
+            <Route path="/contacts" element={<ContactListPage />} />
+            <Route path="/contacts/new" element={<ContactForm />} />
+            <Route path="/contacts/:id" element={<Contact360Page />} />
+            <Route path="/contacts/:id/edit" element={<ContactForm />} />
 
-          {/* Companies */}
-          <Route path="/companies" element={<CompanyListPage />} />
-          <Route path="/companies/new" element={<CompanyForm />} />
-          <Route path="/companies/:id" element={<Company360Page />} />
-          <Route path="/companies/:id/edit" element={<CompanyForm />} />
+            {/* Companies */}
+            <Route path="/companies" element={<CompanyListPage />} />
+            <Route path="/companies/new" element={<CompanyForm />} />
+            <Route path="/companies/:id" element={<Company360Page />} />
+            <Route path="/companies/:id/edit" element={<CompanyForm />} />
 
-          {/* Pipeline */}
-          <Route path="/pipeline" element={<PipelinePage />} />
-          <Route path="/pipeline/new" element={<OpportunityForm />} />
-          <Route path="/pipeline/:id/edit" element={<OpportunityForm />} />
+            {/* Pipeline */}
+            <Route path="/pipeline" element={<PipelinePage />} />
+            <Route path="/pipeline/new" element={<OpportunityForm />} />
+            <Route path="/pipeline/:id/edit" element={<OpportunityForm />} />
 
-          {/* RFQs */}
-          <Route path="/rfqs" element={<RfqListPage />} />
+            {/* RFQs */}
+            <Route path="/rfqs" element={<RfqListPage />} />
 
-          {/* Contracts */}
-          <Route path="/contracts" element={<ContractListPage />} />
+            {/* Contracts */}
+            <Route path="/contracts" element={<ContractListPage />} />
 
-          {/* Tasks */}
-          <Route path="/tasks" element={<TasksPage />} />
-          <Route path="/tasks/list" element={<TaskListPage />} />
-          <Route path="/tasks/new" element={<TaskForm />} />
-          <Route path="/tasks/:id/edit" element={<TaskForm />} />
+            {/* Tasks */}
+            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/tasks/list" element={<TaskListPage />} />
+            <Route path="/tasks/new" element={<TaskForm />} />
+            <Route path="/tasks/:id/edit" element={<TaskForm />} />
 
-          {/* Proposals */}
-          <Route path="/proposals" element={<ProposalListPage />} />
-          <Route path="/proposals/new" element={<ProposalForm />} />
-          <Route path="/proposals/:id/edit" element={<ProposalForm />} />
+            {/* Proposals */}
+            <Route path="/proposals" element={<ProposalListPage />} />
+            <Route path="/proposals/new" element={<ProposalForm />} />
+            <Route path="/proposals/:id/edit" element={<ProposalForm />} />
 
-          {/* Projects */}
-          <Route path="/projects" element={<ProjectListPage />} />
-          <Route path="/projects/new" element={<ProjectForm />} />
-          <Route path="/projects/:id/edit" element={<ProjectForm />} />
+            {/* Projects */}
+            <Route path="/projects" element={<ProjectListPage />} />
+            <Route path="/projects/new" element={<ProjectForm />} />
+            <Route path="/projects/:id/edit" element={<ProjectForm />} />
 
-          {/* Imported Contacts */}
-          <Route path="/imported-contacts" element={<ImportedContactsPage />} />
+            {/* Imported Contacts */}
+            <Route path="/imported-contacts" element={<ImportedContactsPage />} />
 
-          {/* Interactions */}
-          <Route path="/interactions" element={<InteractionListPage />} />
-          <Route path="/interactions/table" element={<InteractionsPage />} />
-          <Route path="/interactions/new" element={<InteractionForm />} />
-          <Route path="/interactions/:id/edit" element={<InteractionForm />} />
+            {/* Interactions */}
+            <Route path="/interactions" element={<InteractionListPage />} />
+            <Route path="/interactions/table" element={<InteractionsPage />} />
+            <Route path="/interactions/new" element={<InteractionForm />} />
+            <Route path="/interactions/:id/edit" element={<InteractionForm />} />
 
-          {/* Portal */}
-          <Route path="/portal" element={<PortalAccessPage />} />
-          <Route path="/portal-logs" element={<PortalLogsPage />} />
+            {/* Portal */}
+            <Route path="/portal" element={<PortalAccessPage />} />
+            <Route path="/portal-logs" element={<PortalLogsPage />} />
 
-          <Route path="/settings" element={<SettingsPage />} />
-        </Route>
-      </Routes>
-    </MemoryRouter>
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </ErrorBoundary>
   )
 }

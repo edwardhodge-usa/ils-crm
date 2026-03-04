@@ -199,8 +199,11 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
       return
     }
 
+    let cancelled = false
+
     async function load() {
       const result = await window.electronAPI.contacts.getById(id!)
+      if (cancelled) return
       if (result.success && result.data) {
         setContact(result.data as Record<string, unknown>)
       } else {
@@ -214,6 +217,8 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
         window.electronAPI.proposals.getAll(),
         window.electronAPI.interactions.getAll(),
       ])
+
+      if (cancelled) return
 
       const linked: Record<string, Record<string, unknown>[]> = {}
 
@@ -242,8 +247,16 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
       }
 
       setLinkedData(linked)
+
+      // Background refresh from Airtable for latest data
+      window.electronAPI.contacts.refresh(id!).then(freshRes => {
+        if (!cancelled && freshRes.success && freshRes.data) {
+          setContact(freshRes.data as Record<string, unknown>)
+        }
+      })
     }
     load()
+    return () => { cancelled = true }
   }, [id])
 
   // Empty state when no contact selected

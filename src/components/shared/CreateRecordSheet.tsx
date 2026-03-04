@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { FieldRenderer, type FormFieldDef } from './EntityForm'
 import { CREATE_FIELD_REGISTRY } from '../../config/create-fields'
+import { parseIds } from '../../utils/linked-records'
 
 interface SubCreateState {
   entityName: string
@@ -30,7 +31,7 @@ function SectionBlock({
   sectionFields: FormFieldDef[]
   values: Record<string, unknown>
   setValue: (key: string, value: unknown) => void
-  onLinkedRecordCreate?: (entityName: string, labelField: string, searchText: string) => void
+  onLinkedRecordCreate?: (fieldKey: string, entityName: string, labelField: string, searchText: string) => void
 }) {
   return (
     <div style={{ marginBottom: 16 }}>
@@ -133,11 +134,7 @@ export default function CreateRecordSheet({
   }
 
   // Called by FieldRenderer when user clicks "+ Create" on a linked record
-  const handleLinkedRecordCreate = useCallback((entityName: string, labelField: string, searchText: string) => {
-    // Find which parent field triggered this
-    const parentField = fields.find(f => f.type === 'linkedRecord' && f.entityName === entityName)
-    if (!parentField) return
-
+  const handleLinkedRecordCreate = useCallback((fieldKey: string, entityName: string, labelField: string, searchText: string) => {
     // Build initial values for the sub-entity
     const initValues: Record<string, unknown> = {}
     if (searchText) {
@@ -151,10 +148,10 @@ export default function CreateRecordSheet({
       }
     }
 
-    setSubCreate({ entityName, labelField, searchText, parentFieldKey: parentField.key })
+    setSubCreate({ entityName, labelField, searchText, parentFieldKey: fieldKey })
     setSubValues(initValues)
     setSubError(null)
-  }, [fields])
+  }, [])
 
   // Confirm the sub-entity creation
   async function handleSubConfirm() {
@@ -169,16 +166,10 @@ export default function CreateRecordSheet({
       const res = await api.create(subValues)
       if (!res.success) throw new Error(res.error || 'Failed to create record')
       const newId = res.data as string
+      if (!newId) throw new Error('No record ID returned from creation')
 
       // Link the new record to the parent field
-      const currentVal = values[subCreate.parentFieldKey]
-      let currentIds: string[] = []
-      if (currentVal) {
-        if (Array.isArray(currentVal)) currentIds = currentVal as string[]
-        else if (typeof currentVal === 'string') {
-          try { currentIds = JSON.parse(currentVal) } catch { currentIds = [] }
-        }
-      }
+      const currentIds = parseIds(values[subCreate.parentFieldKey])
       setValue(subCreate.parentFieldKey, JSON.stringify([...currentIds, newId]))
 
       // Close sub-pane
@@ -204,6 +195,7 @@ export default function CreateRecordSheet({
 
   return createPortal(
     <div
+      onClick={onClose}
       style={{
         position: 'fixed',
         inset: 0,
@@ -216,6 +208,7 @@ export default function CreateRecordSheet({
     >
       {/* Modal panel — animates width when sub-pane opens */}
       <div
+        onClick={e => e.stopPropagation()}
         style={{
           width: isExpanded ? 900 : 520,
           maxHeight: 'calc(100vh - 80px)',

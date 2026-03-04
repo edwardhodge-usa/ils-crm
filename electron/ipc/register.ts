@@ -2,6 +2,7 @@
 // Wires up all entity CRUD, settings, sync, dashboard, and search handlers
 
 import { app, ipcMain, BrowserWindow, shell, dialog } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { getAll, getById, getSetting, setSetting, getAllSyncStatuses } from '../database/queries/entities'
 import { getDashboardStats, getTasksDueToday, getFollowUpAlerts, getPipelineSnapshot } from '../database/queries/dashboard'
 import { searchAll } from '../database/queries/search'
@@ -465,6 +466,17 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       return { success: true, data: result.filePaths[0] }
     } catch (error) {
       console.error('[IPC] contact:select-photo-file failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  // ─── Updater ──────────────────────────────────────────────
+  ipcMain.handle('updater:install', async () => {
+    try {
+      autoUpdater.quitAndInstall()
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] updater:install failed:', String(error))
       return { success: false, error: String(error) }
     }
   })

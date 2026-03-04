@@ -54,6 +54,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
   },
 
+  // Auto-updater
+  updater: {
+    onStatus: (cb: (status: { status: string; version?: string; percent?: number; message?: string }) => void) => {
+      ipcRenderer.on('updater:status', (_e, data) => cb(data))
+    },
+    install: () => ipcRenderer.invoke('updater:install'),
+    removeStatusListener: () => {
+      ipcRenderer.removeAllListeners('updater:status')
+    },
+  },
+
   // Entity CRUD
   contacts: makeCrudBridge('contacts'),
   companies: makeCrudBridge('companies'),

@@ -38,5 +38,11 @@ export default function useEntityList(
 
   useEffect(() => { load() }, []) // load() calls apiFnRef.current — stable by design
 
+  useEffect(() => {
+    const handler = () => { load() }
+    window.addEventListener('sync-complete', handler)
+    return () => window.removeEventListener('sync-complete', handler)
+  }, [])
+
   return { data, loading, error, reload: load }
 }

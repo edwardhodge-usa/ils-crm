@@ -12,6 +12,7 @@ const mockContact: ContactListItem = {
   specialtyNames: ['Broadway Producer'],
   specialtyColors: ['indigo'],
   daysSinceContact: 8,
+  modifiedAt: null,
 }
 
 test('renders name', () => {
