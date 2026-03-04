@@ -261,22 +261,38 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
               />
             )}
             {Boolean(deal.lead_source) && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  minHeight: 36,
-                  cursor: 'default',
-                }}
-              >
-                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>Lead Source</span>
-                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
-                  {deal.lead_source as string}
-                </span>
-              </div>
+              <FormRow
+                label="Lead Source"
+                value={deal.lead_source as string}
+              />
             )}
+            {Boolean(deal.referred_by) && (
+              <FormRow
+                label="Referred By"
+                value={deal.referred_by as string}
+              />
+            )}
+            {Boolean(deal.next_meeting_date) && (
+              <FormRow
+                label="Next Meeting"
+                value={deal.next_meeting_date as string}
+              />
+            )}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                minHeight: 36,
+                cursor: 'default',
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>Quals Sent</span>
+              <span style={{ fontSize: 13, fontWeight: 400, color: deal.qualifications_sent ? 'var(--color-green)' : 'var(--text-secondary)' }}>
+                {deal.qualifications_sent ? 'Yes' : 'No'}
+              </span>
+            </div>
           </div>
 
           {/* Tasks section */}

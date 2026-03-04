@@ -19,6 +19,19 @@ const FIELDS: FormFieldDef[] = [
     options: ['Referral', 'Inbound - Website', 'Inbound - LinkedIn', 'Inbound - Conference/Event', 'Outbound Prospecting', 'Past Relationship', 'Other', 'Partnership'] },
   { key: 'win_loss_reason', label: 'Win/Loss Reason', type: 'singleSelect', section: 'Details',
     options: ['Won - Best Fit', 'Won - Relationship', 'Won - Price', 'Lost - Budget', 'Lost - Competitor', 'Lost - Timing', 'Lost - No Decision', 'Lost - Scope Mismatch'] },
+  { key: 'referred_by', label: 'Referred By', type: 'text', section: 'Details' },
+  { key: 'next_meeting_date', label: 'Next Meeting Date', type: 'date', section: 'Details' },
+  { key: 'qualifications_sent', label: 'Qualifications Sent', type: 'checkbox', section: 'Details' },
+
+  // Linked Records
+  { key: 'company_ids', label: 'Company', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'companies', labelField: 'company_name' },
+  { key: 'associated_contact_ids', label: 'Contacts', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'contacts', labelField: 'contact_name' },
+  { key: 'project_ids', label: 'Projects', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'projects', labelField: 'project_name' },
+  { key: 'proposals_ids', label: 'Proposals', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'proposals', labelField: 'proposal_name' },
 
   { key: 'notes_about', label: 'Notes', type: 'textarea', section: 'Notes' },
   { key: 'contract_milestones', label: 'Contract Milestones', type: 'textarea', section: 'Notes' },

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { DealItem } from '@/types'
+import { CompanyLogo } from '../shared/CompanyLogo'
 
 /** Raw stage color hex values for the badge formula (rgba with 0.10 alpha) */
 const STAGE_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
@@ -39,13 +40,18 @@ export function DealCard({ deal, isSelected, onClick }: DealCardProps) {
         border: isSelected ? '1px solid var(--color-accent)' : '1px solid transparent',
       }}
     >
-      {/* Company name */}
+      {/* Company name + logo */}
       {companyName && (
-        <div
-          className="truncate"
-          style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-secondary)', marginBottom: 2 }}
-        >
-          {companyName}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+          {deal.companyLogoUrl && (
+            <CompanyLogo name={companyName} logoUrl={deal.companyLogoUrl} size={16} />
+          )}
+          <span
+            className="truncate"
+            style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-secondary)' }}
+          >
+            {companyName}
+          </span>
         </div>
       )}
 

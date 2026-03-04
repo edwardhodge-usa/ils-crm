@@ -1,28 +1,7 @@
 import type { ContactListItem } from '@/types'
 import useDarkMode from '../../hooks/useDarkMode'
-
-const AVATAR_COLORS = [
-  { bg: 'rgba(0,122,255,0.22)', fg: '#007AFF' },       // systemBlue
-  { bg: 'rgba(52,199,89,0.22)', fg: '#34C759' },        // systemGreen
-  { bg: 'rgba(255,149,0,0.22)', fg: '#FF9500' },        // systemOrange
-  { bg: 'rgba(255,45,85,0.22)', fg: '#FF2D55' },        // systemPink
-  { bg: 'rgba(175,82,222,0.22)', fg: '#AF52DE' },       // systemPurple
-  { bg: 'rgba(88,86,214,0.22)', fg: '#5856D6' },        // systemIndigo
-  { bg: 'rgba(255,59,48,0.22)', fg: '#FF3B30' },        // systemRed
-  { bg: 'rgba(48,176,199,0.22)', fg: '#30B0C7' },       // systemTeal
-]
-
-function avatarColor(name: string) {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
-}
-
-function initials(first: string, last: string): string {
-  const f = first.trim()[0] || ''
-  const l = last.trim()[0] || ''
-  return (f + l).toUpperCase() || '?'
-}
+import { CompanyLogo } from '../shared/CompanyLogo'
+import { Avatar } from '../shared/Avatar'
 
 interface ContactRowProps {
   contact: ContactListItem
@@ -33,14 +12,11 @@ interface ContactRowProps {
 export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
   const {
     firstName, lastName, jobTitle, companyName,
-    specialtyNames, specialtyColors, daysSinceContact,
+    specialtyNames, specialtyColors, daysSinceContact, photoUrl,
   } = contact
 
   const name = `${firstName} ${lastName}`.trim()
-  const color = avatarColor(name)
-  const subtitle = jobTitle && companyName
-    ? `${jobTitle} · ${companyName}`
-    : jobTitle || companyName || ''
+  const hasSubtitle = Boolean(jobTitle || companyName)
 
   // Days badge styling: warn (orange) for 14-20d, danger (red) for 21+
   const daysColor = daysSinceContact !== null && daysSinceContact !== undefined
@@ -76,14 +52,7 @@ export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
     >
       {/* Avatar */}
-      <div style={{
-        width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 11, fontWeight: 700, background: color.bg, color: color.fg,
-        letterSpacing: '-0.3px',
-      }}>
-        {initials(firstName, lastName)}
-      </div>
+      <Avatar name={name || '?'} size={32} photoUrl={photoUrl} />
 
       {/* Name + subtitle + meta */}
       <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
@@ -96,14 +65,29 @@ export function ContactRow({ contact, isSelected, onClick }: ContactRowProps) {
           {name || 'Unnamed'}
         </div>
 
-        {/* Subtitle: role · company */}
-        {Boolean(subtitle) && (
+        {/* Subtitle: role · [logo] company */}
+        {hasSubtitle && (
           <div style={{
-            fontSize: 11, color: 'var(--text-secondary)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', gap: 3,
+            overflow: 'hidden', whiteSpace: 'nowrap',
             lineHeight: 1.3,
           }}>
-            {subtitle}
+            {jobTitle && (
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {jobTitle}
+              </span>
+            )}
+            {jobTitle && companyName && (
+              <span style={{ fontSize: 11, color: 'var(--text-tertiary)', flexShrink: 0 }}>·</span>
+            )}
+            {companyName && contact.companyLogoUrl && (
+              <CompanyLogo name={companyName} logoUrl={contact.companyLogoUrl} size={16} />
+            )}
+            {companyName && (
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {companyName}
+              </span>
+            )}
           </div>
         )}
 

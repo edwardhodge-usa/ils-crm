@@ -13,6 +13,16 @@ const FIELDS: FormFieldDef[] = [
   { key: 'due_date', label: 'Due Date', type: 'date', section: 'Dates' },
   { key: 'completed_date', label: 'Completed Date', type: 'date', section: 'Dates' },
 
+  // Linked Records
+  { key: 'contacts_ids', label: 'Contacts', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'contacts', labelField: 'contact_name' },
+  { key: 'sales_opportunities_ids', label: 'Opportunities', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'opportunities', labelField: 'opportunity_name' },
+  { key: 'projects_ids', label: 'Projects', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'projects', labelField: 'project_name' },
+  { key: 'proposal_ids', label: 'Proposals', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'proposals', labelField: 'proposal_name' },
+
   { key: 'notes', label: 'Notes', type: 'textarea', section: 'Notes' },
 ]
 

@@ -95,6 +95,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
   },
 
+  // Company logo management
+  companyLogo: {
+    fetch: (companyId: string, website: string) => ipcRenderer.invoke('company:fetch-logo', companyId, website),
+    fetchLinkedIn: (companyId: string, linkedInUrl: string) => ipcRenderer.invoke('company:fetch-linkedin-logo', companyId, linkedInUrl),
+    upload: (companyId: string, filePath: string) => ipcRenderer.invoke('company:upload-logo', companyId, filePath),
+    remove: (companyId: string) => ipcRenderer.invoke('company:remove-logo', companyId),
+    selectFile: () => ipcRenderer.invoke('company:select-logo-file'),
+  },
+
+  // Contact photo management
+  contactPhoto: {
+    fetch: (contactId: string, linkedInUrl: string) => ipcRenderer.invoke('contact:fetch-photo', contactId, linkedInUrl),
+    upload: (contactId: string, filePath: string) => ipcRenderer.invoke('contact:upload-photo', contactId, filePath),
+    remove: (contactId: string) => ipcRenderer.invoke('contact:remove-photo', contactId),
+    selectFile: () => ipcRenderer.invoke('contact:select-photo-file'),
+  },
+
   // System appearance
   onAccentColor: (cb: (color: string) => void) => {
     ipcRenderer.on('accent-color', (_e, color) => cb(color))

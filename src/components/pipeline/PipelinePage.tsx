@@ -45,6 +45,17 @@ function resolveLinkedName(idsJson: unknown, nameMap: Map<string, string>): stri
   return null
 }
 
+function resolveLinkedLogo(idsField: unknown, logoMap: Map<string, string>): string | null {
+  if (!idsField) return null
+  try {
+    const ids = typeof idsField === 'string' ? JSON.parse(idsField) : idsField
+    if (Array.isArray(ids) && ids.length > 0) {
+      return logoMap.get(ids[0]) || null
+    }
+  } catch { /* ignore */ }
+  return null
+}
+
 export default function PipelinePage() {
   const { data: rawData, loading, error } = useEntityList(() => window.electronAPI.opportunities.getAll())
   const { data: companiesData } = useEntityList(() => window.electronAPI.companies.getAll())
@@ -55,6 +66,16 @@ export default function PipelinePage() {
     const map = new Map<string, string>()
     for (const c of companiesData) {
       map.set(c.id as string, c.company_name as string)
+    }
+    return map
+  }, [companiesData])
+
+  const companyLogos = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const c of companiesData) {
+      if (c.logo_url) {
+        map.set(c.id as string, c.logo_url as string)
+      }
     }
     return map
   }, [companiesData])
@@ -70,6 +91,7 @@ export default function PipelinePage() {
         id: o.id as string,
         dealName: (o.opportunity_name as string) || 'Unnamed',
         companyName: resolveLinkedName(o.company_ids, companyNames),
+        companyLogoUrl: resolveLinkedLogo(o.company_ids, companyLogos),
         value: o.deal_value as number | null,
         probability: (o.probability_value as number | null) ?? null,
         stage,
@@ -77,7 +99,7 @@ export default function PipelinePage() {
       })
     }
     return mapped
-  }, [rawData, companyNames])
+  }, [rawData, companyNames, companyLogos])
 
   if (loading) return <LoadingSpinner />
 

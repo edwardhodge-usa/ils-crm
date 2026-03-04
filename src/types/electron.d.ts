@@ -60,6 +60,19 @@ interface ElectronAPI {
   shell: {
     openExternal: (url: string) => Promise<{ success: boolean }>
   }
+  companyLogo: {
+    fetch: (companyId: string, website: string) => Promise<{ success: boolean; error?: string }>
+    fetchLinkedIn: (companyId: string, linkedInUrl: string) => Promise<{ success: boolean; error?: string }>
+    upload: (companyId: string, filePath: string) => Promise<{ success: boolean; error?: string }>
+    remove: (companyId: string) => Promise<{ success: boolean; error?: string }>
+    selectFile: () => Promise<{ success: boolean; data?: string | null; error?: string }>
+  }
+  contactPhoto: {
+    fetch: (contactId: string, linkedInUrl: string) => Promise<{ success: boolean; error?: string }>
+    upload: (contactId: string, filePath: string) => Promise<{ success: boolean; error?: string }>
+    remove: (contactId: string) => Promise<{ success: boolean; error?: string }>
+    selectFile: () => Promise<{ success: boolean; data?: string | null; error?: string }>
+  }
   onAccentColor: (cb: (color: string) => void) => void
 }
 

@@ -6,6 +6,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StatCard from './StatCard'
 import PipelineWidget from './PipelineWidget'
+import { CompanyLogo } from '../shared/CompanyLogo'
+import { Avatar } from '../shared/Avatar'
 
 interface PipelineStage {
   sales_stage: string
@@ -26,6 +28,8 @@ interface FollowUpContact {
   company?: string
   categorization?: string
   last_contact_date?: string
+  companyLogoUrl?: string | null
+  contact_photo_url?: string | null
 }
 
 function getGreeting(): string {
@@ -67,31 +71,6 @@ function dueLabel(dateStr?: string): { text: string; overdue: boolean } {
   if (diff === 0) return { text: 'Today', overdue: false }
   if (diff === 1) return { text: 'Tomorrow', overdue: false }
   return { text: `In ${diff}d`, overdue: false }
-}
-
-function initials(name: string): string {
-  return name
-    .split(' ')
-    .map((w) => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
-
-const AVATAR_COLORS = [
-  { bg: 'rgba(0,122,255,0.18)', fg: '#007AFF' },       // systemBlue
-  { bg: 'rgba(52,199,89,0.18)', fg: '#34C759' },        // systemGreen
-  { bg: 'rgba(255,149,0,0.18)', fg: '#FF9500' },        // systemOrange
-  { bg: 'rgba(255,45,85,0.18)', fg: '#FF2D55' },        // systemPink
-  { bg: 'rgba(175,82,222,0.18)', fg: '#AF52DE' },       // systemPurple
-  { bg: 'rgba(88,86,214,0.18)', fg: '#5856D6' },        // systemIndigo
-]
-
-function avatarColor(name: string) {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
 const MAX_WIDGET_ROWS = 5
@@ -159,17 +138,35 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [tasksRes, alertsRes, pipelineRes, projectsRes, proposalsRes] = await Promise.all([
+        const [tasksRes, alertsRes, pipelineRes, projectsRes, proposalsRes, companiesRes] = await Promise.all([
           window.electronAPI.dashboard.getTasksDueToday(),
           window.electronAPI.dashboard.getFollowUpAlerts(),
           window.electronAPI.dashboard.getPipelineSnapshot(),
           window.electronAPI.projects.getAll(),
           window.electronAPI.proposals.getAll(),
+          window.electronAPI.companies.getAll(),
         ])
 
         if (tasksRes.success && tasksRes.data) setTasksDueToday(tasksRes.data as TaskItem[])
-        if (alertsRes.success && alertsRes.data) setFollowUps(alertsRes.data as FollowUpContact[])
         if (pipelineRes.success && pipelineRes.data) setPipelineStages(pipelineRes.data as PipelineStage[])
+
+        // Build company name → logo URL map for follow-up enrichment
+        const companyNameToLogo = new Map<string, string>()
+        if (companiesRes.success && companiesRes.data) {
+          for (const c of companiesRes.data as Record<string, unknown>[]) {
+            if (c.logo_url && c.company_name) {
+              companyNameToLogo.set(c.company_name as string, c.logo_url as string)
+            }
+          }
+        }
+
+        if (alertsRes.success && alertsRes.data) {
+          const enriched = (alertsRes.data as FollowUpContact[]).map(f => ({
+            ...f,
+            companyLogoUrl: f.company ? companyNameToLogo.get(f.company) || null : null,
+          }))
+          setFollowUps(enriched)
+        }
 
         if (projectsRes.success && projectsRes.data) {
           const projects = projectsRes.data as Record<string, unknown>[]
@@ -433,40 +430,32 @@ export default function DashboardPage() {
               {visibleFollowUps.map((contact, i) => {
                 const name = contact.contact_name || 'Unknown'
                 const days = contact.last_contact_date ? daysSince(contact.last_contact_date) : 0
-                const color = avatarColor(name)
                 const isDanger = days >= 21
                 return (
                   <HoverRow key={contact.id} isLast={i === visibleFollowUps.length - 1}>
-                    <div
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: '50%',
-                        fontSize: 10,
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        background: color.bg,
-                        color: color.fg,
-                      }}
-                    >
-                      {initials(name)}
+                    <Avatar name={name} size={26} photoUrl={contact.contact_photo_url} />
+                    <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 500,
+                          color: 'var(--text-primary)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {name}
+                      </div>
+                      {contact.company && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                          {contact.companyLogoUrl && (
+                            <CompanyLogo name={contact.company} logoUrl={contact.companyLogoUrl} size={16} />
+                          )}
+                          <span style={{ fontSize: 11, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contact.company}</span>
+                        </div>
+                      )}
                     </div>
-                    <span
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 500,
-                        color: 'var(--text-primary)',
-                        flex: 1,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {name}
-                    </span>
                     {Boolean(contact.categorization) && (
                       <span
                         style={{

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '../shared/EmptyState'
 import { PencilIcon } from '../shared/icons/PencilIcon'
 import { interactionTypeIcon } from '../shared/icons/InteractionIcons'
+import { firstId } from '../../utils/linked-records'
 
 // ─── Type → color mapping (matches InteractionRow) ───────────────────────────
 
@@ -109,18 +110,44 @@ interface InteractionDetailProps {
 export function InteractionDetail({ interactionId }: InteractionDetailProps) {
   const navigate = useNavigate()
   const [interaction, setInteraction] = useState<Record<string, unknown> | null>(null)
+  const [linkedContact, setLinkedContact] = useState<Record<string, unknown> | null>(null)
+  const [linkedOpp, setLinkedOpp] = useState<Record<string, unknown> | null>(null)
 
   useEffect(() => {
     if (!interactionId) {
       setInteraction(null)
+      setLinkedContact(null)
+      setLinkedOpp(null)
       return
     }
     setInteraction(null)
-    window.electronAPI.interactions.getById(interactionId).then(res => {
+    setLinkedContact(null)
+    setLinkedOpp(null)
+
+    async function load() {
+      const res = await window.electronAPI.interactions.getById(interactionId!)
       if (res.success && res.data) {
-        setInteraction(res.data as Record<string, unknown>)
+        const data = res.data as Record<string, unknown>
+        setInteraction(data)
+
+        const contactId = firstId(data.contacts_ids)
+        const oppId = firstId(data.sales_opportunities_ids)
+
+        const noOp = Promise.resolve({ success: false, data: null })
+        const [contactRes, oppRes] = await Promise.all([
+          contactId ? window.electronAPI.contacts.getById(contactId) : noOp,
+          oppId ? window.electronAPI.opportunities.getById(oppId) : noOp,
+        ])
+
+        if (contactRes.success && contactRes.data) {
+          setLinkedContact(contactRes.data as Record<string, unknown>)
+        }
+        if (oppRes.success && oppRes.data) {
+          setLinkedOpp(oppRes.data as Record<string, unknown>)
+        }
       }
-    })
+    }
+    load()
   }, [interactionId])
 
   // ── Empty / loading states ─────────────────────────────────────────────────
@@ -179,8 +206,15 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
   const summary     = (interaction.summary      as string | null) ?? null
   const next_steps  = (interaction.next_steps   as string | null) ?? null
   const duration    = (interaction.duration     as string | null) ?? null
-  const contactName = (interaction.contact_name as string | null) ??
+  const resolvedContactName = linkedContact
+    ? (linkedContact.contact_name as string) || [linkedContact.first_name, linkedContact.last_name].filter(Boolean).join(' ') || null
+    : null
+  const contactName = resolvedContactName ??
+                      (interaction.contact_name as string | null) ??
                       (interaction.contact      as string | null) ?? null
+  const resolvedOppName = linkedOpp
+    ? (linkedOpp.opportunity_name as string) || null
+    : null
 
   const colors  = getTypeColor(type)
   const icon    = interactionTypeIcon(type, 20)
@@ -334,6 +368,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
           {Boolean(contactName) && (
             <FormRow label="Contact">
               <span
+                onClick={() => linkedContact && navigate(`/contacts/${linkedContact.id as string}`)}
                 style={{
                   fontSize: 13,
                   fontWeight: 400,
@@ -342,6 +377,22 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
                 }}
               >
                 {contactName}
+              </span>
+            </FormRow>
+          )}
+
+          {Boolean(resolvedOppName) && (
+            <FormRow label="Opportunity">
+              <span
+                onClick={() => linkedOpp && navigate(`/pipeline/${linkedOpp.id as string}/edit`)}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 400,
+                  color: 'var(--color-accent)',
+                  cursor: 'default',
+                }}
+              >
+                {resolvedOppName}
               </span>
             </FormRow>
           )}

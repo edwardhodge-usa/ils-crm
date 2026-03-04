@@ -25,12 +25,25 @@ const FIELDS: FormFieldDef[] = [
   { key: 'postal_code', label: 'Postal Code', type: 'text', section: 'Address' },
 
   // CRM
+  { key: 'companies_ids', label: 'Company', type: 'linkedRecord', section: 'CRM',
+    entityName: 'companies', labelField: 'company_name' },
   { key: 'lead_source', label: 'Lead Source', type: 'singleSelect', section: 'CRM',
     options: ['Referral', 'Website', 'Inbound', 'Outbound', 'Event', 'Social Media', 'Other', 'LinkedIn', 'Cold Call'] },
   { key: 'industry', label: 'Industry', type: 'singleSelect', section: 'CRM',
     options: ['Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing', 'Real Estate', 'Consulting', 'Other', 'Hospitality', 'Logistics', 'Fitness', 'Legal', 'Media', 'Design', 'Venture Capital', 'Retail', 'Entertainment'] },
   { key: 'lead_score', label: 'Lead Score', type: 'number', section: 'CRM' },
   { key: 'last_contact_date', label: 'Last Contact Date', type: 'date', section: 'CRM' },
+  { key: 'event_tags', label: 'Event Tags', type: 'text', section: 'CRM' },
+  { key: 'tags', label: 'Tags', type: 'multiSelect', section: 'CRM',
+    options: ['VIP', 'Investor', 'Speaker', 'Press', 'Influencer', 'Board Member', 'Advisor'] },
+  { key: 'qualification_status', label: 'Qualification Status', type: 'singleSelect', section: 'CRM',
+    options: ['New', 'Contacted', 'Qualified', 'Unqualified', 'Nurturing'] },
+  { key: 'client_type', label: 'Client Type', type: 'singleSelect', section: 'CRM',
+    options: ['Direct', 'Agency', 'Referral Partner', 'Subcontractor'] },
+  { key: 'onboarding_status', label: 'Onboarding Status', type: 'singleSelect', section: 'CRM',
+    options: ['Not Started', 'In Progress', 'Completed', 'On Hold'] },
+  { key: 'import_source', label: 'Import Source', type: 'singleSelect', section: 'CRM',
+    options: ['Apple Contacts', 'LinkedIn', 'CSV Import', 'Manual Entry', 'Business Card', 'Email Signature'] },
 
   // Partner/Vendor
   { key: 'partner_type', label: 'Partner Type', type: 'singleSelect', section: 'Partner/Vendor',

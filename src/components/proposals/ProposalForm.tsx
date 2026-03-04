@@ -12,6 +12,14 @@ const FIELDS: FormFieldDef[] = [
 
   { key: 'version', label: 'Version', type: 'text', section: 'Details' },
 
+  // Linked Records
+  { key: 'client_ids', label: 'Client (Contact)', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'contacts', labelField: 'contact_name' },
+  { key: 'company_ids', label: 'Company', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'companies', labelField: 'company_name' },
+  { key: 'related_opportunity_ids', label: 'Opportunity', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'opportunities', labelField: 'opportunity_name' },
+
   { key: 'notes', label: 'Notes', type: 'textarea', section: 'Notes' },
   { key: 'client_feedback', label: 'Client Feedback', type: 'textarea', section: 'Notes' },
   { key: 'performance_metrics', label: 'Performance Metrics', type: 'textarea', section: 'Notes' },

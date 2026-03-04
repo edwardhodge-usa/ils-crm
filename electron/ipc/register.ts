@@ -1,12 +1,17 @@
 // Central IPC handler registration
 // Wires up all entity CRUD, settings, sync, dashboard, and search handlers
 
-import { app, ipcMain, BrowserWindow, shell } from 'electron'
+import { app, ipcMain, BrowserWindow, shell, dialog } from 'electron'
 import { getAll, getById, getSetting, setSetting, getAllSyncStatuses } from '../database/queries/entities'
 import { getDashboardStats, getTasksDueToday, getFollowUpAlerts, getPipelineSnapshot } from '../database/queries/dashboard'
 import { searchAll } from '../database/queries/search'
 import { fullSync, createRecord, updateRecord, deleteRemoteRecord, refreshRecord, startPolling, stopPolling } from '../airtable/sync-engine'
 import { whoami } from '../airtable/client'
+import {
+  fetchLogoUrl, uploadLogoToAirtable, uploadLocalFile, removeLogoFromAirtable,
+  fetchLinkedInCompanyLogo,
+  fetchLinkedInPhoto, uploadContactPhotoToAirtable, uploadLocalContactPhoto, removeContactPhotoFromAirtable,
+} from '../airtable/logo-service'
 import { getDatabase, saveDatabase } from '../database/init'
 
 // ─── Helper: register CRUD for an entity ─────────────────────
@@ -350,4 +355,118 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       return { success: false, error: (error as Error).message }
     }
   })
+
+  // ─── Company Logo Management ─────────────────────────────────
+
+  ipcMain.handle('company:fetch-logo', async (_event, companyId: string, website: string) => {
+    try {
+      const logoUrl = await fetchLogoUrl(website)
+      await uploadLogoToAirtable(companyId, logoUrl)
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] company:fetch-logo failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('company:upload-logo', async (_event, companyId: string, filePath: string) => {
+    try {
+      await uploadLocalFile(companyId, filePath)
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] company:upload-logo failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('company:remove-logo', async (_event, companyId: string) => {
+    try {
+      await removeLogoFromAirtable(companyId)
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] company:remove-logo failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('company:select-logo-file', async () => {
+    try {
+      const win = BrowserWindow.getFocusedWindow()
+      if (!win) return { success: false, error: 'No focused window' }
+      const result = await dialog.showOpenDialog(win, {
+        properties: ['openFile'],
+        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }],
+      })
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: true, data: null }
+      }
+      return { success: true, data: result.filePaths[0] }
+    } catch (error) {
+      console.error('[IPC] company:select-logo-file failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('company:fetch-linkedin-logo', async (_event, companyId: string, linkedInUrl: string) => {
+    try {
+      const logoUrl = await fetchLinkedInCompanyLogo(linkedInUrl)
+      await uploadLogoToAirtable(companyId, logoUrl)
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] company:fetch-linkedin-logo failed:', error)
+      return { success: false, error: String(error) }
+    }
+  })
+
+  // ─── Contact Photo Management ─────────────────────────────────
+
+  ipcMain.handle('contact:fetch-photo', async (_event, contactId: string, linkedInUrl: string) => {
+    try {
+      const photoUrl = await fetchLinkedInPhoto(linkedInUrl)
+      await uploadContactPhotoToAirtable(contactId, photoUrl)
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] contact:fetch-photo failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('contact:upload-photo', async (_event, contactId: string, filePath: string) => {
+    try {
+      await uploadLocalContactPhoto(contactId, filePath)
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] contact:upload-photo failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('contact:remove-photo', async (_event, contactId: string) => {
+    try {
+      await removeContactPhotoFromAirtable(contactId)
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] contact:remove-photo failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('contact:select-photo-file', async () => {
+    try {
+      const win = BrowserWindow.getFocusedWindow()
+      if (!win) return { success: false, error: 'No focused window' }
+      const result = await dialog.showOpenDialog(win, {
+        properties: ['openFile'],
+        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }],
+      })
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: true, data: null }
+      }
+      return { success: true, data: result.filePaths[0] }
+    } catch (error) {
+      console.error('[IPC] contact:select-photo-file failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
 }

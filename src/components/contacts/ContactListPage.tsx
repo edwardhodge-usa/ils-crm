@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import useEntityList from '../../hooks/useEntityList'
@@ -31,10 +31,21 @@ function parseQualityRating(raw: string | null | undefined): number {
 
 export default function ContactListPage() {
   const { data: contacts, loading, error } = useEntityList(() => window.electronAPI.contacts.getAll())
+  const { data: companiesData } = useEntityList(() => window.electronAPI.companies.getAll())
   const navigate = useNavigate()
   const [specialtyMap, setSpecialtyMap] = useState<Record<string, string>>({})
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+
+  const companyLogoMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const c of companiesData) {
+      if (c.logo_url) {
+        map.set(c.id as string, c.logo_url as string)
+      }
+    }
+    return map
+  }, [companiesData])
 
   useEffect(() => {
     window.electronAPI.specialties.getAll().then(res => {
@@ -47,6 +58,18 @@ export default function ContactListPage() {
       }
     }).catch(() => {})
   }, [])
+
+  function getCompanyLogo(contact: Record<string, unknown>, logoMap: Map<string, string>): string | null {
+    const companiesIds = contact.companies_ids
+    if (!companiesIds) return null
+    try {
+      const ids = typeof companiesIds === 'string' ? JSON.parse(companiesIds) : companiesIds
+      if (Array.isArray(ids) && ids.length > 0) {
+        return logoMap.get(ids[0]) || null
+      }
+    } catch { /* ignore parse errors */ }
+    return null
+  }
 
   function toListItem(row: Record<string, unknown>): ContactListItem {
     const specialtyIds: string[] = (() => {
@@ -77,6 +100,8 @@ export default function ContactListPage() {
       lastName: (row.last_name as string | null) ?? '',
       jobTitle: (row.job_title as string | null) ?? null,
       companyName: (row.company as string | null) ?? null,
+      companyLogoUrl: getCompanyLogo(row, companyLogoMap),
+      photoUrl: (row.contact_photo_url as string | null) ?? null,
       qualityRating: parseQualityRating(row.quality_rating as string | null),
       specialtyNames,
       specialtyColors,

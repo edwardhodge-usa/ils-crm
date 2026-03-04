@@ -68,7 +68,7 @@ function cleanSelectValue(value: unknown): string | null {
 interface FieldMapping {
   local: string
   airtable: string
-  type: 'text' | 'number' | 'linked' | 'multiSelect' | 'singleSelect' | 'checkbox' | 'readonly' | 'collaborator'
+  type: 'text' | 'number' | 'linked' | 'multiSelect' | 'singleSelect' | 'checkbox' | 'readonly' | 'collaborator' | 'attachment'
 }
 
 function airtableToLocal(
@@ -106,6 +106,16 @@ function airtableToLocal(
         result[m.local] = (val && typeof val === 'object' && 'name' in (val as Record<string, unknown>))
           ? String((val as Record<string, string>).name) || null : null
         break
+      case 'attachment':
+        // Extract the first attachment's large thumbnail URL (or direct URL as fallback)
+        if (Array.isArray(val) && val.length > 0) {
+          const att = val[0] as Record<string, unknown>
+          const thumbs = att.thumbnails as Record<string, Record<string, unknown>> | undefined
+          result[m.local] = (thumbs?.large?.url as string) || (att.url as string) || null
+        } else {
+          result[m.local] = null
+        }
+        break
     }
   }
 
@@ -119,7 +129,7 @@ function localToAirtable(
   const fields: Record<string, unknown> = {}
 
   for (const m of mappings) {
-    if (m.type === 'readonly' || m.type === 'collaborator') continue // Skip formula/rollup/lookup/collaborator
+    if (m.type === 'readonly' || m.type === 'collaborator' || m.type === 'attachment') continue // Skip formula/rollup/lookup/collaborator/attachment
     const val = record[m.local]
     if (val === undefined) continue
 
@@ -202,6 +212,7 @@ const CONTACT_MAPPINGS: FieldMapping[] = [
   { local: 'projects_partner_vendor_ids', airtable: CONTACTS.projectsAsPartnerVendor, type: 'linked' },
   { local: 'portal_access_ids', airtable: CONTACTS.portalAccess, type: 'linked' },
   { local: 'last_interaction_date', airtable: CONTACTS.lastInteractionDate, type: 'readonly' },
+  { local: 'contact_photo_url', airtable: CONTACTS.contactPhoto, type: 'attachment' },
 ]
 
 // ─── Companies ───────────────────────────────────────────────
@@ -230,6 +241,8 @@ const COMPANY_MAPPINGS: FieldMapping[] = [
   { local: 'projects_ids', airtable: COMPANIES.projects, type: 'linked' },
   { local: 'contacts_ids', airtable: COMPANIES.contacts, type: 'linked' },
   { local: 'proposals_ids', airtable: COMPANIES.proposals, type: 'linked' },
+  { local: 'logo_url', airtable: COMPANIES.logo, type: 'attachment' },
+  { local: 'linkedin_url', airtable: COMPANIES.linkedInUrl, type: 'text' },
 ]
 
 // ─── Opportunities ───────────────────────────────────────────

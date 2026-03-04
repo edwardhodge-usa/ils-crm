@@ -4,24 +4,8 @@ import ConfirmDialog from '../shared/ConfirmDialog'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import { containsId } from '../../utils/linked-records'
 import { Avatar } from '../shared/Avatar'
+import { CompanyLogo } from '../shared/CompanyLogo'
 import useDarkMode from '../../hooks/useDarkMode'
-
-const ICON_COLORS = [
-  { bg: 'rgba(0,122,255,0.22)', fg: '#007AFF' },       // systemBlue
-  { bg: 'rgba(52,199,89,0.22)', fg: '#34C759' },        // systemGreen
-  { bg: 'rgba(255,149,0,0.22)', fg: '#FF9500' },        // systemOrange
-  { bg: 'rgba(255,45,85,0.22)', fg: '#FF2D55' },        // systemPink
-  { bg: 'rgba(175,82,222,0.22)', fg: '#AF52DE' },       // systemPurple
-  { bg: 'rgba(88,86,214,0.22)', fg: '#5856D6' },        // systemIndigo
-  { bg: 'rgba(255,59,48,0.22)', fg: '#FF3B30' },        // systemRed
-  { bg: 'rgba(48,176,199,0.22)', fg: '#30B0C7' },       // systemTeal
-]
-
-function iconColor(name: string) {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return ICON_COLORS[Math.abs(hash) % ICON_COLORS.length]
-}
 
 /** Stage badge colors for opportunities — Apple system colors */
 const STAGE_COLORS: Record<string, { bg: string; fg: string; fgDark: string }> = {
@@ -41,6 +25,10 @@ export default function Company360Page() {
   const [linkedData, setLinkedData] = useState<Record<string, Record<string, unknown>[]>>({})
   const [showDelete, setShowDelete] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [showLogoMenu, setShowLogoMenu] = useState(false)
+  const [logoLoading, setLogoLoading] = useState(false)
+  const [linkedInInput, setLinkedInInput] = useState('')
+  const [showLinkedInInput, setShowLinkedInInput] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -89,6 +77,17 @@ export default function Company360Page() {
     load()
   }, [id])
 
+  useEffect(() => {
+    if (!showLogoMenu) {
+      setShowLinkedInInput(false)
+      setLinkedInInput('')
+      return
+    }
+    const handler = () => setShowLogoMenu(false)
+    const timer = setTimeout(() => document.addEventListener('click', handler), 0)
+    return () => { clearTimeout(timer); document.removeEventListener('click', handler) }
+  }, [showLogoMenu])
+
   if (!company) return <LoadingSpinner />
 
   const companyName = (company.company_name as string) || 'Unnamed Company'
@@ -96,6 +95,7 @@ export default function Company360Page() {
   const companyType = (company.type as string | null) ?? null
   const category = (company.category as string | null) ?? null
   const website = (company.website as string | null) ?? null
+  const linkedInUrl = (company.linkedin_url as string | null) ?? null
   const phone = (company.phone as string | null) ?? null
   const address = [company.address, company.city, company.state_region, company.country]
     .filter(Boolean)
@@ -103,7 +103,6 @@ export default function Company360Page() {
   const companySize = (company.company_size as string | null) ?? null
   const annualRevenue = (company.annual_revenue as string | null) ?? null
   const leadSource = (company.lead_source as string | null) ?? null
-  const color = iconColor(companyName)
 
   const contacts = linkedData.contacts || []
   const opportunities = linkedData.opportunities || []
@@ -149,13 +148,183 @@ export default function Company360Page() {
         {/* Hero section */}
         <div style={{ padding: '24px 0 16px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-            {/* Large letter icon */}
-            <div style={{
-              width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 20, fontWeight: 700, background: color.bg, color: color.fg,
-            }}>
-              {companyName.charAt(0).toUpperCase()}
+            {/* Company logo with management popover */}
+            <div style={{ position: 'relative' }}>
+              <CompanyLogo
+                name={String(company.company_name || '')}
+                logoUrl={company.logo_url as string | null}
+                size={50}
+                onClick={() => setShowLogoMenu(!showLogoMenu)}
+              />
+              {logoLoading && (
+                <div style={{
+                  position: 'absolute', inset: 0, borderRadius: 10,
+                  background: 'rgba(0,0,0,0.4)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+                </div>
+              )}
+              {showLogoMenu && (
+                <div style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  left: 0,
+                  background: 'var(--bg-card)',
+                  borderRadius: 8,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.15), 0 0 0 0.5px rgba(0,0,0,0.08)',
+                  width: 200,
+                  padding: 4,
+                  zIndex: 100,
+                  cursor: 'default',
+                }}>
+                  {/* Auto-fetch */}
+                  <div
+                    onClick={async (e) => {
+                      e.stopPropagation()
+                      const ws = company.website as string
+                      if (!ws) return
+                      setLogoLoading(true)
+                      setShowLogoMenu(false)
+                      try {
+                        await window.electronAPI.companyLogo.fetch(id!, ws)
+                        const res = await window.electronAPI.companies.getById(id!)
+                        if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+                      } finally {
+                        setLogoLoading(false)
+                      }
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px',
+                      borderRadius: 5, fontSize: 13, color: 'var(--text-primary)', cursor: 'default',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-accent)'; e.currentTarget.style.color = 'white' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-primary)' }}
+                  >
+                    <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>&#8635;</span>
+                    <span>Auto-fetch from website</span>
+                  </div>
+                  {/* Fetch from LinkedIn */}
+                  {showLinkedInInput ? (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        const url = linkedInInput.trim()
+                        if (!url || !url.includes('linkedin.com')) return
+                        setShowLinkedInInput(false)
+                        setLinkedInInput('')
+                        setShowLogoMenu(false)
+                        setLogoLoading(true)
+                        try {
+                          await window.electronAPI.companyLogo.fetchLinkedIn(id!, url)
+                          const res = await window.electronAPI.companies.getById(id!)
+                          if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+                        } finally {
+                          setLogoLoading(false)
+                        }
+                      }}
+                      onClick={e => e.stopPropagation()}
+                      style={{ padding: '4px 6px' }}
+                    >
+                      <input
+                        autoFocus
+                        type="url"
+                        placeholder="Paste LinkedIn URL..."
+                        value={linkedInInput}
+                        onChange={e => setLinkedInInput(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Escape') { setShowLinkedInInput(false); setLinkedInInput('') } }}
+                        style={{
+                          width: '100%', fontSize: 12, padding: '5px 8px',
+                          borderRadius: 5, border: '1px solid var(--separator)',
+                          background: 'var(--bg-primary)', color: 'var(--text-primary)',
+                          outline: 'none', fontFamily: 'inherit',
+                        }}
+                      />
+                    </form>
+                  ) : (
+                    <div
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        if (linkedInUrl) {
+                          setShowLogoMenu(false)
+                          setLogoLoading(true)
+                          try {
+                            await window.electronAPI.companyLogo.fetchLinkedIn(id!, linkedInUrl)
+                            const res = await window.electronAPI.companies.getById(id!)
+                            if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+                          } finally {
+                            setLogoLoading(false)
+                          }
+                        } else {
+                          setShowLinkedInInput(true)
+                        }
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px',
+                        borderRadius: 5, fontSize: 13, color: 'var(--text-primary)', cursor: 'default',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-accent)'; e.currentTarget.style.color = 'white' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-primary)' }}
+                    >
+                      <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>in</span>
+                      <span>Fetch from LinkedIn</span>
+                    </div>
+                  )}
+                  {/* Upload */}
+                  <div
+                    onClick={async (e) => {
+                      e.stopPropagation()
+                      setShowLogoMenu(false)
+                      const fileRes = await window.electronAPI.companyLogo.selectFile()
+                      if (fileRes.success && fileRes.data) {
+                        setLogoLoading(true)
+                        try {
+                          await window.electronAPI.companyLogo.upload(id!, fileRes.data)
+                          const res = await window.electronAPI.companies.getById(id!)
+                          if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+                        } finally {
+                          setLogoLoading(false)
+                        }
+                      }
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px',
+                      borderRadius: 5, fontSize: 13, color: 'var(--text-primary)', cursor: 'default',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-accent)'; e.currentTarget.style.color = 'white' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-primary)' }}
+                  >
+                    <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>&uarr;</span>
+                    <span>Upload image...</span>
+                  </div>
+                  <div style={{ height: 1, background: 'var(--separator)', margin: '4px 8px' }} />
+                  {/* Remove */}
+                  <div
+                    onClick={async (e) => {
+                      e.stopPropagation()
+                      setShowLogoMenu(false)
+                      setLogoLoading(true)
+                      try {
+                        await window.electronAPI.companyLogo.remove(id!)
+                        const res = await window.electronAPI.companies.getById(id!)
+                        if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+                      } finally {
+                        setLogoLoading(false)
+                      }
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px',
+                      borderRadius: 5, fontSize: 13, color: 'var(--color-red)', cursor: 'default',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-red)'; e.currentTarget.style.color = 'white' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--color-red)' }}
+                  >
+                    <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>&times;</span>
+                    <span>Remove logo</span>
+                  </div>
+                </div>
+              )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2, letterSpacing: -0.3 }}>
@@ -248,7 +417,7 @@ export default function Company360Page() {
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
                     onMouseLeave={e => e.currentTarget.style.background = ''}
                   >
-                    <Avatar name={name} size={28} />
+                    <Avatar name={name} size={28} photoUrl={c.contact_photo_url as string | null} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {name}
@@ -473,6 +642,7 @@ export default function Company360Page() {
   function renderInfoRows() {
     const rows: { label: string; value: string | null; isDropdown?: boolean; isLink?: boolean }[] = [
       { label: 'Website', value: website, isLink: true },
+      { label: 'LinkedIn', value: linkedInUrl, isLink: true },
       { label: 'Phone', value: phone, isLink: true },
       { label: 'Address', value: address },
       { label: 'Industry', value: industry, isDropdown: true },

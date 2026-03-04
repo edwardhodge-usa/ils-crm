@@ -9,6 +9,7 @@ const FIELDS: FormFieldDef[] = [
     options: ['Hospitality', 'Entertainment/Attractions', 'Corporate/Brand', 'Retail', 'Real Estate/Development', 'F&B', 'Technology', 'Other', 'Culture', 'Sports', 'Cruise', 'Hospitality/Casino', 'Consulting', 'Theme Parks', 'Entertainment', 'Marketing', 'Design', 'Education', 'Real Estate', 'Media'] },
 
   { key: 'website', label: 'Website', type: 'url', section: 'Contact' },
+  { key: 'linkedin_url', label: 'LinkedIn URL', type: 'url', section: 'Contact' },
 
   { key: 'address', label: 'Address', type: 'text', section: 'Address' },
   { key: 'city', label: 'City', type: 'text', section: 'Address' },
@@ -22,6 +23,19 @@ const FIELDS: FormFieldDef[] = [
     options: ['1-10', '11-50', '51-200', '201-500', '501-1000', '1001-5000', '5000+'] },
   { key: 'annual_revenue', label: 'Annual Revenue', type: 'text', section: 'CRM' },
   { key: 'referred_by', label: 'Referred By', type: 'text', section: 'CRM' },
+
+  { key: 'naics_code', label: 'NAICS Code', type: 'text', section: 'CRM' },
+  { key: 'founding_year', label: 'Founding Year', type: 'number', section: 'CRM' },
+
+  // Linked Records
+  { key: 'contacts_ids', label: 'Contacts', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'contacts', labelField: 'contact_name' },
+  { key: 'projects_ids', label: 'Projects', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'projects', labelField: 'project_name' },
+  { key: 'sales_opportunities_ids', label: 'Opportunities', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'opportunities', labelField: 'opportunity_name' },
+  { key: 'proposals_ids', label: 'Proposals', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'proposals', labelField: 'proposal_name' },
 
   { key: 'company_description', label: 'Description', type: 'textarea', section: 'Notes' },
   { key: 'notes', label: 'Notes', type: 'textarea', section: 'Notes' },

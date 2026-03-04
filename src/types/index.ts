@@ -53,6 +53,7 @@ export interface Contact {
   projects_partner_vendor_ids: string | null
   portal_access_ids: string | null
   last_interaction_date: string | null
+  contact_photo_url: string | null
 }
 
 export interface Company {
@@ -71,6 +72,7 @@ export interface Company {
   notes: string | null
   company_description: string | null
   website: string | null
+  linkedin_url: string | null
   founding_year: number | null
   created_date: string | null
   type: string | null
@@ -269,6 +271,7 @@ export interface DealItem {
   id: string
   dealName: string
   companyName: string | null
+  companyLogoUrl?: string | null // company logo URL from linked company record
   value: number | null
   probability: number | null
   stage: 'Prospecting' | 'Qualified' | 'Proposal Sent' | 'Negotiation' | 'Closed Won'
@@ -281,6 +284,8 @@ export interface ContactListItem {
   lastName: string
   jobTitle: string | null
   companyName: string | null
+  companyLogoUrl?: string | null  // company logo URL from linked company record
+  photoUrl?: string | null        // contact photo URL from Airtable attachment
   qualityRating: number          // 1-5, maps to 5-dot rating
   specialtyNames: string[]       // display names from linked Specialties
   specialtyColors: string[]      // one color per specialty (same length)

@@ -327,7 +327,8 @@ export const COMPANIES = {
   projects: 'fldtgQEptCxvaaAzk',
   contacts: 'fldQ2RK3PeAPMzkJB',
   proposals: 'fld8pQnDzVmyonJ45',
-  attachments: 'fldhCu5ooToK84g4G',
+  logo: 'fldhCu5ooToK84g4G',
+  linkedInUrl: 'fldVt6tIj1DrT85cd',
 } as const
 
 // ─── Specialties (3 fields) ─────────────────────────────────

@@ -15,12 +15,14 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
   const [proposal, setProposal] = useState<Record<string, unknown> | null>(null)
   const [contact, setContact] = useState<Record<string, unknown> | null>(null)
   const [company, setCompany] = useState<Record<string, unknown> | null>(null)
+  const [opportunity, setOpportunity] = useState<Record<string, unknown> | null>(null)
 
   useEffect(() => {
     if (!proposalId) {
       setProposal(null)
       setContact(null)
       setCompany(null)
+      setOpportunity(null)
       return
     }
 
@@ -28,6 +30,7 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
       setProposal(null)
       setContact(null)
       setCompany(null)
+      setOpportunity(null)
 
       const proposalRes = await window.electronAPI.proposals.getById(proposalId!)
       if (proposalRes.success && proposalRes.data) {
@@ -36,11 +39,13 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
 
         const contactId = firstId(p.contact_ids) ?? firstId(p.contacts_ids)
         const companyId = firstId(p.company_ids) ?? firstId(p.companies_ids)
+        const oppId = firstId(p.related_opportunity_ids)
 
         const noOp = Promise.resolve({ success: false, data: null })
-        const [contactRes, companyRes] = await Promise.all([
+        const [contactRes, companyRes, oppRes] = await Promise.all([
           contactId ? window.electronAPI.contacts.getById(contactId) : noOp,
           companyId ? window.electronAPI.companies.getById(companyId) : noOp,
+          oppId ? window.electronAPI.opportunities.getById(oppId) : noOp,
         ])
 
         if (contactRes.success && contactRes.data) {
@@ -48,6 +53,9 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
         }
         if (companyRes.success && companyRes.data) {
           setCompany(companyRes.data as Record<string, unknown>)
+        }
+        if (oppRes.success && oppRes.data) {
+          setOpportunity(oppRes.data as Record<string, unknown>)
         }
       }
     }
@@ -102,9 +110,12 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
 
   const visibleInfoRows = infoRows.filter(r => Boolean(r.value))
 
+  const oppName = opportunity ? (opportunity.opportunity_name as string) || null : null
+
   const linkedRows: { label: string; value: string | null; linkTo?: string }[] = [
     { label: 'Contact', value: contactName, linkTo: contact ? `/contacts/${contact.id as string}` : undefined },
     { label: 'Company', value: companyName, linkTo: company ? `/companies/${company.id as string}` : undefined },
+    { label: 'Opportunity', value: oppName, linkTo: opportunity ? `/pipeline/${opportunity.id as string}/edit` : undefined },
   ]
 
   const visibleLinkedRows = linkedRows.filter(r => Boolean(r.value))

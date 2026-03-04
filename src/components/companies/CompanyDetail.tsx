@@ -4,6 +4,7 @@ import { EmptyState } from '../shared/EmptyState'
 import ConfirmDialog from '../shared/ConfirmDialog'
 import { PencilIcon } from '../shared/icons/PencilIcon'
 import { Avatar } from '../shared/Avatar'
+import { CompanyLogo } from '../shared/CompanyLogo'
 import { containsId } from '../../utils/linked-records'
 import { ContactStats } from '../contacts/ContactStats'
 import useDarkMode from '../../hooks/useDarkMode'
@@ -18,23 +19,6 @@ const STAGE_COLORS: Record<string, { bg: string; fg: string; fgDark: string }> =
   'Closed Lost': { bg: 'rgba(255,59,48,0.22)', fg: '#D70015', fgDark: '#FF453A' },
 }
 
-const ICON_COLORS = [
-  { bg: 'rgba(0,122,255,0.22)', fg: '#007AFF' },       // systemBlue
-  { bg: 'rgba(52,199,89,0.22)', fg: '#34C759' },        // systemGreen
-  { bg: 'rgba(255,149,0,0.22)', fg: '#FF9500' },        // systemOrange
-  { bg: 'rgba(255,45,85,0.22)', fg: '#FF2D55' },        // systemPink
-  { bg: 'rgba(175,82,222,0.22)', fg: '#AF52DE' },       // systemPurple
-  { bg: 'rgba(88,86,214,0.22)', fg: '#5856D6' },        // systemIndigo
-  { bg: 'rgba(255,59,48,0.22)', fg: '#FF3B30' },        // systemRed
-  { bg: 'rgba(48,176,199,0.22)', fg: '#30B0C7' },       // systemTeal
-]
-
-function iconColor(name: string) {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return ICON_COLORS[Math.abs(hash) % ICON_COLORS.length]
-}
-
 interface CompanyDetailProps {
   companyId: string | null
   onDeleted?: () => void
@@ -46,14 +30,20 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
   const [company, setCompany] = useState<Record<string, unknown> | null>(null)
   const [contacts, setContacts] = useState<Record<string, unknown>[]>([])
   const [opps, setOpps] = useState<Record<string, unknown>[]>([])
+  const [projects, setProjects] = useState<Record<string, unknown>[]>([])
+  const [proposals, setProposals] = useState<Record<string, unknown>[]>([])
   const [showDelete, setShowDelete] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [showLogoMenu, setShowLogoMenu] = useState(false)
+  const [_logoLoading, setLogoLoading] = useState(false)
 
   useEffect(() => {
     if (!companyId) {
       setCompany(null)
       setContacts([])
       setOpps([])
+      setProjects([])
+      setProposals([])
       return
     }
 
@@ -61,11 +51,15 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
       setCompany(null)
       setContacts([])
       setOpps([])
+      setProjects([])
+      setProposals([])
 
-      const [companyRes, contactsRes, oppsRes] = await Promise.all([
+      const [companyRes, contactsRes, oppsRes, projectsRes, proposalsRes] = await Promise.all([
         window.electronAPI.companies.getById(companyId!),
         window.electronAPI.contacts.getAll(),
         window.electronAPI.opportunities.getAll(),
+        window.electronAPI.projects.getAll(),
+        window.electronAPI.proposals.getAll(),
       ])
 
       if (companyRes.success && companyRes.data) {
@@ -85,10 +79,42 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
         )
         setOpps(linked)
       }
+
+      if (projectsRes.success && projectsRes.data) {
+        const linked = (projectsRes.data as Record<string, unknown>[]).filter(p =>
+          containsId(p.client_ids, companyId!) || containsId(p.contacts_ids, companyId!)
+        )
+        // Also check via company's contacts
+        const contactIds = contacts.map(c => c.id as string)
+        const viaContacts = (projectsRes.data as Record<string, unknown>[]).filter(p =>
+          contactIds.some(cid => containsId(p.contacts_ids, cid) || containsId(p.client_ids, cid))
+        )
+        const allProjects = [...linked, ...viaContacts]
+        const uniqueProjects = allProjects.filter((p, i, arr) =>
+          arr.findIndex(x => x.id === p.id) === i
+        )
+        setProjects(uniqueProjects)
+      }
+
+      if (proposalsRes.success && proposalsRes.data) {
+        const linked = (proposalsRes.data as Record<string, unknown>[]).filter(p =>
+          containsId(p.company_ids, companyId!)
+        )
+        setProposals(linked)
+      }
     }
 
     load()
   }, [companyId])
+
+  // Close logo popover on outside click
+  useEffect(() => {
+    if (!showLogoMenu) return
+    const handler = () => setShowLogoMenu(false)
+    // Delay to avoid catching the opening click
+    const timer = setTimeout(() => document.addEventListener('click', handler), 0)
+    return () => { clearTimeout(timer); document.removeEventListener('click', handler) }
+  }, [showLogoMenu])
 
   if (!companyId) {
     return (
@@ -115,7 +141,6 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
   const website = (company.website as string | null) ?? null
   const phone = (company.phone as string | null) ?? null
   const location = [company.city, company.state_region, company.country].filter(Boolean).join(', ') || null
-  const color = iconColor(companyName)
 
   const openOpps = opps.filter(o => o.sales_stage !== 'Closed Won' && o.sales_stage !== 'Closed Lost')
   const totalOppValue = opps.reduce((sum, o) => sum + (Number(o.deal_value) || 0), 0)
@@ -169,13 +194,104 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
         {/* 1. Hero block */}
         <div style={{ padding: '18px 0 14px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 13 }}>
-            {/* Letter icon */}
-            <div style={{
-              width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 18, fontWeight: 700, background: color.bg, color: color.fg,
-            }}>
-              {companyName.charAt(0).toUpperCase()}
+            {/* Company logo with management popover */}
+            <div style={{ position: 'relative' }}>
+              <CompanyLogo
+                name={String(company.company_name || '')}
+                logoUrl={company.logo_url as string | null}
+                size={40}
+                onClick={() => setShowLogoMenu(!showLogoMenu)}
+              />
+              {showLogoMenu && (
+                <div style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  left: 0,
+                  background: 'var(--bg-card)',
+                  borderRadius: 8,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.15), 0 0 0 0.5px rgba(0,0,0,0.08)',
+                  width: 200,
+                  padding: 4,
+                  zIndex: 100,
+                  cursor: 'default',
+                }}>
+                  <div
+                    onClick={async () => {
+                      const website = company.website as string
+                      if (!website) return
+                      setLogoLoading(true)
+                      setShowLogoMenu(false)
+                      try {
+                        await window.electronAPI.companyLogo.fetch(companyId!, website)
+                        // Refresh company data
+                        const res = await window.electronAPI.companies.getById(companyId!)
+                        if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+                      } finally {
+                        setLogoLoading(false)
+                      }
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px',
+                      borderRadius: 5, fontSize: 13, color: 'var(--text-primary)', cursor: 'default',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--color-accent)'}
+                    onMouseLeave={e => e.currentTarget.style.background = ''}
+                    onMouseDown={e => { if (e.currentTarget.style.background) (e.currentTarget.style as unknown as Record<string, string>).color = 'white' }}
+                    onMouseUp={e => (e.currentTarget.style as unknown as Record<string, string>).color = ''}
+                  >
+                    <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>↻</span>
+                    <span>Auto-fetch logo</span>
+                  </div>
+                  <div
+                    onClick={async () => {
+                      setShowLogoMenu(false)
+                      const fileRes = await window.electronAPI.companyLogo.selectFile()
+                      if (fileRes.success && fileRes.data) {
+                        setLogoLoading(true)
+                        try {
+                          await window.electronAPI.companyLogo.upload(companyId!, fileRes.data)
+                          const res = await window.electronAPI.companies.getById(companyId!)
+                          if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+                        } finally {
+                          setLogoLoading(false)
+                        }
+                      }
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px',
+                      borderRadius: 5, fontSize: 13, color: 'var(--text-primary)', cursor: 'default',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--color-accent)'}
+                    onMouseLeave={e => e.currentTarget.style.background = ''}
+                  >
+                    <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>↑</span>
+                    <span>Upload image…</span>
+                  </div>
+                  <div style={{ height: 1, background: 'var(--separator)', margin: '4px 8px' }} />
+                  <div
+                    onClick={async () => {
+                      setShowLogoMenu(false)
+                      setLogoLoading(true)
+                      try {
+                        await window.electronAPI.companyLogo.remove(companyId!)
+                        const res = await window.electronAPI.companies.getById(companyId!)
+                        if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+                      } finally {
+                        setLogoLoading(false)
+                      }
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px',
+                      borderRadius: 5, fontSize: 13, color: 'var(--color-red)', cursor: 'default',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-red)'; e.currentTarget.style.color = 'white' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--color-red)' }}
+                  >
+                    <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>✕</span>
+                    <span>Remove logo</span>
+                  </div>
+                </div>
+              )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, letterSpacing: -0.4 }}>
@@ -274,7 +390,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
                     onMouseLeave={e => e.currentTarget.style.background = ''}
                   >
-                    <Avatar name={name} size={28} />
+                    <Avatar name={name} size={28} photoUrl={c.contact_photo_url as string | null} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {name}
@@ -360,6 +476,82 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
           )}
         </div>
 
+        {/* 6. Projects */}
+        {projects.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+              Projects
+            </div>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {projects.slice(0, 3).map((p, idx) => (
+                <div
+                  key={p.id as string}
+                  onClick={() => navigate(`/projects/${p.id as string}/edit`)}
+                  className="cursor-default"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 14px',
+                    borderBottom: idx < Math.min(projects.length, 3) - 1 ? '1px solid var(--separator)' : undefined,
+                    transition: 'background 150ms',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {(p.project_name as string) || '—'}
+                    </div>
+                    {Boolean(p.status) && (
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
+                        {p.status as string}
+                      </div>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 14, color: 'var(--text-tertiary)', flexShrink: 0 }}>›</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 7. Proposals */}
+        {proposals.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+              Proposals
+            </div>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {proposals.slice(0, 3).map((p, idx) => (
+                <div
+                  key={p.id as string}
+                  onClick={() => navigate(`/proposals/${p.id as string}/edit`)}
+                  className="cursor-default"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 14px',
+                    borderBottom: idx < Math.min(proposals.length, 3) - 1 ? '1px solid var(--separator)' : undefined,
+                    transition: 'background 150ms',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {(p.proposal_name as string) || '—'}
+                    </div>
+                    {Boolean(p.status) && (
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
+                        {p.status as string}
+                      </div>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 14, color: 'var(--text-tertiary)', flexShrink: 0 }}>›</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Bottom spacer */}
         <div style={{ height: 16 }} />
 
@@ -402,6 +594,13 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
 
   /** Render Company Info form rows inside grouped container */
   function renderInfoRows() {
+    if (!company) return null
+    const naicsCode = (company.naics_code as string | null) ?? null
+    const foundingYear = company.founding_year != null ? String(company.founding_year) : null
+    const companySize = (company.company_size as string | null) ?? null
+    const annualRevenue = (company.annual_revenue as string | null) ?? null
+    const leadSource = (company.lead_source as string | null) ?? null
+
     const rows: { label: string; value: string | null; isDropdown?: boolean; isLink?: boolean }[] = [
       { label: 'Website', value: website, isLink: true },
       { label: 'Phone', value: phone, isLink: true },
@@ -409,6 +608,11 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
       { label: 'Industry', value: industry, isDropdown: true },
       { label: 'Type', value: companyType, isDropdown: true },
       { label: 'Category', value: category, isDropdown: true },
+      { label: 'Size', value: companySize, isDropdown: true },
+      { label: 'Annual Revenue', value: annualRevenue },
+      { label: 'Lead Source', value: leadSource, isDropdown: true },
+      { label: 'NAICS Code', value: naicsCode },
+      { label: 'Founded', value: foundingYear },
     ]
 
     const visibleRows = rows.filter(r => Boolean(r.value))

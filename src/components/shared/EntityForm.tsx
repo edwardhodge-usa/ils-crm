@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import LinkedRecordPicker from './LinkedRecordPicker'
 
 export type FormFieldType =
   | 'text'
@@ -13,6 +14,7 @@ export type FormFieldType =
   | 'multiSelect'
   | 'checkbox'
   | 'readonly'
+  | 'linkedRecord'
 
 export interface FormFieldDef {
   key: string
@@ -22,6 +24,8 @@ export interface FormFieldDef {
   placeholder?: string
   required?: boolean
   section?: string
+  entityName?: string
+  labelField?: string
 }
 
 interface EntityFormProps {
@@ -243,6 +247,24 @@ function FieldRenderer({
             )
           })}
         </div>
+      </div>
+    )
+  }
+
+  if (field.type === 'linkedRecord' && field.entityName && field.labelField) {
+    const api = (window.electronAPI as unknown as Record<string, unknown>)[field.entityName] as
+      { getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }> } | undefined
+    if (!api) return null
+    return (
+      <div className="py-1.5">
+        <label className={`${labelClass} block mb-1`}>{field.label}</label>
+        <LinkedRecordPicker
+          entityApi={api}
+          labelField={field.labelField}
+          value={value}
+          onChange={onChange}
+          placeholder={field.placeholder}
+        />
       </div>
     )
   }

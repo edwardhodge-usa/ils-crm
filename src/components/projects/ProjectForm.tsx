@@ -15,6 +15,16 @@ const FIELDS: FormFieldDef[] = [
 
   { key: 'location', label: 'Location', type: 'text', section: 'Location' },
 
+  // Linked Records
+  { key: 'contacts_ids', label: 'Contacts', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'contacts', labelField: 'contact_name' },
+  { key: 'primary_contact_ids', label: 'Primary Contact', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'contacts', labelField: 'contact_name' },
+  { key: 'client_ids', label: 'Client', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'contacts', labelField: 'contact_name' },
+  { key: 'sales_opportunities_ids', label: 'Opportunities', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'opportunities', labelField: 'opportunity_name' },
+
   { key: 'description', label: 'Description', type: 'textarea', section: 'Notes' },
   { key: 'key_milestones', label: 'Key Milestones', type: 'textarea', section: 'Notes' },
   { key: 'lessons_learned', label: 'Lessons Learned', type: 'textarea', section: 'Notes' },

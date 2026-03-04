@@ -11,6 +11,7 @@ interface CompanyListItem {
   industry: string | null
   type: string | null
   contactCount: number
+  logoUrl: string | null
 }
 
 function toListItem(
@@ -37,6 +38,7 @@ function toListItem(
     industry: (row.industry as string | null) ?? null,
     type: (row.type as string | null) ?? null,
     contactCount,
+    logoUrl: (row.logo_url as string) || null,
   }
 }
 

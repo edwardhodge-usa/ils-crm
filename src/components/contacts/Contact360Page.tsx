@@ -141,14 +141,69 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
   const [contact, setContact] = useState<Record<string, unknown> | null>(null)
   const [linkedData, setLinkedData] = useState<Record<string, Record<string, unknown>[]>>({})
   const [specialtyNames, setSpecialtyNames] = useState<string[]>([])
+  const [companyName, setCompanyName] = useState<string | null>(null)
+  const [companyId, setCompanyId] = useState<string | null>(null)
   const [showDelete, setShowDelete] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false)
+  const [photoLoading, setPhotoLoading] = useState(false)
+  const [linkedInInput, setLinkedInInput] = useState('')
+  const [showLinkedInInput, setShowLinkedInInput] = useState(false)
+
+  async function handleFetchLinkedInPhoto(urlOverride?: string) {
+    if (!id) return
+    const url = urlOverride ?? (contact?.linkedin_url as string | null)
+    if (!url || !url.includes('linkedin.com')) return
+    setPhotoLoading(true)
+    setShowPhotoMenu(false)
+    setShowLinkedInInput(false)
+    setLinkedInInput('')
+    try {
+      const result = await window.electronAPI.contactPhoto.fetch(id, url)
+      if (result.success) {
+        const res = await window.electronAPI.contacts.getById(id)
+        if (res.success && res.data) setContact(res.data as Record<string, unknown>)
+      }
+    } catch { /* handled by IPC */ }
+    setPhotoLoading(false)
+  }
+
+  async function handleUploadPhoto() {
+    if (!id) return
+    setShowPhotoMenu(false)
+    const fileResult = await window.electronAPI.contactPhoto.selectFile()
+    if (!fileResult.success || !fileResult.data) return
+    setPhotoLoading(true)
+    try {
+      const result = await window.electronAPI.contactPhoto.upload(id, fileResult.data)
+      if (result.success) {
+        const res = await window.electronAPI.contacts.getById(id)
+        if (res.success && res.data) setContact(res.data as Record<string, unknown>)
+      }
+    } catch { /* handled by IPC */ }
+    setPhotoLoading(false)
+  }
+
+  async function handleRemovePhoto() {
+    if (!id) return
+    setPhotoLoading(true)
+    setShowPhotoMenu(false)
+    try {
+      const result = await window.electronAPI.contactPhoto.remove(id)
+      if (result.success) {
+        setContact(prev => prev ? { ...prev, contact_photo_url: null } : null)
+      }
+    } catch { /* handled by IPC */ }
+    setPhotoLoading(false)
+  }
 
   useEffect(() => {
     if (!id) {
       setContact(null)
       setLinkedData({})
       setSpecialtyNames([])
+      setCompanyName(null)
+      setCompanyId(null)
       return
     }
 
@@ -210,6 +265,27 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
           setSpecialtyNames(names)
         } catch { /* ignore parse errors */ }
       }
+
+      // Resolve linked company name
+      if (result.data) {
+        const contactData = result.data as Record<string, unknown>
+        try {
+          const cIds: string[] = JSON.parse((contactData.companies_ids as string) || '[]')
+          if (cIds.length > 0) {
+            setCompanyId(cIds[0])
+            const compRes = await window.electronAPI.companies.getById(cIds[0])
+            if (compRes.success && compRes.data) {
+              setCompanyName((compRes.data as Record<string, unknown>).company_name as string || null)
+            }
+          } else {
+            setCompanyId(null)
+            setCompanyName(null)
+          }
+        } catch {
+          setCompanyId(null)
+          setCompanyName(null)
+        }
+      }
     }
     load()
   }, [id])
@@ -248,6 +324,10 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
 
   /* ── Determine which Contact Info fields exist ── */
   const contactInfoFields: { label: string; value: string; isLink?: boolean; onClick?: () => void }[] = []
+  if (companyName) contactInfoFields.push({
+    label: 'Company', value: companyName, isLink: true,
+    onClick: () => companyId && navigate(`/companies/${companyId}`),
+  })
   if (contact.email) contactInfoFields.push({
     label: 'Email', value: contact.email as string, isLink: true,
     onClick: () => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`),
@@ -282,6 +362,82 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
     value: contact.event_tags as string,
     isDropdown: true,
   })
+  if (contact.qualification_status) crmInfoFields.push({
+    label: 'Qualification',
+    value: (
+      <span style={{
+        fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
+        background: 'rgba(118,118,128,0.12)', color: 'var(--text-secondary)',
+      }}>
+        {contact.qualification_status as string}
+      </span>
+    ),
+    isDropdown: true,
+  })
+  if (contact.client_type) crmInfoFields.push({
+    label: 'Client Type',
+    value: (
+      <span style={{
+        fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
+        background: 'rgba(118,118,128,0.12)', color: 'var(--text-secondary)',
+      }}>
+        {contact.client_type as string}
+      </span>
+    ),
+    isDropdown: true,
+  })
+  if (contact.onboarding_status) crmInfoFields.push({
+    label: 'Onboarding',
+    value: (
+      <span style={{
+        fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
+        background: 'rgba(118,118,128,0.12)', color: 'var(--text-secondary)',
+      }}>
+        {contact.onboarding_status as string}
+      </span>
+    ),
+    isDropdown: true,
+  })
+  if (contact.import_source) crmInfoFields.push({
+    label: 'Import Source',
+    value: (
+      <span style={{
+        fontSize: 12, fontWeight: 500, padding: '2px 8px', borderRadius: 4,
+        background: 'rgba(118,118,128,0.12)', color: 'var(--text-secondary)',
+      }}>
+        {contact.import_source as string}
+      </span>
+    ),
+    isDropdown: true,
+  })
+  // Tags (multiSelect)
+  const tags: string[] = (() => {
+    try {
+      const raw = contact.tags
+      if (!raw) return []
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+      return Array.isArray(parsed) ? parsed : []
+    } catch { return [] }
+  })()
+  if (tags.length > 0) crmInfoFields.push({
+    label: 'Tags',
+    value: (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
+        {tags.map((tag: string) => (
+          <span
+            key={tag}
+            style={{
+              fontSize: 11, fontWeight: 600, padding: '2px 8px',
+              borderRadius: 4, background: 'rgba(175,82,222,0.22)',
+              color: isDark ? '#BF5AF2' : '#8944AB',
+            }}
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+    ),
+  })
   if (specialtyNames.length > 0) crmInfoFields.push({
     label: 'Specialty',
     value: (
@@ -311,7 +467,116 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
         {/* ── 1. Hero section ── */}
         <div style={{ padding: '0 0 16px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-            <Avatar name={fullName} size={50} />
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <Avatar
+                name={fullName}
+                size={50}
+                photoUrl={contact.contact_photo_url as string | null}
+                onClick={() => setShowPhotoMenu(!showPhotoMenu)}
+              />
+              {photoLoading && (
+                <div style={{
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  background: 'rgba(0,0,0,0.4)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+                </div>
+              )}
+              {showPhotoMenu && (
+                <div
+                  style={{
+                    position: 'absolute', top: 'calc(100% + 4px)', left: 0,
+                    background: 'var(--bg-secondary)', borderRadius: 8,
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 0 0 0.5px var(--separator)',
+                    padding: '4px 0', minWidth: 200, zIndex: 100,
+                  }}
+                  onMouseLeave={() => { setShowPhotoMenu(false); setShowLinkedInInput(false); setLinkedInInput('') }}
+                >
+                  {/* Fetch from LinkedIn */}
+                  {showLinkedInInput ? (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        const url = linkedInInput.trim()
+                        if (url && url.includes('linkedin.com')) {
+                          handleFetchLinkedInPhoto(url)
+                        }
+                      }}
+                      onClick={e => e.stopPropagation()}
+                      style={{ padding: '4px 6px' }}
+                    >
+                      <input
+                        autoFocus
+                        type="url"
+                        placeholder="Paste LinkedIn URL..."
+                        value={linkedInInput}
+                        onChange={e => setLinkedInInput(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Escape') { setShowLinkedInInput(false); setLinkedInInput('') } }}
+                        style={{
+                          width: '100%', fontSize: 12, padding: '5px 8px',
+                          borderRadius: 5, border: '1px solid var(--separator)',
+                          background: 'var(--bg-primary)', color: 'var(--text-primary)',
+                          outline: 'none', fontFamily: 'inherit',
+                        }}
+                      />
+                    </form>
+                  ) : (
+                    <div
+                      onClick={() => {
+                        if (contact.linkedin_url) {
+                          handleFetchLinkedInPhoto()
+                        } else {
+                          setShowLinkedInInput(true)
+                        }
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '6px 14px', fontSize: 13, color: 'var(--text-primary)',
+                        cursor: 'default', transition: 'background 150ms',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = ''}
+                    >
+                      <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>in</span>
+                      Auto-fetch from LinkedIn
+                    </div>
+                  )}
+                  <div
+                    onClick={handleUploadPhoto}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '6px 14px', fontSize: 13, color: 'var(--text-primary)',
+                      cursor: 'default', transition: 'background 150ms',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                    onMouseLeave={e => e.currentTarget.style.background = ''}
+                  >
+                    <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>&uarr;</span>
+                    Upload image&#8230;
+                  </div>
+                  {Boolean(contact.contact_photo_url) && (
+                    <>
+                      <div style={{ height: 1, background: 'var(--separator)', margin: '4px 8px' }} />
+                      <div
+                        onClick={handleRemovePhoto}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '6px 14px', fontSize: 13, color: 'var(--color-red)',
+                          cursor: 'default', transition: 'background 150ms',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                        onMouseLeave={e => e.currentTarget.style.background = ''}
+                      >
+                        <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>&times;</span>
+                        Remove photo
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2, letterSpacing: '-0.3px' }}>
                 {fullName}

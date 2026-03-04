@@ -59,6 +59,7 @@ export function createSchema(db: SqlJsDatabase): void {
       projects_partner_vendor_ids TEXT,
       portal_access_ids TEXT,
       last_interaction_date TEXT,
+      contact_photo_url TEXT,
       _airtable_modified_at TEXT,
       _local_modified_at TEXT,
       _pending_push INTEGER DEFAULT 0
@@ -83,6 +84,8 @@ export function createSchema(db: SqlJsDatabase): void {
       notes TEXT,
       company_description TEXT,
       website TEXT,
+      linkedin_url TEXT,
+      logo_url TEXT,
       founding_year INTEGER,
       created_date TEXT,
       type TEXT,
@@ -356,6 +359,9 @@ export function createSchema(db: SqlJsDatabase): void {
     'ALTER TABLE portal_access ADD COLUMN contact_city_lookup TEXT',
     'ALTER TABLE portal_access ADD COLUMN contact_state_lookup TEXT',
     'ALTER TABLE portal_access ADD COLUMN contact_country_lookup TEXT',
+    'ALTER TABLE companies ADD COLUMN logo_url TEXT',
+    'ALTER TABLE companies ADD COLUMN linkedin_url TEXT',
+    'ALTER TABLE contacts ADD COLUMN contact_photo_url TEXT',
   ]
   for (const sql of fieldAuditMigrations) {
     try { db.run(sql) } catch { /* column already exists */ }

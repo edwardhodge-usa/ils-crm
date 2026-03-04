@@ -9,6 +9,12 @@ const FIELDS: FormFieldDef[] = [
     options: ['Outbound (we initiated)', 'Inbound (they initiated)'] },
   { key: 'date', label: 'Date', type: 'date', section: 'Details' },
 
+  // Linked Records
+  { key: 'contacts_ids', label: 'Contacts', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'contacts', labelField: 'contact_name' },
+  { key: 'sales_opportunities_ids', label: 'Opportunities', type: 'linkedRecord', section: 'Linked Records',
+    entityName: 'opportunities', labelField: 'opportunity_name' },
+
   { key: 'summary', label: 'Summary', type: 'textarea', section: 'Notes' },
   { key: 'next_steps', label: 'Next Steps', type: 'textarea', section: 'Notes' },
 ]

@@ -46,7 +46,7 @@ export function getFollowUpAlerts(): Record<string, unknown>[] {
   const db = getDatabase()
   // Contacts not contacted in 14+ days (any categorization that isn't archived)
   const result = db.exec(
-    `SELECT id, contact_name, company, email, phone, last_contact_date, categorization
+    `SELECT id, contact_name, company, email, phone, last_contact_date, categorization, contact_photo_url
      FROM contacts
      WHERE last_contact_date IS NOT NULL
        AND last_contact_date != ''

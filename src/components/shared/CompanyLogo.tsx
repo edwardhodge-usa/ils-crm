@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import useDarkMode from '../../hooks/useDarkMode'
 
-// 11 Apple system colors (no systemRed — reserved for destructive)
-const AVATAR_COLORS = [
+const ICON_COLORS = [
   { bg: 'rgba(0,122,255,0.22)', fg: '#007AFF', fgDark: '#409CFF' },       // systemBlue
   { bg: 'rgba(52,199,89,0.22)', fg: '#34C759', fgDark: '#30D158' },        // systemGreen
   { bg: 'rgba(255,149,0,0.22)', fg: '#FF9500', fgDark: '#FF9F0A' },        // systemOrange
@@ -16,58 +14,42 @@ const AVATAR_COLORS = [
   { bg: 'rgba(162,132,94,0.22)', fg: '#A2845E', fgDark: '#AC8E68' },       // systemBrown
 ]
 
-export function avatarColor(name: string) {
+export function iconColor(name: string) {
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+  return ICON_COLORS[Math.abs(hash) % ICON_COLORS.length]
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .map(w => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
-
-interface AvatarProps {
+interface CompanyLogoProps {
   name: string
-  size?: number
-  photoUrl?: string | null
+  logoUrl?: string | null
+  size: 16 | 30 | 40 | 50
   onClick?: () => void
 }
 
-export function Avatar({ name, size = 28, photoUrl, onClick }: AvatarProps) {
+export function CompanyLogo({ name, logoUrl, size, onClick }: CompanyLogoProps) {
   const [imgError, setImgError] = useState(false)
-  const isDark = useDarkMode()
-  const color = avatarColor(name)
+  const color = iconColor(name)
+  const radius = { 16: 3, 30: 7, 40: 10, 50: 12 }[size]
+  const fontSize = { 16: 8, 30: 13, 40: 16, 50: 20 }[size]
 
-  if (photoUrl && !imgError) {
+  if (logoUrl && !imgError) {
     return (
-      <div
+      <img
+        src={logoUrl}
+        alt={name}
         onClick={onClick}
+        onError={() => setImgError(true)}
         style={{
           width: size,
           height: size,
-          borderRadius: '50%',
+          borderRadius: radius,
+          objectFit: 'contain',
           flexShrink: 0,
-          overflow: 'hidden',
+          background: '#fff',
           cursor: 'default',
         }}
-      >
-        <img
-          src={photoUrl}
-          alt={name}
-          onError={() => setImgError(true)}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
-        />
-      </div>
+      />
     )
   }
 
@@ -77,20 +59,19 @@ export function Avatar({ name, size = 28, photoUrl, onClick }: AvatarProps) {
       style={{
         width: size,
         height: size,
-        borderRadius: '50%',
+        borderRadius: radius,
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: Math.round(size * 0.38),
+        fontSize,
         fontWeight: 700,
         background: color.bg,
-        color: isDark ? color.fgDark : color.fg,
+        color: color.fg,
         cursor: 'default',
-        userSelect: 'none',
       }}
     >
-      {getInitials(name)}
+      {name.charAt(0).toUpperCase()}
     </div>
   )
 }
