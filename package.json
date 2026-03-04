@@ -59,12 +59,18 @@
         {
           "target": "dmg",
           "arch": [
-            "arm64",
-            "x64"
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
           ]
         }
       ],
-      "hardenedRuntime": true,
+      "identity": null,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false
     },
     "files": [
