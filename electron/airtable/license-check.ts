@@ -30,7 +30,7 @@ export async function checkLicense(
     const sanitizedEmail = email.replace(/'/g, "\\'")
 
     const filterFormula = `AND({${LICENSE_CONFIG.fields.email}} = '${sanitizedEmail}', {${LICENSE_CONFIG.fields.app}} = '${LICENSE_CONFIG.appName}')`
-    const url = `https://api.airtable.com/v0/${LICENSE_CONFIG.baseId}/${LICENSE_CONFIG.tableId}?filterByFormula=${encodeURIComponent(filterFormula)}`
+    const url = `https://api.airtable.com/v0/${LICENSE_CONFIG.baseId}/${LICENSE_CONFIG.tableId}?filterByFormula=${encodeURIComponent(filterFormula)}&returnFieldsByFieldId=true`
 
     const response = await fetch(url, {
       headers: {
@@ -84,6 +84,7 @@ export async function checkLicense(
     return { valid: true, status: 'active' }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)
+    console.error('[License] checkLicense error:', message)
     return { valid: false, status: 'error', message }
   }
 }
