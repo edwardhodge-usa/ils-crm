@@ -16,3 +16,4 @@ build/
 *.log
 .claude/
 .worktrees/
+electron/updater-token.ts

@@ -6,6 +6,7 @@ import { registerAllHandlers } from './ipc/register'
 import { getSetting } from './database/queries/entities'
 import { fullSync, startPolling } from './airtable/sync-engine'
 import { buildMenu } from './menu'
+import { UPDATER_TOKEN } from './updater-token'
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL
 
@@ -89,10 +90,11 @@ app.whenReady().then(async () => {
 
   createWindow()
 
-  // Auto-update (production only)
+  // Auto-update (production only, private GitHub repo requires token)
   if (!isDev) {
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = true
+    process.env.GH_TOKEN = UPDATER_TOKEN
     autoUpdater.checkForUpdatesAndNotify()
 
     autoUpdater.on('update-available', (info) => {
