@@ -2,6 +2,16 @@ import { useEffect, useState, useCallback } from 'react'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import { StageProgress } from './StageProgress'
 
+function safeParseIds(val: unknown): string[] {
+  if (!val) return []
+  if (Array.isArray(val)) return val as string[]
+  if (typeof val !== 'string') return []
+  try {
+    const parsed = JSON.parse(val)
+    return Array.isArray(parsed) ? parsed : []
+  } catch { return [] }
+}
+
 interface DealDetailProps {
   dealId: string | null
   onClose: () => void
@@ -49,7 +59,62 @@ function TaskStatusBadge({ status }: { status: string }) {
 export function DealDetail({ dealId, onClose }: DealDetailProps) {
   const [deal, setDeal] = useState<Record<string, unknown> | null>(null)
   const [linkedTasks, setLinkedTasks] = useState<Record<string, unknown>[]>([])
+  const [linkedNames, setLinkedNames] = useState<Record<string, string>>({})
   const [visible, setVisible] = useState(false)
+
+  // Resolve linked record IDs to display names
+  useEffect(() => {
+    if (!deal) { setLinkedNames({}); return }
+    const companyIds = safeParseIds(deal.company_ids)
+    const contactIds = safeParseIds(deal.associated_contact_ids)
+    const taskIds = safeParseIds(deal.tasks_ids)
+    const projectIds = safeParseIds(deal.project_ids)
+    const proposalIds = safeParseIds(deal.proposals_ids)
+    if (companyIds.length + contactIds.length + taskIds.length + projectIds.length + proposalIds.length === 0) {
+      setLinkedNames({})
+      return
+    }
+
+    async function resolve() {
+      const names: Record<string, string> = {}
+      const [companies, contacts, tasks, projects, proposals] = await Promise.all([
+        companyIds.length > 0 ? window.electronAPI.companies.getAll() : Promise.resolve({ success: true, data: [] }),
+        contactIds.length > 0 ? window.electronAPI.contacts.getAll() : Promise.resolve({ success: true, data: [] }),
+        taskIds.length > 0 ? window.electronAPI.tasks.getAll() : Promise.resolve({ success: true, data: [] }),
+        projectIds.length > 0 ? window.electronAPI.projects.getAll() : Promise.resolve({ success: true, data: [] }),
+        proposalIds.length > 0 ? window.electronAPI.proposals.getAll() : Promise.resolve({ success: true, data: [] }),
+      ])
+      if (companies.success && companies.data) {
+        for (const r of companies.data as Record<string, unknown>[]) {
+          if (companyIds.includes(r.id as string)) names[r.id as string] = (r.company_name as string) || 'Unnamed'
+        }
+      }
+      if (contacts.success && contacts.data) {
+        for (const r of contacts.data as Record<string, unknown>[]) {
+          if (contactIds.includes(r.id as string)) {
+            names[r.id as string] = (r.contact_name as string) || [r.first_name, r.last_name].filter(Boolean).join(' ') || 'Unnamed'
+          }
+        }
+      }
+      if (tasks.success && tasks.data) {
+        for (const r of tasks.data as Record<string, unknown>[]) {
+          if (taskIds.includes(r.id as string)) names[r.id as string] = (r.task as string) || 'Unnamed'
+        }
+      }
+      if (projects.success && projects.data) {
+        for (const r of projects.data as Record<string, unknown>[]) {
+          if (projectIds.includes(r.id as string)) names[r.id as string] = (r.project_name as string) || 'Unnamed'
+        }
+      }
+      if (proposals.success && proposals.data) {
+        for (const r of proposals.data as Record<string, unknown>[]) {
+          if (proposalIds.includes(r.id as string)) names[r.id as string] = (r.proposal_name as string) || 'Unnamed'
+        }
+      }
+      setLinkedNames(names)
+    }
+    resolve()
+  }, [deal?.company_ids, deal?.associated_contact_ids, deal?.tasks_ids, deal?.project_ids, deal?.proposals_ids])
 
   useEffect(() => {
     if (!dealId) {
@@ -113,6 +178,21 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
     const res = await window.electronAPI.opportunities.getById(dealId)
     if (res.success && res.data) setDeal(res.data as Record<string, unknown>)
   }, [dealId])
+
+  // Resolve linked IDs to display names
+  const resolveLinked = (ids: unknown): string => {
+    const parsed = safeParseIds(ids)
+    if (parsed.length === 0) return '—'
+    return parsed.map(id => linkedNames[id] || id.slice(0, 8)).join(', ')
+  }
+
+  const DEAL_LINKED_FIELDS: EditableField[] = [
+    { key: 'company_ids', label: 'Company', type: 'readonly' },
+    { key: 'associated_contact_ids', label: 'Contacts', type: 'readonly' },
+    { key: 'tasks_ids', label: 'Tasks', type: 'readonly' },
+    { key: 'project_ids', label: 'Projects', type: 'readonly' },
+    { key: 'proposals_ids', label: 'Proposals', type: 'readonly' },
+  ]
 
   // Trigger slide-in when panel first mounts with a dealId
   useEffect(() => {
@@ -213,6 +293,31 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
                 onSave={handleFieldSave}
               />
             ))}
+          </div>
+
+          {/* Related linked records */}
+          <div style={{ padding: '0 12px 16px' }}>
+            <div style={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase' as const,
+              color: 'var(--text-secondary)',
+              padding: '0 4px 8px',
+            }}>
+              Related
+            </div>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {DEAL_LINKED_FIELDS.map((field, idx) => (
+                <EditableFormRow
+                  key={field.key}
+                  field={field}
+                  value={resolveLinked((deal as Record<string, unknown>)[field.key])}
+                  isLast={idx === DEAL_LINKED_FIELDS.length - 1}
+                  onSave={async () => {}}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Tasks section */}

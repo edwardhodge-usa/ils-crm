@@ -39,6 +39,15 @@ export default function ProjectListPage() {
     )
   }, [projects, search])
 
+  const leadOptions = useMemo(() => {
+    const names = new Set<string>()
+    for (const p of projects as Record<string, unknown>[]) {
+      const lead = p.project_lead as string | null
+      if (lead) names.add(lead)
+    }
+    return Array.from(names).sort()
+  }, [projects])
+
   if (loading) return <LoadingSpinner />
 
   if (error) {
@@ -83,7 +92,7 @@ export default function ProjectListPage() {
       </div>
 
       {/* Detail panel — flex-1 */}
-      <ProjectDetail projectId={selectedId} />
+      <ProjectDetail projectId={selectedId} leadOptions={leadOptions} />
     </div>
   )
 }

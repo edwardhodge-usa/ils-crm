@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
@@ -15,6 +15,7 @@ interface TaskItem {
   priority: string | null
   priorityClean: string | null
   due_date: string | null
+  completed_date: string | null
   type: string | null
   notes: string | null
   contacts_ids: string | null
@@ -59,16 +60,20 @@ const TYPE_SWATCH_COLORS: Record<string, string> = {
   'Project': '#00C7BE', 'Travel': '#FF3B30',
 }
 
-const TASK_EDITABLE_FIELDS: EditableField[] = [
-  { key: 'due_date', label: 'Due Date', type: 'date' },
-  { key: 'priority', label: 'Priority', type: 'singleSelect',
-    options: ['🔴 High', '🟡 Medium', '🟢 Low'] },
-  { key: 'status', label: 'Status', type: 'singleSelect',
-    options: ['To Do', 'In Progress', 'Waiting', 'Completed', 'Cancelled'] },
-  { key: 'type', label: 'Type', type: 'singleSelect',
-    options: ['Administrative', 'Follow-up Call', 'Follow-up Email', 'Internal Review', 'Other', 'Presentation Deck', 'Research', 'Schedule Meeting', 'Send Proposal', 'Send Qualifications'] },
-  { key: 'assigned_to', label: 'Assigned To', type: 'readonly' },
-]
+function buildTaskEditableFields(assigneeOptions: string[]): EditableField[] {
+  return [
+    { key: 'due_date', label: 'Due Date', type: 'date' },
+    { key: 'completed_date', label: 'Completed Date', type: 'date' },
+    { key: 'priority', label: 'Priority', type: 'singleSelect',
+      options: ['🔴 High', '🟡 Medium', '🟢 Low'] },
+    { key: 'status', label: 'Status', type: 'singleSelect',
+      options: ['To Do', 'In Progress', 'Waiting', 'Completed', 'Cancelled'] },
+    { key: 'type', label: 'Type', type: 'singleSelect',
+      options: ['Administrative', 'Follow-up Call', 'Follow-up Email', 'Internal Review', 'Other', 'Presentation Deck', 'Research', 'Schedule Meeting', 'Send Proposal', 'Send Qualifications'] },
+    { key: 'assigned_to', label: 'Assigned To', type: 'singleSelect',
+      options: assigneeOptions },
+  ]
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -108,6 +113,7 @@ function toTaskItem(row: Record<string, unknown>): TaskItem {
     priority:      raw,
     priorityClean: cleanPriority(raw),
     due_date:      (row.due_date as string | null) ?? null,
+    completed_date: (row.completed_date as string | null) ?? null,
     type:          (row.type as string | null) ?? null,
     notes:         (row.notes as string | null) ?? null,
     contacts_ids:  (row.contacts_ids as string | null) ?? null,
@@ -390,12 +396,69 @@ function TaskRow({ task, section, isSelected, isDark, onSelect, onComplete }: Ta
 
 interface TaskDetailProps {
   task: TaskItem | null
+  assigneeOptions: string[]
   onComplete: (id: string) => void
   onDelete: (id: string) => void
   onReload: () => void
 }
 
-function TaskDetail({ task, onComplete, onDelete, onReload }: TaskDetailProps) {
+function safeParseIds(val: string | null): string[] {
+  if (!val) return []
+  try {
+    const parsed = JSON.parse(val)
+    return Array.isArray(parsed) ? parsed : []
+  } catch { return [] }
+}
+
+function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: TaskDetailProps) {
+  const [linkedNames, setLinkedNames] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (!task) return
+    const oppIds = safeParseIds(task.sales_opportunities_ids)
+    const contactIds = safeParseIds(task.contacts_ids)
+    const projectIds = safeParseIds(task.projects_ids)
+    const proposalIds = safeParseIds(task.proposal_ids)
+    if (oppIds.length + contactIds.length + projectIds.length + proposalIds.length === 0) {
+      setLinkedNames({})
+      return
+    }
+
+    async function resolve() {
+      const names: Record<string, string> = {}
+      const [opps, contacts, projects, proposals] = await Promise.all([
+        oppIds.length > 0 ? window.electronAPI.opportunities.getAll() : Promise.resolve({ success: true, data: [] }),
+        contactIds.length > 0 ? window.electronAPI.contacts.getAll() : Promise.resolve({ success: true, data: [] }),
+        projectIds.length > 0 ? window.electronAPI.projects.getAll() : Promise.resolve({ success: true, data: [] }),
+        proposalIds.length > 0 ? window.electronAPI.proposals.getAll() : Promise.resolve({ success: true, data: [] }),
+      ])
+      if (opps.success && opps.data) {
+        for (const r of opps.data as Record<string, unknown>[]) {
+          if (oppIds.includes(r.id as string)) names[r.id as string] = (r.opportunity_name as string) || 'Unnamed'
+        }
+      }
+      if (contacts.success && contacts.data) {
+        for (const r of contacts.data as Record<string, unknown>[]) {
+          if (contactIds.includes(r.id as string)) {
+            names[r.id as string] = (r.contact_name as string) || [r.first_name, r.last_name].filter(Boolean).join(' ') || 'Unnamed'
+          }
+        }
+      }
+      if (projects.success && projects.data) {
+        for (const r of projects.data as Record<string, unknown>[]) {
+          if (projectIds.includes(r.id as string)) names[r.id as string] = (r.project_name as string) || 'Unnamed'
+        }
+      }
+      if (proposals.success && proposals.data) {
+        for (const r of proposals.data as Record<string, unknown>[]) {
+          if (proposalIds.includes(r.id as string)) names[r.id as string] = (r.proposal_name as string) || 'Unnamed'
+        }
+      }
+      setLinkedNames(names)
+    }
+    resolve()
+  }, [task?.id, task?.sales_opportunities_ids, task?.contacts_ids, task?.projects_ids, task?.proposal_ids])
+
   if (!task) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
@@ -406,6 +469,20 @@ function TaskDetail({ task, onComplete, onDelete, onReload }: TaskDetailProps) {
 
   const completed = isCompleted(task)
   const borderColor = completed ? 'var(--color-green)' : priorityBorderColor(task.priorityClean)
+
+  // Resolve linked fields to display names
+  const resolveLinked = (ids: string | null): string => {
+    const parsed = safeParseIds(ids)
+    if (parsed.length === 0) return '—'
+    return parsed.map(id => linkedNames[id] || id.slice(0, 8)).join(', ')
+  }
+
+  const TASK_LINKED_FIELDS: EditableField[] = [
+    { key: 'sales_opportunities_ids', label: 'Opportunity', type: 'readonly' },
+    { key: 'contacts_ids', label: 'Contacts', type: 'readonly' },
+    { key: 'projects_ids', label: 'Projects', type: 'readonly' },
+    { key: 'proposal_ids', label: 'Proposal', type: 'readonly' },
+  ]
 
   let overdueLabel = ''
   if (task.due_date && !completed) {
@@ -477,16 +554,32 @@ function TaskDetail({ task, onComplete, onDelete, onReload }: TaskDetailProps) {
       </div>
 
       <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
-        {TASK_EDITABLE_FIELDS.map((field, idx) => (
+        {buildTaskEditableFields(assigneeOptions).map((field, idx, arr) => (
           <EditableFormRow
             key={field.key}
             field={field}
             value={task[field.key as keyof TaskItem]}
-            isLast={idx === TASK_EDITABLE_FIELDS.length - 1}
+            isLast={idx === arr.length - 1}
             onSave={async (key, val) => {
               await window.electronAPI.tasks.update(task.id, { [key]: val })
               onReload()
             }}
+          />
+        ))}
+      </div>
+
+      {/* Linked Records */}
+      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+        Related
+      </div>
+      <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+        {TASK_LINKED_FIELDS.map((field, idx) => (
+          <EditableFormRow
+            key={field.key}
+            field={field}
+            value={resolveLinked(task[field.key as keyof TaskItem] as string | null)}
+            isLast={idx === TASK_LINKED_FIELDS.length - 1}
+            onSave={async () => {}}
           />
         ))}
       </div>
@@ -580,8 +673,16 @@ export default function TasksPage() {
 
   const selectedTask = useMemo(() => allTasks.find(t => t.id === selectedId) ?? null, [allTasks, selectedId])
 
+  const assigneeOptions = useMemo(() => {
+    const names = new Set<string>()
+    for (const t of allTasks) {
+      if (t.assigned_to) names.add(t.assigned_to)
+    }
+    return Array.from(names).sort()
+  }, [allTasks])
+
   const handleComplete = useCallback(async (id: string) => {
-    await window.electronAPI.tasks.update(id, { status: 'Completed' })
+    await window.electronAPI.tasks.update(id, { status: 'Completed', completed_date: todayStr() })
     reload()
   }, [reload])
 
@@ -738,6 +839,7 @@ export default function TasksPage() {
       {/* Task Detail pane */}
       <TaskDetail
         task={selectedTask}
+        assigneeOptions={assigneeOptions}
         onComplete={handleComplete}
         onDelete={handleDelete}
         onReload={reload}

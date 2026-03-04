@@ -1,10 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '../shared/EmptyState'
 import StatusBadge from '../shared/StatusBadge'
 import { ContactStats } from '../contacts/ContactStats'
-import { PencilIcon } from '../shared/icons/PencilIcon'
+import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import { firstId } from '../../utils/linked-records'
+
+const PROPOSAL_EDITABLE_FIELDS: EditableField[] = [
+  { key: 'status', label: 'Status', type: 'singleSelect',
+    options: ['Draft', 'Pending Approval', 'Approved', 'Sent to Client', 'Closed Won', 'Closed Lost', 'Submitted', 'In Review', 'Rejected'] },
+  { key: 'proposed_value', label: 'Value', type: 'currency' },
+  { key: 'approval_status', label: 'Approval', type: 'singleSelect',
+    options: ['Not Submitted', 'Submitted', 'Approved', 'Rejected', 'Pending', 'Under Review'] },
+  { key: 'version', label: 'Version', type: 'text' },
+  { key: 'template_used', label: 'Template', type: 'singleSelect',
+    options: ['Basic', 'Detailed', 'Custom', 'Standard Template', 'Custom Template', 'Marketing Template', 'IT Template', 'Service Template', 'Design Template', 'Security Template', 'Strategy Template', 'HR Template', 'Event Template'] },
+  { key: 'created_by', label: 'Created By', type: 'readonly' },
+]
 
 interface ProposalDetailProps {
   proposalId: string | null
@@ -63,6 +75,13 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
     load()
   }, [proposalId])
 
+  const handleFieldSave = useCallback(async (key: string, val: unknown) => {
+    if (!proposalId) return
+    await window.electronAPI.proposals.update(proposalId, { [key]: val })
+    const res = await window.electronAPI.proposals.getById(proposalId)
+    if (res.success && res.data) setProposal(res.data as Record<string, unknown>)
+  }, [proposalId])
+
   if (!proposalId) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
@@ -83,10 +102,6 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
 
   const proposalName = (proposal.proposal_name as string) || 'Unnamed Proposal'
   const status = (proposal.status as string | null) ?? null
-  const notes = (proposal.notes as string | null) ?? null
-  const version = (proposal.version as string | null) ?? null
-  const templateUsed = (proposal.template_used as string | null) ?? null
-  const approvalStatus = (proposal.approval_status as string | null) ?? null
   const proposedValue = proposal.proposed_value ? Number(proposal.proposed_value) : null
 
   const contactName = contact
@@ -95,20 +110,10 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
   const companyName = company ? (company.company_name as string) || null : null
 
   const stats = [
-    { label: 'Version', value: version || '—' },
-    { label: 'Template', value: templateUsed || '—' },
-    { label: 'Approval', value: approvalStatus || '—' },
+    { label: 'Version', value: (proposal.version as string) || '—' },
+    { label: 'Template', value: (proposal.template_used as string) || '—' },
+    { label: 'Approval', value: (proposal.approval_status as string) || '—' },
   ]
-
-  const infoRows: { label: string; value: string | null; isDropdown?: boolean; isLink?: boolean; linkTo?: string }[] = [
-    { label: 'Status', value: status, isDropdown: true },
-    { label: 'Value', value: proposedValue ? `$${proposedValue.toLocaleString()}` : null },
-    { label: 'Approval', value: approvalStatus, isDropdown: true },
-    { label: 'Version', value: version },
-    { label: 'Template', value: templateUsed },
-  ]
-
-  const visibleInfoRows = infoRows.filter(r => Boolean(r.value))
 
   const oppName = opportunity ? (opportunity.opportunity_name as string) || null : null
 
@@ -123,17 +128,10 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
+      <div className="flex items-center px-4 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
         <div className="text-[12px] text-[var(--text-tertiary)] truncate">
           {proposalName}
         </div>
-        <button
-          onClick={() => navigate(`/proposals/${proposalId}/edit`)}
-          title="Edit proposal"
-          className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors cursor-default"
-        >
-          <PencilIcon />
-        </button>
       </div>
 
       {/* Scrollable content */}
@@ -157,25 +155,23 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
         {/* 2. Stats strip */}
         <ContactStats stats={stats} />
 
-        {/* 3. Proposal details — Apple HIG form rows */}
-        {visibleInfoRows.length > 0 && (
-          <div style={{ marginTop: 16, marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
-              Proposal Info
-            </div>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-              {visibleInfoRows.map((row, idx) => (
-                <DetailFormRow
-                  key={row.label}
-                  label={row.label}
-                  value={row.value!}
-                  isDropdown={row.isDropdown}
-                  isLast={idx === visibleInfoRows.length - 1}
-                />
-              ))}
-            </div>
+        {/* 3. Proposal details — inline-editable form rows */}
+        <div style={{ marginTop: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+            Proposal Info
           </div>
-        )}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            {PROPOSAL_EDITABLE_FIELDS.map((field, idx) => (
+              <EditableFormRow
+                key={field.key}
+                field={field}
+                value={(proposal as Record<string, unknown>)[field.key]}
+                isLast={idx === PROPOSAL_EDITABLE_FIELDS.length - 1}
+                onSave={handleFieldSave}
+              />
+            ))}
+          </div>
+        </div>
 
         {/* 4. Linked Contact + Company */}
         <div style={{ marginBottom: 16 }}>
@@ -222,62 +218,53 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
         </div>
 
         {/* 5. Notes */}
-        {Boolean(notes) && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
-              Notes
-            </div>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', padding: '10px 14px' }}>
-              <div style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-                {notes}
-              </div>
-            </div>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+            Notes
           </div>
-        )}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            <EditableFormRow
+              field={{ key: 'notes', label: 'Notes', type: 'textarea' }}
+              value={proposal.notes}
+              isLast
+              onSave={handleFieldSave}
+            />
+          </div>
+        </div>
+
+        {/* 6. Client Feedback */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+            Client Feedback
+          </div>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            <EditableFormRow
+              field={{ key: 'client_feedback', label: 'Client Feedback', type: 'textarea' }}
+              value={proposal.client_feedback}
+              isLast
+              onSave={handleFieldSave}
+            />
+          </div>
+        </div>
+
+        {/* 7. Performance Metrics */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+            Performance Metrics
+          </div>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            <EditableFormRow
+              field={{ key: 'performance_metrics', label: 'Performance Metrics', type: 'textarea' }}
+              value={proposal.performance_metrics}
+              isLast
+              onSave={handleFieldSave}
+            />
+          </div>
+        </div>
 
         {/* Bottom spacer */}
         <div style={{ height: 16 }} />
 
-      </div>
-    </div>
-  )
-}
-
-/** A single Apple-style form row for the detail pane */
-function DetailFormRow({ label, value, isDropdown, isLast }: {
-  label: string
-  value: string
-  isDropdown?: boolean
-  isLast?: boolean
-}) {
-  const [hovered, setHovered] = useState(false)
-
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '10px 14px', minHeight: 36,
-      borderBottom: isLast ? undefined : '1px solid var(--separator)',
-    }}>
-      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>
-        {label}
-      </span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-        <span
-          style={{
-            fontSize: 13, fontWeight: 400, color: 'var(--text-primary)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
-            background: hovered ? 'var(--bg-hover)' : 'transparent',
-            transition: 'background 150ms',
-          }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-        >
-          {value}
-        </span>
-        {isDropdown && (
-          <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4, flexShrink: 0 }}>⌃</span>
-        )}
       </div>
     </div>
   )

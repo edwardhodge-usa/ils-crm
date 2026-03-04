@@ -6,23 +6,27 @@ import { ContactStats } from '../contacts/ContactStats'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import { containsId } from '../../utils/linked-records'
 
-const PROJECT_EDITABLE_FIELDS: EditableField[] = [
-  { key: 'project_lead', label: 'Project Lead', type: 'readonly' },
-  { key: 'start_date', label: 'Start Date', type: 'date' },
-  { key: 'target_completion', label: 'End Date', type: 'date' },
-  { key: 'status', label: 'Status', type: 'singleSelect',
-    options: ['Kickoff', 'Discovery', 'Concept Development', 'Design Development', 'Production', 'Installation', 'Opening/Launch', 'Closeout', 'Complete', 'On Hold', 'Cancelled', 'Strategy'] },
-  { key: 'engagement_type', label: 'Engagement Type', type: 'multiSelect',
-    options: ['Strategy/Consulting', 'Design/Concept Development', 'Production/Fabrication Oversight', 'Opening/Operations Support'] },
-  { key: 'contract_value', label: 'Contract Value', type: 'currency' },
-  { key: 'location', label: 'Location', type: 'text' },
-]
+function buildProjectEditableFields(leadOptions: string[]): EditableField[] {
+  return [
+    { key: 'project_lead', label: 'Project Lead', type: 'singleSelect',
+      options: leadOptions },
+    { key: 'start_date', label: 'Start Date', type: 'date' },
+    { key: 'target_completion', label: 'End Date', type: 'date' },
+    { key: 'status', label: 'Status', type: 'singleSelect',
+      options: ['Kickoff', 'Discovery', 'Concept Development', 'Design Development', 'Production', 'Installation', 'Opening/Launch', 'Closeout', 'Complete', 'On Hold', 'Cancelled', 'Strategy'] },
+    { key: 'engagement_type', label: 'Engagement Type', type: 'multiSelect',
+      options: ['Strategy/Consulting', 'Design/Concept Development', 'Production/Fabrication Oversight', 'Opening/Operations Support'] },
+    { key: 'contract_value', label: 'Contract Value', type: 'currency' },
+    { key: 'location', label: 'Location', type: 'text' },
+  ]
+}
 
 interface ProjectDetailProps {
   projectId: string | null
+  leadOptions: string[]
 }
 
-export function ProjectDetail({ projectId }: ProjectDetailProps) {
+export function ProjectDetail({ projectId, leadOptions }: ProjectDetailProps) {
   const navigate = useNavigate()
   const [project, setProject] = useState<Record<string, unknown> | null>(null)
   const [contacts, setContacts] = useState<Record<string, unknown>[]>([])
@@ -139,12 +143,12 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             Project Info
           </div>
           <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            {PROJECT_EDITABLE_FIELDS.map((field, idx) => (
+            {buildProjectEditableFields(leadOptions).map((field, idx, arr) => (
               <EditableFormRow
                 key={field.key}
                 field={field}
                 value={(project as Record<string, unknown>)[field.key]}
-                isLast={idx === PROJECT_EDITABLE_FIELDS.length - 1}
+                isLast={idx === arr.length - 1}
                 onSave={handleFieldSave}
               />
             ))}
