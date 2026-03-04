@@ -174,7 +174,7 @@ app.whenReady().then(async () => {
     if (isDev) console.log('[App] No API key configured, skipping sync')
   }
 
-  // ─── Periodic license re-check every 5 minutes ──────────
+  // ─── Periodic license re-check every 2 hours ──────────
   setInterval(async () => {
     const email = getSetting('user_email')
     if (!email) return // not onboarded yet
@@ -194,7 +194,7 @@ app.whenReady().then(async () => {
       await handleRevocation()
       mainWindow?.webContents.send('license:revoked')
     }
-  }, 5 * 60 * 1000)
+  }, 2 * 60 * 60 * 1000)
 })
 
 app.on('window-all-closed', () => {
