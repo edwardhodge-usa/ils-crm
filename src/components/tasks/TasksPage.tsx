@@ -441,6 +441,12 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
     return null
   }, [])
 
+  const createOpportunity = useCallback(async (name: string): Promise<string | null> => {
+    const res = await window.electronAPI.opportunities.create({ opportunity_name: name, sales_stage: 'Initial Contact' })
+    if (res.success && res.data) return res.data as string
+    return null
+  }, [])
+
   const createProposal = useCallback(async (name: string): Promise<string | null> => {
     const res = await window.electronAPI.proposals.create({ proposal_name: name, status: 'Draft' })
     if (res.success && res.data) return res.data as string
@@ -542,6 +548,7 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
           labelField="opportunity_name"
           value={task.sales_opportunities_ids}
           onChange={val => handleLinkedSave('sales_opportunities_ids', val)}
+          onCreate={createOpportunity}
           placeholder="Search opportunities..."
         />
         <LinkedRecordPicker
