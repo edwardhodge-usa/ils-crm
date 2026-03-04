@@ -105,6 +105,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
   const [saveError, setSaveError] = useState(false)
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
+  const textareaDisplayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setEditValue(toEditValue(value, field.type))
@@ -117,6 +118,11 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
       if (field.type === 'text' || field.type === 'number' || field.type === 'currency') {
         const input = inputRef.current as HTMLInputElement
         input.select()
+      }
+      if (field.type === 'textarea') {
+        const ta = inputRef.current as HTMLTextAreaElement
+        ta.style.height = 'auto'
+        ta.style.height = ta.scrollHeight + 'px'
       }
     }
   }, [editing, field.type])
@@ -221,15 +227,22 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
         <textarea
           ref={inputRef as React.RefObject<HTMLTextAreaElement>}
           value={editValue}
-          onChange={e => setEditValue(e.target.value)}
+          onChange={e => {
+            setEditValue(e.target.value)
+            // Auto-resize
+            const ta = e.target
+            ta.style.height = 'auto'
+            ta.style.height = ta.scrollHeight + 'px'
+          }}
           onBlur={handleTextSave}
           onKeyDown={e => { if (e.key === 'Escape') { setEditValue(toEditValue(value, field.type)); setEditing(false) } }}
           style={{
-            width: '100%', minHeight: 60, resize: 'vertical',
+            width: '100%', minHeight: 60, resize: 'none',
             background: 'var(--bg-card)', border: '1px solid var(--color-accent)',
             borderRadius: 4, padding: '4px 8px',
             fontSize: 13, fontWeight: 400, color: 'var(--text-primary)',
             fontFamily: 'inherit', outline: 'none', cursor: 'default',
+            overflow: 'hidden',
           }}
         />
       )
@@ -338,19 +351,52 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
     )
   }
 
-  // --- Textarea editing layout (full-width) ---
+  // --- Textarea layout (full-width, auto-height in both modes) ---
 
-  if (editing && field.type === 'textarea') {
+  if (field.type === 'textarea') {
+    const displayText = formatDisplayValue(value, field.type)
     return (
-      <div style={{
-        padding: '10px 14px', minHeight: 36,
-        borderBottom: isLast ? 'none' : '1px solid var(--separator)',
-        background: 'var(--bg-hover)',
-      }}>
-        <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', display: 'block', marginBottom: 6 }}>
-          {field.label}
-        </span>
-        {renderEditControl()}
+      <div
+        style={{
+          padding: '10px 14px',
+          borderBottom: isLast ? 'none' : '1px solid var(--separator)',
+          background: editing ? 'var(--bg-hover)' : 'transparent',
+          cursor: 'default',
+          transition: 'background 150ms',
+        }}
+      >
+        {Boolean(field.label) && (
+          <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', display: 'block', marginBottom: 6 }}>
+            {field.label}
+          </span>
+        )}
+        {editing ? (
+          renderEditControl()
+        ) : (
+          <div
+            ref={textareaDisplayRef}
+            onClick={handleClick}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            style={{
+              fontSize: 13, fontWeight: 400,
+              color: displayText === '—' ? 'var(--text-tertiary)' : 'var(--text-primary)',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              lineHeight: 1.5,
+              borderRadius: 4,
+              padding: '2px 4px',
+              margin: '-2px -4px',
+              minHeight: 20,
+              background: 'transparent',
+              transition: 'background 150ms',
+            }}
+          >
+            {displayText}
+          </div>
+        )}
+        {saving && <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4, display: 'block' }}>Saving...</span>}
+        {saveError && <span style={{ fontSize: 11, color: 'var(--color-red)', marginTop: 4, display: 'block' }}>Save failed</span>}
       </div>
     )
   }

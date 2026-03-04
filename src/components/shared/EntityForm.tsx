@@ -261,6 +261,7 @@ function FieldRenderer({
         <LinkedRecordPicker
           entityApi={api}
           labelField={field.labelField}
+          label={field.label}
           value={value}
           onChange={onChange}
           placeholder={field.placeholder}

@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
+import LinkedRecordPicker from '../shared/LinkedRecordPicker'
 import useEntityList from '../../hooks/useEntityList'
 import useDarkMode from '../../hooks/useDarkMode'
 
@@ -402,62 +403,7 @@ interface TaskDetailProps {
   onReload: () => void
 }
 
-function safeParseIds(val: string | null): string[] {
-  if (!val) return []
-  try {
-    const parsed = JSON.parse(val)
-    return Array.isArray(parsed) ? parsed : []
-  } catch { return [] }
-}
-
 function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: TaskDetailProps) {
-  const [linkedNames, setLinkedNames] = useState<Record<string, string>>({})
-
-  useEffect(() => {
-    if (!task) return
-    const oppIds = safeParseIds(task.sales_opportunities_ids)
-    const contactIds = safeParseIds(task.contacts_ids)
-    const projectIds = safeParseIds(task.projects_ids)
-    const proposalIds = safeParseIds(task.proposal_ids)
-    if (oppIds.length + contactIds.length + projectIds.length + proposalIds.length === 0) {
-      setLinkedNames({})
-      return
-    }
-
-    async function resolve() {
-      const names: Record<string, string> = {}
-      const [opps, contacts, projects, proposals] = await Promise.all([
-        oppIds.length > 0 ? window.electronAPI.opportunities.getAll() : Promise.resolve({ success: true, data: [] }),
-        contactIds.length > 0 ? window.electronAPI.contacts.getAll() : Promise.resolve({ success: true, data: [] }),
-        projectIds.length > 0 ? window.electronAPI.projects.getAll() : Promise.resolve({ success: true, data: [] }),
-        proposalIds.length > 0 ? window.electronAPI.proposals.getAll() : Promise.resolve({ success: true, data: [] }),
-      ])
-      if (opps.success && opps.data) {
-        for (const r of opps.data as Record<string, unknown>[]) {
-          if (oppIds.includes(r.id as string)) names[r.id as string] = (r.opportunity_name as string) || 'Unnamed'
-        }
-      }
-      if (contacts.success && contacts.data) {
-        for (const r of contacts.data as Record<string, unknown>[]) {
-          if (contactIds.includes(r.id as string)) {
-            names[r.id as string] = (r.contact_name as string) || [r.first_name, r.last_name].filter(Boolean).join(' ') || 'Unnamed'
-          }
-        }
-      }
-      if (projects.success && projects.data) {
-        for (const r of projects.data as Record<string, unknown>[]) {
-          if (projectIds.includes(r.id as string)) names[r.id as string] = (r.project_name as string) || 'Unnamed'
-        }
-      }
-      if (proposals.success && proposals.data) {
-        for (const r of proposals.data as Record<string, unknown>[]) {
-          if (proposalIds.includes(r.id as string)) names[r.id as string] = (r.proposal_name as string) || 'Unnamed'
-        }
-      }
-      setLinkedNames(names)
-    }
-    resolve()
-  }, [task?.id, task?.sales_opportunities_ids, task?.contacts_ids, task?.projects_ids, task?.proposal_ids])
 
   if (!task) {
     return (
@@ -470,19 +416,36 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
   const completed = isCompleted(task)
   const borderColor = completed ? 'var(--color-green)' : priorityBorderColor(task.priorityClean)
 
-  // Resolve linked fields to display names
-  const resolveLinked = (ids: string | null): string => {
-    const parsed = safeParseIds(ids)
-    if (parsed.length === 0) return '—'
-    return parsed.map(id => linkedNames[id] || id.slice(0, 8)).join(', ')
-  }
+  const handleLinkedSave = useCallback(async (key: string, val: unknown) => {
+    if (!task) return
+    await window.electronAPI.tasks.update(task.id, { [key]: val })
+    onReload()
+  }, [task, onReload])
 
-  const TASK_LINKED_FIELDS: EditableField[] = [
-    { key: 'sales_opportunities_ids', label: 'Opportunity', type: 'readonly' },
-    { key: 'contacts_ids', label: 'Contacts', type: 'readonly' },
-    { key: 'projects_ids', label: 'Projects', type: 'readonly' },
-    { key: 'proposal_ids', label: 'Proposal', type: 'readonly' },
-  ]
+  const createContact = useCallback(async (name: string): Promise<string | null> => {
+    const parts = name.split(' ')
+    const first = parts[0] || name
+    const last = parts.slice(1).join(' ') || ''
+    const res = await window.electronAPI.contacts.create({
+      contact_name: name,
+      first_name: first,
+      last_name: last,
+    })
+    if (res.success && res.data) return res.data as string
+    return null
+  }, [])
+
+  const createProject = useCallback(async (name: string): Promise<string | null> => {
+    const res = await window.electronAPI.projects.create({ project_name: name })
+    if (res.success && res.data) return res.data as string
+    return null
+  }, [])
+
+  const createProposal = useCallback(async (name: string): Promise<string | null> => {
+    const res = await window.electronAPI.proposals.create({ proposal_name: name, status: 'Draft' })
+    if (res.success && res.data) return res.data as string
+    return null
+  }, [])
 
   let overdueLabel = ''
   if (task.due_date && !completed) {
@@ -573,15 +536,42 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
         Related
       </div>
       <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
-        {TASK_LINKED_FIELDS.map((field, idx) => (
-          <EditableFormRow
-            key={field.key}
-            field={field}
-            value={resolveLinked(task[field.key as keyof TaskItem] as string | null)}
-            isLast={idx === TASK_LINKED_FIELDS.length - 1}
-            onSave={async () => {}}
-          />
-        ))}
+        <LinkedRecordPicker
+          label="Opportunity"
+          entityApi={window.electronAPI.opportunities}
+          labelField="opportunity_name"
+          value={task.sales_opportunities_ids}
+          onChange={val => handleLinkedSave('sales_opportunities_ids', val)}
+          placeholder="Search opportunities..."
+        />
+        <LinkedRecordPicker
+          label="Contacts"
+          entityApi={window.electronAPI.contacts}
+          labelField="contact_name"
+          labelFallbackFields={['first_name', 'last_name']}
+          value={task.contacts_ids}
+          onChange={val => handleLinkedSave('contacts_ids', val)}
+          onCreate={createContact}
+          placeholder="Search contacts..."
+        />
+        <LinkedRecordPicker
+          label="Projects"
+          entityApi={window.electronAPI.projects}
+          labelField="project_name"
+          value={task.projects_ids}
+          onChange={val => handleLinkedSave('projects_ids', val)}
+          onCreate={createProject}
+          placeholder="Search projects..."
+        />
+        <LinkedRecordPicker
+          label="Proposals"
+          entityApi={window.electronAPI.proposals}
+          labelField="proposal_name"
+          value={task.proposal_ids}
+          onChange={val => handleLinkedSave('proposal_ids', val)}
+          onCreate={createProposal}
+          placeholder="Search proposals..."
+        />
       </div>
 
       <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
