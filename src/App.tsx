@@ -30,9 +30,11 @@ import PortalLogsPage from './components/portal/PortalLogsPage'
 import CommandPalette from './components/layout/CommandPalette'
 import ErrorBoundary from './components/shared/ErrorBoundary'
 import UpdateBanner from './components/layout/UpdateBanner'
+import RevokedPage from './components/auth/RevokedPage'
+import OfflineLockPage from './components/auth/OfflineLockPage'
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null) // null = loading
+  const [appState, setAppState] = useState<'loading' | 'revoked' | 'offline-locked' | 'onboarding' | 'ready'>('loading')
 
   // Theme initialization (runs regardless of auth state)
   useEffect(() => {
@@ -64,20 +66,49 @@ export default function App() {
   // Check auth state on mount
   useEffect(() => {
     window.electronAPI.auth.getCurrentUser().then(result => {
-      setIsAuthenticated(result.success && result.data?.hasApiKey === true)
+      if (result.success && result.data?.hasApiKey === true) {
+        setAppState('ready')
+      } else {
+        setAppState('onboarding')
+      }
     })
   }, [])
 
+  // Listen for license revocation / offline lock events from main process
+  useEffect(() => {
+    window.electronAPI.license.onRevoked(() => {
+      setAppState('revoked')
+    })
+    window.electronAPI.license.onOfflineLocked(() => {
+      setAppState('offline-locked')
+    })
+
+    return () => {
+      window.electronAPI.license.removeRevokedListener()
+      window.electronAPI.license.removeOfflineLockedListener()
+    }
+  }, [])
+
   // Loading state — blank window with matching background
-  if (isAuthenticated === null) {
+  if (appState === 'loading') {
     return <div style={{ width: '100%', height: '100vh', background: 'var(--bg-window)' }} />
   }
 
+  // Revoked — license has been revoked
+  if (appState === 'revoked') {
+    return <RevokedPage />
+  }
+
+  // Offline locked — grace period expired without verification
+  if (appState === 'offline-locked') {
+    return <OfflineLockPage />
+  }
+
   // Not authenticated — show onboarding
-  if (!isAuthenticated) {
+  if (appState === 'onboarding') {
     return (
       <OnboardingPage onComplete={() => {
-        setIsAuthenticated(true)
+        setAppState('ready')
         // Trigger initial sync after onboarding
         window.electronAPI.sync.forceSync()
         window.electronAPI.sync.start()
@@ -85,14 +116,17 @@ export default function App() {
     )
   }
 
-  // Authenticated — normal app
+  // Ready — normal app
   return (
     <ErrorBoundary>
       <UpdateBanner />
       <MemoryRouter>
         <CommandPalette />
         <Routes>
-          <Route element={<Layout onSignOut={() => setIsAuthenticated(false)} />}>
+          <Route element={<Layout onSignOut={async () => {
+            await window.electronAPI.license.revoke()
+            setAppState('onboarding')
+          }} />}>
             <Route path="/" element={<DashboardPage />} />
 
             {/* Contacts */}

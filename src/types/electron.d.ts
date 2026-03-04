@@ -79,6 +79,15 @@ interface ElectronAPI {
     remove: (contactId: string) => Promise<{ success: boolean; error?: string }>
     selectFile: () => Promise<{ success: boolean; data?: string | null; error?: string }>
   }
+  license: {
+    check: (email: string, airtableUserId?: string) => Promise<{ valid: boolean; status: string; message?: string }>
+    getStatus: () => Promise<{ lastVerified: number | null; withinGrace: boolean }>
+    revoke: () => Promise<{ success: boolean }>
+    onRevoked: (cb: () => void) => void
+    onOfflineLocked: (cb: () => void) => void
+    removeRevokedListener: () => void
+    removeOfflineLockedListener: () => void
+  }
   onAccentColor: (cb: (color: string) => void) => void
 }
 

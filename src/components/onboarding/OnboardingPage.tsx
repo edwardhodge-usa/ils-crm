@@ -29,6 +29,20 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
         return
       }
 
+      // Verify license is active before allowing onboarding
+      const licenseResult = await window.electronAPI.license.check(email.trim(), result.data.id)
+      if (!licenseResult.valid) {
+        setError(
+          licenseResult.status === 'not-found'
+            ? 'No active license found for this email. Contact admin@imaginelabstudios.com'
+            : licenseResult.status === 'error'
+              ? 'Unable to verify license. Please check your internet connection and try again.'
+              : `License is ${licenseResult.status}. Contact admin@imaginelabstudios.com`
+        )
+        setIsValidating(false)
+        return
+      }
+
       // Save user identity
       const saveResult = await window.electronAPI.auth.saveUser({
         id: result.data.id,

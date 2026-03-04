@@ -65,6 +65,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
   },
 
+  // License management
+  license: {
+    check: (email: string, airtableUserId?: string) =>
+      ipcRenderer.invoke('license:check', email, airtableUserId),
+    getStatus: () => ipcRenderer.invoke('license:getStatus'),
+    revoke: () => ipcRenderer.invoke('license:revoke'),
+    onRevoked: (cb: () => void) => {
+      ipcRenderer.on('license:revoked', () => cb())
+    },
+    onOfflineLocked: (cb: () => void) => {
+      ipcRenderer.on('license:offline-locked', () => cb())
+    },
+    removeRevokedListener: () => {
+      ipcRenderer.removeAllListeners('license:revoked')
+    },
+    removeOfflineLockedListener: () => {
+      ipcRenderer.removeAllListeners('license:offline-locked')
+    },
+  },
+
   // Entity CRUD
   contacts: makeCrudBridge('contacts'),
   companies: makeCrudBridge('companies'),

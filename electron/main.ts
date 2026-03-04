@@ -5,6 +5,7 @@ import { initDatabase, closeDatabase } from './database/init'
 import { registerAllHandlers } from './ipc/register'
 import { getSetting } from './database/queries/entities'
 import { fullSync, startPolling } from './airtable/sync-engine'
+import { checkLicense, setLastVerifiedTime, isWithinGracePeriod, handleRevocation } from './airtable/license-check'
 import { buildMenu } from './menu'
 import { UPDATER_TOKEN } from './updater-token'
 
@@ -115,22 +116,85 @@ app.whenReady().then(async () => {
     setInterval(() => autoUpdater.checkForUpdatesAndNotify(), 4 * 60 * 60 * 1000)
   }
 
-  // Auto-start sync if API key is configured
+  // ─── License check + sync startup ─────────────────────────
+  const userEmail = getSetting('user_email')
   const apiKey = getSetting('airtable_api_key')
-  if (apiKey) {
-    if (isDev) console.log('[App] API key found, starting initial sync...')
+
+  if (userEmail && apiKey) {
+    // Validate license before starting sync
+    const license = await checkLicense(userEmail, getSetting('user_id') || undefined)
+
+    if (license.valid) {
+      setLastVerifiedTime()
+      if (isDev) console.log('[App] License valid, starting sync...')
+
+      fullSync(mainWindow).then((result) => {
+        if (result.success) {
+          if (isDev) console.log('[App] Initial sync complete')
+        } else {
+          console.error('[App] Initial sync failed:', result.error)
+        }
+        startPolling(mainWindow)
+      })
+    } else if (license.status === 'error') {
+      // Network error — check grace period
+      if (isWithinGracePeriod()) {
+        if (isDev) console.log('[App] License check failed (network), within grace period — proceeding')
+        fullSync(mainWindow).then((result) => {
+          if (result.success) {
+            if (isDev) console.log('[App] Initial sync complete')
+          } else {
+            console.error('[App] Initial sync failed:', result.error)
+          }
+          startPolling(mainWindow)
+        })
+      } else {
+        // Grace period expired — lock the app (no data deletion)
+        if (isDev) console.log('[App] License check failed, grace period expired — locking app')
+        mainWindow?.webContents.send('license:offline-locked')
+      }
+    } else {
+      // Revoked, suspended, or not-found — revoke access
+      console.error(`[App] License not active: ${license.status}`)
+      await handleRevocation()
+      mainWindow?.webContents.send('license:revoked')
+    }
+  } else if (apiKey && !userEmail) {
+    // Legacy: has API key but no email — start sync normally (shouldn't happen)
+    if (isDev) console.log('[App] API key found but no email, starting sync...')
     fullSync(mainWindow).then((result) => {
       if (result.success) {
         if (isDev) console.log('[App] Initial sync complete')
       } else {
         console.error('[App] Initial sync failed:', result.error)
       }
-      // Always start polling — don't block on initial sync failure
       startPolling(mainWindow)
     })
   } else {
     if (isDev) console.log('[App] No API key configured, skipping sync')
   }
+
+  // ─── Periodic license re-check every 5 minutes ──────────
+  setInterval(async () => {
+    const email = getSetting('user_email')
+    if (!email) return // not onboarded yet
+
+    const license = await checkLicense(email, getSetting('user_id') || undefined)
+
+    if (license.valid) {
+      setLastVerifiedTime()
+    } else if (license.status === 'error') {
+      // Network error — grace period still active, do nothing
+      if (!isWithinGracePeriod()) {
+        mainWindow?.webContents.send('license:offline-locked')
+      }
+    } else {
+      // Revoked mid-session
+      console.error(`[App] License revoked mid-session: ${license.status}`)
+      await handleRevocation()
+      mainWindow?.webContents.send('license:revoked')
+    }
+  }, 5 * 60 * 1000)
 })
 
 app.on('window-all-closed', () => {

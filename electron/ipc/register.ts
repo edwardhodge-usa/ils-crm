@@ -14,6 +14,7 @@ import {
   fetchLinkedInPhoto, uploadContactPhotoToAirtable, uploadLocalContactPhoto, removeContactPhotoFromAirtable,
 } from '../airtable/logo-service'
 import { getDatabase, saveDatabase } from '../database/init'
+import { checkLicense, getLastVerifiedTime, isWithinGracePeriod, handleRevocation } from '../airtable/license-check'
 
 // ─── Helper: register CRUD for an entity ─────────────────────
 
@@ -477,6 +478,39 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       return { success: true }
     } catch (error) {
       console.error('[IPC] updater:install failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  // ─── License ──────────────────────────────────────────────
+  ipcMain.handle('license:check', async (_e, email: string, airtableUserId?: string) => {
+    try {
+      const result = await checkLicense(email, airtableUserId)
+      return result
+    } catch (error) {
+      console.error('[IPC] license:check failed:', String(error))
+      return { valid: false, status: 'error' as const, message: String(error) }
+    }
+  })
+
+  ipcMain.handle('license:getStatus', async () => {
+    try {
+      return {
+        lastVerified: getLastVerifiedTime(),
+        withinGrace: isWithinGracePeriod(),
+      }
+    } catch (error) {
+      console.error('[IPC] license:getStatus failed:', String(error))
+      return { lastVerified: null, withinGrace: false }
+    }
+  })
+
+  ipcMain.handle('license:revoke', async () => {
+    try {
+      await handleRevocation()
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] license:revoke failed:', String(error))
       return { success: false, error: String(error) }
     }
   })
