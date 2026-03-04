@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import type { FormFieldDef } from './EntityForm'
+import CreateRecordSheet from './CreateRecordSheet'
 
 interface LinkedRecordPickerProps {
   entityApi: { getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }> }
@@ -8,7 +10,16 @@ interface LinkedRecordPickerProps {
   labelFallbackFields?: string[]
   value: unknown
   onChange: (v: unknown) => void
+  /** Legacy: simple create callback (name only) */
   onCreate?: (name: string) => Promise<string | null>
+  /** Modal create: field definitions for the create form */
+  createFields?: FormFieldDef[]
+  /** Modal create: title for the create modal (e.g. "New Contact") */
+  createTitle?: string
+  /** Modal create: default values to pre-populate */
+  createDefaults?: Record<string, unknown>
+  /** Modal create: entity API with create method */
+  createApi?: { create: (values: Record<string, unknown>) => Promise<{ success: boolean; data?: unknown; error?: string }> }
   multiple?: boolean
   placeholder?: string
   label: string
@@ -21,6 +32,10 @@ export default function LinkedRecordPicker({
   value,
   onChange,
   onCreate,
+  createFields,
+  createTitle,
+  createDefaults,
+  createApi,
   multiple = true,
   placeholder = 'Search to link...',
   label,
@@ -29,9 +44,15 @@ export default function LinkedRecordPicker({
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [showCreateSheet, setShowCreateSheet] = useState(false)
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [sheetSearchText, setSheetSearchText] = useState('')
   const containerRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const hasModalCreate = Boolean(createFields && createApi)
+  const canCreate = Boolean(onCreate) || hasModalCreate
 
   // Parse current linked IDs
   const linkedIds: string[] = (() => {
@@ -75,11 +96,13 @@ export default function LinkedRecordPicker({
     refreshRecords()
   }, [refreshRecords])
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click (exclude the portal dropdown itself)
   useEffect(() => {
     if (!open) return
     function handleClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node
+      if (containerRef.current && !containerRef.current.contains(target)
+        && (!dropdownRef.current || !dropdownRef.current.contains(target))) {
         setOpen(false)
         setSearch('')
       }
@@ -126,6 +149,15 @@ export default function LinkedRecordPicker({
   }
 
   async function handleCreate() {
+    if (hasModalCreate) {
+      // Capture search text before closing dropdown
+      setSheetSearchText(search.trim())
+      setOpen(false)
+      setSearch('')
+      setShowCreateSheet(true)
+      return
+    }
+    // Legacy: simple name-only create
     if (!onCreate || !search.trim()) return
     setCreating(true)
     try {
@@ -138,6 +170,20 @@ export default function LinkedRecordPicker({
     } finally {
       setCreating(false)
     }
+  }
+
+  async function handleSheetSubmit(values: Record<string, unknown>): Promise<string | null> {
+    if (!createApi) return null
+    const res = await createApi.create(values)
+    if (res.success && res.data) {
+      const newId = res.data as string
+      refreshRecords()
+      handleLink(newId)
+      setSearch('')
+      setOpen(false)
+      return newId
+    }
+    throw new Error(res.error || 'Failed to create record')
   }
 
   // Filter records: exclude already linked, match search
@@ -153,6 +199,21 @@ export default function LinkedRecordPicker({
   })
 
   const hasSearch = search.trim().length > 0
+
+  // Build defaults for create sheet: pre-populate name field from captured search text
+  const sheetDefaults = (() => {
+    if (!sheetSearchText) return createDefaults || {}
+    const base = { ...createDefaults }
+    if (labelField === 'contact_name') {
+      const parts = sheetSearchText.split(' ')
+      base.first_name = parts[0] || ''
+      base.last_name = parts.slice(1).join(' ') || ''
+      base.contact_name = sheetSearchText
+    } else {
+      base[labelField] = sheetSearchText
+    }
+    return base
+  })()
 
   return (
     <div
@@ -231,7 +292,7 @@ export default function LinkedRecordPicker({
           onChange={e => setSearch(e.target.value)}
           onKeyDown={e => {
             if (e.key === 'Escape') { setOpen(false); setSearch('') }
-            if (e.key === 'Enter' && hasSearch && onCreate && filtered.length === 0) {
+            if (e.key === 'Enter' && hasSearch && canCreate && filtered.length === 0) {
               e.preventDefault()
               handleCreate()
             }
@@ -252,6 +313,7 @@ export default function LinkedRecordPicker({
       {/* Dropdown via portal */}
       {open && dropdownPos && createPortal(
         <div
+          ref={dropdownRef}
           style={{
             position: 'fixed',
             top: dropdownPos.top,
@@ -259,8 +321,8 @@ export default function LinkedRecordPicker({
             width: dropdownPos.width,
             maxHeight: 220,
             overflowY: 'auto',
-            zIndex: 9999,
-            background: 'var(--bg-window)',
+            zIndex: 10001,
+            background: 'var(--bg-sheet)',
             border: '1px solid var(--separator-opaque)',
             borderRadius: 8,
             boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
@@ -273,7 +335,7 @@ export default function LinkedRecordPicker({
             </div>
           )}
 
-          {filtered.length === 0 && hasSearch && !onCreate && (
+          {filtered.length === 0 && hasSearch && !canCreate && (
             <div style={{ padding: '8px 12px', fontSize: 13, color: 'var(--text-tertiary)' }}>
               No matching records
             </div>
@@ -300,7 +362,7 @@ export default function LinkedRecordPicker({
           ))}
 
           {/* Create new option */}
-          {onCreate && hasSearch && (
+          {canCreate && hasSearch && (
             <button
               type="button"
               onClick={handleCreate}
@@ -324,6 +386,17 @@ export default function LinkedRecordPicker({
           )}
         </div>,
         document.body
+      )}
+
+      {/* Create Record Sheet (modal) */}
+      {showCreateSheet && createFields && createApi && (
+        <CreateRecordSheet
+          title={createTitle || 'New Record'}
+          fields={createFields}
+          defaults={sheetDefaults}
+          onSubmit={handleSheetSubmit}
+          onClose={() => { setShowCreateSheet(false); setSheetSearchText('') }}
+        />
       )}
     </div>
   )

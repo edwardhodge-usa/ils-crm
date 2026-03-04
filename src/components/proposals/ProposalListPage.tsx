@@ -24,28 +24,51 @@ function toListItem(row: Record<string, unknown>): ProposalListItem {
   }
 }
 
+type SortKey = 'name' | 'status' | 'value' | 'newest'
+
 export default function ProposalListPage() {
   const { data: proposals, loading, error } = useEntityList(() => window.electronAPI.proposals.getAll())
   const navigate = useNavigate()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<SortKey>('name')
 
-  const filteredProposals: ProposalListItem[] = useMemo(() => {
-    const items = (proposals as Record<string, unknown>[]).map(toListItem)
-    if (!search.trim()) return items
-    const q = search.toLowerCase()
-    return items.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      (p.status ?? '').toLowerCase().includes(q) ||
-      (p.companyName ?? '').toLowerCase().includes(q)
-    )
-  }, [proposals, search])
+  const filtered = useMemo(() => {
+    let items = (proposals as Record<string, unknown>[]).map(toListItem)
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      items = items.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.status ?? '').toLowerCase().includes(q) ||
+        (p.companyName ?? '').toLowerCase().includes(q)
+      )
+    }
+    const sorted = [...items]
+    switch (sortBy) {
+      case 'name':
+        sorted.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      case 'status':
+        sorted.sort((a, b) => (a.status ?? '').localeCompare(b.status ?? ''))
+        break
+      case 'value':
+        sorted.sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+        break
+      case 'newest':
+        // id order as proxy (Airtable IDs are chronological)
+        sorted.sort((a, b) => b.id.localeCompare(a.id))
+        break
+    }
+    return sorted
+  }, [proposals, search, sortBy])
 
   if (loading) return <LoadingSpinner />
 
   if (error) {
     return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
   }
+
+  const isGrouped = sortBy === 'status'
 
   return (
     <div className="flex h-full w-full overflow-hidden">
@@ -65,14 +88,78 @@ export default function ProposalListPage() {
           </PrimaryButton>
         </div>
 
+        {/* Sort bar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '6px 12px',
+          borderBottom: '1px solid var(--separator)',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+            {filtered.length} proposal{filtered.length !== 1 ? 's' : ''}
+          </span>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as SortKey)}
+            style={{
+              fontSize: 11, fontWeight: 500,
+              color: 'var(--text-secondary)',
+              background: 'transparent',
+              border: 'none', outline: 'none',
+              cursor: 'default',
+              textAlign: 'right',
+            }}
+          >
+            <option value="name">Name A–Z</option>
+            <option value="status">Status</option>
+            <option value="value">Value High→Low</option>
+            <option value="newest">Newest First</option>
+          </select>
+        </div>
+
         {/* List */}
         <div className="flex-1 overflow-y-auto">
-          {filteredProposals.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="flex items-center justify-center h-full text-[12px] text-[var(--text-secondary)] px-4 text-center">
               {search ? 'No proposals match your search.' : 'No proposals yet. Sync from Airtable in Settings.'}
             </div>
-          ) : (
-            filteredProposals.map(proposal => (
+          ) : isGrouped ? (() => {
+            const groups = new Map<string, ProposalListItem[]>()
+            for (const item of filtered) {
+              const key = item.status || 'No Status'
+              if (!groups.has(key)) groups.set(key, [])
+              groups.get(key)!.push(item)
+            }
+            return Array.from(groups.entries()).map(([label, items]) => (
+              <div key={label}>
+                <div style={{
+                  position: 'sticky', top: 0, zIndex: 1,
+                  padding: '18px 12px 6px',
+                  fontSize: 11, fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: 'var(--text-primary)',
+                  background: 'var(--bg-window)',
+                  borderBottom: '0.5px solid var(--separator)',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}>
+                  <span>{label.toUpperCase()}</span>
+                  <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    {items.length}
+                  </span>
+                </div>
+                {items.map(proposal => (
+                  <ProposalRow
+                    key={proposal.id}
+                    proposal={proposal}
+                    isSelected={selectedId === proposal.id}
+                    onClick={() => setSelectedId(proposal.id)}
+                  />
+                ))}
+              </div>
+            ))
+          })() : (
+            filtered.map(proposal => (
               <ProposalRow
                 key={proposal.id}
                 proposal={proposal}

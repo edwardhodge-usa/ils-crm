@@ -142,14 +142,18 @@ export default function EntityForm({
   )
 }
 
-function FieldRenderer({
+export function FieldRenderer({
   field,
   value,
   onChange,
+  onLinkedRecordCreate,
 }: {
   field: FormFieldDef
   value: unknown
   onChange: (v: unknown) => void
+  /** When provided, linked record "+ Create" triggers this instead of simple inline create.
+   *  Called with (entityName, labelField, searchText). Used by CreateRecordSheet for split-pane. */
+  onLinkedRecordCreate?: (entityName: string, labelField: string, searchText: string) => void
 }) {
   const labelClass = 'text-[13px] font-normal text-[var(--text-primary)] flex-shrink-0'
 
@@ -253,8 +257,28 @@ function FieldRenderer({
 
   if (field.type === 'linkedRecord' && field.entityName && field.labelField) {
     const api = (window.electronAPI as unknown as Record<string, unknown>)[field.entityName] as
-      { getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }> } | undefined
+      { getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>; create: (v: Record<string, unknown>) => Promise<{ success: boolean; data?: unknown; error?: string }> } | undefined
     if (!api) return null
+
+    // If parent provides onLinkedRecordCreate, use that for split-pane sub-creation
+    const handleCreate = onLinkedRecordCreate
+      ? async (name: string): Promise<string | null> => {
+          onLinkedRecordCreate(field.entityName!, field.labelField!, name)
+          return null // signal: don't link yet, the sub-create pane will handle it
+        }
+      : async (name: string): Promise<string | null> => {
+          const payload: Record<string, unknown> = { [field.labelField!]: name }
+          if (field.entityName === 'contacts') {
+            const parts = name.split(' ')
+            payload.first_name = parts[0] || name
+            payload.last_name = parts.slice(1).join(' ') || ''
+            payload.contact_name = name
+          }
+          const res = await api.create(payload)
+          if (res.success && res.data) return res.data as string
+          return null
+        }
+
     return (
       <div className="py-1.5">
         <label className={`${labelClass} block mb-1`}>{field.label}</label>
@@ -265,6 +289,7 @@ function FieldRenderer({
           value={value}
           onChange={onChange}
           placeholder={field.placeholder}
+          onCreate={handleCreate}
         />
       </div>
     )

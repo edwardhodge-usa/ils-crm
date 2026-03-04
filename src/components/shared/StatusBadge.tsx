@@ -7,7 +7,7 @@ import useDarkMode from '../../hooks/useDarkMode'
 type BadgeSize = 'sm' | 'md'
 
 // Apple color pairs: text (light accessible) / textDark (dark mode bright) / bg
-const colorMap: Record<string, { text: string; textDark: string; bg: string }> = {
+export const colorMap: Record<string, { text: string; textDark: string; bg: string }> = {
   // Task/Proposal status
   'To Do':             { text: '#636366',  textDark: '#98989D',  bg: 'rgba(142,142,147,0.22)' },
   'In Progress':       { text: '#0055B3',  textDark: '#409CFF',  bg: 'rgba(0,122,255,0.22)' },
@@ -57,7 +57,7 @@ const colorMap: Record<string, { text: string; textDark: string; bg: string }> =
   'IN-ACTIVE':         { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
 }
 
-const defaultColors = { text: '#636366', textDark: '#98989D', bg: 'rgba(142,142,147,0.20)' }
+export const defaultColors = { text: '#636366', textDark: '#98989D', bg: 'rgba(142,142,147,0.20)' }
 
 interface StatusBadgeProps {
   value: string | null | undefined

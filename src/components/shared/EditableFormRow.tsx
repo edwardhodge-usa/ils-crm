@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import useDarkMode from '../../hooks/useDarkMode'
+import { colorMap as statusColorMap, defaultColors as statusDefaultColors } from './StatusBadge'
 
 export type EditableFieldType =
   | 'text'
@@ -7,6 +9,7 @@ export type EditableFieldType =
   | 'currency'
   | 'date'
   | 'singleSelect'
+  | 'statusSelect'
   | 'multiSelect'
   | 'checkbox'
   | 'readonly'
@@ -97,10 +100,12 @@ function valuesEqual(a: unknown, b: unknown, type: EditableFieldType): boolean {
 }
 
 export function EditableFormRow({ field, value, isLast = false, onSave }: EditableFormRowProps) {
+  const isDark = useDarkMode()
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
   const [multiSelectValues, setMultiSelectValues] = useState<string[]>([])
   const [showMultiPopover, setShowMultiPopover] = useState(false)
+  const [showStatusPopover, setShowStatusPopover] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(false)
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null)
@@ -128,15 +133,16 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
   }, [editing, field.type])
 
   useEffect(() => {
-    if (!showMultiPopover) return
+    if (!showMultiPopover && !showStatusPopover) return
     function handleOutsideClick(e: MouseEvent) {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
         setShowMultiPopover(false)
+        setShowStatusPopover(false)
       }
     }
     document.addEventListener('mousedown', handleOutsideClick)
     return () => document.removeEventListener('mousedown', handleOutsideClick)
-  }, [showMultiPopover])
+  }, [showMultiPopover, showStatusPopover])
 
   const doSave = useCallback(async (newValue: unknown) => {
     if (valuesEqual(newValue, value, field.type)) {
@@ -189,6 +195,11 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
       return
     }
 
+    if (field.type === 'statusSelect') {
+      setShowStatusPopover(true)
+      return
+    }
+
     if (field.type === 'singleSelect') {
       setEditValue(toEditValue(value, field.type))
       setEditing(true)
@@ -217,7 +228,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
   }
 
   const isInteractive = field.type !== 'readonly'
-  const showChevron = field.type === 'singleSelect' || field.type === 'multiSelect'
+  const showChevron = field.type === 'singleSelect' || field.type === 'multiSelect' || field.type === 'statusSelect'
 
   // --- Render edit controls ---
 
@@ -449,7 +460,20 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
               background: 'transparent',
             }}
           >
-            {formatDisplayValue(value, field.type)}
+            {field.type === 'statusSelect' && value ? (() => {
+              const colors = statusColorMap[String(value)] || statusDefaultColors
+              return (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center',
+                  padding: '2px 6px', borderRadius: 4,
+                  fontSize: 11, fontWeight: 600, lineHeight: 1.4,
+                  color: isDark ? colors.textDark : colors.text,
+                  background: colors.bg, whiteSpace: 'nowrap',
+                }}>
+                  {String(value)}
+                </span>
+              )
+            })() : formatDisplayValue(value, field.type)}
             {showChevron && (
               <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4, flexShrink: 0 }}>⌃</span>
             )}
@@ -508,6 +532,69 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
           >
             Done
           </button>
+        </div>
+      )}
+
+      {/* StatusSelect popover — pill-style options */}
+      {showStatusPopover && (
+        <div
+          ref={popoverRef}
+          style={{
+            position: 'absolute', right: 14, top: '100%', zIndex: 200,
+            background: 'var(--bg-card)', border: '1px solid var(--separator)',
+            borderRadius: 8, padding: 6,
+            maxHeight: 240, overflowY: 'auto',
+            minWidth: 160,
+            boxShadow: 'var(--shadow-menu)',
+          }}
+        >
+          {/* Clear option */}
+          <div
+            onClick={() => { setShowStatusPopover(false); doSave(null) }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            style={{
+              padding: '6px 8px', borderRadius: 4,
+              cursor: 'default', fontSize: 13,
+              color: 'var(--text-tertiary)',
+              background: 'transparent',
+              transition: 'background 150ms',
+            }}
+          >
+            —
+          </div>
+          {(field.options || []).map(opt => {
+            const colors = statusColorMap[opt] || statusDefaultColors
+            const isSelected = String(value) === opt
+            return (
+              <div
+                key={opt}
+                onClick={() => { setShowStatusPopover(false); doSave(opt) }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '5px 8px', borderRadius: 4,
+                  cursor: 'default',
+                  background: 'transparent',
+                  transition: 'background 150ms',
+                }}
+              >
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center',
+                  padding: '2px 6px', borderRadius: 4,
+                  fontSize: 11, fontWeight: 600, lineHeight: 1.4,
+                  color: isDark ? colors.textDark : colors.text,
+                  background: colors.bg, whiteSpace: 'nowrap',
+                }}>
+                  {opt}
+                </span>
+                {isSelected && (
+                  <span style={{ fontSize: 11, color: 'var(--color-accent)', marginLeft: 'auto' }}>✓</span>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

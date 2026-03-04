@@ -2,10 +2,17 @@ import { useState, useMemo, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
+import ConfirmDialog from '../shared/ConfirmDialog'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import LinkedRecordPicker from '../shared/LinkedRecordPicker'
 import useEntityList from '../../hooks/useEntityList'
 import useDarkMode from '../../hooks/useDarkMode'
+import {
+  CONTACT_CREATE_FIELDS,
+  PROJECT_CREATE_FIELDS,
+  PROPOSAL_CREATE_FIELDS,
+  OPPORTUNITY_CREATE_FIELDS,
+} from '../../config/create-fields'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -422,37 +429,6 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
     onReload()
   }, [task, onReload])
 
-  const createContact = useCallback(async (name: string): Promise<string | null> => {
-    const parts = name.split(' ')
-    const first = parts[0] || name
-    const last = parts.slice(1).join(' ') || ''
-    const res = await window.electronAPI.contacts.create({
-      contact_name: name,
-      first_name: first,
-      last_name: last,
-    })
-    if (res.success && res.data) return res.data as string
-    return null
-  }, [])
-
-  const createProject = useCallback(async (name: string): Promise<string | null> => {
-    const res = await window.electronAPI.projects.create({ project_name: name })
-    if (res.success && res.data) return res.data as string
-    return null
-  }, [])
-
-  const createOpportunity = useCallback(async (name: string): Promise<string | null> => {
-    const res = await window.electronAPI.opportunities.create({ opportunity_name: name, sales_stage: 'Initial Contact' })
-    if (res.success && res.data) return res.data as string
-    return null
-  }, [])
-
-  const createProposal = useCallback(async (name: string): Promise<string | null> => {
-    const res = await window.electronAPI.proposals.create({ proposal_name: name, status: 'Draft' })
-    if (res.success && res.data) return res.data as string
-    return null
-  }, [])
-
   let overdueLabel = ''
   if (task.due_date && !completed) {
     const today = new Date()
@@ -548,7 +524,10 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
           labelField="opportunity_name"
           value={task.sales_opportunities_ids}
           onChange={val => handleLinkedSave('sales_opportunities_ids', val)}
-          onCreate={createOpportunity}
+          createFields={OPPORTUNITY_CREATE_FIELDS}
+          createTitle="New Opportunity"
+          createDefaults={{ sales_stage: 'Initial Contact' }}
+          createApi={window.electronAPI.opportunities}
           placeholder="Search opportunities..."
         />
         <LinkedRecordPicker
@@ -558,7 +537,9 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
           labelFallbackFields={['first_name', 'last_name']}
           value={task.contacts_ids}
           onChange={val => handleLinkedSave('contacts_ids', val)}
-          onCreate={createContact}
+          createFields={CONTACT_CREATE_FIELDS}
+          createTitle="New Contact"
+          createApi={window.electronAPI.contacts}
           placeholder="Search contacts..."
         />
         <LinkedRecordPicker
@@ -567,7 +548,9 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
           labelField="project_name"
           value={task.projects_ids}
           onChange={val => handleLinkedSave('projects_ids', val)}
-          onCreate={createProject}
+          createFields={PROJECT_CREATE_FIELDS}
+          createTitle="New Project"
+          createApi={window.electronAPI.projects}
           placeholder="Search projects..."
         />
         <LinkedRecordPicker
@@ -576,7 +559,10 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
           labelField="proposal_name"
           value={task.proposal_ids}
           onChange={val => handleLinkedSave('proposal_ids', val)}
-          onCreate={createProposal}
+          createFields={PROPOSAL_CREATE_FIELDS}
+          createTitle="New Proposal"
+          createDefaults={{ status: 'Draft' }}
+          createApi={window.electronAPI.proposals}
           placeholder="Search proposals..."
         />
       </div>
@@ -609,6 +595,7 @@ export default function TasksPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   const today = todayStr()
   const allTasks = useMemo(() => rawTasks.map(toTaskItem), [rawTasks])
@@ -683,11 +670,17 @@ export default function TasksPage() {
     reload()
   }, [reload])
 
-  const handleDelete = useCallback(async (id: string) => {
-    await window.electronAPI.tasks.delete(id)
+  const handleDelete = useCallback((id: string) => {
+    setPendingDeleteId(id)
+  }, [])
+
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDeleteId) return
+    await window.electronAPI.tasks.delete(pendingDeleteId)
+    setPendingDeleteId(null)
     setSelectedId(null)
     reload()
-  }, [reload])
+  }, [pendingDeleteId, reload])
 
   const toggleSection = useCallback((key: string) => {
     setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
@@ -840,6 +833,14 @@ export default function TasksPage() {
         onComplete={handleComplete}
         onDelete={handleDelete}
         onReload={reload}
+      />
+
+      <ConfirmDialog
+        open={Boolean(pendingDeleteId)}
+        title="Delete Task"
+        message={`Are you sure you want to delete "${allTasks.find(t => t.id === pendingDeleteId)?.title || 'this task'}"? This cannot be undone.`}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDeleteId(null)}
       />
     </div>
   )

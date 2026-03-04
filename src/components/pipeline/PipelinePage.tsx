@@ -57,7 +57,7 @@ function resolveLinkedLogo(idsField: unknown, logoMap: Map<string, string>): str
 }
 
 export default function PipelinePage() {
-  const { data: rawData, loading, error } = useEntityList(() => window.electronAPI.opportunities.getAll())
+  const { data: rawData, loading, error, reload } = useEntityList(() => window.electronAPI.opportunities.getAll())
   const { data: companiesData } = useEntityList(() => window.electronAPI.companies.getAll())
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -150,7 +150,7 @@ export default function PipelinePage() {
       </div>
 
       {/* Deal detail slide-in panel */}
-      <DealDetail dealId={selectedDealId} onClose={() => setSelectedDealId(null)} />
+      <DealDetail dealId={selectedDealId} onClose={() => setSelectedDealId(null)} onDeleted={() => { setSelectedDealId(null); reload() }} />
     </div>
   )
 }

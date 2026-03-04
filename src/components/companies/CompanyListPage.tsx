@@ -48,19 +48,37 @@ export default function CompanyListPage() {
   const navigate = useNavigate()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'name' | 'type' | 'industry' | 'newest'>('name')
 
   const filteredCompanies: CompanyListItem[] = useMemo(() => {
-    const items = (companies as Record<string, unknown>[]).map(row =>
+    let items = (companies as Record<string, unknown>[]).map(row =>
       toListItem(row, contactsData as Record<string, unknown>[])
     )
-    if (!search.trim()) return items
-    const q = search.toLowerCase()
-    return items.filter(c =>
-      c.name.toLowerCase().includes(q) ||
-      (c.industry ?? '').toLowerCase().includes(q) ||
-      (c.type ?? '').toLowerCase().includes(q)
-    )
-  }, [companies, contactsData, search])
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      items = items.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        (c.industry ?? '').toLowerCase().includes(q) ||
+        (c.type ?? '').toLowerCase().includes(q)
+      )
+    }
+    const sorted = [...items]
+    switch (sortBy) {
+      case 'name':
+        sorted.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      case 'type':
+        sorted.sort((a, b) => (a.type ?? '').localeCompare(b.type ?? ''))
+        break
+      case 'industry':
+        sorted.sort((a, b) => (a.industry ?? '').localeCompare(b.industry ?? ''))
+        break
+      case 'newest':
+        sorted.sort((a, b) => b.id.localeCompare(a.id))
+        break
+    }
+    return sorted
+  }, [companies, contactsData, search, sortBy])
 
   if (loading) return <LoadingSpinner />
 
@@ -119,13 +137,78 @@ export default function CompanyListPage() {
           />
         </div>
 
+        {/* Sort bar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '6px 12px',
+          borderBottom: '1px solid var(--separator)',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+            {filteredCompanies.length} compan{filteredCompanies.length !== 1 ? 'ies' : 'y'}
+          </span>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            style={{
+              fontSize: 11, fontWeight: 500,
+              color: 'var(--text-secondary)',
+              background: 'transparent',
+              border: 'none', outline: 'none',
+              cursor: 'default',
+              textAlign: 'right',
+            }}
+          >
+            <option value="name">Name A–Z</option>
+            <option value="type">Type</option>
+            <option value="industry">Industry</option>
+            <option value="newest">Newest First</option>
+          </select>
+        </div>
+
         {/* Company list */}
         <div className="flex-1 overflow-y-auto">
           {filteredCompanies.length === 0 ? (
             <div className="flex items-center justify-center h-full text-[13px] text-[var(--text-secondary)] px-4 text-center">
               {search ? 'No companies match your search.' : 'No companies yet. Sync from Airtable in Settings.'}
             </div>
-          ) : (
+          ) : (sortBy === 'type' || sortBy === 'industry') ? (() => {
+            const groupKey = sortBy
+            const groups = new Map<string, CompanyListItem[]>()
+            for (const item of filteredCompanies) {
+              const key = item[groupKey] || `No ${groupKey === 'type' ? 'Type' : 'Industry'}`
+              if (!groups.has(key)) groups.set(key, [])
+              groups.get(key)!.push(item)
+            }
+            return Array.from(groups.entries()).map(([label, items]) => (
+              <div key={label}>
+                <div style={{
+                  position: 'sticky', top: 0, zIndex: 1,
+                  padding: '18px 12px 6px',
+                  fontSize: 11, fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: 'var(--text-primary)',
+                  background: 'var(--bg-window)',
+                  borderBottom: '0.5px solid var(--separator)',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}>
+                  <span>{label.toUpperCase()}</span>
+                  <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    {items.length}
+                  </span>
+                </div>
+                {items.map(company => (
+                  <CompanyRow
+                    key={company.id}
+                    company={company}
+                    isSelected={selectedId === company.id}
+                    onClick={() => setSelectedId(company.id)}
+                  />
+                ))}
+              </div>
+            ))
+          })() : (
             filteredCompanies.map(company => (
               <CompanyRow
                 key={company.id}

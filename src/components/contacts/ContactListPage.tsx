@@ -36,6 +36,7 @@ export default function ContactListPage() {
   const [specialtyMap, setSpecialtyMap] = useState<Record<string, string>>({})
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'name' | 'company' | 'newest'>('name')
 
   const companyLogoMap = useMemo(() => {
     const map = new Map<string, string>()
@@ -109,17 +110,30 @@ export default function ContactListPage() {
     }
   }
 
-  const filteredContacts: ContactListItem[] = (contacts as Record<string, unknown>[])
-    .map(toListItem)
-    .filter(c => {
-      if (!search.trim()) return true
+  const filteredContacts: ContactListItem[] = useMemo(() => {
+    let items = (contacts as Record<string, unknown>[]).map(toListItem)
+    if (search.trim()) {
       const q = search.toLowerCase()
-      return (
+      items = items.filter(c =>
         `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
         (c.companyName ?? '').toLowerCase().includes(q) ||
         (c.jobTitle ?? '').toLowerCase().includes(q)
       )
-    })
+    }
+    const sorted = [...items]
+    switch (sortBy) {
+      case 'name':
+        sorted.sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`))
+        break
+      case 'company':
+        sorted.sort((a, b) => (a.companyName ?? '').localeCompare(b.companyName ?? ''))
+        break
+      case 'newest':
+        sorted.sort((a, b) => b.id.localeCompare(a.id))
+        break
+    }
+    return sorted
+  }, [contacts, specialtyMap, companyLogoMap, search, sortBy]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <LoadingSpinner />
 
@@ -179,13 +193,76 @@ export default function ContactListPage() {
           />
         </div>
 
+        {/* Sort bar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '6px 12px',
+          borderBottom: '1px solid var(--separator)',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+            {filteredContacts.length} contact{filteredContacts.length !== 1 ? 's' : ''}
+          </span>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            style={{
+              fontSize: 11, fontWeight: 500,
+              color: 'var(--text-secondary)',
+              background: 'transparent',
+              border: 'none', outline: 'none',
+              cursor: 'default',
+              textAlign: 'right',
+            }}
+          >
+            <option value="name">Name A–Z</option>
+            <option value="company">Company</option>
+            <option value="newest">Newest First</option>
+          </select>
+        </div>
+
         {/* Contact list */}
         <div className="flex-1 overflow-y-auto">
           {filteredContacts.length === 0 ? (
             <div className="flex items-center justify-center h-full text-[13px] text-[var(--text-secondary)] px-4 text-center">
               {search ? 'No contacts match your search.' : 'No contacts yet. Sync from Airtable in Settings.'}
             </div>
-          ) : (
+          ) : sortBy === 'company' ? (() => {
+            const groups = new Map<string, ContactListItem[]>()
+            for (const item of filteredContacts) {
+              const key = item.companyName || 'No Company'
+              if (!groups.has(key)) groups.set(key, [])
+              groups.get(key)!.push(item)
+            }
+            return Array.from(groups.entries()).map(([label, items]) => (
+              <div key={label}>
+                <div style={{
+                  position: 'sticky', top: 0, zIndex: 1,
+                  padding: '18px 12px 6px',
+                  fontSize: 11, fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: 'var(--text-primary)',
+                  background: 'var(--bg-window)',
+                  borderBottom: '0.5px solid var(--separator)',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}>
+                  <span>{label.toUpperCase()}</span>
+                  <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    {items.length}
+                  </span>
+                </div>
+                {items.map(contact => (
+                  <ContactRow
+                    key={contact.id}
+                    contact={contact}
+                    isSelected={selectedId === contact.id}
+                    onClick={() => setSelectedId(contact.id)}
+                  />
+                ))}
+              </div>
+            ))
+          })() : (
             filteredContacts.map(contact => (
               <ContactRow
                 key={contact.id}

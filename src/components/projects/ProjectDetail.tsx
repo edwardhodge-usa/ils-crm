@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '../shared/EmptyState'
 import StatusBadge from '../shared/StatusBadge'
 import { ContactStats } from '../contacts/ContactStats'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
-import { containsId } from '../../utils/linked-records'
+import LinkedRecordPicker from '../shared/LinkedRecordPicker'
+import {
+  CONTACT_CREATE_FIELDS,
+  OPPORTUNITY_CREATE_FIELDS,
+} from '../../config/create-fields'
 
 function buildProjectEditableFields(leadOptions: string[]): EditableField[] {
   return [
@@ -27,12 +30,16 @@ interface ProjectDetailProps {
 }
 
 export function ProjectDetail({ projectId, leadOptions }: ProjectDetailProps) {
-  const navigate = useNavigate()
   const [project, setProject] = useState<Record<string, unknown> | null>(null)
-  const [contacts, setContacts] = useState<Record<string, unknown>[]>([])
-  const [opps, setOpps] = useState<Record<string, unknown>[]>([])
 
   const handleFieldSave = useCallback(async (key: string, val: unknown) => {
+    if (!projectId) return
+    await window.electronAPI.projects.update(projectId, { [key]: val })
+    const res = await window.electronAPI.projects.getById(projectId)
+    if (res.success && res.data) setProject(res.data as Record<string, unknown>)
+  }, [projectId])
+
+  const handleLinkedSave = useCallback(async (key: string, val: unknown) => {
     if (!projectId) return
     await window.electronAPI.projects.update(projectId, { [key]: val })
     const res = await window.electronAPI.projects.getById(projectId)
@@ -42,38 +49,14 @@ export function ProjectDetail({ projectId, leadOptions }: ProjectDetailProps) {
   useEffect(() => {
     if (!projectId) {
       setProject(null)
-      setContacts([])
-      setOpps([])
       return
     }
 
     async function load() {
       setProject(null)
-      setContacts([])
-      setOpps([])
-
-      const [projectRes, contactsRes, oppsRes] = await Promise.all([
-        window.electronAPI.projects.getById(projectId!),
-        window.electronAPI.contacts.getAll(),
-        window.electronAPI.opportunities.getAll(),
-      ])
-
+      const projectRes = await window.electronAPI.projects.getById(projectId!)
       if (projectRes.success && projectRes.data) {
         setProject(projectRes.data as Record<string, unknown>)
-      }
-
-      if (contactsRes.success && contactsRes.data) {
-        const linked = (contactsRes.data as Record<string, unknown>[]).filter(c =>
-          containsId(c.projects_ids, projectId!) || containsId(c.project_ids, projectId!)
-        )
-        setContacts(linked)
-      }
-
-      if (oppsRes.success && oppsRes.data) {
-        const linked = (oppsRes.data as Record<string, unknown>[]).filter(o =>
-          containsId(o.project_ids, projectId!) || containsId(o.projects_ids, projectId!)
-        )
-        setOpps(linked)
       }
     }
 
@@ -104,8 +87,6 @@ export function ProjectDetail({ projectId, leadOptions }: ProjectDetailProps) {
   const contractValue = project.contract_value ? Number(project.contract_value) : null
 
   const stats = [
-    { label: 'Contacts', value: contacts.length },
-    { label: 'Opportunities', value: opps.length },
     { label: 'Value', value: contractValue ? `$${contractValue.toLocaleString()}` : '—' },
   ]
 
@@ -155,93 +136,40 @@ export function ProjectDetail({ projectId, leadOptions }: ProjectDetailProps) {
           </div>
         </div>
 
-        {/* 4. Linked Contacts */}
+        {/* 4. Linked Records — interactive LinkedRecordPicker */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
-            Contacts
+            Related
           </div>
-          {contacts.length === 0 ? (
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0' }}>No linked contacts</div>
-          ) : (
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-              {contacts.slice(0, 3).map((c, idx) => {
-                const name = (c.contact_name as string) ||
-                  [c.first_name, c.last_name].filter(Boolean).join(' ') ||
-                  'Unnamed'
-                const title = (c.job_title as string | null) ?? null
-                return (
-                  <div
-                    key={c.id as string}
-                    className="cursor-default"
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '10px 14px',
-                      borderBottom: idx < Math.min(contacts.length, 3) - 1 ? '1px solid var(--separator)' : undefined,
-                      transition: 'background 150ms',
-                    }}
-                    onClick={() => navigate(`/contacts/${c.id as string}`)}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                    onMouseLeave={e => e.currentTarget.style.background = ''}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {name}
-                      </div>
-                      {Boolean(title) && (
-                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {title}
-                        </div>
-                      )}
-                    </div>
-                    <span style={{ fontSize: 14, color: 'var(--text-tertiary)', flexShrink: 0 }}>›</span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            <LinkedRecordPicker
+              label="Contacts"
+              entityApi={window.electronAPI.contacts}
+              labelField="contact_name"
+              labelFallbackFields={['first_name', 'last_name']}
+              value={project.contacts_ids}
+              onChange={val => handleLinkedSave('contacts_ids', val)}
+              createFields={CONTACT_CREATE_FIELDS}
+              createTitle="New Contact"
+              createApi={window.electronAPI.contacts}
+              placeholder="Search contacts..."
+            />
+            <LinkedRecordPicker
+              label="Opportunities"
+              entityApi={window.electronAPI.opportunities}
+              labelField="opportunity_name"
+              value={project.sales_opportunities_ids}
+              onChange={val => handleLinkedSave('sales_opportunities_ids', val)}
+              createFields={OPPORTUNITY_CREATE_FIELDS}
+              createTitle="New Opportunity"
+              createDefaults={{ sales_stage: 'Initial Contact' }}
+              createApi={window.electronAPI.opportunities}
+              placeholder="Search opportunities..."
+            />
+          </div>
         </div>
 
-        {/* 5. Linked Opportunities */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
-            Opportunities
-          </div>
-          {opps.length === 0 ? (
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0' }}>No linked opportunities</div>
-          ) : (
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-              {opps.slice(0, 3).map((o, idx) => (
-                <div
-                  key={o.id as string}
-                  className="cursor-default"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '10px 14px',
-                    borderBottom: idx < Math.min(opps.length, 3) - 1 ? '1px solid var(--separator)' : undefined,
-                    transition: 'background 150ms',
-                  }}
-                  onClick={() => navigate(`/pipeline/${o.id as string}/edit`)}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                  onMouseLeave={e => e.currentTarget.style.background = ''}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {(o.opportunity_name as string) || '—'}
-                    </div>
-                    {Boolean(o.deal_value) && (
-                      <div style={{ fontSize: 11, color: 'var(--color-green)', marginTop: 1 }}>
-                        ${Number(o.deal_value).toLocaleString()}
-                      </div>
-                    )}
-                  </div>
-                  <span style={{ fontSize: 14, color: 'var(--text-tertiary)', flexShrink: 0 }}>›</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* 6. Notes */}
+        {/* 5. Notes */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
             Notes
@@ -250,21 +178,13 @@ export function ProjectDetail({ projectId, leadOptions }: ProjectDetailProps) {
             <EditableFormRow
               field={{ key: 'description', label: 'Description', type: 'textarea' }}
               value={project.description}
-              onSave={async (key, val) => {
-                await window.electronAPI.projects.update(projectId!, { [key]: val })
-                const res = await window.electronAPI.projects.getById(projectId!)
-                if (res.success && res.data) setProject(res.data as Record<string, unknown>)
-              }}
+              onSave={handleFieldSave}
             />
             <EditableFormRow
               field={{ key: 'key_milestones', label: 'Key Milestones', type: 'textarea' }}
               value={project.key_milestones}
               isLast
-              onSave={async (key, val) => {
-                await window.electronAPI.projects.update(projectId!, { [key]: val })
-                const res = await window.electronAPI.projects.getById(projectId!)
-                if (res.success && res.data) setProject(res.data as Record<string, unknown>)
-              }}
+              onSave={handleFieldSave}
             />
           </div>
         </div>

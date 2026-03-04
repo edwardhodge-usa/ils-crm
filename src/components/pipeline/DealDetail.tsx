@@ -1,20 +1,20 @@
 import { useEffect, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
+import LinkedRecordPicker from '../shared/LinkedRecordPicker'
+import ConfirmDialog from '../shared/ConfirmDialog'
 import { StageProgress } from './StageProgress'
-
-function safeParseIds(val: unknown): string[] {
-  if (!val) return []
-  if (Array.isArray(val)) return val as string[]
-  if (typeof val !== 'string') return []
-  try {
-    const parsed = JSON.parse(val)
-    return Array.isArray(parsed) ? parsed : []
-  } catch { return [] }
-}
+import {
+  CONTACT_CREATE_FIELDS,
+  COMPANY_CREATE_FIELDS,
+  PROJECT_CREATE_FIELDS,
+  PROPOSAL_CREATE_FIELDS,
+} from '../../config/create-fields'
 
 interface DealDetailProps {
   dealId: string | null
   onClose: () => void
+  onDeleted?: () => void
 }
 
 const DEAL_EDITABLE_FIELDS: EditableField[] = [
@@ -56,76 +56,32 @@ function TaskStatusBadge({ status }: { status: string }) {
   )
 }
 
-export function DealDetail({ dealId, onClose }: DealDetailProps) {
+export function DealDetail({ dealId, onClose, onDeleted }: DealDetailProps) {
   const [deal, setDeal] = useState<Record<string, unknown> | null>(null)
   const [linkedTasks, setLinkedTasks] = useState<Record<string, unknown>[]>([])
-  const [linkedNames, setLinkedNames] = useState<Record<string, string>>({})
   const [visible, setVisible] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  // Resolve linked record IDs to display names
+  // Mount/unmount lifecycle for portal animation
   useEffect(() => {
-    if (!deal) { setLinkedNames({}); return }
-    const companyIds = safeParseIds(deal.company_ids)
-    const contactIds = safeParseIds(deal.associated_contact_ids)
-    const taskIds = safeParseIds(deal.tasks_ids)
-    const projectIds = safeParseIds(deal.project_ids)
-    const proposalIds = safeParseIds(deal.proposals_ids)
-    if (companyIds.length + contactIds.length + taskIds.length + projectIds.length + proposalIds.length === 0) {
-      setLinkedNames({})
-      return
-    }
-
-    async function resolve() {
-      const names: Record<string, string> = {}
-      const [companies, contacts, tasks, projects, proposals] = await Promise.all([
-        companyIds.length > 0 ? window.electronAPI.companies.getAll() : Promise.resolve({ success: true, data: [] }),
-        contactIds.length > 0 ? window.electronAPI.contacts.getAll() : Promise.resolve({ success: true, data: [] }),
-        taskIds.length > 0 ? window.electronAPI.tasks.getAll() : Promise.resolve({ success: true, data: [] }),
-        projectIds.length > 0 ? window.electronAPI.projects.getAll() : Promise.resolve({ success: true, data: [] }),
-        proposalIds.length > 0 ? window.electronAPI.proposals.getAll() : Promise.resolve({ success: true, data: [] }),
-      ])
-      if (companies.success && companies.data) {
-        for (const r of companies.data as Record<string, unknown>[]) {
-          if (companyIds.includes(r.id as string)) names[r.id as string] = (r.company_name as string) || 'Unnamed'
-        }
-      }
-      if (contacts.success && contacts.data) {
-        for (const r of contacts.data as Record<string, unknown>[]) {
-          if (contactIds.includes(r.id as string)) {
-            names[r.id as string] = (r.contact_name as string) || [r.first_name, r.last_name].filter(Boolean).join(' ') || 'Unnamed'
-          }
-        }
-      }
-      if (tasks.success && tasks.data) {
-        for (const r of tasks.data as Record<string, unknown>[]) {
-          if (taskIds.includes(r.id as string)) names[r.id as string] = (r.task as string) || 'Unnamed'
-        }
-      }
-      if (projects.success && projects.data) {
-        for (const r of projects.data as Record<string, unknown>[]) {
-          if (projectIds.includes(r.id as string)) names[r.id as string] = (r.project_name as string) || 'Unnamed'
-        }
-      }
-      if (proposals.success && proposals.data) {
-        for (const r of proposals.data as Record<string, unknown>[]) {
-          if (proposalIds.includes(r.id as string)) names[r.id as string] = (r.proposal_name as string) || 'Unnamed'
-        }
-      }
-      setLinkedNames(names)
-    }
-    resolve()
-  }, [deal?.company_ids, deal?.associated_contact_ids, deal?.tasks_ids, deal?.project_ids, deal?.proposals_ids])
-
-  useEffect(() => {
-    if (!dealId) {
+    if (dealId) {
+      setMounted(true)
+    } else {
       setVisible(false)
-      // Delay clearing deal data until slide-out animation completes
       const t = setTimeout(() => {
+        setMounted(false)
         setDeal(null)
         setLinkedTasks([])
-      }, 250)
+      }, 300) // wait for slide-out animation
       return () => clearTimeout(t)
     }
+  }, [dealId])
+
+  // Load deal data
+  useEffect(() => {
+    if (!dealId) return
 
     setVisible(false)
     setDeal(null)
@@ -162,7 +118,6 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
         setLinkedTasks(filtered)
       }
 
-      // Trigger slide-in after data is ready
       requestAnimationFrame(() => {
         if (!cancelled) setVisible(true)
       })
@@ -172,6 +127,16 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
     return () => { cancelled = true }
   }, [dealId])
 
+  // Escape key to close
+  useEffect(() => {
+    if (!mounted) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [mounted, onClose])
+
   const handleFieldSave = useCallback(async (key: string, val: unknown) => {
     if (!dealId) return
     await window.electronAPI.opportunities.update(dealId, { [key]: val })
@@ -179,225 +144,309 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
     if (res.success && res.data) setDeal(res.data as Record<string, unknown>)
   }, [dealId])
 
-  // Resolve linked IDs to display names
-  const resolveLinked = (ids: unknown): string => {
-    const parsed = safeParseIds(ids)
-    if (parsed.length === 0) return '—'
-    return parsed.map(id => linkedNames[id] || id.slice(0, 8)).join(', ')
-  }
+  const handleLinkedSave = useCallback(async (key: string, val: unknown) => {
+    if (!dealId) return
+    await window.electronAPI.opportunities.update(dealId, { [key]: val })
+    const res = await window.electronAPI.opportunities.getById(dealId)
+    if (res.success && res.data) setDeal(res.data as Record<string, unknown>)
+  }, [dealId])
 
-  const DEAL_LINKED_FIELDS: EditableField[] = [
-    { key: 'company_ids', label: 'Company', type: 'readonly' },
-    { key: 'associated_contact_ids', label: 'Contacts', type: 'readonly' },
-    { key: 'tasks_ids', label: 'Tasks', type: 'readonly' },
-    { key: 'project_ids', label: 'Projects', type: 'readonly' },
-    { key: 'proposals_ids', label: 'Proposals', type: 'readonly' },
-  ]
-
-  // Trigger slide-in when panel first mounts with a dealId
+  // Trigger slide-in after data loads
   useEffect(() => {
     if (dealId && deal) {
       requestAnimationFrame(() => setVisible(true))
     }
   }, [dealId, deal])
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <div
-      className="absolute top-0 right-0 bottom-0 flex flex-col"
       style={{
-        width: 300,
-        background: 'var(--bg-window)',
-        borderLeft: '1px solid var(--separator)',
-        zIndex: 10,
-        transform: visible ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform 250ms cubic-bezier(0,0,0.2,1)',
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10000,
+        display: 'flex',
+        justifyContent: 'flex-end',
+        pointerEvents: visible ? 'auto' : 'none',
       }}
     >
-      {deal ? (
-        <div className="flex flex-col flex-1 min-h-0" style={{ overflowY: 'auto' }}>
-          {/* Hero */}
-          <div style={{ padding: '24px 20px 16px' }}>
-            {/* Close button */}
-            <div className="flex justify-end" style={{ marginBottom: 8 }}>
-              <button
-                onClick={onClose}
-                className="flex items-center justify-center"
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 6,
-                  fontSize: 13,
-                  color: 'var(--text-secondary)',
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'default',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-              >
-                ✕
-              </button>
-            </div>
+      {/* Backdrop — subtle darkening, click to close */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(0,0,0,0.25)',
+          opacity: visible ? 1 : 0,
+          transition: 'opacity 250ms ease',
+        }}
+      />
 
-            {/* Deal name */}
-            <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.25, marginBottom: 4 }}>
-              {(deal.opportunity_name as string) || '—'}
-            </div>
-
-            {/* Company name */}
-            {Boolean(deal.company_name) && (
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-                {deal.company_name as string}
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="flex gap-2" style={{ marginTop: 16 }}>
-              {['Log Activity', 'Email'].map(label => (
+      {/* Slide-over panel */}
+      <div
+        style={{
+          position: 'relative',
+          width: 400,
+          height: '100%',
+          background: 'var(--bg-sheet)',
+          borderLeft: '1px solid var(--separator)',
+          boxShadow: visible ? '-8px 0 30px rgba(0,0,0,0.15)' : 'none',
+          transform: visible ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 300ms cubic-bezier(0.2,0.9,0.3,1)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        {deal ? (
+          <div className="flex flex-col flex-1 min-h-0" style={{ overflowY: 'auto' }}>
+            {/* Hero */}
+            <div style={{ padding: '24px 20px 16px' }}>
+              {/* Close button */}
+              <div className="flex justify-end" style={{ marginBottom: 8 }}>
                 <button
-                  key={label}
-                  className="flex-1"
+                  onClick={onClose}
+                  className="flex items-center justify-center"
                   style={{
-                    padding: '6px 0',
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: 'var(--color-accent)',
+                    width: 24,
+                    height: 24,
+                    borderRadius: 6,
+                    fontSize: 13,
+                    color: 'var(--text-secondary)',
                     background: 'transparent',
                     border: 'none',
-                    borderRadius: 6,
                     cursor: 'default',
-                    transition: 'background 150ms',
                   }}
                   onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                 >
-                  {label}
+                  ✕
                 </button>
-              ))}
+              </div>
+
+              {/* Deal name */}
+              <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.25, marginBottom: 4 }}>
+                {(deal.opportunity_name as string) || '—'}
+              </div>
+
+              {/* Company name */}
+              {Boolean(deal.company_name) && (
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                  {deal.company_name as string}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-2" style={{ marginTop: 16 }}>
+                {['Log Activity', 'Email'].map(label => (
+                  <button
+                    key={label}
+                    className="flex-1"
+                    style={{
+                      padding: '6px 0',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: 'var(--color-accent)',
+                      background: 'transparent',
+                      border: 'none',
+                      borderRadius: 6,
+                      cursor: 'default',
+                      transition: 'background 150ms',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Stage progress bar */}
-          <div style={{ padding: '0 20px 16px' }}>
-            <StageProgress currentStage={(deal.sales_stage as string) || ''} />
-          </div>
-
-          {/* Grouped container — deal fields */}
-          <div style={{ margin: '0 12px 16px', background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            {DEAL_EDITABLE_FIELDS.map((field, idx) => (
-              <EditableFormRow
-                key={field.key}
-                field={field}
-                value={(deal as Record<string, unknown>)[field.key]}
-                isLast={idx === DEAL_EDITABLE_FIELDS.length - 1}
-                onSave={handleFieldSave}
-              />
-            ))}
-          </div>
-
-          {/* Related linked records */}
-          <div style={{ padding: '0 12px 16px' }}>
-            <div style={{
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase' as const,
-              color: 'var(--text-secondary)',
-              padding: '0 4px 8px',
-            }}>
-              Related
+            {/* Stage progress bar */}
+            <div style={{ padding: '0 20px 16px' }}>
+              <StageProgress currentStage={(deal.sales_stage as string) || ''} />
             </div>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-              {DEAL_LINKED_FIELDS.map((field, idx) => (
+
+            {/* Grouped container — deal fields */}
+            <div style={{ margin: '0 12px 16px', background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              {DEAL_EDITABLE_FIELDS.map((field, idx) => (
                 <EditableFormRow
                   key={field.key}
                   field={field}
-                  value={resolveLinked((deal as Record<string, unknown>)[field.key])}
-                  isLast={idx === DEAL_LINKED_FIELDS.length - 1}
-                  onSave={async () => {}}
+                  value={(deal as Record<string, unknown>)[field.key]}
+                  isLast={idx === DEAL_EDITABLE_FIELDS.length - 1}
+                  onSave={handleFieldSave}
                 />
               ))}
             </div>
-          </div>
 
-          {/* Tasks section */}
-          <div style={{ padding: '0 12px 16px' }}>
-            <div style={{
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase' as const,
-              color: 'var(--text-secondary)',
-              padding: '0 4px 8px',
-            }}>
-              Tasks
+            {/* Related linked records — interactive LinkedRecordPicker */}
+            <div style={{ padding: '0 12px 16px' }}>
+              <div style={{
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase' as const,
+                color: 'var(--text-secondary)',
+                padding: '0 4px 8px',
+              }}>
+                Related
+              </div>
+              <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+                <LinkedRecordPicker
+                  label="Company"
+                  entityApi={window.electronAPI.companies}
+                  labelField="company_name"
+                  value={deal.company_ids}
+                  onChange={val => handleLinkedSave('company_ids', val)}
+                  createFields={COMPANY_CREATE_FIELDS}
+                  createTitle="New Company"
+                  createApi={window.electronAPI.companies}
+                  placeholder="Search companies..."
+                />
+                <LinkedRecordPicker
+                  label="Contacts"
+                  entityApi={window.electronAPI.contacts}
+                  labelField="contact_name"
+                  labelFallbackFields={['first_name', 'last_name']}
+                  value={deal.associated_contact_ids}
+                  onChange={val => handleLinkedSave('associated_contact_ids', val)}
+                  createFields={CONTACT_CREATE_FIELDS}
+                  createTitle="New Contact"
+                  createApi={window.electronAPI.contacts}
+                  placeholder="Search contacts..."
+                />
+                <LinkedRecordPicker
+                  label="Projects"
+                  entityApi={window.electronAPI.projects}
+                  labelField="project_name"
+                  value={deal.project_ids}
+                  onChange={val => handleLinkedSave('project_ids', val)}
+                  createFields={PROJECT_CREATE_FIELDS}
+                  createTitle="New Project"
+                  createApi={window.electronAPI.projects}
+                  placeholder="Search projects..."
+                />
+                <LinkedRecordPicker
+                  label="Proposals"
+                  entityApi={window.electronAPI.proposals}
+                  labelField="proposal_name"
+                  value={deal.proposals_ids}
+                  onChange={val => handleLinkedSave('proposals_ids', val)}
+                  createFields={PROPOSAL_CREATE_FIELDS}
+                  createTitle="New Proposal"
+                  createDefaults={{ status: 'Draft' }}
+                  createApi={window.electronAPI.proposals}
+                  placeholder="Search proposals..."
+                />
+              </div>
             </div>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-              {linkedTasks.length === 0 ? (
-                <div style={{
-                  padding: '10px 14px',
-                  fontSize: 13,
-                  color: 'var(--text-secondary)',
-                  fontStyle: 'italic',
-                }}>
-                  No linked tasks
-                </div>
-              ) : (
-                linkedTasks.map((task, i) => (
-                  <div
-                    key={task.id as string}
-                    className="flex items-center justify-between"
-                    style={{
-                      padding: '10px 14px',
-                      minHeight: 36,
-                      borderBottom: i < linkedTasks.length - 1 ? '1px solid var(--separator)' : 'none',
-                      cursor: 'default',
-                    }}
-                  >
-                    <span
-                      className="truncate flex-1"
-                      style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', marginRight: 8 }}
-                    >
-                      {(task.task as string) || '—'}
-                    </span>
-                    <span className="flex items-center gap-2 flex-shrink-0">
-                      <TaskStatusBadge status={(task.status as string) || ''} />
-                      <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>⌃</span>
-                    </span>
+
+            {/* Tasks section */}
+            <div style={{ padding: '0 12px 16px' }}>
+              <div style={{
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase' as const,
+                color: 'var(--text-secondary)',
+                padding: '0 4px 8px',
+              }}>
+                Tasks
+              </div>
+              <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+                {linkedTasks.length === 0 ? (
+                  <div style={{
+                    padding: '10px 14px',
+                    fontSize: 13,
+                    color: 'var(--text-secondary)',
+                    fontStyle: 'italic',
+                  }}>
+                    No linked tasks
                   </div>
-                ))
-              )}
+                ) : (
+                  linkedTasks.map((task, i) => (
+                    <div
+                      key={task.id as string}
+                      className="flex items-center justify-between"
+                      style={{
+                        padding: '10px 14px',
+                        minHeight: 36,
+                        borderBottom: i < linkedTasks.length - 1 ? '1px solid var(--separator)' : 'none',
+                        cursor: 'default',
+                      }}
+                    >
+                      <span
+                        className="truncate flex-1"
+                        style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', marginRight: 8 }}
+                      >
+                        {(task.task as string) || '—'}
+                      </span>
+                      <span className="flex items-center gap-2 flex-shrink-0">
+                        <TaskStatusBadge status={(task.status as string) || ''} />
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Action buttons at bottom */}
-          <div className="flex gap-2" style={{ padding: '8px 12px 20px' }}>
-            <button
-              className="flex-1"
-              style={{
-                padding: '8px 0',
-                fontSize: 13,
-                fontWeight: 500,
-                color: 'var(--color-red)',
-                background: 'transparent',
-                border: '1px solid var(--color-red)',
-                borderRadius: 8,
-                cursor: 'default',
-                transition: 'background 150ms',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              Delete
-            </button>
+            {/* Delete button */}
+            <div className="flex gap-2" style={{ padding: '8px 12px 20px' }}>
+              <button
+                className="flex-1"
+                onClick={() => setShowDelete(true)}
+                style={{
+                  padding: '8px 0',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'var(--color-red)',
+                  background: 'transparent',
+                  border: '1px solid var(--color-red)',
+                  borderRadius: 8,
+                  cursor: 'default',
+                  transition: 'background 150ms',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              >
+                Delete
+              </button>
+            </div>
+
+            {deleteError && (
+              <div style={{ margin: '0 12px 12px', padding: '8px 12px', borderRadius: 8, background: 'rgba(255,59,48,0.12)', border: '1px solid rgba(255,59,48,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, color: 'var(--color-red)' }}>{deleteError}</span>
+                <button onClick={() => setDeleteError(null)} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--text-tertiary)', cursor: 'default' }}>✕</button>
+              </div>
+            )}
           </div>
-        </div>
-      ) : (
-        /* Loading state while data fetches */
-        <div className="flex-1 flex items-center justify-center">
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Loading...</div>
-        </div>
-      )}
-    </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Loading...</div>
+          </div>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={showDelete}
+        title="Delete Opportunity"
+        message={`Are you sure you want to delete "${(deal?.opportunity_name as string) || 'this opportunity'}"? This cannot be undone.`}
+        onConfirm={async () => {
+          const result = await window.electronAPI.opportunities.delete(dealId!)
+          if (result.success) {
+            setShowDelete(false)
+            onDeleted?.()
+            onClose()
+          } else {
+            setShowDelete(false)
+            setDeleteError(result.error || 'Delete failed — please try again')
+          }
+        }}
+        onCancel={() => setShowDelete(false)}
+      />
+    </div>,
+    document.body
   )
 }
