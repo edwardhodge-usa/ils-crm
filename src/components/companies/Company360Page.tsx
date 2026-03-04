@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ConfirmDialog from '../shared/ConfirmDialog'
 import LoadingSpinner from '../shared/LoadingSpinner'
@@ -97,6 +97,13 @@ export default function Company360Page() {
     load()
   }, [id])
 
+  const handleFieldSave = useCallback(async (key: string, val: unknown) => {
+    if (!id) return
+    await window.electronAPI.companies.update(id, { [key]: val })
+    const res = await window.electronAPI.companies.getById(id)
+    if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
+  }, [id])
+
   useEffect(() => {
     if (!showLogoMenu) {
       setShowLinkedInInput(false)
@@ -137,20 +144,6 @@ export default function Company360Page() {
           Companies
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button
-            onClick={() => navigate(`/companies/${id}/edit`)}
-            title="Edit company"
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 28, height: 28, borderRadius: 6, border: 'none', cursor: 'default',
-              background: 'none', color: 'var(--text-tertiary)', transition: 'color 150ms',
-              fontFamily: 'inherit',
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-          </button>
         </div>
       </div>
 
@@ -399,11 +392,7 @@ export default function Company360Page() {
                 field={field}
                 value={(company as Record<string, unknown>)[field.key]}
                 isLast={idx === COMPANY_EDITABLE_FIELDS.length - 1}
-                onSave={async (key, val) => {
-                  await window.electronAPI.companies.update(id!, { [key]: val })
-                  const res = await window.electronAPI.companies.getById(id!)
-                  if (res.success && res.data) setCompany(res.data as Record<string, unknown>)
-                }}
+                onSave={handleFieldSave}
               />
             ))}
           </div>

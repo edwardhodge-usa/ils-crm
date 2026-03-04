@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { EmptyState } from '../shared/EmptyState'
 import StatusBadge from '../shared/StatusBadge'
@@ -27,6 +27,13 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
   const [project, setProject] = useState<Record<string, unknown> | null>(null)
   const [contacts, setContacts] = useState<Record<string, unknown>[]>([])
   const [opps, setOpps] = useState<Record<string, unknown>[]>([])
+
+  const handleFieldSave = useCallback(async (key: string, val: unknown) => {
+    if (!projectId) return
+    await window.electronAPI.projects.update(projectId, { [key]: val })
+    const res = await window.electronAPI.projects.getById(projectId)
+    if (res.success && res.data) setProject(res.data as Record<string, unknown>)
+  }, [projectId])
 
   useEffect(() => {
     if (!projectId) {
@@ -138,11 +145,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
                 field={field}
                 value={(project as Record<string, unknown>)[field.key]}
                 isLast={idx === PROJECT_EDITABLE_FIELDS.length - 1}
-                onSave={async (key, val) => {
-                  await window.electronAPI.projects.update(projectId!, { [key]: val })
-                  const res = await window.electronAPI.projects.getById(projectId!)
-                  if (res.success && res.data) setProject(res.data as Record<string, unknown>)
-                }}
+                onSave={handleFieldSave}
               />
             ))}
           </div>

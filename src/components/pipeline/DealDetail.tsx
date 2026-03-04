@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import { StageProgress } from './StageProgress'
 
@@ -107,6 +107,13 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
     return () => { cancelled = true }
   }, [dealId])
 
+  const handleFieldSave = useCallback(async (key: string, val: unknown) => {
+    if (!dealId) return
+    await window.electronAPI.opportunities.update(dealId, { [key]: val })
+    const res = await window.electronAPI.opportunities.getById(dealId)
+    if (res.success && res.data) setDeal(res.data as Record<string, unknown>)
+  }, [dealId])
+
   // Trigger slide-in when panel first mounts with a dealId
   useEffect(() => {
     if (dealId && deal) {
@@ -203,11 +210,7 @@ export function DealDetail({ dealId, onClose }: DealDetailProps) {
                 field={field}
                 value={(deal as Record<string, unknown>)[field.key]}
                 isLast={idx === DEAL_EDITABLE_FIELDS.length - 1}
-                onSave={async (key, val) => {
-                  await window.electronAPI.opportunities.update(deal.id as string, { [key]: val })
-                  const res = await window.electronAPI.opportunities.getById(deal.id as string)
-                  if (res.success && res.data) setDeal(res.data as Record<string, unknown>)
-                }}
+                onSave={handleFieldSave}
               />
             ))}
           </div>

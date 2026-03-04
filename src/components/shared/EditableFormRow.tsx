@@ -87,12 +87,22 @@ function parseMultiSelectValue(value: unknown): string[] {
   return []
 }
 
+function valuesEqual(a: unknown, b: unknown, type: EditableFieldType): boolean {
+  if (a === b) return true
+  if (a == null && b == null) return true
+  if (a == null || b == null) return false
+  if (type === 'number' || type === 'currency') return Number(a) === Number(b)
+  if (type === 'date') return String(a).slice(0, 10) === String(b).slice(0, 10)
+  return String(a) === String(b)
+}
+
 export function EditableFormRow({ field, value, isLast = false, onSave }: EditableFormRowProps) {
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
   const [multiSelectValues, setMultiSelectValues] = useState<string[]>([])
   const [showMultiPopover, setShowMultiPopover] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
 
@@ -123,18 +133,21 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
   }, [showMultiPopover])
 
   const doSave = useCallback(async (newValue: unknown) => {
-    if (newValue === value) {
+    if (valuesEqual(newValue, value, field.type)) {
       setEditing(false)
       return
     }
     setSaving(true)
+    setSaveError(false)
     try {
       await onSave(field.key, newValue)
+      setEditing(false)
+    } catch {
+      setSaveError(true)
     } finally {
       setSaving(false)
-      setEditing(false)
     }
-  }, [field.key, onSave, value])
+  }, [field.key, field.type, onSave, value])
 
   const handleTextSave = useCallback(() => {
     const trimmed = editValue.trim()
@@ -160,8 +173,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
 
     if (field.type === 'checkbox') {
       const newVal = value === 1 || value === true ? 0 : 1
-      setSaving(true)
-      onSave(field.key, newVal).finally(() => setSaving(false))
+      doSave(newVal)
       return
     }
 
@@ -195,11 +207,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
   const handleMultiDone = () => {
     setShowMultiPopover(false)
     const jsonVal = JSON.stringify(multiSelectValues)
-    const currentJson = JSON.stringify(parseMultiSelectValue(value))
-    if (jsonVal !== currentJson) {
-      setSaving(true)
-      onSave(field.key, jsonVal).finally(() => setSaving(false))
-    }
+    doSave(jsonVal)
   }
 
   const isInteractive = field.type !== 'readonly'
@@ -305,6 +313,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {saving && <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Saving...</span>}
+          {saveError && <span style={{ fontSize: 11, color: 'var(--color-red)' }}>Save failed</span>}
           <div
             onClick={handleClick}
             style={{
@@ -372,11 +381,13 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
       {editing ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {saving && <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Saving...</span>}
+          {saveError && <span style={{ fontSize: 11, color: 'var(--color-red)' }}>Save failed</span>}
           {renderEditControl()}
         </div>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
           {saving && <span style={{ fontSize: 11, color: 'var(--text-tertiary)', flexShrink: 0 }}>Saving...</span>}
+          {saveError && <span style={{ fontSize: 11, color: 'var(--color-red)', flexShrink: 0 }}>Save failed</span>}
           <span
             onClick={isInteractive ? handleClick : undefined}
             onMouseEnter={e => { if (isInteractive) e.currentTarget.style.background = 'var(--bg-hover)' }}
