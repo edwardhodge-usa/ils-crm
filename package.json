@@ -1,6 +1,6 @@
 {
   "name": "ils-crm",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "ILS CRM Desktop App — full CRUD interface for Airtable CRM",
   "main": "dist-electron/main.js",
   "author": "Edward Hodge",
