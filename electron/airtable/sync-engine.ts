@@ -2,7 +2,7 @@
 // "Airtable wins" conflict resolution — remote overwrites local on pull
 
 import { BrowserWindow } from 'electron'
-import { fetchAllRecords, fetchRecord, batchCreate, batchUpdate, batchDelete } from './client'
+import { fetchAllRecords, fetchRecord, batchCreate, batchUpdate, batchDelete, resetRateLimitState, shouldAbortSync, getStaggerMs } from './client'
 import { TABLES, PRIMARY_FIELDS } from './field-maps'
 import { TABLE_CONVERTERS } from './converters'
 import { getDatabase, saveDatabase } from '../database/init'
@@ -22,6 +22,7 @@ export interface SyncProgress {
   tablesTotal: number
   recordsPulled: number
   error?: string
+  nextPollMs?: number
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -195,6 +196,7 @@ export async function fullSync(
     return { success: false, error: 'Sync already in progress' }
   }
   isSyncing = true
+  resetRateLimitState()
 
   const config = getApiConfig()
   if (!config) {
@@ -215,24 +217,37 @@ export async function fullSync(
   }
 
   try {
-    // Phase 1: Push local changes first
+    // Phase 1: Push local changes first (with stagger)
     progress.phase = 'pushing'
     sendProgress(progress)
 
     for (const tableName of SYNC_ORDER) {
+      if (shouldAbortSync()) {
+        console.error('[Sync] Aborting push — too many consecutive errors')
+        break
+      }
+
       try {
         await pushTable(tableName, config.apiKey, config.baseId)
       } catch (error) {
         console.error(`[Sync] Push error for ${tableName}:`, error)
         updateSyncStatus(tableName, 'push_error', undefined, String(error))
       }
+
+      // Stagger between tables
+      await new Promise(resolve => setTimeout(resolve, getStaggerMs(300)))
     }
 
-    // Phase 2: Pull all tables from Airtable
+    // Phase 2: Pull all tables from Airtable (with adaptive stagger)
     progress.phase = 'pulling'
     sendProgress(progress)
 
     for (const tableName of SYNC_ORDER) {
+      if (shouldAbortSync()) {
+        console.error('[Sync] Aborting pull — too many consecutive errors')
+        break
+      }
+
       progress.table = tableName
       sendProgress(progress)
 
@@ -246,8 +261,8 @@ export async function fullSync(
         updateSyncStatus(tableName, 'error', undefined, String(error))
       }
 
-      // Stagger requests to avoid rate limiting (200ms between tables)
-      await new Promise(resolve => setTimeout(resolve, 200))
+      // Adaptive stagger between tables
+      await new Promise(resolve => setTimeout(resolve, getStaggerMs(300)))
     }
 
     progress.phase = 'complete'
@@ -390,22 +405,46 @@ export async function deleteRemoteRecord(
   }
 }
 
-// ─── Polling ─────────────────────────────────────────────────
+// ─── Polling (setTimeout chaining — waits for sync to finish) ─
 
-let pollInterval: ReturnType<typeof setInterval> | null = null
+let pollTimeout: ReturnType<typeof setTimeout> | null = null
+let pollWindow: BrowserWindow | null = null
+const DEFAULT_POLL_MS = 120000   // 2 minutes (conservative for multi-user)
+const MAX_POLL_MS = 600000       // 10 minute ceiling
+let currentPollMs = DEFAULT_POLL_MS
 
 export function startPolling(win: BrowserWindow | null): void {
-  if (pollInterval) return
+  if (pollTimeout) return
+  pollWindow = win
 
-  const intervalMs = parseInt(getSetting('sync_interval_ms') || '60000', 10)
-  if (isDev) console.log(`[Sync] Starting polling every ${intervalMs / 1000}s`)
+  const configuredMs = parseInt(getSetting('sync_interval_ms') || String(DEFAULT_POLL_MS), 10)
+  currentPollMs = Math.max(configuredMs, DEFAULT_POLL_MS)
+  if (isDev) console.log(`[Sync] Starting polling every ${currentPollMs / 1000}s`)
 
-  pollInterval = setInterval(async () => {
+  scheduleNextSync()
+}
+
+function scheduleNextSync(): void {
+  if (pollTimeout) clearTimeout(pollTimeout)
+
+  pollTimeout = setTimeout(async () => {
     try {
-      await fullSync(win)
+      const result = await fullSync(pollWindow)
+
+      if (result.success) {
+        // Success — reset to base interval
+        const configuredMs = parseInt(getSetting('sync_interval_ms') || String(DEFAULT_POLL_MS), 10)
+        currentPollMs = Math.max(configuredMs, DEFAULT_POLL_MS)
+      } else {
+        // Failure — back off 1.5x
+        currentPollMs = Math.min(currentPollMs * 1.5, MAX_POLL_MS)
+        if (isDev) console.log(`[Sync] Sync failed, next poll in ${Math.round(currentPollMs / 1000)}s`)
+      }
     } catch (error) {
       console.error('[Sync] Poll error:', error)
-      win?.webContents?.send('sync:progress', {
+      // Exception — back off 2x
+      currentPollMs = Math.min(currentPollMs * 2, MAX_POLL_MS)
+      pollWindow?.webContents?.send('sync:progress', {
         phase: 'error',
         tablesCompleted: 0,
         tablesTotal: SYNC_ORDER.length,
@@ -413,13 +452,19 @@ export function startPolling(win: BrowserWindow | null): void {
         error: String(error),
       })
     }
-  }, intervalMs)
+
+    // Schedule next — only after current finishes + rest period
+    if (pollTimeout !== null) {
+      scheduleNextSync()
+    }
+  }, currentPollMs)
 }
 
 export function stopPolling(): void {
-  if (pollInterval) {
-    clearInterval(pollInterval)
-    pollInterval = null
+  if (pollTimeout) {
+    clearTimeout(pollTimeout)
+    pollTimeout = null
+    pollWindow = null
     if (isDev) console.log('[Sync] Polling stopped')
   }
 }

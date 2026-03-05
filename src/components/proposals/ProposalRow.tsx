@@ -10,14 +10,16 @@ interface ProposalRowProps {
   }
   isSelected: boolean
   onClick: () => void
+  onContextMenu?: (e: React.MouseEvent) => void
 }
 
-export function ProposalRow({ proposal, isSelected, onClick }: ProposalRowProps) {
+export function ProposalRow({ proposal, isSelected, onClick, onContextMenu }: ProposalRowProps) {
   const { name, status, value, companyName } = proposal
 
   return (
     <div
       onClick={onClick}
+      onContextMenu={onContextMenu}
       className="cursor-default"
       style={{
         padding: '9px 12px',

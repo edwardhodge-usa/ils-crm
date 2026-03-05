@@ -8,6 +8,8 @@ import useEntityList from '../../hooks/useEntityList'
 import { CONTACT_CREATE_FIELDS } from '../../config/create-fields'
 import { parseIds } from '../../utils/linked-records'
 import { GroupedSectionHeader } from '../shared/GroupedSectionHeader'
+import { ContextMenu } from '../shared/ContextMenu'
+import ConfirmDialog from '../shared/ConfirmDialog'
 
 /** Resolve the first linked contact's photo and company logo */
 function useLinkedImages(record: Record<string, unknown> | null) {
@@ -232,10 +234,11 @@ interface PortalRowProps {
   record: Record<string, unknown>
   isSelected: boolean
   onClick: () => void
+  onContextMenu?: (e: React.MouseEvent) => void
   groupedBy?: string
 }
 
-function PortalAccessRow({ record, isSelected, onClick, groupedBy }: PortalRowProps) {
+function PortalAccessRow({ record, isSelected, onClick, onContextMenu, groupedBy }: PortalRowProps) {
   const name = resolvedName(record)
   const email = resolvedEmail(record)
   const company = resolvedCompany(record)
@@ -249,6 +252,7 @@ function PortalAccessRow({ record, isSelected, onClick, groupedBy }: PortalRowPr
   return (
     <div
       onClick={onClick}
+      onContextMenu={onContextMenu}
       className="cursor-default"
       style={{
         padding: '9px 12px',
@@ -837,6 +841,52 @@ export default function PortalAccessPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<'name' | 'company' | 'status' | 'stage' | 'newest' | 'oldest'>(() => (localStorage.getItem('sort-portal') as 'name' | 'company' | 'status' | 'stage' | 'newest' | 'oldest') || 'name')
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, id: string) => {
+    e.preventDefault()
+    setContextMenu({ x: e.clientX, y: e.clientY, id })
+  }, [])
+
+  const handleDuplicate = useCallback(async (id: string) => {
+    const res = await window.electronAPI.portalAccess.getById(id)
+    if (!res.success || !res.data) return
+    const source = res.data as Record<string, unknown>
+
+    // Strip internal, readonly, lookup, collaborator, and formula fields
+    const stripKeys = new Set([
+      'id', 'airtable_id', '_pending_push', '_airtable_modified_at', '_local_modified_at',
+      'framer_page_url', 'assignee',
+      'contact_name_lookup', 'contact_company_lookup', 'contact_email_lookup',
+      'contact_phone_lookup', 'contact_job_title_lookup', 'contact_industry_lookup',
+      'contact_tags_lookup', 'contact_website_lookup', 'contact_address_line_lookup',
+      'contact_city_lookup', 'contact_state_lookup', 'contact_country_lookup',
+    ])
+    const fields: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(source)) {
+      if (!stripKeys.has(k)) fields[k] = v
+    }
+
+    // Append " (Copy)" to the resolved name field
+    const nameField = fields.name as string | null
+    if (nameField) {
+      fields.name = nameField + ' (Copy)'
+    } else {
+      fields.name = (resolvedName(source)) + ' (Copy)'
+    }
+
+    await window.electronAPI.portalAccess.create(fields)
+    reload()
+  }, [reload])
+
+  const handleDelete = useCallback(async () => {
+    if (!deleteTarget) return
+    await window.electronAPI.portalAccess.delete(deleteTarget.id)
+    if (selectedId === deleteTarget.id) setSelectedId(null)
+    setDeleteTarget(null)
+    reload()
+  }, [deleteTarget, selectedId, reload])
 
   // Load portal logs once for activity data
   useEffect(() => {
@@ -1004,6 +1054,7 @@ export default function PortalAccessPage() {
                     record={record}
                     isSelected={selectedId === (record.id as string)}
                     onClick={() => setSelectedId(record.id as string)}
+                    onContextMenu={e => handleContextMenu(e, record.id as string)}
                     groupedBy={sortBy}
                   />
                 ))}
@@ -1016,6 +1067,7 @@ export default function PortalAccessPage() {
                 record={record}
                 isSelected={selectedId === (record.id as string)}
                 onClick={() => setSelectedId(record.id as string)}
+                onContextMenu={e => handleContextMenu(e, record.id as string)}
               />
             ))
           )}
@@ -1024,6 +1076,29 @@ export default function PortalAccessPage() {
 
       {/* Detail panel — flex-1 */}
       <PortalAccessDetail record={selected} logs={logs} onFieldSave={handleFieldSave} onDeleteLog={handleDeleteLog} />
+
+      <ContextMenu
+        position={contextMenu}
+        onClose={() => setContextMenu(null)}
+        items={[
+          { label: 'Duplicate', onClick: () => contextMenu && handleDuplicate(contextMenu.id) },
+          { label: 'Delete', destructive: true, onClick: () => {
+            if (!contextMenu) return
+            const record = filtered.find(r => (r.id as string) === contextMenu.id)
+            setDeleteTarget({ id: contextMenu.id, name: record ? resolvedName(record) : 'this record' })
+          }},
+        ]}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Portal Access"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? This will also remove it from Airtable.`}
+        confirmLabel="Delete"
+        destructive
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }

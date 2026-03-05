@@ -52,7 +52,7 @@ interface ElectronAPI {
     reject: (id: string, reason: string) => Promise<{ success: boolean; error?: string }>
   }
   specialties: ReadOnlyEntityAPI
-  portalAccess: Omit<EntityAPI, 'delete'>
+  portalAccess: EntityAPI
   portalLogs: ReadOnlyEntityAPI & {
     delete: (id: string) => Promise<{ success: boolean; error?: string }>
   }

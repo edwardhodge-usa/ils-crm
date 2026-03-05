@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import PrimaryButton from '../shared/PrimaryButton'
 import { GroupedSectionHeader } from '../shared/GroupedSectionHeader'
+import { ContextMenu } from '../shared/ContextMenu'
 import useEntityList from '../../hooks/useEntityList'
 import { ProposalRow } from './ProposalRow'
 import { ProposalDetail } from './ProposalDetail'
@@ -30,11 +31,32 @@ function toListItem(row: Record<string, unknown>): ProposalListItem {
 type SortKey = 'name' | 'status' | 'value' | 'company' | 'newest'
 
 export default function ProposalListPage() {
-  const { data: proposals, loading, error } = useEntityList(() => window.electronAPI.proposals.getAll())
+  const { data: proposals, loading, error, reload } = useEntityList(() => window.electronAPI.proposals.getAll())
   const navigate = useNavigate()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortKey>(() => (localStorage.getItem('sort-proposals') as SortKey) || 'name')
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null)
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, id: string) => {
+    e.preventDefault()
+    setContextMenu({ x: e.clientX, y: e.clientY, id })
+  }, [])
+
+  const handleDuplicate = useCallback(async (id: string) => {
+    const res = await window.electronAPI.proposals.getById(id)
+    if (!res.success || !res.data) return
+    const source = res.data as Record<string, unknown>
+
+    // Strip internal/readonly fields
+    const { id: _id, airtable_id: _aid, _pending_push, _airtable_modified_at, _local_modified_at,
+      company_name: _cn, client_company: _cc, ...fields } = source
+
+    fields.proposal_name = ((fields.proposal_name as string) || 'Unnamed Proposal') + ' (Copy)'
+
+    await window.electronAPI.proposals.create(fields)
+    reload()
+  }, [reload])
 
   // Status grouping: merge related statuses into pipeline stages
   const STATUS_GROUP_ORDER = ['No Status', 'Draft', 'Submitted', 'Won', 'Lost'] as const
@@ -194,6 +216,7 @@ export default function ProposalListPage() {
                       proposal={proposal}
                       isSelected={selectedId === proposal.id}
                       onClick={() => setSelectedId(proposal.id)}
+                      onContextMenu={e => handleContextMenu(e, proposal.id)}
                     />
                   ))}
                 </div>
@@ -206,6 +229,7 @@ export default function ProposalListPage() {
                 proposal={proposal}
                 isSelected={selectedId === proposal.id}
                 onClick={() => setSelectedId(proposal.id)}
+                onContextMenu={e => handleContextMenu(e, proposal.id)}
               />
             ))
           )}
@@ -214,6 +238,14 @@ export default function ProposalListPage() {
 
       {/* Detail panel — flex-1 */}
       <ProposalDetail proposalId={selectedId} />
+
+      <ContextMenu
+        position={contextMenu}
+        onClose={() => setContextMenu(null)}
+        items={[
+          { label: 'Duplicate', onClick: () => contextMenu && handleDuplicate(contextMenu.id) },
+        ]}
+      />
     </div>
   )
 }

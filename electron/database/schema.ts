@@ -431,7 +431,7 @@ export function createSchema(db: SqlJsDatabase): void {
   const defaults: [string, string][] = [
     ['airtable_api_key', ''],
     ['airtable_base_id', ''], // Never hardcode — user must configure explicitly in Settings
-    ['sync_interval_ms', '60000'],
+    ['sync_interval_ms', '120000'],
     ['last_full_sync', ''],
   ]
 
