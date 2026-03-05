@@ -36,12 +36,19 @@ interface TaskItem {
 type Section = 'overdue' | 'today' | 'upcoming' | 'waiting' | 'nodate'
 type CategoryFilter = 'all' | Section | 'completed' | string
 
+// Named assignee colors — Apple System Blue (Edward), Apple Accessible Pink (Laura)
+const ASSIGNEE_COLOR_OVERRIDES: Record<string, string> = {
+  'Edward Hodge': '#007AFF',
+  'Laura Youngkin': '#FF8AC4',
+}
+
 const ASSIGNEE_COLORS = [
-  '#007AFF', '#34C759', '#FF9500', '#AF52DE', '#FF2D55',
-  '#5856D6', '#30B0C7', '#FF3B30', '#00C7BE', '#A2845E',
+  '#34C759', '#FF9500', '#AF52DE', '#5856D6',
+  '#30B0C7', '#FF3B30', '#00C7BE', '#A2845E',
 ]
 
 function assigneeColor(name: string): string {
+  if (ASSIGNEE_COLOR_OVERRIDES[name]) return ASSIGNEE_COLOR_OVERRIDES[name]
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0
   return ASSIGNEE_COLORS[Math.abs(hash) % ASSIGNEE_COLORS.length]
