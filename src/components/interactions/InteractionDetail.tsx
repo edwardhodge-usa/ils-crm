@@ -333,7 +333,7 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
 
         {/* ── New Follow-up Task button ── */}
         <button
-          onClick={() => navigate('/tasks/new')}
+          onClick={() => navigate('/tasks')}
           style={{
             width: '100%',
             display: 'flex',

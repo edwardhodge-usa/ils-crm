@@ -25,7 +25,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Work',
     items: [
-      { id: 'tasks', label: 'Tasks', path: '/tasks', icon: 'checkbox', newPath: '/tasks/new' },
+      { id: 'tasks', label: 'Tasks', path: '/tasks', icon: 'checkbox' },
       { id: 'projects', label: 'Projects', path: '/projects', icon: 'folder', newPath: '/projects/new' },
       { id: 'proposals', label: 'Proposals', path: '/proposals', icon: 'doc-check', newPath: '/proposals/new' },
     ],

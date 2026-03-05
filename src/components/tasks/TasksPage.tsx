@@ -1,10 +1,10 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import type { ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import ConfirmDialog from '../shared/ConfirmDialog'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import LinkedRecordPicker from '../shared/LinkedRecordPicker'
+import DateSuggestionPicker from '../shared/DateSuggestionPicker'
 import useEntityList from '../../hooks/useEntityList'
 import useDarkMode from '../../hooks/useDarkMode'
 import {
@@ -94,8 +94,6 @@ const TYPE_SWATCH_COLORS: Record<string, string> = {
 
 function buildTaskEditableFields(assigneeOptions: string[]): EditableField[] {
   return [
-    { key: 'due_date', label: 'Due Date', type: 'date' },
-    { key: 'completed_date', label: 'Completed Date', type: 'date' },
     { key: 'priority', label: 'Priority', type: 'singleSelect',
       options: ['🔴 High', '🟡 Medium', '🟢 Low'] },
     { key: 'status', label: 'Status', type: 'singleSelect',
@@ -546,13 +544,14 @@ function TaskRow({ task, section, isSelected, isDark, onSelect, onComplete }: Ta
 
 interface TaskDetailProps {
   task: TaskItem | null
+  isNewTask: boolean
   assigneeOptions: string[]
   onComplete: (id: string) => void
   onDelete: (id: string) => void
   onReload: () => void
 }
 
-function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: TaskDetailProps) {
+function TaskDetail({ task, isNewTask, assigneeOptions, onComplete, onDelete, onReload }: TaskDetailProps) {
 
   if (!task) {
     return (
@@ -563,7 +562,6 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
   }
 
   const completed = isCompleted(task)
-  const borderColor = completed ? 'var(--color-green)' : priorityBorderColor(task.priorityClean)
 
   const handleLinkedSave = useCallback(async (key: string, val: unknown) => {
     if (!task) return
@@ -581,66 +579,77 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
     else if (diffDays === 0) overdueLabel = 'Due today'
   }
 
+  const [titleDraft, setTitleDraft] = useState(task.title === '(Untitled task)' ? '' : task.title)
+  const titleRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setTitleDraft(task.title === '(Untitled task)' ? '' : task.title)
+  }, [task.id, task.title])
+
+  useEffect(() => {
+    if (isNewTask && titleRef.current) {
+      titleRef.current.focus()
+    }
+  }, [isNewTask])
+
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '24px 28px' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 16 }}>
-        <div
-          onClick={() => onComplete(task.id)}
-          style={{
-            width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-            border: `2px solid ${completed ? 'var(--color-green)' : borderColor}`,
-            background: completed ? 'var(--color-green)' : 'transparent',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginTop: 2, cursor: 'default', transition: 'all 150ms',
+      {/* Editable Title */}
+      <div style={{ marginBottom: 8 }}>
+        <input
+          ref={titleRef}
+          value={titleDraft}
+          placeholder="New Task"
+          onChange={e => setTitleDraft(e.target.value)}
+          onBlur={() => {
+            const trimmed = titleDraft.trim()
+            if (trimmed !== task.title) {
+              window.electronAPI.tasks.update(task.id, { task: trimmed || null })
+              onReload()
+            }
           }}
-        >
-          {completed && (
-            <svg width="12" height="12" viewBox="0 0 10 10" fill="none">
-              <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontSize: 17, fontWeight: 600, color: 'var(--text-primary)',
-            lineHeight: 1.3, marginBottom: 3, borderRadius: 4, padding: '2px 4px', marginLeft: -4,
-          }}>
-            {task.title}
-          </div>
-          {Boolean(overdueLabel) && (
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{overdueLabel}</div>
-          )}
-        </div>
-        <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
-          {!completed && (
-            <button
-              onClick={() => onComplete(task.id)}
-              style={{
-                fontSize: 12, fontWeight: 500, padding: '4px 12px', borderRadius: 8,
-                background: 'var(--color-accent)', color: 'var(--text-on-accent)',
-                border: 'none', cursor: 'default', minHeight: 24,
-                display: 'inline-flex', alignItems: 'center', transition: 'background 150ms',
-              }}
-            >
-              Complete
-            </button>
-          )}
-          <button
-            onClick={() => onDelete(task.id)}
-            style={{
-              fontSize: 12, fontWeight: 500, padding: '4px 12px', borderRadius: 8,
-              color: 'var(--color-red)', background: 'none',
-              border: 'none', cursor: 'default', minHeight: 24,
-              display: 'inline-flex', alignItems: 'center', transition: 'background 150ms',
-            }}
-          >
-            Delete
-          </button>
-        </div>
+          onKeyDown={e => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+            if (e.key === 'Escape') { setTitleDraft(task.title === '(Untitled task)' ? '' : task.title); (e.target as HTMLInputElement).blur() }
+          }}
+          style={{
+            width: '100%', fontSize: 17, fontWeight: 600,
+            color: 'var(--text-primary)', background: 'transparent',
+            border: 'none', outline: 'none', padding: '2px 0',
+            fontFamily: 'inherit', cursor: 'default',
+          }}
+        />
+        {Boolean(overdueLabel) && (
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>{overdueLabel}</div>
+        )}
       </div>
 
+      {/* Notes — directly below title */}
       <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+        <EditableFormRow
+          field={{ key: 'notes', label: '', type: 'textarea' }}
+          value={task.notes}
+          isLast
+          onSave={async (key, val) => {
+            await window.electronAPI.tasks.update(task.id, { [key]: val })
+            onReload()
+          }}
+        />
+      </div>
+
+      {/* Details */}
+      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+        Details
+      </div>
+      <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+        <DateSuggestionPicker
+          value={task.due_date}
+          onSave={async (date) => {
+            await window.electronAPI.tasks.update(task.id, { due_date: date })
+            onReload()
+          }}
+        />
+        <div style={{ height: 1, background: 'var(--separator)', margin: '0 14px' }} />
         {buildTaskEditableFields(assigneeOptions).map((field, idx, arr) => (
           <EditableFormRow
             key={field.key}
@@ -709,19 +718,24 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
         />
       </div>
 
-      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
-        Notes
-      </div>
-      <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
-        <EditableFormRow
-          field={{ key: 'notes', label: '', type: 'textarea' }}
-          value={task.notes}
-          isLast
-          onSave={async (key, val) => {
-            await window.electronAPI.tasks.update(task.id, { [key]: val })
-            onReload()
-          }}
-        />
+      {/* Actions — at bottom */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 16 }}>
+        {!completed && (
+          <button onClick={() => onComplete(task.id)} style={{
+            fontSize: 12, fontWeight: 500, padding: '6px 16px', borderRadius: 8,
+            background: 'var(--color-accent)', color: 'var(--text-on-accent)',
+            border: 'none', cursor: 'default', transition: 'background 150ms',
+          }}>
+            Complete
+          </button>
+        )}
+        <button onClick={() => onDelete(task.id)} style={{
+          fontSize: 12, fontWeight: 500, padding: '6px 16px', borderRadius: 8,
+          color: 'var(--color-red)', background: 'none',
+          border: 'none', cursor: 'default', transition: 'background 150ms',
+        }}>
+          Delete
+        </button>
       </div>
     </div>
   )
@@ -730,7 +744,6 @@ function TaskDetail({ task, assigneeOptions, onComplete, onDelete, onReload }: T
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function TasksPage() {
-  const navigate = useNavigate()
   const isDark = useDarkMode()
   const { data: rawTasks, loading, error, reload } = useEntityList(() => window.electronAPI.tasks.getAll())
   const [activeAssignee, setActiveAssignee] = useState<string | null>(
@@ -743,6 +756,12 @@ export default function TasksPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [newTaskId, setNewTaskId] = useState<string | null>(null)
+  const [userName, setUserName] = useState<string | null>(null)
+
+  useEffect(() => {
+    window.electronAPI.settings.get('user_name').then((name: unknown) => setUserName(name as string | null))
+  }, [])
 
   const handleAssigneeChange = useCallback((assignee: string | null) => {
     setActiveAssignee(assignee)
@@ -862,6 +881,23 @@ export default function TasksPage() {
     setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
   }, [])
 
+  const handleNewTask = useCallback(async () => {
+    const result = await window.electronAPI.tasks.create({
+      task: '',
+      status: 'To Do',
+      assigned_to: userName,
+    })
+    if (result?.success && result.data) {
+      setNewTaskId(result.data)
+      setSelectedId(result.data)
+      reload()
+    }
+  }, [userName, reload])
+
+  useEffect(() => {
+    if (newTaskId && selectedId !== newTaskId) setNewTaskId(null)
+  }, [selectedId, newTaskId])
+
   if (loading) return <LoadingSpinner />
 
   if (error) {
@@ -919,7 +955,7 @@ export default function TasksPage() {
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginLeft: 6 }}>{filteredTasks.length}</span>
           </div>
           <button
-            onClick={() => navigate('/tasks/new')}
+            onClick={handleNewTask}
             style={{
               background: 'var(--color-accent)', color: 'var(--text-on-accent)',
               fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 8,
@@ -1016,6 +1052,7 @@ export default function TasksPage() {
       {/* Task Detail pane */}
       <TaskDetail
         task={selectedTask}
+        isNewTask={selectedId != null && selectedId === newTaskId}
         assigneeOptions={assigneeOptions}
         onComplete={handleComplete}
         onDelete={handleDelete}

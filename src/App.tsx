@@ -155,7 +155,6 @@ export default function App() {
             {/* Tasks */}
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/tasks/list" element={<TaskListPage />} />
-            <Route path="/tasks/new" element={<TaskForm />} />
             <Route path="/tasks/:id/edit" element={<TaskForm />} />
 
             {/* Proposals */}
