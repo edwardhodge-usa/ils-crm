@@ -36,6 +36,23 @@ interface TaskItem {
 type Section = 'overdue' | 'today' | 'upcoming' | 'waiting' | 'nodate'
 type CategoryFilter = 'all' | Section | 'completed' | string
 
+const ASSIGNEE_COLORS = [
+  '#007AFF', '#34C759', '#FF9500', '#AF52DE', '#FF2D55',
+  '#5856D6', '#30B0C7', '#FF3B30', '#00C7BE', '#A2845E',
+]
+
+function assigneeColor(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0
+  return ASSIGNEE_COLORS[Math.abs(hash) % ASSIGNEE_COLORS.length]
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  return name.slice(0, 2).toUpperCase()
+}
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const TASK_TYPES = [
@@ -164,9 +181,14 @@ interface CategoriesPaneProps {
   onSelect: (cat: CategoryFilter) => void
   counts: Record<string, number>
   typeCounts: Record<string, number>
+  activeAssignee: string | null
+  onAssigneeSelect: (assignee: string | null) => void
+  assigneeOptions: string[]
+  assigneeCounts: { named: Record<string, number>; unassigned: number }
+  totalTaskCount: number
 }
 
-function CategoriesPane({ active, onSelect, counts, typeCounts }: CategoriesPaneProps) {
+function CategoriesPane({ active, onSelect, counts, typeCounts, activeAssignee, onAssigneeSelect, assigneeOptions, assigneeCounts, totalTaskCount }: CategoriesPaneProps) {
   const smartLists: { key: CategoryFilter; label: string; color: string }[] = [
     { key: 'all',       label: 'All Tasks',  color: 'var(--color-accent)' },
     { key: 'overdue',   label: 'Overdue',    color: 'var(--color-red)' },
@@ -182,6 +204,119 @@ function CategoriesPane({ active, onSelect, counts, typeCounts }: CategoriesPane
       width: 210, flexShrink: 0, borderRight: '1px solid var(--separator)',
       display: 'flex', flexDirection: 'column', overflowY: 'auto',
     }}>
+      {/* By Assigned */}
+      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', padding: '10px 12px 5px' }}>
+        Assigned
+      </div>
+      {/* All row */}
+      {(() => {
+        const isActive = activeAssignee === null
+        return (
+          <div
+            onClick={() => onAssigneeSelect(null)}
+            className="cursor-default"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '6px 12px', paddingLeft: 28, borderRadius: 8, margin: '1px 6px',
+              background: isActive ? 'var(--color-accent)' : undefined,
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-hover)' }}
+            onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = '' }}
+          >
+            <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: isActive ? 'var(--text-on-accent)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              All
+            </span>
+            <span style={{
+              fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 9999, flexShrink: 0,
+              background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--bg-tertiary)',
+              color: isActive ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+            }}>
+              {totalTaskCount}
+            </span>
+          </div>
+        )
+      })()}
+      {/* Named assignees */}
+      {assigneeOptions.map(name => {
+        const isActive = activeAssignee === name
+        const count = assigneeCounts.named[name] ?? 0
+        return (
+          <div
+            key={name}
+            onClick={() => onAssigneeSelect(name)}
+            className="cursor-default"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '6px 12px', borderRadius: 8, margin: '1px 6px',
+              background: isActive ? 'var(--color-accent)' : undefined,
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-hover)' }}
+            onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = '' }}
+          >
+            <div style={{
+              width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+              background: assigneeColor(name),
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 9, fontWeight: 700, color: '#fff', letterSpacing: '0.02em',
+            }}>
+              {initials(name)}
+            </div>
+            <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: isActive ? 'var(--text-on-accent)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {name}
+            </span>
+            <span style={{
+              fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 9999, flexShrink: 0,
+              background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--bg-tertiary)',
+              color: isActive ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+            }}>
+              {count}
+            </span>
+          </div>
+        )
+      })}
+      {/* Unassigned row */}
+      {(() => {
+        const isActive = activeAssignee === '__unassigned__'
+        const count = assigneeCounts.unassigned
+        return (
+          <div
+            onClick={() => onAssigneeSelect('__unassigned__')}
+            className="cursor-default"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '6px 12px', borderRadius: 8, margin: '1px 6px',
+              background: isActive ? 'var(--color-accent)' : undefined,
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-hover)' }}
+            onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = '' }}
+          >
+            <div style={{
+              width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+              background: 'var(--bg-tertiary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)',
+            }}>
+              —
+            </div>
+            <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: isActive ? 'var(--text-on-accent)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Unassigned
+            </span>
+            <span style={{
+              fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 9999, flexShrink: 0,
+              background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--bg-tertiary)',
+              color: isActive ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+              opacity: count === 0 ? 0.4 : 1,
+            }}>
+              {count}
+            </span>
+          </div>
+        )
+      })()}
+      <div style={{ height: 1, background: 'var(--separator)', margin: '6px 12px' }} />
+
       {/* Smart Lists */}
       <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', padding: '10px 12px 5px' }}>
         Smart Lists
@@ -591,14 +726,38 @@ export default function TasksPage() {
   const navigate = useNavigate()
   const isDark = useDarkMode()
   const { data: rawTasks, loading, error, reload } = useEntityList(() => window.electronAPI.tasks.getAll())
-  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
+  const [activeAssignee, setActiveAssignee] = useState<string | null>(
+    () => localStorage.getItem('tasks-filter-assignee') || null
+  )
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>(
+    () => (localStorage.getItem('tasks-filter-category') as CategoryFilter) || 'all'
+  )
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
+  const handleAssigneeChange = useCallback((assignee: string | null) => {
+    setActiveAssignee(assignee)
+    if (assignee) localStorage.setItem('tasks-filter-assignee', assignee)
+    else localStorage.removeItem('tasks-filter-assignee')
+    setSelectedId(null)
+  }, [])
+
+  const handleCategoryChange = useCallback((cat: CategoryFilter) => {
+    setActiveCategory(cat)
+    localStorage.setItem('tasks-filter-category', cat)
+    setSelectedId(null)
+  }, [])
+
   const today = todayStr()
   const allTasks = useMemo(() => rawTasks.map(toTaskItem), [rawTasks])
+
+  const scopedTasks = useMemo(() => {
+    if (!activeAssignee) return allTasks
+    if (activeAssignee === '__unassigned__') return allTasks.filter(t => !t.assigned_to)
+    return allTasks.filter(t => t.assigned_to === activeAssignee)
+  }, [allTasks, activeAssignee])
 
   // Counts for categories
   const { counts, typeCounts, sectionGroups } = useMemo(() => {
@@ -606,7 +765,7 @@ export default function TasksPage() {
     const typeCounts: Record<string, number> = {}
     const sectionGroups: Record<string, TaskItem[]> = { overdue: [], today: [], upcoming: [], waiting: [], nodate: [] }
 
-    for (const t of allTasks) {
+    for (const t of scopedTasks) {
       const section = classifyTask(t, today)
       if (section === 'complete') {
         counts.completed++
@@ -626,19 +785,29 @@ export default function TasksPage() {
     }
 
     return { counts, typeCounts, sectionGroups }
-  }, [allTasks, today])
+  }, [scopedTasks, today])
+
+  const assigneeCounts = useMemo(() => {
+    const map: Record<string, number> = {}
+    let unassigned = 0
+    for (const t of allTasks) {
+      if (t.assigned_to) map[t.assigned_to] = (map[t.assigned_to] || 0) + 1
+      else unassigned++
+    }
+    return { named: map, unassigned }
+  }, [allTasks])
 
   // Filtered tasks based on category
   const filteredTasks = useMemo(() => {
     let tasks: TaskItem[]
 
     if (activeCategory === 'all') {
-      tasks = allTasks.filter(t => !isCompleted(t))
+      tasks = scopedTasks.filter(t => !isCompleted(t))
     } else if (activeCategory === 'completed') {
-      tasks = allTasks.filter(t => isCompleted(t))
+      tasks = scopedTasks.filter(t => isCompleted(t))
     } else if (activeCategory.startsWith('type:')) {
       const type = activeCategory.slice(5)
-      tasks = allTasks.filter(t => t.type === type)
+      tasks = scopedTasks.filter(t => t.type === type)
     } else {
       tasks = sectionGroups[activeCategory] || []
     }
@@ -650,7 +819,7 @@ export default function TasksPage() {
     }
 
     return tasks
-  }, [activeCategory, allTasks, sectionGroups, searchQuery])
+  }, [activeCategory, scopedTasks, sectionGroups, searchQuery])
 
   // Group filtered tasks into sections (only for "all" view)
   const showSections = activeCategory === 'all'
@@ -705,19 +874,30 @@ export default function TasksPage() {
     { key: 'nodate', label: 'No Date', icon: '○', iconColor: 'var(--text-tertiary)' },
   ]
 
+  const assigneeLabel = activeAssignee === '__unassigned__' ? 'Unassigned'
+    : activeAssignee ? activeAssignee
+    : null
+
   const categoryLabel = activeCategory === 'all' ? 'All Tasks'
     : activeCategory === 'completed' ? 'Completed'
     : activeCategory.startsWith('type:') ? activeCategory.slice(5)
     : activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)
+
+  const fullLabel = assigneeLabel ? `${categoryLabel} — ${assigneeLabel}` : categoryLabel
 
   return (
     <div style={{ display: 'flex', height: '100%', width: '100%' }}>
       {/* Categories pane */}
       <CategoriesPane
         active={activeCategory}
-        onSelect={cat => { setActiveCategory(cat); setSelectedId(null) }}
+        onSelect={handleCategoryChange}
         counts={counts}
         typeCounts={typeCounts}
+        activeAssignee={activeAssignee}
+        onAssigneeSelect={handleAssigneeChange}
+        assigneeOptions={assigneeOptions}
+        assigneeCounts={assigneeCounts}
+        totalTaskCount={allTasks.length}
       />
 
       {/* Task List pane */}
@@ -728,7 +908,7 @@ export default function TasksPage() {
           padding: '12px 14px 10px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
         }}>
           <div>
-            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: -0.2 }}>{categoryLabel}</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: -0.2 }}>{fullLabel}</span>
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginLeft: 6 }}>{filteredTasks.length}</span>
           </div>
           <button
