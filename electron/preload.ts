@@ -99,6 +99,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   specialties: makeReadOnlyBridge('specialties'),
   portalLogs: {
     getAll: () => ipcRenderer.invoke('portalLogs:getAll'),
+    delete: (id: string) => ipcRenderer.invoke('portalLogs:delete', id),
   },
 
   // Imported contacts with approve/reject

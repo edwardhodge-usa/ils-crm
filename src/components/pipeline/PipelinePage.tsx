@@ -11,22 +11,22 @@ type DealStage = DealItem['stage']
 
 // Map all legacy/extended Airtable stage values to the 5 canonical Kanban stages
 const STAGE_MAP: Record<string, DealStage> = {
-  // Prospecting bucket
+  // Canonical stages (pass-through)
+  'Prospecting': 'Prospecting',
+  'Qualified': 'Qualified',
+  'Development': 'Development',
+  'Proposal Sent': 'Proposal Sent',
+  'Negotiation': 'Negotiation',
+  'Closed Won': 'Closed Won',
+  'Closed Lost': 'Closed Lost',
+  // Legacy Airtable values → canonical
   'Initial Contact': 'Prospecting',
   'Outbound Prospecting': 'Prospecting',
   'Future Client': 'Prospecting',
   'Investment': 'Prospecting',
-  // Qualified bucket
   'Qualification': 'Qualified',
   'Meeting Scheduled': 'Qualified',
-  // Direct pass-throughs
-  'Proposal Sent': 'Proposal Sent',
-  'Negotiation': 'Negotiation',
   'Contract Sent': 'Negotiation',
-  'Development': 'Negotiation',
-  // Win/loss
-  'Closed Won': 'Closed Won',
-  // Closed Lost is excluded from the board (filtered out below)
 }
 
 function toStage(raw: string | null | undefined): DealStage | null {
@@ -150,7 +150,7 @@ export default function PipelinePage() {
       </div>
 
       {/* Deal detail slide-in panel */}
-      <DealDetail dealId={selectedDealId} onClose={() => setSelectedDealId(null)} onDeleted={() => { setSelectedDealId(null); reload() }} />
+      <DealDetail dealId={selectedDealId} onClose={() => setSelectedDealId(null)} onDeleted={() => { setSelectedDealId(null); reload() }} onSaved={reload} />
     </div>
   )
 }

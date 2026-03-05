@@ -53,7 +53,9 @@ interface ElectronAPI {
   }
   specialties: ReadOnlyEntityAPI
   portalAccess: Omit<EntityAPI, 'delete'>
-  portalLogs: ReadOnlyEntityAPI
+  portalLogs: ReadOnlyEntityAPI & {
+    delete: (id: string) => Promise<{ success: boolean; error?: string }>
+  }
   dashboard: {
     getStats: () => Promise<{ success: boolean; data?: unknown }>
     getTasksDueToday: () => Promise<{ success: boolean; data?: unknown[] }>

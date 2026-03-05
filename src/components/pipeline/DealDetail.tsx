@@ -15,11 +15,12 @@ interface DealDetailProps {
   dealId: string | null
   onClose: () => void
   onDeleted?: () => void
+  onSaved?: () => void
 }
 
 const DEAL_EDITABLE_FIELDS: EditableField[] = [
   { key: 'sales_stage', label: 'Stage', type: 'singleSelect',
-    options: ['Qualification', 'Meeting Scheduled', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost', 'Initial Contact', 'Contract Sent', 'Development', 'Investment', 'Future Client'] },
+    options: ['Prospecting', 'Qualified', 'Development', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] },
   { key: 'deal_value', label: 'Value', type: 'currency' },
   { key: 'probability', label: 'Probability', type: 'singleSelect',
     options: ['Cold', 'Low', '02 Medium', '01 High', '04 FUTURE ROADMAP'] },
@@ -56,7 +57,7 @@ function TaskStatusBadge({ status }: { status: string }) {
   )
 }
 
-export function DealDetail({ dealId, onClose, onDeleted }: DealDetailProps) {
+export function DealDetail({ dealId, onClose, onDeleted, onSaved }: DealDetailProps) {
   const [deal, setDeal] = useState<Record<string, unknown> | null>(null)
   const [linkedTasks, setLinkedTasks] = useState<Record<string, unknown>[]>([])
   const [visible, setVisible] = useState(false)
@@ -142,14 +143,16 @@ export function DealDetail({ dealId, onClose, onDeleted }: DealDetailProps) {
     await window.electronAPI.opportunities.update(dealId, { [key]: val })
     const res = await window.electronAPI.opportunities.getById(dealId)
     if (res.success && res.data) setDeal(res.data as Record<string, unknown>)
-  }, [dealId])
+    onSaved?.()
+  }, [dealId, onSaved])
 
   const handleLinkedSave = useCallback(async (key: string, val: unknown) => {
     if (!dealId) return
     await window.electronAPI.opportunities.update(dealId, { [key]: val })
     const res = await window.electronAPI.opportunities.getById(dealId)
     if (res.success && res.data) setDeal(res.data as Record<string, unknown>)
-  }, [dealId])
+    onSaved?.()
+  }, [dealId, onSaved])
 
   // Trigger slide-in after data loads
   useEffect(() => {

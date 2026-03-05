@@ -342,16 +342,27 @@ export async function updateRecord(
   if (!tableId || !converter) return { success: false, error: `Unknown table: ${tableName}` }
 
   try {
-    const airtableFields = converter.toAirtable(fields)
-    if (isDev) console.log(`[Sync] updateRecord ${tableName}/${id} → sending fields:`, JSON.stringify(airtableFields, null, 2))
-    await batchUpdate(tableId, [{ id, fields: airtableFields }], { apiKey: config.apiKey, baseId: config.baseId })
-
-    // Update local cache
+    // Optimistic local update — instant UI refresh
     upsert(tableName, id, {
       ...fields,
-      _airtable_modified_at: new Date().toISOString(),
-      _pending_push: 0,
+      _local_modified_at: new Date().toISOString(),
+      _pending_push: 1,
     })
+
+    // Push to Airtable in the background
+    const airtableFields = converter.toAirtable(fields)
+    if (isDev) console.log(`[Sync] updateRecord ${tableName}/${id} → sending fields:`, JSON.stringify(airtableFields, null, 2))
+    batchUpdate(tableId, [{ id, fields: airtableFields }], { apiKey: config.apiKey, baseId: config.baseId })
+      .then(() => {
+        upsert(tableName, id, {
+          _airtable_modified_at: new Date().toISOString(),
+          _pending_push: 0,
+        })
+      })
+      .catch((err) => {
+        console.error(`[Sync] updateRecord push FAILED ${tableName}/${id}:`, String(err))
+        // Record stays _pending_push=1, next full sync will retry
+      })
 
     return { success: true }
   } catch (error) {

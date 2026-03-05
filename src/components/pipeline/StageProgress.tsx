@@ -1,4 +1,4 @@
-const STAGES = ['Prospecting', 'Qualified', 'Proposal Sent', 'Negotiation', 'Closed Won'] as const
+const STAGES = ['Prospecting', 'Qualified', 'Development', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] as const
 type Stage = typeof STAGES[number]
 
 interface StageProgressProps {

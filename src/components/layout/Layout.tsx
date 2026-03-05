@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
+import TopBar from './TopBar'
 import UpdateBanner from './UpdateBanner'
 import { NEW_ROUTES } from '../../config/routes'
 
@@ -37,9 +38,13 @@ export default function Layout({ onSignOut }: LayoutProps) {
       <UpdateBanner />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 flex overflow-hidden">
-          <Outlet context={{ onSignOut: onSignOut ?? (() => {}) } satisfies LayoutOutletContext} />
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Titlebar with sync indicator + drag region */}
+          <TopBar />
+          <main className="flex-1 flex overflow-hidden">
+            <Outlet context={{ onSignOut: onSignOut ?? (() => {}) } satisfies LayoutOutletContext} />
+          </main>
+        </div>
       </div>
     </div>
   )

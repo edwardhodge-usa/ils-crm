@@ -108,8 +108,6 @@ function resolvedCompany(row: Record<string, unknown>): string | null {
 // ─── Editable field definitions ──────────────────────────────────────────────
 
 const PORTAL_EDITABLE_FIELDS: EditableField[] = [
-  { key: 'status', label: 'Status', type: 'statusSelect',
-    options: ['Active', 'Inactive', 'Pending', 'Expired', 'Revoked'] },
   { key: 'stage', label: 'Stage', type: 'statusSelect',
     options: ['Prospect', 'Lead', 'Client', 'Past Client', 'Partner'] },
   { key: 'lead_source', label: 'Lead Source', type: 'singleSelect',
@@ -234,13 +232,19 @@ interface PortalRowProps {
   record: Record<string, unknown>
   isSelected: boolean
   onClick: () => void
+  groupedBy?: string
 }
 
-function PortalAccessRow({ record, isSelected, onClick }: PortalRowProps) {
+function PortalAccessRow({ record, isSelected, onClick, groupedBy }: PortalRowProps) {
   const name = resolvedName(record)
   const email = resolvedEmail(record)
   const company = resolvedCompany(record)
   const status = (record.status as string | null) ?? null
+
+  // When grouped by company, show email instead (company is in the section header)
+  const subtitle = groupedBy === 'company'
+    ? (email || null)
+    : (company || email || null)
 
   return (
     <div
@@ -256,35 +260,30 @@ function PortalAccessRow({ record, isSelected, onClick }: PortalRowProps) {
       onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-hover)' }}
       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
     >
-      {/* Line 1: name */}
+      {/* Line 1: name + status badge right-aligned */}
       <div style={{
-        fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        display: 'flex', alignItems: 'center', gap: 6,
         lineHeight: 1.3,
       }}>
-        {name}
+        <span style={{
+          fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          flex: 1, minWidth: 0,
+        }}>
+          {name}
+        </span>
+        {Boolean(status) && <StatusBadge value={status} />}
       </div>
 
-      {/* Line 2: email/company + status */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-        {Boolean(status) && <StatusBadge value={status} />}
-        {Boolean(email) && (
-          <span style={{
-            fontSize: 11, color: 'var(--text-secondary)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
-            {email}
-          </span>
-        )}
-        {Boolean(company) && !email && (
-          <span style={{
-            fontSize: 11, color: 'var(--text-secondary)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
-            {company}
-          </span>
-        )}
-      </div>
+      {/* Line 2: subtitle (company or email) */}
+      {Boolean(subtitle) && (
+        <div style={{
+          fontSize: 11, color: 'var(--text-secondary)', marginTop: 2,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {subtitle}
+        </div>
+      )}
     </div>
   )
 }
@@ -295,10 +294,12 @@ interface DetailProps {
   record: Record<string, unknown> | null
   logs: Record<string, unknown>[]
   onFieldSave: (key: string, val: unknown) => Promise<void>
+  onDeleteLog: (id: string) => Promise<void>
 }
 
-function PortalAccessDetail({ record, logs, onFieldSave }: DetailProps) {
+function PortalAccessDetail({ record, logs, onFieldSave, onDeleteLog }: DetailProps) {
   const { contactPhotoUrl, companyLogoUrl } = useLinkedImages(record)
+  const [showAllLogs, setShowAllLogs] = useState(false)
 
   if (!record) {
     return (
@@ -313,7 +314,6 @@ function PortalAccessDetail({ record, logs, onFieldSave }: DetailProps) {
 
   const name = resolvedName(record)
   const email = resolvedEmail(record)
-  const status = (record.status as string | null) ?? null
   const stage = (record.stage as string | null) ?? null
   const company = resolvedCompany(record)
 
@@ -379,10 +379,11 @@ function PortalAccessDetail({ record, logs, onFieldSave }: DetailProps) {
                   {email}
                 </div>
               )}
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 6 }}>
-                {Boolean(status) && <StatusBadge value={status} />}
-                {Boolean(stage) && <StatusBadge value={stage} />}
-              </div>
+              {Boolean(stage) && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                  <StatusBadge value={stage} />
+                </div>
+              )}
             </div>
 
             {/* Company logo */}
@@ -422,51 +423,57 @@ function PortalAccessDetail({ record, logs, onFieldSave }: DetailProps) {
 
         {/* Portal URL — prominent, clickable + copyable */}
         {Boolean(record.framer_page_url) && (
-          <div style={{
-            padding: '10px 16px',
-            borderBottom: '1px solid var(--separator)',
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>
-              PORTAL URL
-            </span>
-            <a
-              href={String(record.framer_page_url)}
-              onClick={e => {
-                e.preventDefault()
-                window.electronAPI.shell.openExternal(String(record.framer_page_url))
-              }}
-              style={{
-                flex: 1, minWidth: 0,
-                fontSize: 13, fontWeight: 500, color: 'var(--color-accent)',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                cursor: 'default', textDecoration: 'none',
-              }}
-              title={String(record.framer_page_url)}
-            >
-              {String(record.framer_page_url)}
-            </a>
-            <button
-              onClick={() => navigator.clipboard.writeText(String(record.framer_page_url))}
-              style={{
-                background: 'var(--bg-secondary)', border: '1px solid var(--separator)',
-                cursor: 'default', fontSize: 11, fontWeight: 500,
-                color: 'var(--text-secondary)', padding: '3px 8px',
-                borderRadius: 6, flexShrink: 0,
-                transition: 'background 150ms',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
-            >
-              Copy
-            </button>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
+            <div style={{
+              fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+              letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
+            }}>
+              Portal URL
+            </div>
+            <div style={{
+              background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden',
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '10px 14px',
+            }}>
+              <a
+                href={String(record.framer_page_url)}
+                onClick={e => {
+                  e.preventDefault()
+                  window.electronAPI.shell.openExternal(String(record.framer_page_url))
+                }}
+                style={{
+                  flex: 1, minWidth: 0,
+                  fontSize: 13, fontWeight: 500, color: 'var(--color-accent)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  cursor: 'default', textDecoration: 'none',
+                }}
+                title={String(record.framer_page_url)}
+              >
+                {String(record.framer_page_url)}
+              </a>
+              <button
+                onClick={() => navigator.clipboard.writeText(String(record.framer_page_url))}
+                className="cursor-default"
+                style={{
+                  background: 'var(--bg-tertiary)', border: '1px solid var(--separator)',
+                  fontSize: 11, fontWeight: 500,
+                  color: 'var(--text-secondary)', padding: '3px 8px',
+                  borderRadius: 6, flexShrink: 0,
+                  transition: 'background 150ms',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+              >
+                Copy
+              </button>
+            </div>
           </div>
         )}
 
         {/* Page Path — editable */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{
-            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
             letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
           }}>
             Portal Page
@@ -479,10 +486,44 @@ function PortalAccessDetail({ record, logs, onFieldSave }: DetailProps) {
           </div>
         </div>
 
-        {/* Visit stats */}
+        {/* Linked Contact + Status */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{
-            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
+          }}>
+            Linked Contact
+          </div>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            <LinkedRecordPicker
+              label="Contact"
+              entityApi={window.electronAPI.contacts}
+              labelField="contact_name"
+              labelFallbackFields={['first_name', 'last_name']}
+              value={record.contact_ids}
+              onChange={val => onFieldSave('contact_ids', val)}
+              createFields={CONTACT_CREATE_FIELDS}
+              createTitle="New Contact"
+              createApi={window.electronAPI.contacts}
+              placeholder="Search contacts..."
+              multiple={false}
+            />
+            <EditableFormRow
+              field={{
+                key: 'status', label: 'Status', type: 'statusSelect',
+                options: ['Active', 'Inactive', 'Pending', 'Expired', 'Revoked'],
+              }}
+              value={record.status}
+              isLast
+              onSave={onFieldSave}
+            />
+          </div>
+        </div>
+
+        {/* Activity — Total Visits, Last Activity, Recent Visits (max 4) */}
+        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
             letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
           }}>
             Activity
@@ -499,17 +540,210 @@ function PortalAccessDetail({ record, logs, onFieldSave }: DetailProps) {
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               minHeight: 36, padding: '10px 14px',
+              borderBottom: relatedLogs.length > 0 ? '1px solid var(--separator)' : 'none',
             }}>
               <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>Last Activity</span>
               <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>{lastActivity ?? '---'}</span>
             </div>
+            {relatedLogs.slice(0, 4).map((log, i, arr) => {
+              const ts = String(log.timestamp ?? '')
+              const dateStr = (() => {
+                const m = ts.match(/^(\d{4}-\d{2}-\d{2})/)
+                return m ? formatDate(m[1]) : ts
+              })()
+              const page = (log.page_url as string | null) ?? null
+              const city = (log.city as string | null) ?? null
+              const isLast = i === arr.length - 1 && relatedLogs.length <= 4
+
+              return (
+                <div
+                  key={i}
+                  className="cursor-default"
+                  style={{
+                    padding: '10px 14px',
+                    borderBottom: isLast ? 'none' : '1px solid var(--separator)',
+                    transition: 'background 150ms',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-secondary)', flexShrink: 0 }}>
+                      {dateStr}
+                    </span>
+                    {Boolean(city) && (
+                      <span style={{
+                        fontSize: 13, color: 'var(--text-primary)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {city}
+                      </span>
+                    )}
+                  </div>
+                  {Boolean(page) && (
+                    <div style={{
+                      fontSize: 11, color: 'var(--color-accent)', marginTop: 2,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {page}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+            {/* View All button when more than 4 logs */}
+            {relatedLogs.length > 4 && (
+              <div
+                onClick={() => setShowAllLogs(true)}
+                className="cursor-default"
+                style={{
+                  padding: '8px 14px',
+                  textAlign: 'center',
+                  fontSize: 12, fontWeight: 500, color: 'var(--color-accent)',
+                  borderTop: '1px solid var(--separator)',
+                  transition: 'background 150ms',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '' }}
+              >
+                View All {relatedLogs.length} Visits
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Full activity log overlay */}
+        {showAllLogs && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(0,0,0,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+            onClick={e => { if (e.target === e.currentTarget) setShowAllLogs(false) }}
+          >
+            <div style={{
+              width: 480, maxHeight: '70vh',
+              background: 'var(--bg-window)',
+              borderRadius: 12,
+              boxShadow: '0 16px 48px rgba(0,0,0,0.25)',
+              display: 'flex', flexDirection: 'column',
+              overflow: 'hidden',
+            }}>
+              {/* Header */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '14px 16px',
+                borderBottom: '1px solid var(--separator)',
+                flexShrink: 0,
+              }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  All Visits ({relatedLogs.length})
+                </span>
+                <button
+                  onClick={() => setShowAllLogs(false)}
+                  className="cursor-default"
+                  style={{
+                    background: 'var(--bg-secondary)', border: '1px solid var(--separator)',
+                    borderRadius: 6, padding: '4px 10px',
+                    fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)',
+                    transition: 'background 150ms',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                >
+                  Done
+                </button>
+              </div>
+              {/* Scrollable log list */}
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                {relatedLogs.map((log, i) => {
+                  const ts = String(log.timestamp ?? '')
+                  const dateStr = (() => {
+                    const m = ts.match(/^(\d{4}-\d{2}-\d{2})/)
+                    return m ? formatDate(m[1]) : ts
+                  })()
+                  const page = (log.page_url as string | null) ?? null
+                  const city = (log.city as string | null) ?? null
+                  const logId = log.id as string
+
+                  return (
+                    <div
+                      key={logId || i}
+                      className="cursor-default"
+                      style={{
+                        padding: '10px 16px',
+                        borderBottom: i < relatedLogs.length - 1 ? '1px solid var(--separator)' : 'none',
+                        display: 'flex', alignItems: 'flex-start', gap: 10,
+                        transition: 'background 150ms',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '' }}
+                    >
+                      {/* Log info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                          <span style={{ fontSize: 12, color: 'var(--text-secondary)', flexShrink: 0 }}>
+                            {dateStr}
+                          </span>
+                          {Boolean(city) && (
+                            <span style={{
+                              fontSize: 13, color: 'var(--text-primary)',
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            }}>
+                              {city}
+                            </span>
+                          )}
+                        </div>
+                        {Boolean(page) && (
+                          <div style={{
+                            fontSize: 12, color: 'var(--color-accent)', marginTop: 2,
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          }}>
+                            {page}
+                          </div>
+                        )}
+                      </div>
+                      {/* Delete button */}
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          await onDeleteLog(logId)
+                        }}
+                        className="cursor-default"
+                        style={{
+                          background: 'transparent', border: 'none',
+                          fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)',
+                          padding: '2px 6px', borderRadius: 4, flexShrink: 0,
+                          transition: 'color 150ms, background 150ms',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.color = 'var(--color-red)'
+                          e.currentTarget.style.background = 'rgba(255,59,48,0.08)'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.color = 'var(--text-tertiary)'
+                          e.currentTarget.style.background = 'transparent'
+                        }}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )
+                })}
+                {relatedLogs.length === 0 && (
+                  <div style={{ padding: 24, textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)' }}>
+                    No visits recorded.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Portal Info — editable selects and dates */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{
-            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
             letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
           }}>
             Portal Info
@@ -527,55 +761,10 @@ function PortalAccessDetail({ record, logs, onFieldSave }: DetailProps) {
           </div>
         </div>
 
-        {/* Linked Contact */}
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
-          <div style={{
-            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
-          }}>
-            Linked Contact
-          </div>
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            <LinkedRecordPicker
-              label="Contact"
-              entityApi={window.electronAPI.contacts}
-              labelField="contact_name"
-              labelFallbackFields={['first_name', 'last_name']}
-              value={record.contact_ids}
-              onChange={val => onFieldSave('contact_ids', val)}
-              createFields={CONTACT_CREATE_FIELDS}
-              createTitle="New Contact"
-              createApi={window.electronAPI.contacts}
-              placeholder="Search contacts..."
-            />
-          </div>
-        </div>
-
-        {/* Contact Info — pulled from linked contact record (Airtable lookups) */}
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
-          <div style={{
-            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
-          }}>
-            Contact Info
-          </div>
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            {PORTAL_CONTACT_LOOKUP_FIELDS.map((field, idx) => (
-              <EditableFormRow
-                key={field.key}
-                field={field}
-                value={record[field.key]}
-                isLast={idx === PORTAL_CONTACT_LOOKUP_FIELDS.length - 1}
-                onSave={onFieldSave}
-              />
-            ))}
-          </div>
-        </div>
-
         {/* Other fields */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{
-            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
             letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
           }}>
             Other
@@ -596,7 +785,7 @@ function PortalAccessDetail({ record, logs, onFieldSave }: DetailProps) {
         {/* Notes */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{
-            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
             letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
           }}>
             Notes
@@ -611,64 +800,26 @@ function PortalAccessDetail({ record, logs, onFieldSave }: DetailProps) {
           </div>
         </div>
 
-        {/* Recent portal log entries */}
-        {relatedLogs.length > 0 && (
-          <div style={{ padding: '14px 16px' }}>
-            <div style={{
-              fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
-            }}>
-              Recent Visits
-            </div>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-              {relatedLogs.slice(0, 5).map((log, i, arr) => {
-                const ts = String(log.timestamp ?? '')
-                const dateStr = (() => {
-                  const m = ts.match(/^(\d{4}-\d{2}-\d{2})/)
-                  return m ? formatDate(m[1]) : ts
-                })()
-                const page = (log.page_url as string | null) ?? null
-                const city = (log.city as string | null) ?? null
-
-                return (
-                  <div
-                    key={i}
-                    className="cursor-default"
-                    style={{
-                      padding: '10px 14px',
-                      borderBottom: i < arr.length - 1 ? '1px solid var(--separator)' : 'none',
-                      transition: 'background 150ms',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = '' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                      <span style={{ fontSize: 11, color: 'var(--text-secondary)', flexShrink: 0 }}>
-                        {dateStr}
-                      </span>
-                      {Boolean(city) && (
-                        <span style={{
-                          fontSize: 13, color: 'var(--text-primary)',
-                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        }}>
-                          {city}
-                        </span>
-                      )}
-                    </div>
-                    {Boolean(page) && (
-                      <div style={{
-                        fontSize: 11, color: 'var(--color-accent)', marginTop: 2,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>
-                        {page}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+        {/* Contact Info — pulled from linked contact record (Airtable lookups) */}
+        <div style={{ padding: '14px 16px' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
+          }}>
+            Contact Info
           </div>
-        )}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+            {PORTAL_CONTACT_LOOKUP_FIELDS.map((field, idx) => (
+              <EditableFormRow
+                key={field.key}
+                field={field}
+                value={record[field.key]}
+                isLast={idx === PORTAL_CONTACT_LOOKUP_FIELDS.length - 1}
+                onSave={onFieldSave}
+              />
+            ))}
+          </div>
+        </div>
 
         {/* Bottom spacer */}
         <div style={{ height: 16 }} />
@@ -685,7 +836,7 @@ export default function PortalAccessPage() {
   const [logs, setLogs] = useState<Record<string, unknown>[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState<'name' | 'status' | 'stage' | 'newest' | 'oldest'>('name')
+  const [sortBy, setSortBy] = useState<'name' | 'company' | 'status' | 'stage' | 'newest' | 'oldest'>(() => (localStorage.getItem('sort-portal') as 'name' | 'company' | 'status' | 'stage' | 'newest' | 'oldest') || 'name')
 
   // Load portal logs once for activity data
   useEffect(() => {
@@ -696,15 +847,17 @@ export default function PortalAccessPage() {
     }).catch(() => { /* logs stay empty */ })
   }, [])
 
-  // Background refresh selected record from Airtable for latest data
+  // Background refresh selected record from Airtable for latest data (debounced)
   useEffect(() => {
     if (!selectedId) return
     let cancelled = false
-    window.electronAPI.portalAccess.refresh(selectedId).then(() => {
-      if (!cancelled) reload()
-    })
-    return () => { cancelled = true }
-  }, [selectedId, reload])
+    const timer = setTimeout(() => {
+      window.electronAPI.portalAccess.refresh(selectedId).then(() => {
+        if (!cancelled) reload()
+      })
+    }, 400)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [selectedId]) // reload is stable (useCallback) — no need in deps
 
   const filtered = useMemo(() => {
     let list = records as Record<string, unknown>[]
@@ -720,6 +873,9 @@ export default function PortalAccessPage() {
     switch (sortBy) {
       case 'name':
         sorted.sort((a, b) => resolvedName(a).localeCompare(resolvedName(b)))
+        break
+      case 'company':
+        sorted.sort((a, b) => (resolvedCompany(a) ?? '').localeCompare(resolvedCompany(b) ?? ''))
         break
       case 'status':
         sorted.sort((a, b) => String(a.status ?? '').localeCompare(String(b.status ?? '')))
@@ -745,6 +901,11 @@ export default function PortalAccessPage() {
     reload()
   }, [selectedId, reload])
 
+  const handleDeleteLog = useCallback(async (id: string) => {
+    await window.electronAPI.portalLogs.delete(id)
+    setLogs(prev => prev.filter(l => (l.id as string) !== id))
+  }, [])
+
   if (loading) return <LoadingSpinner />
 
   if (error) {
@@ -755,16 +916,36 @@ export default function PortalAccessPage() {
     <div className="flex h-full w-full overflow-hidden">
 
       {/* List pane — 240px fixed */}
-      <div className="w-[240px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
+      <div className="w-[300px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
+
+        {/* Header: title + count */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '12px 14px 10px', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
+              Portal Access
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {filtered.length}
+            </span>
+          </div>
+        </div>
 
         {/* Search */}
-        <div className="px-3 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
+        <div style={{ padding: '0 10px 6px', flexShrink: 0 }}>
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search portal access…"
-            className="w-full text-[13px] px-3 py-1.5 rounded-full bg-[var(--bg-secondary)] border border-transparent text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)]"
+            style={{
+              width: '100%', fontSize: 12, padding: '6px 12px',
+              borderRadius: 9999, border: 'none',
+              background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+              outline: 'none', fontFamily: 'inherit',
+            }}
           />
         </div>
 
@@ -780,7 +961,7 @@ export default function PortalAccessPage() {
           </span>
           <select
             value={sortBy}
-            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            onChange={e => { const v = e.target.value as typeof sortBy; setSortBy(v); localStorage.setItem('sort-portal', v) }}
             style={{
               fontSize: 11, fontWeight: 500,
               color: 'var(--text-secondary)',
@@ -791,6 +972,7 @@ export default function PortalAccessPage() {
             }}
           >
             <option value="name">Name A–Z</option>
+            <option value="company">Company</option>
             <option value="status">Status</option>
             <option value="stage">Stage</option>
             <option value="newest">Newest First</option>
@@ -804,11 +986,12 @@ export default function PortalAccessPage() {
             <div className="flex items-center justify-center h-full text-[12px] text-[var(--text-secondary)] px-4 text-center">
               {search ? 'No records match your search.' : 'No portal access records.'}
             </div>
-          ) : (sortBy === 'status' || sortBy === 'stage') ? (() => {
-            const groupKey = sortBy
+          ) : (sortBy === 'company' || sortBy === 'status' || sortBy === 'stage') ? (() => {
             const groups = new Map<string, Record<string, unknown>[]>()
             for (const r of filtered) {
-              const val = (r[groupKey] as string) || 'No ' + (groupKey === 'status' ? 'Status' : 'Stage')
+              const val = sortBy === 'company'
+                ? (resolvedCompany(r) || 'No Company')
+                : ((r[sortBy] as string) || 'No ' + (sortBy === 'status' ? 'Status' : 'Stage'))
               if (!groups.has(val)) groups.set(val, [])
               groups.get(val)!.push(r)
             }
@@ -821,6 +1004,7 @@ export default function PortalAccessPage() {
                     record={record}
                     isSelected={selectedId === (record.id as string)}
                     onClick={() => setSelectedId(record.id as string)}
+                    groupedBy={sortBy}
                   />
                 ))}
               </div>
@@ -839,7 +1023,7 @@ export default function PortalAccessPage() {
       </div>
 
       {/* Detail panel — flex-1 */}
-      <PortalAccessDetail record={selected} logs={logs} onFieldSave={handleFieldSave} />
+      <PortalAccessDetail record={selected} logs={logs} onFieldSave={handleFieldSave} onDeleteLog={handleDeleteLog} />
     </div>
   )
 }

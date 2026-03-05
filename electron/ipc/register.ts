@@ -3,7 +3,7 @@
 
 import { app, ipcMain, BrowserWindow, shell, dialog } from 'electron'
 import { autoUpdater } from 'electron-updater'
-import { getAll, getById, getSetting, setSetting, getAllSyncStatuses } from '../database/queries/entities'
+import { getAll, getById, getSetting, setSetting, getAllSyncStatuses, deleteRecord } from '../database/queries/entities'
 import { getDashboardStats, getTasksDueToday, getFollowUpAlerts, getPipelineSnapshot } from '../database/queries/dashboard'
 import { searchAll } from '../database/queries/search'
 import { fullSync, createRecord, updateRecord, deleteRemoteRecord, refreshRecord, startPolling, stopPolling } from '../airtable/sync-engine'
@@ -120,6 +120,16 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
   registerEntityCrud('interactions', 'interactions')
   registerReadOnly('specialties', 'specialties')
   registerReadOnly('portalLogs', 'portal_logs')
+
+  ipcMain.handle('portalLogs:delete', async (_e, id: string) => {
+    try {
+      deleteRecord('portal_logs', id)
+      return { success: true }
+    } catch (error) {
+      console.error(`[IPC] portalLogs:delete(${id}) failed:`, String(error))
+      return { success: false, error: String(error) }
+    }
+  })
 
   // Imported contacts (read-only + approve/reject)
   registerReadOnly('importedContacts', 'imported_contacts')

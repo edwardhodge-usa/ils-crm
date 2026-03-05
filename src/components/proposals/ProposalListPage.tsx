@@ -27,14 +27,30 @@ function toListItem(row: Record<string, unknown>): ProposalListItem {
   }
 }
 
-type SortKey = 'name' | 'status' | 'value' | 'newest'
+type SortKey = 'name' | 'status' | 'value' | 'company' | 'newest'
 
 export default function ProposalListPage() {
   const { data: proposals, loading, error } = useEntityList(() => window.electronAPI.proposals.getAll())
   const navigate = useNavigate()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState<SortKey>('name')
+  const [sortBy, setSortBy] = useState<SortKey>(() => (localStorage.getItem('sort-proposals') as SortKey) || 'name')
+
+  // Status grouping: merge related statuses into pipeline stages
+  const STATUS_GROUP_ORDER = ['No Status', 'Draft', 'Submitted', 'Won', 'Lost'] as const
+  const STATUS_GROUP_MAP: Record<string, string> = {
+    'Draft': 'Draft',
+    'In Review': 'Submitted',
+    'Pending': 'Submitted',
+    'Pending Approval': 'Submitted',
+    'Submitted': 'Submitted',
+    'Sent to Client': 'Submitted',
+    'Under Review': 'Submitted',
+    'Approved': 'Submitted',
+    'Closed Won': 'Won',
+    'Closed Lost': 'Lost',
+    'Rejected': 'Lost',
+  }
 
   const filtered = useMemo(() => {
     let items = (proposals as Record<string, unknown>[]).map(toListItem)
@@ -51,11 +67,19 @@ export default function ProposalListPage() {
       case 'name':
         sorted.sort((a, b) => a.name.localeCompare(b.name))
         break
-      case 'status':
-        sorted.sort((a, b) => (a.status ?? '').localeCompare(b.status ?? ''))
+      case 'status': {
+        const groupIndex = (s: string | null) => {
+          const group = STATUS_GROUP_MAP[s ?? ''] ?? 'No Status'
+          return STATUS_GROUP_ORDER.indexOf(group as typeof STATUS_GROUP_ORDER[number])
+        }
+        sorted.sort((a, b) => groupIndex(a.status) - groupIndex(b.status))
         break
+      }
       case 'value':
         sorted.sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+        break
+      case 'company':
+        sorted.sort((a, b) => (a.companyName ?? '').localeCompare(b.companyName ?? ''))
         break
       case 'newest':
         sorted.sort((a, b) => (b.modifiedAt ?? '').localeCompare(a.modifiedAt ?? ''))
@@ -70,24 +94,44 @@ export default function ProposalListPage() {
     return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
   }
 
-  const isGrouped = sortBy === 'status'
+  const isGrouped = sortBy === 'status' || sortBy === 'company'
 
   return (
     <div className="flex h-full w-full overflow-hidden">
       {/* List pane — 240px fixed */}
-      <div className="w-[240px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
-        {/* Toolbar */}
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--separator)] flex-shrink-0">
+      <div className="w-[300px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
+        {/* Header: title + count + add button */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '12px 14px 10px', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
+              Proposals
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {filtered.length}
+            </span>
+          </div>
+          <PrimaryButton onClick={() => navigate('/proposals/new')}>
+            + New Proposal
+          </PrimaryButton>
+        </div>
+
+        {/* Search */}
+        <div style={{ padding: '0 10px 6px', flexShrink: 0 }}>
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search proposals…"
-            className="flex-1 text-[12px] px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--separator)] text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)]"
+            style={{
+              width: '100%', fontSize: 12, padding: '6px 12px',
+              borderRadius: 9999, border: 'none',
+              background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+              outline: 'none', fontFamily: 'inherit',
+            }}
           />
-          <PrimaryButton onClick={() => navigate('/proposals/new')}>
-            + New
-          </PrimaryButton>
         </div>
 
         {/* Sort bar */}
@@ -102,7 +146,7 @@ export default function ProposalListPage() {
           </span>
           <select
             value={sortBy}
-            onChange={e => setSortBy(e.target.value as SortKey)}
+            onChange={e => { const v = e.target.value as SortKey; setSortBy(v); localStorage.setItem('sort-proposals', v) }}
             style={{
               fontSize: 11, fontWeight: 500,
               color: 'var(--text-secondary)',
@@ -114,6 +158,7 @@ export default function ProposalListPage() {
           >
             <option value="name">Name A–Z</option>
             <option value="status">Status</option>
+            <option value="company">Company</option>
             <option value="value">Value High→Low</option>
             <option value="newest">Newest First</option>
           </select>
@@ -128,23 +173,32 @@ export default function ProposalListPage() {
           ) : isGrouped ? (() => {
             const groups = new Map<string, ProposalListItem[]>()
             for (const item of filtered) {
-              const key = item.status || 'No Status'
+              const key = sortBy === 'status'
+                ? (STATUS_GROUP_MAP[item.status ?? ''] ?? 'No Status')
+                : (item.companyName || 'No Company')
               if (!groups.has(key)) groups.set(key, [])
               groups.get(key)!.push(item)
             }
-            return Array.from(groups.entries()).map(([label, items]) => (
-              <div key={label}>
-                <GroupedSectionHeader label={label} count={items.length} />
-                {items.map(proposal => (
-                  <ProposalRow
-                    key={proposal.id}
-                    proposal={proposal}
-                    isSelected={selectedId === proposal.id}
-                    onClick={() => setSelectedId(proposal.id)}
-                  />
-                ))}
-              </div>
-            ))
+            const orderedKeys = sortBy === 'status'
+              ? (STATUS_GROUP_ORDER as readonly string[]).filter(g => groups.has(g))
+              : Array.from(groups.keys()).sort((a, b) =>
+                  a === 'No Company' ? 1 : b === 'No Company' ? -1 : a.localeCompare(b))
+            return orderedKeys.map(key => {
+              const items = groups.get(key)!
+              return (
+                <div key={key}>
+                  <GroupedSectionHeader label={key} count={items.length} />
+                  {items.map(proposal => (
+                    <ProposalRow
+                      key={proposal.id}
+                      proposal={proposal}
+                      isSelected={selectedId === proposal.id}
+                      onClick={() => setSelectedId(proposal.id)}
+                    />
+                  ))}
+                </div>
+              )
+            })
           })() : (
             filtered.map(proposal => (
               <ProposalRow

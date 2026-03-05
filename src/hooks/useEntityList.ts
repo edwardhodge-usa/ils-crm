@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 interface UseEntityListResult {
   data: Record<string, unknown>[]
@@ -44,5 +44,7 @@ export default function useEntityList(
     return () => window.removeEventListener('sync-complete', handler)
   }, [])
 
-  return { data, loading, error, reload: load }
+  const reload = useCallback(() => { load() }, [])
+
+  return { data, loading, error, reload }
 }

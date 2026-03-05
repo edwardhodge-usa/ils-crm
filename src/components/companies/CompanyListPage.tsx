@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
+import PrimaryButton from '../shared/PrimaryButton'
 import { GroupedSectionHeader } from '../shared/GroupedSectionHeader'
 import useEntityList from '../../hooks/useEntityList'
 import { CompanyRow } from './CompanyRow'
@@ -51,7 +52,7 @@ export default function CompanyListPage() {
   const navigate = useNavigate()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState<'name' | 'type' | 'industry' | 'newest'>('name')
+  const [sortBy, setSortBy] = useState<'name' | 'type' | 'industry' | 'newest'>(() => (localStorage.getItem('sort-companies') as 'name' | 'type' | 'industry' | 'newest') || 'name')
 
   const filteredCompanies: CompanyListItem[] = useMemo(() => {
     let items = (companies as Record<string, unknown>[]).map(row =>
@@ -107,21 +108,9 @@ export default function CompanyListPage() {
               {filteredCompanies.length}
             </span>
           </div>
-          <button
-            onClick={() => navigate('/companies/new')}
-            style={{
-              fontSize: 18, fontWeight: 400, lineHeight: 1,
-              width: 26, height: 26, borderRadius: 6,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'none', border: 'none', cursor: 'default',
-              color: 'var(--color-accent)', fontFamily: 'inherit',
-              transition: 'background 150ms',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-          >
-            +
-          </button>
+          <PrimaryButton onClick={() => navigate('/companies/new')}>
+            + New Company
+          </PrimaryButton>
         </div>
 
         {/* Search — pill shape */}
@@ -152,7 +141,7 @@ export default function CompanyListPage() {
           </span>
           <select
             value={sortBy}
-            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            onChange={e => { const v = e.target.value as typeof sortBy; setSortBy(v); localStorage.setItem('sort-companies', v) }}
             style={{
               fontSize: 11, fontWeight: 500,
               color: 'var(--text-secondary)',

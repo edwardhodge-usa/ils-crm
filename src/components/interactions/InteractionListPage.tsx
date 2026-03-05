@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
+import PrimaryButton from '../shared/PrimaryButton'
 import useEntityList from '../../hooks/useEntityList'
 import { InteractionRow } from './InteractionRow'
 import { InteractionDetail } from './InteractionDetail'
@@ -78,123 +79,51 @@ export default function InteractionListPage() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100%', width: '100%', overflow: 'hidden' }}>
+    <div className="flex h-full w-full overflow-hidden">
 
-      {/* ── List pane — 240px fixed ── */}
-      <div
-        style={{
-          width: 240,
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          borderRight: '0.5px solid var(--separator)',
-          background: 'var(--bg-window)',
-        }}
-      >
-        {/* Header bar */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '10px 14px 0 14px',
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span
-              style={{
-                fontSize: 15,
-                fontWeight: 700,
-                letterSpacing: '-0.2px',
-                color: 'var(--text-primary)',
-              }}
-            >
+      {/* List pane — 300px fixed */}
+      <div className="w-[300px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
+        {/* Header: title + count + add button */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '12px 14px 10px', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
               Interactions
             </span>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 500,
-                color: 'var(--text-secondary)',
-                background: 'var(--bg-secondary)',
-                borderRadius: 10,
-                padding: '1px 7px',
-                lineHeight: '16px',
-              }}
-            >
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
               {filtered.length}
             </span>
           </div>
-
-          {/* Add button */}
-          <button
-            onClick={() => navigate('/interactions/new')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 24,
-              height: 24,
-              borderRadius: 6,
-              border: 'none',
-              background: 'transparent',
-              color: 'var(--color-accent)',
-              fontSize: 18,
-              fontWeight: 400,
-              cursor: 'default',
-              lineHeight: 1,
-              transition: 'background 150ms',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            title="Log new interaction"
-          >
-            +
-          </button>
+          <PrimaryButton onClick={() => navigate('/interactions/new')}>
+            + New Interaction
+          </PrimaryButton>
         </div>
 
-        {/* Search bar */}
-        <div style={{ padding: '8px 14px 8px 14px', flexShrink: 0 }}>
+        {/* Search */}
+        <div style={{ padding: '0 10px 6px', flexShrink: 0 }}>
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search interactions..."
+            placeholder="Search interactions…"
             style={{
-              width: '100%',
-              fontSize: 12,
-              padding: '5px 10px',
-              borderRadius: 16,
-              border: 'none',
-              background: 'var(--bg-secondary)',
-              color: 'var(--text-primary)',
-              outline: 'none',
-              cursor: 'default',
+              width: '100%', fontSize: 12, padding: '6px 12px',
+              borderRadius: 9999, border: 'none',
+              background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+              outline: 'none', fontFamily: 'inherit',
             }}
           />
         </div>
 
         {/* List */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                fontSize: 12,
-                color: 'var(--text-secondary)',
-                padding: '0 20px',
-                textAlign: 'center',
-                lineHeight: '18px',
-              }}
-            >
+            <div className="flex items-center justify-center h-full text-[12px] text-[var(--text-secondary)] px-4 text-center">
               {search
                 ? 'No interactions match your search.'
-                : 'No interactions logged yet. Click + to record your first call, email, or meeting.'}
+                : 'No interactions logged yet. Click + New to record your first call, email, or meeting.'}
             </div>
           ) : (
             filtered.map(item => (

@@ -32,15 +32,35 @@ export default function ContractListPage() {
   return (
     <div className="flex h-full w-full overflow-hidden">
       {/* List pane — 240px fixed */}
-      <div className="w-[240px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
-        {/* Toolbar */}
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--separator)] flex-shrink-0">
+      <div className="w-[300px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
+        {/* Header: title + count */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '12px 14px 10px', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
+              Contracts
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {filteredContracts.length}
+            </span>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div style={{ padding: '0 10px 6px', flexShrink: 0 }}>
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search contracts…"
-            className="flex-1 text-[12px] px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--separator)] text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)]"
+            style={{
+              width: '100%', fontSize: 12, padding: '6px 12px',
+              borderRadius: 9999, border: 'none',
+              background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+              outline: 'none', fontFamily: 'inherit',
+            }}
           />
         </div>
 

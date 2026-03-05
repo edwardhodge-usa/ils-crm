@@ -3,23 +3,29 @@ interface Props {
   count: number
 }
 
-export function GroupedSectionHeader({ label, count }: Props) {
+export function GroupedSectionHeader({ label }: Props) {
   return (
     <div style={{
       position: 'sticky', top: 0, zIndex: 1,
-      padding: '18px 12px 6px',
-      fontSize: 11, fontWeight: 700,
-      letterSpacing: '0.06em',
-      textTransform: 'uppercase',
-      color: 'var(--text-primary)',
+      padding: '14px 12px 6px',
       background: 'var(--bg-window)',
-      borderBottom: '0.5px solid var(--separator)',
-      display: 'flex', alignItems: 'center', gap: 6,
+      borderBottom: 'none',
     }}>
-      <span>{label}</span>
-      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>
-        {count}
-      </span>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        background: 'var(--bg-tertiary)',
+        borderRadius: 6,
+        padding: '3px 8px',
+      }}>
+        <span style={{
+          fontSize: 11, fontWeight: 600,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: 'var(--text-secondary)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          minWidth: 0,
+        }}>{label}</span>
+      </div>
     </div>
   )
 }

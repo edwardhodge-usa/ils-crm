@@ -9,6 +9,7 @@ import {
   COMPANY_CREATE_FIELDS,
   OPPORTUNITY_CREATE_FIELDS,
 } from '../../config/create-fields'
+import { parseIds } from '../../utils/linked-records'
 
 const PROPOSAL_EDITABLE_FIELDS: EditableField[] = [
   { key: 'status', label: 'Status', type: 'singleSelect',
@@ -66,7 +67,24 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
 
   const handleLinkedSave = useCallback(async (key: string, val: unknown) => {
     if (!proposalId) return
-    await window.electronAPI.proposals.update(proposalId, { [key]: val })
+    const updates: Record<string, unknown> = { [key]: val }
+
+    // Auto-populate company from the linked client contact
+    if (key === 'client_ids') {
+      const contactIds = parseIds(val)
+      if (contactIds.length > 0) {
+        const contactRes = await window.electronAPI.contacts.getById(contactIds[0])
+        if (contactRes.success && contactRes.data) {
+          const contact = contactRes.data as Record<string, unknown>
+          const companyIds = parseIds(contact.companies_ids)
+          if (companyIds.length > 0) {
+            updates.company_ids = JSON.stringify(companyIds)
+          }
+        }
+      }
+    }
+
+    await window.electronAPI.proposals.update(proposalId, updates)
     const res = await window.electronAPI.proposals.getById(proposalId)
     if (res.success && res.data) setProposal(res.data as Record<string, unknown>)
   }, [proposalId])
@@ -184,7 +202,7 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
               onChange={val => handleLinkedSave('related_opportunity_ids', val)}
               createFields={OPPORTUNITY_CREATE_FIELDS}
               createTitle="New Opportunity"
-              createDefaults={{ sales_stage: 'Initial Contact' }}
+              createDefaults={{ sales_stage: 'Prospecting' }}
               createApi={window.electronAPI.opportunities}
               placeholder="Search opportunities..."
             />

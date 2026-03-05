@@ -288,8 +288,8 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
           ref={inputRef as React.RefObject<HTMLInputElement>}
           type="date"
           value={editValue}
-          onChange={e => { doSave(e.target.value || null) }}
-          onBlur={() => setEditing(false)}
+          onChange={e => setEditValue(e.target.value)}
+          onBlur={() => { doSave(editValue || null) }}
           onKeyDown={handleKeyDown}
           style={{
             background: 'var(--bg-card)', border: '1px solid var(--color-accent)',

@@ -20,12 +20,13 @@ export default function TopBar() {
     )?.[1] ?? ''
 
   return (
-    <div className="h-12 bg-[var(--bg-window)] border-b border-[var(--separator-opaque)] flex items-center px-4 window-drag">
-      <div className="flex-1 flex items-center justify-center">
-        <h1 className="text-[15px] font-semibold text-[var(--text-primary)]">{title}</h1>
-      </div>
+    <div className="h-12 bg-[var(--bg-window)] border-b border-[var(--separator-opaque)] flex items-center justify-end px-4 window-drag relative">
+      {/* Absolutely centered title — unaffected by right-side content */}
+      <h1 className="absolute inset-0 flex items-center justify-center text-[15px] font-semibold text-[var(--text-primary)] pointer-events-none">
+        {title}
+      </h1>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 relative">
         {/* Sync indicator — click to force sync */}
         <button
           aria-label={isSyncing ? 'Syncing in progress' : 'Force sync'}
@@ -48,21 +49,6 @@ export default function TopBar() {
               <span className="text-[var(--text-tertiary)]">Synced</span>
             </>
           )}
-        </button>
-
-        {/* Search button */}
-        <button
-          aria-label="Search"
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
-          onClick={() => {
-            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
-          }}
-        >
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-          </svg>
-          Search
-          <kbd className="ml-1 text-[12px] text-[var(--text-tertiary)] font-mono">⌘K</kbd>
         </button>
 
         {/* Version label */}

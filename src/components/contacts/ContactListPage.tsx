@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoadingSpinner from '../shared/LoadingSpinner'
+import PrimaryButton from '../shared/PrimaryButton'
 import { GroupedSectionHeader } from '../shared/GroupedSectionHeader'
 import useEntityList from '../../hooks/useEntityList'
 import { ContactRow } from './ContactRow'
@@ -37,7 +38,7 @@ export default function ContactListPage() {
   const [specialtyMap, setSpecialtyMap] = useState<Record<string, string>>({})
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState<'name' | 'company' | 'newest'>('name')
+  const [sortBy, setSortBy] = useState<'name' | 'company' | 'newest'>(() => (localStorage.getItem('sort-contacts') as 'name' | 'company' | 'newest') || 'name')
 
   const companyLogoMap = useMemo(() => {
     const map = new Map<string, string>()
@@ -162,21 +163,9 @@ export default function ContactListPage() {
               {filteredContacts.length}
             </span>
           </div>
-          <button
-            onClick={() => navigate('/contacts/new')}
-            style={{
-              fontSize: 18, fontWeight: 400, lineHeight: 1,
-              width: 26, height: 26, borderRadius: 6,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'none', border: 'none', cursor: 'default',
-              color: 'var(--color-accent)', fontFamily: 'inherit',
-              transition: 'background 150ms',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-          >
-            +
-          </button>
+          <PrimaryButton onClick={() => navigate('/contacts/new')}>
+            + New Contact
+          </PrimaryButton>
         </div>
 
         {/* Search */}
@@ -207,7 +196,7 @@ export default function ContactListPage() {
           </span>
           <select
             value={sortBy}
-            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            onChange={e => { const v = e.target.value as typeof sortBy; setSortBy(v); localStorage.setItem('sort-contacts', v) }}
             style={{
               fontSize: 11, fontWeight: 500,
               color: 'var(--text-secondary)',
