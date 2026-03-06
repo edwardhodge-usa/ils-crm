@@ -22,6 +22,7 @@
   --bg-selected-blur: rgba(0,0,0,0.08);
   --bg-glass: rgba(246,246,246,0.75);
   --bg-grouped: #FFFFFF;
+  --bg-popover: #FFFFFF;
 
   /* ── Text — Light (Apple label colors: base 60,60,67) ── */
   --text-primary: rgba(0,0,0,0.85);
@@ -48,16 +49,20 @@
   --color-indigo: #5856D6;
 
   /* ── Stage colors — Light (text on tinted badge bg) ── */
-  --stage-prospecting: #1A8FA8;
-  --stage-prospecting-bg: rgba(48,176,199,0.15);
-  --stage-qualified: #4847A8;
-  --stage-qualified-bg: rgba(88,86,214,0.15);
-  --stage-proposal: #A04B00;
-  --stage-proposal-bg: rgba(255,149,0,0.15);
-  --stage-negotiation: #A0002A;
-  --stage-negotiation-bg: rgba(255,55,95,0.15);
+  --stage-prospecting: #9D8500;
+  --stage-prospecting-bg: rgba(255,204,0,0.15);
+  --stage-qualified: #A04B00;
+  --stage-qualified-bg: rgba(255,149,0,0.15);
+  --stage-bizdev: #7B4EA8;
+  --stage-bizdev-bg: rgba(175,82,222,0.15);
+  --stage-proposal: #3634A3;
+  --stage-proposal-bg: rgba(88,86,214,0.15);
+  --stage-negotiation: #1A8FA8;
+  --stage-negotiation-bg: rgba(48,176,199,0.15);
   --stage-won: #1A7834;
   --stage-won-bg: rgba(48,209,88,0.15);
+  --stage-lost: #CC2D22;
+  --stage-lost-bg: rgba(255,59,48,0.15);
 
   /* ── Scrollbars ── */
   --color-scrollbar-thumb: rgba(0,0,0,0.20);
@@ -140,6 +145,7 @@
   --bg-selected-blur: rgba(255,255,255,0.10);
   --bg-glass: rgba(30,30,30,0.75);
   --bg-grouped: rgba(118,118,128,0.20);
+  --bg-popover: #2a2a2c;
 
   --text-primary: rgba(255,255,255,0.92);
   --text-secondary: rgba(255,255,255,0.65);
@@ -161,16 +167,20 @@
   --color-teal: #40CBE0;
   --color-indigo: #5E5CE6;
 
-  --stage-prospecting: #40CBE0;
-  --stage-prospecting-bg: rgba(48,176,199,0.15);
-  --stage-qualified: #A5A3FF;
-  --stage-qualified-bg: rgba(94,92,230,0.15);
-  --stage-proposal: #FF9500;
-  --stage-proposal-bg: rgba(255,149,0,0.15);
-  --stage-negotiation: #FF375F;
-  --stage-negotiation-bg: rgba(255,55,95,0.15);
+  --stage-prospecting: #FFD60A;
+  --stage-prospecting-bg: rgba(255,214,10,0.15);
+  --stage-qualified: #FF9F0A;
+  --stage-qualified-bg: rgba(255,159,10,0.15);
+  --stage-bizdev: #BF5AF2;
+  --stage-bizdev-bg: rgba(191,90,242,0.15);
+  --stage-proposal: #5E5CE6;
+  --stage-proposal-bg: rgba(94,92,230,0.15);
+  --stage-negotiation: #40CBE0;
+  --stage-negotiation-bg: rgba(64,203,224,0.15);
   --stage-won: #30D158;
   --stage-won-bg: rgba(48,209,88,0.15);
+  --stage-lost: #FF453A;
+  --stage-lost-bg: rgba(255,69,58,0.15);
 
   --color-scrollbar-thumb: rgba(255,255,255,0.20);
   --color-scrollbar-thumb-hover: rgba(255,255,255,0.35);

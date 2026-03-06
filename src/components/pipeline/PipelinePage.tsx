@@ -14,12 +14,13 @@ const STAGE_MAP: Record<string, DealStage> = {
   // Canonical stages (pass-through)
   'Prospecting': 'Prospecting',
   'Qualified': 'Qualified',
-  'Development': 'Development',
+  'Business Development': 'Business Development',
   'Proposal Sent': 'Proposal Sent',
   'Negotiation': 'Negotiation',
   'Closed Won': 'Closed Won',
   'Closed Lost': 'Closed Lost',
   // Legacy Airtable values → canonical
+  'Development': 'Business Development',
   'Initial Contact': 'Prospecting',
   'Outbound Prospecting': 'Prospecting',
   'Future Client': 'Prospecting',

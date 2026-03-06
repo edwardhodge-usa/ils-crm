@@ -92,7 +92,7 @@ export const OPPORTUNITY_CREATE_FIELDS: FormFieldDef[] = [
   // Basic Info
   { key: 'opportunity_name', label: 'Opportunity Name', type: 'text', required: true, section: 'Basic Info' },
   { key: 'sales_stage', label: 'Sales Stage', type: 'singleSelect', section: 'Basic Info',
-    options: ['Prospecting', 'Qualified', 'Development', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] },
+    options: ['Prospecting', 'Qualified', 'Business Development', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] },
   { key: 'probability', label: 'Probability', type: 'singleSelect', section: 'Basic Info',
     options: ['Cold', 'Low', '02 Medium', '01 High', '04 FUTURE ROADMAP'] },
 

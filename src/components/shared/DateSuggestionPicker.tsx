@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 
 interface DateSuggestionPickerProps {
+  label?: string        // Row label (default: "Due Date")
   value: string | null  // ISO date string (YYYY-MM-DD) or null
   onSave: (date: string | null) => Promise<void>
 }
@@ -32,17 +33,19 @@ function getDateSuggestions(): { label: string; sublabel: string; date: string }
   ]
 }
 
-export default function DateSuggestionPicker({ value, onSave }: DateSuggestionPickerProps) {
+export default function DateSuggestionPicker({ label = 'Due Date', value, onSave }: DateSuggestionPickerProps) {
   const [open, setOpen] = useState(false)
   const [showCustom, setShowCustom] = useState(false)
   const [customValue, setCustomValue] = useState('')
-  const popoverRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [popoverPos, setPopoverPos] = useState<{ top: number; right: number } | null>(null)
 
   useEffect(() => {
     if (!open) return
     function handleOutside(e: MouseEvent) {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
         setShowCustom(false)
       }
@@ -82,10 +85,17 @@ export default function DateSuggestionPicker({ value, onSave }: DateSuggestionPi
   )
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div ref={containerRef} style={{ position: 'relative' }}>
       {/* Row display */}
       <div
-        onClick={() => setOpen(!open)}
+        ref={triggerRef}
+        onClick={() => {
+          if (!open && triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect()
+            setPopoverPos({ top: rect.bottom, right: window.innerWidth - rect.right })
+          }
+          setOpen(!open)
+        }}
         className="cursor-default"
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -96,7 +106,7 @@ export default function DateSuggestionPicker({ value, onSave }: DateSuggestionPi
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       >
         <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
-          Due Date
+          {label}
         </span>
         <span style={{
           fontSize: 13, fontWeight: 400,
@@ -111,10 +121,12 @@ export default function DateSuggestionPicker({ value, onSave }: DateSuggestionPi
       {/* Suggestions popover */}
       {open && (
         <div
-          ref={popoverRef}
           style={{
-            position: 'absolute', right: 14, top: '100%', zIndex: 200,
-            background: 'var(--bg-card)', border: '1px solid var(--separator)',
+            position: 'fixed',
+            top: popoverPos?.top ?? 0,
+            right: popoverPos?.right ?? 0,
+            zIndex: 200,
+            background: 'var(--bg-popover)', border: '1px solid var(--separator)',
             borderRadius: 8, padding: 4,
             minWidth: 220, boxShadow: 'var(--shadow-menu)',
           }}

@@ -2,11 +2,13 @@ import type { DealItem } from '@/types'
 import { DealCard } from './DealCard'
 
 const STAGE_COLORS: Record<string, string> = {
-  'Prospecting': 'var(--color-teal)',
-  'Qualified': 'var(--color-indigo)',
-  'Proposal Sent': 'var(--color-orange)',
-  'Negotiation': 'var(--color-pink)',
+  'Prospecting': 'var(--color-yellow)',
+  'Qualified': 'var(--color-orange)',
+  'Business Development': 'var(--color-purple)',
+  'Proposal Sent': 'var(--color-indigo)',
+  'Negotiation': 'var(--color-teal)',
   'Closed Won': 'var(--color-green)',
+  'Closed Lost': 'var(--color-red)',
 }
 
 interface KanbanColumnProps {

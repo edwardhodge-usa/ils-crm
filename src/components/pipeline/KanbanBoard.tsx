@@ -1,7 +1,7 @@
 import type { DealItem } from '@/types'
 import { KanbanColumn } from './KanbanColumn'
 
-const STAGES = ['Prospecting', 'Qualified', 'Development', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] as const
+const STAGES = ['Prospecting', 'Qualified', 'Business Development', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] as const
 
 interface KanbanBoardProps {
   deals: DealItem[]

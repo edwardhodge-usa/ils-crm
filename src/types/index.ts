@@ -274,7 +274,7 @@ export interface DealItem {
   companyLogoUrl?: string | null // company logo URL from linked company record
   value: number | null
   probability: number | null
-  stage: 'Prospecting' | 'Qualified' | 'Development' | 'Proposal Sent' | 'Negotiation' | 'Closed Won' | 'Closed Lost'
+  stage: 'Prospecting' | 'Qualified' | 'Business Development' | 'Proposal Sent' | 'Negotiation' | 'Closed Won' | 'Closed Lost'
   daysInStage: number | null
 }
 

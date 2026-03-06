@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import LinkedRecordPicker from '../shared/LinkedRecordPicker'
 import ConfirmDialog from '../shared/ConfirmDialog'
+import DateSuggestionPicker from '../shared/DateSuggestionPicker'
 import { StageProgress } from './StageProgress'
 import {
   CONTACT_CREATE_FIELDS,
@@ -20,11 +21,10 @@ interface DealDetailProps {
 
 const DEAL_EDITABLE_FIELDS: EditableField[] = [
   { key: 'sales_stage', label: 'Stage', type: 'singleSelect',
-    options: ['Prospecting', 'Qualified', 'Development', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] },
+    options: ['Prospecting', 'Qualified', 'Business Development', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] },
   { key: 'deal_value', label: 'Value', type: 'currency' },
   { key: 'probability', label: 'Probability', type: 'singleSelect',
     options: ['Cold', 'Low', '02 Medium', '01 High', '04 FUTURE ROADMAP'] },
-  { key: 'expected_close_date', label: 'Close Date', type: 'date' },
   { key: 'engagement_type', label: 'Engagement Type', type: 'multiSelect',
     options: ['Strategy/Consulting', 'Design/Concept Development', 'Production/Fabrication Oversight', 'Opening/Operations Support', 'Executive Producing'] },
   { key: 'quals_type', label: 'Quals Type', type: 'singleSelect',
@@ -32,7 +32,6 @@ const DEAL_EDITABLE_FIELDS: EditableField[] = [
   { key: 'lead_source', label: 'Lead Source', type: 'singleSelect',
     options: ['Referral', 'Inbound - Website', 'Inbound - LinkedIn', 'Inbound - Conference/Event', 'Outbound Prospecting', 'Past Relationship', 'Other', 'Partnership'] },
   { key: 'referred_by', label: 'Referred By', type: 'text' },
-  { key: 'next_meeting_date', label: 'Next Meeting', type: 'date' },
   { key: 'qualifications_sent', label: 'Quals Sent', type: 'checkbox' },
 ]
 
@@ -282,6 +281,25 @@ export function DealDetail({ dealId, onClose, onDeleted, onSaved }: DealDetailPr
                   onSave={handleFieldSave}
                 />
               ))}
+            </div>
+
+            {/* Date fields with suggestion picker */}
+            <div style={{ margin: '0 12px 16px', background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
+              <DateSuggestionPicker
+                label="Close Date"
+                value={(deal.expected_close_date as string | null) ?? null}
+                onSave={async (date) => {
+                  await handleFieldSave('expected_close_date', date)
+                }}
+              />
+              <div style={{ height: 1, background: 'var(--separator)', margin: '0 14px' }} />
+              <DateSuggestionPicker
+                label="Next Meeting"
+                value={(deal.next_meeting_date as string | null) ?? null}
+                onSave={async (date) => {
+                  await handleFieldSave('next_meeting_date', date)
+                }}
+              />
             </div>
 
             {/* Related linked records — interactive LinkedRecordPicker */}

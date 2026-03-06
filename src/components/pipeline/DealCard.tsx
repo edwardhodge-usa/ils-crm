@@ -3,12 +3,15 @@ import type { DealItem } from '@/types'
 import { CompanyLogo } from '../shared/CompanyLogo'
 
 /** Raw stage color hex values for the badge formula (rgba with 0.10 alpha) */
+/** Stage badge colors — uses CSS tokens from tokens.css */
 const STAGE_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
-  'Prospecting':  { bg: 'var(--stage-prospecting-bg)', text: 'var(--stage-prospecting)' },
-  'Qualified':    { bg: 'var(--stage-qualified-bg)',    text: 'var(--stage-qualified)' },
-  'Proposal Sent':{ bg: 'var(--stage-proposal-bg)',     text: 'var(--stage-proposal)' },
-  'Negotiation':  { bg: 'var(--stage-negotiation-bg)',  text: 'var(--stage-negotiation)' },
-  'Closed Won':   { bg: 'var(--stage-won-bg)',          text: 'var(--stage-won)' },
+  'Prospecting':          { bg: 'var(--stage-prospecting-bg)',  text: 'var(--stage-prospecting)' },
+  'Qualified':            { bg: 'var(--stage-qualified-bg)',    text: 'var(--stage-qualified)' },
+  'Business Development': { bg: 'var(--stage-bizdev-bg)',       text: 'var(--stage-bizdev)' },
+  'Proposal Sent':        { bg: 'var(--stage-proposal-bg)',     text: 'var(--stage-proposal)' },
+  'Negotiation':          { bg: 'var(--stage-negotiation-bg)',  text: 'var(--stage-negotiation)' },
+  'Closed Won':           { bg: 'var(--stage-won-bg)',          text: 'var(--stage-won)' },
+  'Closed Lost':          { bg: 'var(--stage-lost-bg)',         text: 'var(--stage-lost)' },
 }
 
 interface DealCardProps {

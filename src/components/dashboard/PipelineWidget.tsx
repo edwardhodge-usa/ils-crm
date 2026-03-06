@@ -22,18 +22,18 @@ function formatCurrency(v: number): string {
 
 // Map stage names to their token-based colors
 const STAGE_BAR_COLORS: Record<string, string> = {
-  'Prospecting': 'var(--color-teal)',
-  'Qualified': 'var(--color-indigo)',
-  'Development': 'var(--color-purple)',
-  'Proposal Sent': 'var(--color-orange)',
-  'Negotiation': 'var(--color-pink)',
+  'Prospecting': 'var(--color-yellow)',
+  'Qualified': 'var(--color-orange)',
+  'Business Development': 'var(--color-purple)',
+  'Proposal Sent': 'var(--color-indigo)',
+  'Negotiation': 'var(--color-teal)',
   'Closed Won': 'var(--color-green)',
   'Closed Lost': 'var(--color-red)',
   // Legacy prefixed names
-  '01 Prospecting': 'var(--color-teal)',
-  '02 Qualified': 'var(--color-indigo)',
-  '03 Proposal Sent': 'var(--color-orange)',
-  '04 Negotiation': 'var(--color-pink)',
+  '01 Prospecting': 'var(--color-yellow)',
+  '02 Qualified': 'var(--color-orange)',
+  '03 Proposal Sent': 'var(--color-indigo)',
+  '04 Negotiation': 'var(--color-teal)',
   '05 Closed Won': 'var(--color-green)',
 }
 
@@ -41,11 +41,11 @@ function stageBarColor(stageName: string): string {
   // Try exact match first, then partial
   if (STAGE_BAR_COLORS[stageName]) return STAGE_BAR_COLORS[stageName]
   const lower = stageName.toLowerCase()
-  if (lower.includes('prospect')) return 'var(--color-teal)'
-  if (lower.includes('qualif')) return 'var(--color-indigo)'
+  if (lower.includes('prospect')) return 'var(--color-yellow)'
+  if (lower.includes('qualif')) return 'var(--color-orange)'
   if (lower.includes('develop')) return 'var(--color-purple)'
-  if (lower.includes('proposal')) return 'var(--color-orange)'
-  if (lower.includes('negot')) return 'var(--color-pink)'
+  if (lower.includes('proposal')) return 'var(--color-indigo)'
+  if (lower.includes('negot')) return 'var(--color-teal)'
   if (lower.includes('won')) return 'var(--color-green)'
   if (lower.includes('lost')) return 'var(--color-red)'
   return 'var(--color-accent)'

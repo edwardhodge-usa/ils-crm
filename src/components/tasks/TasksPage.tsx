@@ -553,6 +553,28 @@ interface TaskDetailProps {
 
 function TaskDetail({ task, isNewTask, assigneeOptions, onComplete, onDelete, onReload }: TaskDetailProps) {
 
+  // All hooks MUST be above the early return to satisfy React's rules of hooks
+  const handleLinkedSave = useCallback(async (key: string, val: unknown) => {
+    if (!task) return
+    await window.electronAPI.tasks.update(task.id, { [key]: val })
+    onReload()
+  }, [task, onReload])
+
+  const [titleDraft, setTitleDraft] = useState('')
+  const titleRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (task) {
+      setTitleDraft(task.title === '(Untitled task)' ? '' : task.title)
+    }
+  }, [task?.id, task?.title])
+
+  useEffect(() => {
+    if (isNewTask && titleRef.current) {
+      titleRef.current.focus()
+    }
+  }, [isNewTask])
+
   if (!task) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
@@ -562,12 +584,6 @@ function TaskDetail({ task, isNewTask, assigneeOptions, onComplete, onDelete, on
   }
 
   const completed = isCompleted(task)
-
-  const handleLinkedSave = useCallback(async (key: string, val: unknown) => {
-    if (!task) return
-    await window.electronAPI.tasks.update(task.id, { [key]: val })
-    onReload()
-  }, [task, onReload])
 
   let overdueLabel = ''
   if (task.due_date && !completed) {
@@ -579,52 +595,49 @@ function TaskDetail({ task, isNewTask, assigneeOptions, onComplete, onDelete, on
     else if (diffDays === 0) overdueLabel = 'Due today'
   }
 
-  const [titleDraft, setTitleDraft] = useState(task.title === '(Untitled task)' ? '' : task.title)
-  const titleRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    setTitleDraft(task.title === '(Untitled task)' ? '' : task.title)
-  }, [task.id, task.title])
-
-  useEffect(() => {
-    if (isNewTask && titleRef.current) {
-      titleRef.current.focus()
-    }
-  }, [isNewTask])
-
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '24px 28px' }}>
       {/* Editable Title */}
-      <div style={{ marginBottom: 8 }}>
+      <div style={{ marginBottom: 12 }}>
         <input
           ref={titleRef}
           value={titleDraft}
-          placeholder="New Task"
+          placeholder="Task name"
           onChange={e => setTitleDraft(e.target.value)}
           onBlur={() => {
             const trimmed = titleDraft.trim()
-            if (trimmed !== task.title) {
-              window.electronAPI.tasks.update(task.id, { task: trimmed || null })
+            // Don't save if nothing meaningful changed (avoids reload churn on new tasks)
+            if (trimmed === task.title) return
+            if (!trimmed && task.title === '(Untitled task)') return
+            window.electronAPI.tasks.update(task.id, { task: trimmed || null }).then(() => {
               onReload()
-            }
+            })
           }}
           onKeyDown={e => {
             if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
             if (e.key === 'Escape') { setTitleDraft(task.title === '(Untitled task)' ? '' : task.title); (e.target as HTMLInputElement).blur() }
           }}
           style={{
-            width: '100%', fontSize: 17, fontWeight: 600,
-            color: 'var(--text-primary)', background: 'transparent',
-            border: 'none', outline: 'none', padding: '2px 0',
+            width: '100%', fontSize: 15, fontWeight: 500,
+            color: 'var(--text-primary)',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--separator)',
+            borderRadius: 8, padding: '8px 12px',
             fontFamily: 'inherit', cursor: 'default',
+            outline: 'none',
           }}
+          onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-accent)' }}
+          onBlurCapture={e => { e.currentTarget.style.borderColor = 'var(--separator)' }}
         />
         {Boolean(overdueLabel) && (
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>{overdueLabel}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>{overdueLabel}</div>
         )}
       </div>
 
-      {/* Notes — directly below title */}
+      {/* Notes */}
+      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+        Notes
+      </div>
       <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
         <EditableFormRow
           field={{ key: 'notes', label: '', type: 'textarea' }}
@@ -754,13 +767,18 @@ export default function TasksPage() {
   )
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem('tasks-collapsed') || '{}') } catch { return {} }
+  })
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [newTaskId, setNewTaskId] = useState<string | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
 
   useEffect(() => {
-    window.electronAPI.settings.get('user_name').then((name: unknown) => setUserName(name as string | null))
+    window.electronAPI.settings.get('user_name').then((res: unknown) => {
+      const result = res as { success: boolean; data?: string | null }
+      setUserName(result?.data ?? null)
+    })
   }, [])
 
   const handleAssigneeChange = useCallback((assignee: string | null) => {
@@ -878,27 +896,38 @@ export default function TasksPage() {
   }, [pendingDeleteId, reload])
 
   const toggleSection = useCallback((key: string) => {
-    setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
+    setCollapsed(prev => {
+      const next = { ...prev, [key]: !prev[key] }
+      localStorage.setItem('tasks-collapsed', JSON.stringify(next))
+      return next
+    })
   }, [])
 
   const handleNewTask = useCallback(async () => {
     const result = await window.electronAPI.tasks.create({
       task: '',
       status: 'To Do',
-      assigned_to: userName,
     })
     if (result?.success && result.data) {
+      // Set defaults locally after creation (collaborator fields can't be pushed via API,
+      // and status may not round-trip if Airtable option names differ)
+      const localDefaults: Record<string, unknown> = { status: 'To Do' }
+      if (userName && assigneeOptions.length > 0) {
+        const match = assigneeOptions.find(n => n.toLowerCase().startsWith(userName.toLowerCase()))
+        if (match) localDefaults.assigned_to = match
+      }
+      await window.electronAPI.tasks.update(result.data, localDefaults)
       setNewTaskId(result.data)
       setSelectedId(result.data)
       reload()
     }
-  }, [userName, reload])
+  }, [userName, assigneeOptions, reload])
 
   useEffect(() => {
     if (newTaskId && selectedId !== newTaskId) setNewTaskId(null)
   }, [selectedId, newTaskId])
 
-  if (loading) return <LoadingSpinner />
+  if (loading && rawTasks.length === 0) return <LoadingSpinner />
 
   if (error) {
     return (
