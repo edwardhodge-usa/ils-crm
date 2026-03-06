@@ -844,6 +844,14 @@ export default function PortalAccessPage() {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
+  const handleNew = useCallback(async () => {
+    const res = await window.electronAPI.portalAccess.create({ name: 'New Access' })
+    if (res.success && res.data) {
+      reload()
+      setSelectedId(res.data)
+    }
+  }, [reload])
+
   const handleContextMenu = useCallback((e: React.MouseEvent, id: string) => {
     e.preventDefault()
     setContextMenu({ x: e.clientX, y: e.clientY, id })
@@ -981,6 +989,21 @@ export default function PortalAccessPage() {
               {filtered.length}
             </span>
           </div>
+          <button
+            onClick={handleNew}
+            style={{
+              width: 24, height: 24, borderRadius: 6,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'transparent', border: 'none',
+              fontSize: 18, fontWeight: 300, color: 'var(--color-accent)',
+              cursor: 'default',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            title="New Access"
+          >
+            +
+          </button>
         </div>
 
         {/* Search */}
