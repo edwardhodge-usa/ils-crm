@@ -95,7 +95,9 @@ app.whenReady().then(async () => {
   if (!isDev) {
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = true
+    // Private repo: set token both ways for compatibility
     process.env.GH_TOKEN = UPDATER_TOKEN
+    autoUpdater.requestHeaders = { Authorization: `token ${UPDATER_TOKEN}` }
     autoUpdater.checkForUpdatesAndNotify()
 
     autoUpdater.on('update-available', (info) => {
