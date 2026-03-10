@@ -27,6 +27,31 @@ function applyTheme(mode: ThemeMode) {
 }
 
 // ────────────────────────────────────────────────────────────
+// Font-size helpers — cooperate with App.tsx startup apply
+// ────────────────────────────────────────────────────────────
+type FontSize = 'compact' | 'default' | 'large'
+
+const FONT_SIZES: Record<FontSize, { body: string; secondary: string; small: string }> = {
+  compact: { body: '13px', secondary: '11px', small: '10px' },
+  default: { body: '14px', secondary: '12px', small: '11px' },
+  large:   { body: '16px', secondary: '14px', small: '12px' },
+}
+
+function getStoredFontSize(): FontSize {
+  const stored = localStorage.getItem('font-size')
+  if (stored === 'compact' || stored === 'default' || stored === 'large') return stored
+  return 'default'
+}
+
+function applyFontSize(size: FontSize) {
+  const values = FONT_SIZES[size]
+  document.documentElement.style.setProperty('--font-body', values.body)
+  document.documentElement.style.setProperty('--font-secondary', values.secondary)
+  document.documentElement.style.setProperty('--font-small', values.small)
+  localStorage.setItem('font-size', size)
+}
+
+// ────────────────────────────────────────────────────────────
 // Section IDs
 // ────────────────────────────────────────────────────────────
 type SectionId = 'general' | 'sync' | 'appearance' | 'about'
@@ -483,6 +508,7 @@ function SyncSection() {
 // ────────────────────────────────────────────────────────────
 function AppearanceSection() {
   const [themeMode, setThemeMode] = useState<ThemeMode>(getStoredTheme)
+  const [fontSize, setFontSize] = useState<FontSize>(getStoredFontSize)
 
   const [pipelineMode, setPipelineMode] = useState<PipelineMode>(() => {
     const stored = localStorage.getItem('pipeline-mode')
@@ -495,6 +521,11 @@ function AppearanceSection() {
     applyTheme(mode)
   }
 
+  const handleFontSizeChange = (size: FontSize) => {
+    setFontSize(size)
+    applyFontSize(size)
+  }
+
   const handlePipelineModeChange = (mode: PipelineMode) => {
     setPipelineMode(mode)
     localStorage.setItem('pipeline-mode', mode)
@@ -504,6 +535,12 @@ function AppearanceSection() {
     { value: 'system', label: 'System' },
     { value: 'light', label: 'Light' },
     { value: 'dark', label: 'Dark' },
+  ]
+
+  const fontSizeOptions: { value: FontSize; label: string }[] = [
+    { value: 'compact', label: 'Compact' },
+    { value: 'default', label: 'Default' },
+    { value: 'large', label: 'Large' },
   ]
 
   const pipelineOptions: { value: PipelineMode; label: string }[] = [
@@ -522,6 +559,14 @@ function AppearanceSection() {
             options={themeOptions}
             value={themeMode}
             onChange={handleThemeChange}
+          />
+        </PrefRow>
+
+        <PrefRow label="Text Size">
+          <SegmentedControl
+            options={fontSizeOptions}
+            value={fontSize}
+            onChange={handleFontSizeChange}
           />
         </PrefRow>
 

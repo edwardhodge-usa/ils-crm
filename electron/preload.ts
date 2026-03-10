@@ -25,6 +25,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPaths: () => ipcRenderer.invoke('app:getPaths'),
   },
 
+  // Logging
+  log: {
+    error: (msg: string) => ipcRenderer.send('log:error', msg),
+  },
+
   // Auth
   auth: {
     validatePat: (apiKey: string) => ipcRenderer.invoke('auth:validate-pat', apiKey),

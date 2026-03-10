@@ -104,6 +104,11 @@
   --text-caption1: 10px;
   --text-caption2: 10px;
 
+  /* ── User font-size preference (overridden by JS) ── */
+  --font-body: 14px;
+  --font-secondary: 12px;
+  --font-small: 11px;
+
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
@@ -181,6 +186,11 @@
   --stage-won-bg: rgba(48,209,88,0.15);
   --stage-lost: #FF453A;
   --stage-lost-bg: rgba(255,69,58,0.15);
+
+  /* ── User font-size preference (overridden by JS) ── */
+  --font-body: 14px;
+  --font-secondary: 12px;
+  --font-small: 11px;
 
   --color-scrollbar-thumb: rgba(255,255,255,0.20);
   --color-scrollbar-thumb-hover: rgba(255,255,255,0.35);

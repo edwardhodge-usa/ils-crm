@@ -4,6 +4,23 @@ import useEntityList from '../../hooks/useEntityList'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Safely extract a display string from a value that may be a lookup array */
+function resolveLookup(val: unknown): string | null {
+  if (!val) return null
+  if (typeof val === 'string') {
+    // Might be a JSON array from a lookup field stored as text
+    if (val.startsWith('[')) {
+      try {
+        const arr = JSON.parse(val)
+        if (Array.isArray(arr) && arr.length > 0) return String(arr[0])
+      } catch { /* not JSON, use as-is */ }
+    }
+    return val
+  }
+  if (Array.isArray(val) && val.length > 0) return String(val[0])
+  return String(val)
+}
+
 function formatTimestamp(raw: unknown): string {
   if (!raw) return '—'
   const s = String(raw)
@@ -25,9 +42,9 @@ function formatTimestamp(raw: unknown): string {
 
 function LogRow({ log }: { log: Record<string, unknown> }) {
   const timestamp = formatTimestamp(log.timestamp)
-  const clientName = (log.client_name as string | null) ?? null
-  const clientEmail = (log.client_email as string | null) ?? null
-  const company = (log.company as string | null) ?? null
+  const clientName = resolveLookup(log.client_name)
+  const clientEmail = resolveLookup(log.client_email)
+  const company = resolveLookup(log.company)
   const pageUrl = (log.page_url as string | null) ?? null
   const city = (log.city as string | null) ?? null
   const country = (log.country as string | null) ?? null

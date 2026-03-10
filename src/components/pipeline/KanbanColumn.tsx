@@ -23,7 +23,7 @@ export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: Kan
   const stageColor = STAGE_COLORS[stage] ?? 'var(--text-secondary)'
 
   return (
-    <div className="flex flex-col w-[232px] flex-shrink-0">
+    <div className="flex flex-col flex-1 min-w-[180px]">
       {/* Column header */}
       <div
         className="flex items-center gap-2 flex-shrink-0"

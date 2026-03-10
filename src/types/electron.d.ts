@@ -17,6 +17,9 @@ interface ElectronAPI {
     getVersion: () => Promise<{ success: boolean; data: string }>
     getPaths: () => Promise<{ success: boolean; data: { userData: string; appPath: string } }>
   }
+  log: {
+    error: (msg: string) => void
+  }
   auth: {
     validatePat: (apiKey: string) => Promise<{ success: boolean; data?: { id: string; email?: string }; error?: string }>
     getCurrentUser: () => Promise<{ success: boolean; data?: { id: string | null; name: string | null; email: string | null; hasApiKey: boolean }; error?: string }>

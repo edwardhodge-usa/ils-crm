@@ -447,9 +447,9 @@ const PORTAL_ACCESS_MAPPINGS: FieldMapping[] = [
 
 const PORTAL_LOG_MAPPINGS: FieldMapping[] = [
   { local: 'auto_id', airtable: PORTAL_LOGS.id, type: 'number' },
-  { local: 'client_email', airtable: PORTAL_LOGS.clientEmail, type: 'text' },
-  { local: 'client_name', airtable: PORTAL_LOGS.clientName, type: 'text' },
-  { local: 'company', airtable: PORTAL_LOGS.company, type: 'text' },
+  { local: 'client_email', airtable: PORTAL_LOGS.clientEmail, type: 'readonly' },
+  { local: 'client_name', airtable: PORTAL_LOGS.clientName, type: 'readonly' },
+  { local: 'company', airtable: PORTAL_LOGS.company, type: 'readonly' },
   { local: 'ip_address', airtable: PORTAL_LOGS.ipAddress, type: 'text' },
   { local: 'city', airtable: PORTAL_LOGS.city, type: 'text' },
   { local: 'region', airtable: PORTAL_LOGS.region, type: 'text' },

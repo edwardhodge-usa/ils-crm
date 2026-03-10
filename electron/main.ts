@@ -1,4 +1,4 @@
-import { app, BrowserWindow, nativeTheme, systemPreferences } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeTheme, systemPreferences } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import { initDatabase, closeDatabase } from './database/init'
@@ -88,6 +88,11 @@ app.whenReady().then(async () => {
 
   // Register all entity/sync/dashboard/search IPC handlers (after DB init)
   registerAllHandlers(() => mainWindow)
+
+  // Forward renderer errors to main process console
+  ipcMain.on('log:error', (_event, msg: string) => {
+    console.error('[Renderer]', msg)
+  })
 
   createWindow()
 

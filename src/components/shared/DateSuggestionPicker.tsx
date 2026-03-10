@@ -78,9 +78,9 @@ export default function DateSuggestionPicker({ label = 'Due Date', value, onSave
 
   const calIcon = (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-      <rect x="1.5" y="3" width="13" height="11.5" rx="2" stroke="var(--text-tertiary)" strokeWidth="1.2" />
-      <path d="M1.5 7h13" stroke="var(--text-tertiary)" strokeWidth="1.2" />
-      <path d="M5 1.5v3M11 1.5v3" stroke="var(--text-tertiary)" strokeWidth="1.2" strokeLinecap="round" />
+      <rect x="1.5" y="3" width="13" height="11.5" rx="2" stroke="var(--text-secondary)" strokeWidth="1.2" />
+      <path d="M1.5 7h13" stroke="var(--text-secondary)" strokeWidth="1.2" />
+      <path d="M5 1.5v3M11 1.5v3" stroke="var(--text-secondary)" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   )
 
@@ -114,7 +114,7 @@ export default function DateSuggestionPicker({ label = 'Due Date', value, onSave
           display: 'flex', alignItems: 'center', gap: 5,
         }}>
           {displayValue || 'Add Date'}
-          <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>⌃</span>
+          <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>⌃</span>
         </span>
       </div>
 

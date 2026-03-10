@@ -59,6 +59,20 @@ export default function App() {
       document.documentElement.classList.toggle('dark', mq.matches)
     }
 
+    // Apply font size preference
+    const storedSize = localStorage.getItem('font-size')
+    if (storedSize === 'compact' || storedSize === 'default' || storedSize === 'large') {
+      const sizes: Record<string, { body: string; secondary: string; small: string }> = {
+        compact: { body: '13px', secondary: '11px', small: '10px' },
+        default: { body: '14px', secondary: '12px', small: '11px' },
+        large:   { body: '16px', secondary: '14px', small: '12px' },
+      }
+      const v = sizes[storedSize]
+      document.documentElement.style.setProperty('--font-body', v.body)
+      document.documentElement.style.setProperty('--font-secondary', v.secondary)
+      document.documentElement.style.setProperty('--font-small', v.small)
+    }
+
     mq.addEventListener('change', applySystem)
     return () => mq.removeEventListener('change', applySystem)
   }, [])
@@ -86,6 +100,22 @@ export default function App() {
     return () => {
       window.electronAPI.license.removeRevokedListener()
       window.electronAPI.license.removeOfflineLockedListener()
+    }
+  }, [])
+
+  // Forward uncaught renderer errors to main process
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      window.electronAPI?.log?.error(`${event.message} at ${event.filename}:${event.lineno}:${event.colno}`)
+    }
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      window.electronAPI?.log?.error(`Unhandled rejection: ${event.reason}`)
+    }
+    window.addEventListener('error', handleError)
+    window.addEventListener('unhandledrejection', handleRejection)
+    return () => {
+      window.removeEventListener('error', handleError)
+      window.removeEventListener('unhandledrejection', handleRejection)
     }
   }, [])
 
