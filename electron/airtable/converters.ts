@@ -103,8 +103,12 @@ function airtableToLocal(
         result[m.local] = val != null ? (typeof val === 'number' ? val : str(val)) : null
         break
       case 'collaborator':
-        result[m.local] = (val && typeof val === 'object' && 'name' in (val as Record<string, unknown>))
-          ? String((val as Record<string, string>).name) || null : null
+        if (val && typeof val === 'object' && 'id' in (val as Record<string, unknown>)) {
+          const collab = val as Record<string, string>
+          result[m.local] = JSON.stringify({ id: collab.id, email: collab.email || '', name: collab.name || '' })
+        } else {
+          result[m.local] = null
+        }
         break
       case 'attachment':
         // Extract the first attachment's large thumbnail URL (or direct URL as fallback)
@@ -129,7 +133,24 @@ function localToAirtable(
   const fields: Record<string, unknown> = {}
 
   for (const m of mappings) {
-    if (m.type === 'readonly' || m.type === 'collaborator' || m.type === 'attachment') continue // Skip formula/rollup/lookup/collaborator/attachment
+    if (m.type === 'readonly' || m.type === 'attachment') continue // Skip formula/rollup/lookup/attachment
+    if (m.type === 'collaborator') {
+      // Collaborator fields: parse stored JSON to get the Airtable user ID for writes
+      const collabVal = record[m.local]
+      if (collabVal && typeof collabVal === 'string') {
+        try {
+          const parsed = JSON.parse(collabVal)
+          if (parsed && typeof parsed === 'object' && parsed.id) {
+            fields[m.airtable] = { id: parsed.id }
+          }
+        } catch {
+          // Legacy plain-string name — can't write without an ID, skip
+        }
+      } else if (collabVal === null) {
+        fields[m.airtable] = null
+      }
+      continue
+    }
     const val = record[m.local]
     if (val === undefined) continue
 
@@ -488,4 +509,20 @@ for (const [name, mappings] of allTables) {
     fromAirtable: (record) => airtableToLocal(record, mappings),
     toAirtable: (record) => localToAirtable(record, mappings),
   }
+}
+
+/**
+ * Parse a collaborator field value to extract the display name.
+ * Handles both new JSON format ({"id":"usrXXX","name":"John"}) and legacy plain strings.
+ */
+export function parseCollaboratorDisplayName(val: unknown): string | null {
+  if (!val || typeof val !== 'string') return null
+  try {
+    const parsed = JSON.parse(val)
+    if (parsed && typeof parsed === 'object' && parsed.name) return parsed.name
+  } catch {
+    // Legacy plain string — return as-is
+    return val || null
+  }
+  return val
 }

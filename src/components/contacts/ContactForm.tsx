@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import EntityForm, { type EntityFormHandle, type FormFieldDef } from '../shared/EntityForm'
 import useEntityForm from '../../hooks/useEntityForm'
+import { normalizeUrl } from '../../utils/normalize-url'
 
 const FIELDS: FormFieldDef[] = [
   // Basic Info
@@ -82,6 +83,12 @@ export default function ContactForm() {
   })
   const formRef = useRef<EntityFormHandle>(null)
 
+  // Wrap handleSave to auto-compute contact_name from first_name + last_name
+  const handleSaveWithContactName = useCallback(async (values: Record<string, unknown>) => {
+    const contactName = [values.first_name, values.last_name].filter(Boolean).join(' ')
+    await handleSave({ ...values, contact_name: contactName || null })
+  }, [handleSave])
+
   // Right pane state
   const [paneMode, setPaneMode] = useState<PaneMode>('closed')
   const [companySearch, setCompanySearch] = useState('')
@@ -134,7 +141,14 @@ export default function ContactForm() {
     setCreating(true)
     setCreateError(null)
     try {
-      const res = await window.electronAPI.companies.create(createValues)
+      // Auto-prepend https:// to URL fields missing a protocol
+      const normalized = { ...createValues }
+      for (const f of COMPANY_CREATE_FIELDS) {
+        if (f.type === 'url' && typeof normalized[f.key] === 'string') {
+          normalized[f.key] = normalizeUrl(normalized[f.key] as string)
+        }
+      }
+      const res = await window.electronAPI.companies.create(normalized)
       if (res.success && res.data) {
         const newId = res.data as string
         refreshCompanies()
@@ -168,7 +182,7 @@ export default function ContactForm() {
           ref={formRef}
           fields={FIELDS}
           initialValues={initialValues}
-          onSave={handleSave}
+          onSave={handleSaveWithContactName}
           onCancel={handleCancel}
           title="Contact"
           isNew={isNew}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import useDarkMode from '../../hooks/useDarkMode'
+import { normalizeUrl } from '../../utils/normalize-url'
 import { colorMap as statusColorMap, defaultColors as statusDefaultColors } from './StatusBadge'
 
 export type EditableFieldType =
@@ -166,10 +167,13 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
     if (field.type === 'number' || field.type === 'currency') {
       const num = trimmed === '' ? null : Number(trimmed)
       doSave(num)
+    } else if (field.isLink) {
+      // Auto-prepend https:// to URL/link fields missing a protocol
+      doSave(normalizeUrl(trimmed))
     } else {
       doSave(trimmed || null)
     }
-  }, [editValue, field.type, doSave])
+  }, [editValue, field.type, field.isLink, doSave])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {

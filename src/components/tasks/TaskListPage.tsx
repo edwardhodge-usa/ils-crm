@@ -65,7 +65,7 @@ export default function TaskListPage() {
           columns={columns}
           data={filtered}
           onRowClick={(row) => navigate(`/tasks/${row.id}/edit`)}
-          searchKeys={['task', 'type']}
+          searchKeys={['task', 'type', 'status', 'priority', 'notes', 'assigned_to']}
           emptyMessage={activeTab === 'All' ? 'No tasks yet.' : `No ${activeTab.toLowerCase()} tasks.`}
           actions={
             <PrimaryButton onClick={() => navigate('/tasks/new')}>

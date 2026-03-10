@@ -23,7 +23,10 @@ export default function ContractListPage() {
     const q = search.toLowerCase()
     return contracts.filter(c =>
       c.name.toLowerCase().includes(q) ||
-      (c.status ?? '').toLowerCase().includes(q)
+      (c.status ?? '').toLowerCase().includes(q) ||
+      (String(c.raw?.description ?? '')).toLowerCase().includes(q) ||
+      (String(c.raw?.notes ?? '')).toLowerCase().includes(q) ||
+      (String(c.raw?.company_name ?? '')).toLowerCase().includes(q)
     )
   }, [contracts, search])
 

@@ -35,14 +35,25 @@ export default function ProjectListPage() {
   const [sortBy, setSortBy] = useState<SortKey>(() => (localStorage.getItem('sort-projects') as SortKey) || 'name')
 
   const filtered = useMemo(() => {
-    let items = (projects as Record<string, unknown>[]).map(toListItem)
+    const rawRows = projects as Record<string, unknown>[]
+    let items = rawRows.map(toListItem)
     if (search.trim()) {
       const q = search.toLowerCase()
-      items = items.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        (p.status ?? '').toLowerCase().includes(q) ||
-        (p.companyName ?? '').toLowerCase().includes(q)
-      )
+      const rawById = new Map<string, Record<string, unknown>>()
+      for (const r of rawRows) rawById.set(r.id as string, r)
+      items = items.filter(p => {
+        const raw = rawById.get(p.id)
+        return (
+          p.name.toLowerCase().includes(q) ||
+          (p.status ?? '').toLowerCase().includes(q) ||
+          (p.companyName ?? '').toLowerCase().includes(q) ||
+          (String(raw?.engagement_type ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.description ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.location ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.project_lead ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.key_milestones ?? '')).toLowerCase().includes(q)
+        )
+      })
     }
     const sorted = [...items]
     switch (sortBy) {

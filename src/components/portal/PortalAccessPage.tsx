@@ -83,28 +83,50 @@ function formatDate(raw: unknown): string {
   })
 }
 
+/** Safely extract a display string from a value that may be a lookup array */
+function resolveLookup(val: unknown): string | null {
+  if (!val) return null
+  if (typeof val === 'string') {
+    // Might be a JSON array from a lookup field stored as text
+    if (val.startsWith('[')) {
+      try {
+        const arr = JSON.parse(val)
+        if (Array.isArray(arr) && arr.length > 0) return String(arr[0])
+      } catch { /* not JSON, use as-is */ }
+    }
+    return val
+  }
+  if (Array.isArray(val) && val.length > 0) return String(val[0])
+  return String(val)
+}
+
+/**
+ * Resolve the best display name for a Portal Access record.
+ * Entries created via Slack often have `name` set to the unique identifier
+ * (Airtable record ID) instead of a human-readable name.
+ */
 function resolvedName(row: Record<string, unknown>): string {
-  return (
-    (row.name as string | null) ||
-    (row.contact_name_lookup as string | null) ||
-    '—'
-  )
+  // Try the name field first — but skip if it looks like an Airtable record ID
+  const name = row.name as string | null
+  if (name && name !== row.airtable_id) {
+    return name
+  }
+  // Try contact_name_lookup (stored as JSON array from linked record)
+  const contactName = resolveLookup(row.contact_name_lookup)
+  if (contactName) return contactName
+  // Try email fields as fallback
+  const email = row.email as string | null
+  if (email) return email
+  const contactEmail = resolveLookup(row.contact_email_lookup)
+  if (contactEmail) return contactEmail
+  // Last resort — use name even if it's the ID, or show placeholder
+  return name || 'Unnamed'
 }
 
 function resolvedEmail(row: Record<string, unknown>): string | null {
-  return (
-    (row.contact_email_lookup as string | null) ||
-    (row.email as string | null) ||
-    null
-  )
-}
-
-function resolvedCompany(row: Record<string, unknown>): string | null {
-  return (
-    (row.contact_company_lookup as string | null) ||
-    (row.company as string | null) ||
-    null
-  )
+  const contactEmail = resolveLookup(row.contact_email_lookup)
+  if (contactEmail) return contactEmail
+  return (row.email as string | null) || null
 }
 
 // ─── Editable field definitions ──────────────────────────────────────────────
@@ -122,24 +144,46 @@ const PORTAL_EDITABLE_FIELDS: EditableField[] = [
   { key: 'follow_up_date', label: 'Follow Up', type: 'date' },
 ]
 
-/** Contact info pulled from the linked contact record (Airtable lookups) */
-const PORTAL_CONTACT_LOOKUP_FIELDS: EditableField[] = [
-  { key: 'contact_email_lookup', label: 'Email', type: 'readonly' },
-  { key: 'contact_company_lookup', label: 'Company', type: 'readonly' },
-  { key: 'contact_job_title_lookup', label: 'Position', type: 'readonly' },
-  { key: 'contact_phone_lookup', label: 'Phone', type: 'readonly' },
-  { key: 'contact_website_lookup', label: 'Website', type: 'readonly' },
-  { key: 'contact_industry_lookup', label: 'Industry', type: 'readonly' },
-  { key: 'contact_address_line_lookup', label: 'Address', type: 'readonly' },
-  { key: 'contact_city_lookup', label: 'City', type: 'readonly' },
-  { key: 'contact_state_lookup', label: 'State', type: 'readonly' },
-  { key: 'contact_country_lookup', label: 'Country', type: 'readonly' },
+
+const PORTAL_OTHER_FIELDS_STATIC: EditableField[] = [
+  { key: 'date_added', label: 'Added', type: 'date' },
 ]
 
-const PORTAL_OTHER_FIELDS: EditableField[] = [
-  { key: 'assignee', label: 'Assignee', type: 'readonly' },
-  { key: 'date_added', label: 'Added', type: 'readonly' },
-]
+/** Parse a collaborator JSON string to extract the name. Falls back to plain string for legacy data. */
+function parseCollaboratorName(val: unknown): string | null {
+  if (!val || typeof val !== 'string') return null
+  try {
+    const parsed = JSON.parse(val)
+    if (parsed && typeof parsed === 'object' && parsed.name) return parsed.name
+  } catch {
+    // Legacy plain string — return as-is
+    return val || null
+  }
+  return val
+}
+
+/** Extract unique collaborator objects from all portal_access records' assignee fields */
+function buildCollaboratorOptions(records: Record<string, unknown>[]): { id: string; name: string; email: string; json: string }[] {
+  const seen = new Map<string, { id: string; name: string; email: string; json: string }>()
+  for (const r of records) {
+    const val = r.assignee
+    if (!val || typeof val !== 'string') continue
+    try {
+      const parsed = JSON.parse(val)
+      if (parsed && typeof parsed === 'object' && parsed.id && !seen.has(parsed.id)) {
+        seen.set(parsed.id, {
+          id: parsed.id,
+          name: parsed.name || parsed.email || parsed.id,
+          email: parsed.email || '',
+          json: val,
+        })
+      }
+    } catch {
+      // Legacy plain string — can't create an option without an ID
+    }
+  }
+  return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name))
+}
 
 /** Page Path editor with explicit Save button */
 function PagePathEditor({ value, onSave }: { value: string; onSave: (val: string) => Promise<void> }) {
@@ -236,12 +280,13 @@ interface PortalRowProps {
   onClick: () => void
   onContextMenu?: (e: React.MouseEvent) => void
   groupedBy?: string
+  linkedCompanyName?: string | null
 }
 
-function PortalAccessRow({ record, isSelected, onClick, onContextMenu, groupedBy }: PortalRowProps) {
+function PortalAccessRow({ record, isSelected, onClick, onContextMenu, groupedBy, linkedCompanyName }: PortalRowProps) {
   const name = resolvedName(record)
   const email = resolvedEmail(record)
-  const company = resolvedCompany(record)
+  const company = linkedCompanyName ?? null
   const status = (record.status as string | null) ?? null
 
   // When grouped by company, show email instead (company is in the section header)
@@ -298,10 +343,14 @@ interface DetailProps {
   record: Record<string, unknown> | null
   logs: Record<string, unknown>[]
   onFieldSave: (key: string, val: unknown) => Promise<void>
+  onContactFieldSave: (key: string, val: unknown) => Promise<void>
   onDeleteLog: (id: string) => Promise<void>
+  linkedCompanyName?: string | null
+  linkedContact?: Record<string, unknown> | null
+  collaboratorOptions: { id: string; name: string; email: string; json: string }[]
 }
 
-function PortalAccessDetail({ record, logs, onFieldSave, onDeleteLog }: DetailProps) {
+function PortalAccessDetail({ record, logs, onFieldSave, onContactFieldSave, onDeleteLog, linkedCompanyName, linkedContact, collaboratorOptions }: DetailProps) {
   const { contactPhotoUrl, companyLogoUrl } = useLinkedImages(record)
   const [showAllLogs, setShowAllLogs] = useState(false)
 
@@ -319,7 +368,7 @@ function PortalAccessDetail({ record, logs, onFieldSave, onDeleteLog }: DetailPr
   const name = resolvedName(record)
   const email = resolvedEmail(record)
   const stage = (record.stage as string | null) ?? null
-  const company = resolvedCompany(record)
+  const company = linkedCompanyName ?? null
 
   // Filter logs related to this record by email match
   const relatedLogs = email
@@ -490,14 +539,15 @@ function PortalAccessDetail({ record, logs, onFieldSave, onDeleteLog }: DetailPr
           </div>
         </div>
 
-        {/* Linked Contact + Status */}
+        {/* Details — Contact, Status, Assignee, Added, Notes */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{
             fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
             letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
           }}>
-            Linked Contact
+            Details
           </div>
+          {/* Contact + Position + Email */}
           <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
             <LinkedRecordPicker
               label="Contact"
@@ -512,12 +562,118 @@ function PortalAccessDetail({ record, logs, onFieldSave, onDeleteLog }: DetailPr
               placeholder="Search contacts..."
               multiple={false}
             />
+            {linkedContact && (
+              <>
+                <EditableFormRow
+                  field={{ key: 'job_title', label: 'Position', type: 'text' }}
+                  value={(linkedContact.job_title as string) || null}
+                  isLast={false}
+                  onSave={onContactFieldSave}
+                />
+                <EditableFormRow
+                  field={{ key: 'email', label: 'Email', type: 'text', isLink: true }}
+                  value={(linkedContact.email as string) || null}
+                  isLast
+                  onSave={onContactFieldSave}
+                />
+              </>
+            )}
+          </div>
+          {/* Company */}
+          {linkedContact && (
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginTop: 8 }}>
+              <LinkedRecordPicker
+                label="Company"
+                entityApi={window.electronAPI.companies}
+                labelField="company_name"
+                value={linkedContact.companies_ids}
+                onChange={val => onContactFieldSave('companies_ids', val)}
+                placeholder="Search companies..."
+                multiple={false}
+              />
+            </div>
+          )}
+          {/* Status + Assignee + Added + Notes */}
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, marginTop: 8, position: 'relative', overflow: 'visible' }}>
             <EditableFormRow
               field={{
                 key: 'status', label: 'Status', type: 'statusSelect',
-                options: ['Active', 'Inactive', 'Pending', 'Expired', 'Revoked'],
+                options: ['ACTIVE', 'IN-ACTIVE', 'PENDING', 'EXPIRED', 'REVOKED'],
               }}
               value={record.status}
+              isLast={false}
+              onSave={onFieldSave}
+            />
+            {/* Assignee dropdown — collaborator field */}
+            {(() => {
+              let currentCollabId = ''
+              const assigneeVal = record.assignee
+              if (assigneeVal && typeof assigneeVal === 'string') {
+                try {
+                  const parsed = JSON.parse(assigneeVal)
+                  if (parsed && typeof parsed === 'object' && parsed.id) currentCollabId = parsed.id
+                } catch { /* Legacy plain string */ }
+              }
+              return (
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '10px 14px', minHeight: 36,
+                  borderBottom: '1px solid var(--separator)',
+                  cursor: 'default',
+                }}>
+                  <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)', flexShrink: 0, marginRight: 12 }}>
+                    Assignee
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    {collaboratorOptions.length > 0 ? (
+                      <select
+                        value={currentCollabId}
+                        onChange={e => {
+                          const selectedId = e.target.value
+                          if (!selectedId) {
+                            onFieldSave('assignee', null)
+                          } else {
+                            const opt = collaboratorOptions.find(o => o.id === selectedId)
+                            if (opt) onFieldSave('assignee', opt.json)
+                          }
+                        }}
+                        style={{
+                          background: 'var(--bg-card)', border: '1px solid var(--separator)',
+                          borderRadius: 4, padding: '4px 8px',
+                          fontSize: 13, fontWeight: 400, color: 'var(--text-primary)',
+                          fontFamily: 'inherit', outline: 'none', cursor: 'default',
+                          maxWidth: 200, textAlign: 'right' as const,
+                        }}
+                      >
+                        <option value="">Unassigned</option>
+                        {collaboratorOptions.map(opt => (
+                          <option key={opt.id} value={opt.id}>{opt.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
+                        {parseCollaboratorName(assigneeVal) || '—'}
+                      </span>
+                    )}
+                    {collaboratorOptions.length > 0 && (
+                      <span style={{ fontSize: 10, color: 'var(--text-tertiary)', flexShrink: 0 }}>&#x2303;</span>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
+            {PORTAL_OTHER_FIELDS_STATIC.map((field) => (
+              <EditableFormRow
+                key={field.key}
+                field={field}
+                value={field.key === 'date_added' ? (formatDate(record[field.key]) || null) : record[field.key]}
+                isLast={false}
+                onSave={onFieldSave}
+              />
+            ))}
+            <EditableFormRow
+              field={{ key: 'notes', label: 'Notes', type: 'textarea' }}
+              value={record.notes}
               isLast
               onSave={onFieldSave}
             />
@@ -765,65 +921,7 @@ function PortalAccessDetail({ record, logs, onFieldSave, onDeleteLog }: DetailPr
           </div>
         </div>
 
-        {/* Other fields */}
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
-          <div style={{
-            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
-          }}>
-            Other
-          </div>
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            {PORTAL_OTHER_FIELDS.map((field, idx) => (
-              <EditableFormRow
-                key={field.key}
-                field={field}
-                value={field.key === 'date_added' ? (formatDate(record[field.key]) || null) : record[field.key]}
-                isLast={idx === PORTAL_OTHER_FIELDS.length - 1}
-                onSave={onFieldSave}
-              />
-            ))}
-          </div>
-        </div>
 
-        {/* Notes */}
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
-          <div style={{
-            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
-          }}>
-            Notes
-          </div>
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            <EditableFormRow
-              field={{ key: 'notes', label: 'Notes', type: 'textarea' }}
-              value={record.notes}
-              isLast
-              onSave={onFieldSave}
-            />
-          </div>
-        </div>
-
-        {/* Contact Info — pulled from linked contact record (Airtable lookups) */}
-        <div style={{ padding: '14px 16px' }}>
-          <div style={{
-            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
-          }}>
-            Contact Info
-          </div>
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            {PORTAL_CONTACT_LOOKUP_FIELDS.map((field, idx) => (
-              <EditableFormRow
-                key={field.key}
-                field={field}
-                value={record[field.key]}
-                isLast={idx === PORTAL_CONTACT_LOOKUP_FIELDS.length - 1}
-                onSave={onFieldSave}
-              />
-            ))}
-          </div>
-        </div>
 
         {/* Bottom spacer */}
         <div style={{ height: 16 }} />
@@ -837,12 +935,45 @@ function PortalAccessDetail({ record, logs, onFieldSave, onDeleteLog }: DetailPr
 
 export default function PortalAccessPage() {
   const { data: records, loading, error, reload } = useEntityList(() => window.electronAPI.portalAccess.getAll())
+  const { data: contactsData, reload: reloadContacts } = useEntityList(() => window.electronAPI.contacts.getAll())
+  const { data: companiesData } = useEntityList(() => window.electronAPI.companies.getAll())
   const [logs, setLogs] = useState<Record<string, unknown>[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<'name' | 'company' | 'status' | 'stage' | 'newest' | 'oldest'>(() => (localStorage.getItem('sort-portal') as 'name' | 'company' | 'status' | 'stage' | 'newest' | 'oldest') || 'name')
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+
+  // Build id→record map for contacts
+  const contactMap = useMemo(() => {
+    const map = new Map<string, Record<string, unknown>>()
+    for (const c of contactsData) {
+      map.set(c.id as string, c)
+    }
+    return map
+  }, [contactsData])
+
+  // Build id→name map for companies
+  const companyNameMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const c of companiesData) {
+      if (c.company_name) {
+        map.set(c.id as string, c.company_name as string)
+      }
+    }
+    return map
+  }, [companiesData])
+
+  // Resolve company name for a portal access record via contact → company chain
+  const resolveLinkedCompany = useCallback((row: Record<string, unknown>): string | null => {
+    const contactIds = parseIds(row.contact_ids)
+    if (contactIds.length === 0) return null
+    const contact = contactMap.get(contactIds[0])
+    if (!contact) return null
+    const companyIds = parseIds(contact.companies_ids)
+    if (companyIds.length === 0) return null
+    return companyNameMap.get(companyIds[0]) || null
+  }, [contactMap, companyNameMap])
 
   const handleNew = useCallback(async () => {
     const res = await window.electronAPI.portalAccess.create({ name: 'New Access' })
@@ -862,10 +993,10 @@ export default function PortalAccessPage() {
     if (!res.success || !res.data) return
     const source = res.data as Record<string, unknown>
 
-    // Strip internal, readonly, lookup, collaborator, and formula fields
+    // Strip internal, readonly, lookup, and formula fields (assignee is now writable)
     const stripKeys = new Set([
       'id', 'airtable_id', '_pending_push', '_airtable_modified_at', '_local_modified_at',
-      'framer_page_url', 'assignee',
+      'framer_page_url',
       'contact_name_lookup', 'contact_company_lookup', 'contact_email_lookup',
       'contact_phone_lookup', 'contact_job_title_lookup', 'contact_industry_lookup',
       'contact_tags_lookup', 'contact_website_lookup', 'contact_address_line_lookup',
@@ -924,7 +1055,14 @@ export default function PortalAccessPage() {
       list = list.filter(r =>
         resolvedName(r).toLowerCase().includes(q) ||
         String(resolvedEmail(r) ?? '').toLowerCase().includes(q) ||
-        String(resolvedCompany(r) ?? '').toLowerCase().includes(q)
+        String(resolveLinkedCompany(r) ?? '').toLowerCase().includes(q) ||
+        String(r.status ?? '').toLowerCase().includes(q) ||
+        String(r.stage ?? '').toLowerCase().includes(q) ||
+        String(r.lead_source ?? '').toLowerCase().includes(q) ||
+        String(r.industry ?? '').toLowerCase().includes(q) ||
+        String(r.notes ?? '').toLowerCase().includes(q) ||
+        String(r.services_interested_in ?? '').toLowerCase().includes(q) ||
+        String(r.position_title ?? '').toLowerCase().includes(q)
       )
     }
     const sorted = [...list]
@@ -933,7 +1071,7 @@ export default function PortalAccessPage() {
         sorted.sort((a, b) => resolvedName(a).localeCompare(resolvedName(b)))
         break
       case 'company':
-        sorted.sort((a, b) => (resolvedCompany(a) ?? '').localeCompare(resolvedCompany(b) ?? ''))
+        sorted.sort((a, b) => (resolveLinkedCompany(a) ?? '').localeCompare(resolveLinkedCompany(b) ?? ''))
         break
       case 'status':
         sorted.sort((a, b) => String(a.status ?? '').localeCompare(String(b.status ?? '')))
@@ -949,15 +1087,32 @@ export default function PortalAccessPage() {
         break
     }
     return sorted
-  }, [records, search, sortBy])
+  }, [records, search, sortBy, resolveLinkedCompany])
 
   const selected = filtered.find(r => r.id === selectedId) ?? null
+
+  // Build collaborator options from all records' assignee fields
+  const collaboratorOptions = useMemo(
+    () => buildCollaboratorOptions(records as Record<string, unknown>[]),
+    [records]
+  )
 
   const handleFieldSave = useCallback(async (key: string, val: unknown) => {
     if (!selectedId) return
     await window.electronAPI.portalAccess.update(selectedId, { [key]: val })
     reload()
   }, [selectedId, reload])
+
+  // Save a field on the linked Contact record (not the portal_access record)
+  const handleContactFieldSave = useCallback(async (key: string, val: unknown) => {
+    if (!selected) return
+    const cIds = parseIds(selected.contact_ids)
+    if (!cIds.length) return
+    const contactId = cIds[0]
+    await window.electronAPI.contacts.update(contactId, { [key]: val })
+    // Refresh contacts data so the UI updates
+    reloadContacts()
+  }, [selected, reloadContacts])
 
   const handleDeleteLog = useCallback(async (id: string) => {
     await window.electronAPI.portalLogs.delete(id)
@@ -1063,7 +1218,7 @@ export default function PortalAccessPage() {
             const groups = new Map<string, Record<string, unknown>[]>()
             for (const r of filtered) {
               const val = sortBy === 'company'
-                ? (resolvedCompany(r) || 'No Company')
+                ? (resolveLinkedCompany(r) || 'No Company')
                 : ((r[sortBy] as string) || 'No ' + (sortBy === 'status' ? 'Status' : 'Stage'))
               if (!groups.has(val)) groups.set(val, [])
               groups.get(val)!.push(r)
@@ -1079,6 +1234,7 @@ export default function PortalAccessPage() {
                     onClick={() => setSelectedId(record.id as string)}
                     onContextMenu={e => handleContextMenu(e, record.id as string)}
                     groupedBy={sortBy}
+                    linkedCompanyName={resolveLinkedCompany(record)}
                   />
                 ))}
               </div>
@@ -1091,6 +1247,7 @@ export default function PortalAccessPage() {
                 isSelected={selectedId === (record.id as string)}
                 onClick={() => setSelectedId(record.id as string)}
                 onContextMenu={e => handleContextMenu(e, record.id as string)}
+                linkedCompanyName={resolveLinkedCompany(record)}
               />
             ))
           )}
@@ -1098,7 +1255,7 @@ export default function PortalAccessPage() {
       </div>
 
       {/* Detail panel — flex-1 */}
-      <PortalAccessDetail record={selected} logs={logs} onFieldSave={handleFieldSave} onDeleteLog={handleDeleteLog} />
+      <PortalAccessDetail record={selected} logs={logs} onFieldSave={handleFieldSave} onContactFieldSave={handleContactFieldSave} onDeleteLog={handleDeleteLog} linkedCompanyName={selected ? resolveLinkedCompany(selected) : null} linkedContact={(() => { if (!selected) return null; const cIds = parseIds(selected.contact_ids); return cIds.length ? contactMap.get(cIds[0]) ?? null : null })()} collaboratorOptions={collaboratorOptions} />
 
       <ContextMenu
         position={contextMenu}

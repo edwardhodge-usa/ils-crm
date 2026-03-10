@@ -377,7 +377,17 @@ export default function ImportedContactsPage() {
         String(c.first_name ?? '').toLowerCase().includes(q) ||
         String(c.last_name ?? '').toLowerCase().includes(q) ||
         String(c.email ?? '').toLowerCase().includes(q) ||
-        String(c.company ?? '').toLowerCase().includes(q)
+        String(c.company ?? '').toLowerCase().includes(q) ||
+        String(c.job_title ?? '').toLowerCase().includes(q) ||
+        String(c.phone ?? '').toLowerCase().includes(q) ||
+        String(c.mobile_phone ?? '').toLowerCase().includes(q) ||
+        String(c.city ?? '').toLowerCase().includes(q) ||
+        String(c.state ?? '').toLowerCase().includes(q) ||
+        String(c.tags ?? '').toLowerCase().includes(q) ||
+        String(c.note ?? '').toLowerCase().includes(q) ||
+        String(c.categorization ?? '').toLowerCase().includes(q) ||
+        String(c.import_source ?? '').toLowerCase().includes(q) ||
+        String(c.linkedin_url ?? '').toLowerCase().includes(q)
       )
     }
 

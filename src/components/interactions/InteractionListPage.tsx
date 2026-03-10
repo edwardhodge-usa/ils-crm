@@ -46,18 +46,25 @@ export default function InteractionListPage() {
   const [search, setSearch] = useState('')
 
   const filtered: InteractionListItem[] = useMemo(() => {
-    const items = (interactions as Record<string, unknown>[])
-      .map(toListItem)
-      .sort(byDateDesc)
+    const rawRows = interactions as Record<string, unknown>[]
+    const items = rawRows.map(toListItem).sort(byDateDesc)
 
     if (!search.trim()) return items
     const q = search.toLowerCase()
-    return items.filter(i =>
-      (i.subject      ?? '').toLowerCase().includes(q) ||
-      (i.type         ?? '').toLowerCase().includes(q) ||
-      (i.summary      ?? '').toLowerCase().includes(q) ||
-      (i.contact_name ?? '').toLowerCase().includes(q)
-    )
+    const rawById = new Map<string, Record<string, unknown>>()
+    for (const r of rawRows) rawById.set(r.id as string, r)
+    return items.filter(i => {
+      const raw = rawById.get(i.id)
+      return (
+        (i.subject      ?? '').toLowerCase().includes(q) ||
+        (i.type         ?? '').toLowerCase().includes(q) ||
+        (i.summary      ?? '').toLowerCase().includes(q) ||
+        (i.contact_name ?? '').toLowerCase().includes(q) ||
+        (String(raw?.next_steps ?? '')).toLowerCase().includes(q) ||
+        (String(raw?.direction ?? '')).toLowerCase().includes(q) ||
+        (String(raw?.logged_by ?? '')).toLowerCase().includes(q)
+      )
+    })
   }, [interactions, search])
 
   if (loading) return <LoadingSpinner />

@@ -50,6 +50,16 @@ export default function ContactListPage() {
     return map
   }, [companiesData])
 
+  const companyNameMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const c of companiesData) {
+      if (c.company_name) {
+        map.set(c.id as string, c.company_name as string)
+      }
+    }
+    return map
+  }, [companiesData])
+
   useEffect(() => {
     window.electronAPI.specialties.getAll().then(res => {
       if (res.success && res.data) {
@@ -69,6 +79,18 @@ export default function ContactListPage() {
       const ids = typeof companiesIds === 'string' ? JSON.parse(companiesIds) : companiesIds
       if (Array.isArray(ids) && ids.length > 0) {
         return logoMap.get(ids[0]) || null
+      }
+    } catch { /* ignore parse errors */ }
+    return null
+  }
+
+  function getCompanyName(contact: Record<string, unknown>, nameMap: Map<string, string>): string | null {
+    const companiesIds = contact.companies_ids
+    if (!companiesIds) return null
+    try {
+      const ids = typeof companiesIds === 'string' ? JSON.parse(companiesIds) : companiesIds
+      if (Array.isArray(ids) && ids.length > 0) {
+        return nameMap.get(ids[0]) || null
       }
     } catch { /* ignore parse errors */ }
     return null
@@ -102,7 +124,7 @@ export default function ContactListPage() {
       firstName: (row.first_name as string | null) ?? '',
       lastName: (row.last_name as string | null) ?? '',
       jobTitle: (row.job_title as string | null) ?? null,
-      companyName: (row.company as string | null) ?? null,
+      companyName: getCompanyName(row, companyNameMap),
       companyLogoUrl: getCompanyLogo(row, companyLogoMap),
       photoUrl: (row.contact_photo_url as string | null) ?? null,
       qualityRating: parseQualityRating(row.quality_rating as string | null),
@@ -114,14 +136,34 @@ export default function ContactListPage() {
   }
 
   const filteredContacts: ContactListItem[] = useMemo(() => {
-    let items = (contacts as Record<string, unknown>[]).map(toListItem)
+    const rawRows = contacts as Record<string, unknown>[]
+    let items = rawRows.map(toListItem)
     if (search.trim()) {
       const q = search.toLowerCase()
-      items = items.filter(c =>
-        `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
-        (c.companyName ?? '').toLowerCase().includes(q) ||
-        (c.jobTitle ?? '').toLowerCase().includes(q)
-      )
+      // Build a raw-row lookup by id for searching fields not in the list item
+      const rawById = new Map<string, Record<string, unknown>>()
+      for (const r of rawRows) rawById.set(r.id as string, r)
+      items = items.filter(c => {
+        const raw = rawById.get(c.id)
+        return (
+          `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
+          (c.companyName ?? '').toLowerCase().includes(q) ||
+          (c.jobTitle ?? '').toLowerCase().includes(q) ||
+          (String(raw?.email ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.work_email ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.phone ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.mobile_phone ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.notes ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.tags ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.industry ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.linkedin_url ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.city ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.state ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.lead_source ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.categorization ?? '')).toLowerCase().includes(q) ||
+          c.specialtyNames.some(s => s.toLowerCase().includes(q))
+        )
+      })
     }
     const sorted = [...items]
     switch (sortBy) {
@@ -136,7 +178,7 @@ export default function ContactListPage() {
         break
     }
     return sorted
-  }, [contacts, specialtyMap, companyLogoMap, search, sortBy]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [contacts, specialtyMap, companyLogoMap, companyNameMap, search, sortBy]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <LoadingSpinner />
 

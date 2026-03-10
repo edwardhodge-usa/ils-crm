@@ -55,16 +55,31 @@ export default function CompanyListPage() {
   const [sortBy, setSortBy] = useState<'name' | 'type' | 'industry' | 'newest'>(() => (localStorage.getItem('sort-companies') as 'name' | 'type' | 'industry' | 'newest') || 'name')
 
   const filteredCompanies: CompanyListItem[] = useMemo(() => {
-    let items = (companies as Record<string, unknown>[]).map(row =>
+    const rawRows = companies as Record<string, unknown>[]
+    let items = rawRows.map(row =>
       toListItem(row, contactsData as Record<string, unknown>[])
     )
     if (search.trim()) {
       const q = search.toLowerCase()
-      items = items.filter(c =>
-        c.name.toLowerCase().includes(q) ||
-        (c.industry ?? '').toLowerCase().includes(q) ||
-        (c.type ?? '').toLowerCase().includes(q)
-      )
+      // Build a raw-row lookup by id for searching fields not in the list item
+      const rawById = new Map<string, Record<string, unknown>>()
+      for (const r of rawRows) rawById.set(r.id as string, r)
+      items = items.filter(c => {
+        const raw = rawById.get(c.id)
+        return (
+          c.name.toLowerCase().includes(q) ||
+          (c.industry ?? '').toLowerCase().includes(q) ||
+          (c.type ?? '').toLowerCase().includes(q) ||
+          (String(raw?.website ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.company_description ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.city ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.state_region ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.notes ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.lead_source ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.linkedin_url ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.naics_code ?? '')).toLowerCase().includes(q)
+        )
+      })
     }
     const sorted = [...items]
     switch (sortBy) {

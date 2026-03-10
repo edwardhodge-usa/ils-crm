@@ -859,7 +859,14 @@ export default function TasksPage() {
     // Search filter
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
-      tasks = tasks.filter(t => t.title.toLowerCase().includes(q))
+      tasks = tasks.filter(t =>
+        t.title.toLowerCase().includes(q) ||
+        (t.notes ?? '').toLowerCase().includes(q) ||
+        (t.status ?? '').toLowerCase().includes(q) ||
+        (t.type ?? '').toLowerCase().includes(q) ||
+        (t.priority ?? '').toLowerCase().includes(q) ||
+        (t.assigned_to ?? '').toLowerCase().includes(q)
+      )
     }
 
     return tasks

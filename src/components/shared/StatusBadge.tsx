@@ -60,6 +60,9 @@ export const colorMap: Record<string, { text: string; textDark: string; bg: stri
   'ACTIVE':            { text: '#248A3D',  textDark: '#30D158',  bg: 'rgba(52,199,89,0.22)' },
   'Inactive':          { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
   'IN-ACTIVE':         { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
+  'PENDING':           { text: '#C93400',  textDark: '#FF9F0A',  bg: 'rgba(255,149,0,0.22)' },
+  'EXPIRED':           { text: '#636366',  textDark: '#98989D',  bg: 'rgba(142,142,147,0.22)' },
+  'REVOKED':           { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
 }
 
 export const defaultColors = { text: '#636366', textDark: '#98989D', bg: 'rgba(142,142,147,0.20)' }

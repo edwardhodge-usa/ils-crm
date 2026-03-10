@@ -125,7 +125,12 @@ export default function PortalLogsPage() {
       String(l.client_name ?? '').toLowerCase().includes(q) ||
       String(l.client_email ?? '').toLowerCase().includes(q) ||
       String(l.company ?? '').toLowerCase().includes(q) ||
-      String(l.page_url ?? '').toLowerCase().includes(q)
+      String(l.page_url ?? '').toLowerCase().includes(q) ||
+      String(l.city ?? '').toLowerCase().includes(q) ||
+      String(l.country ?? '').toLowerCase().includes(q) ||
+      String(l.region ?? '').toLowerCase().includes(q) ||
+      String(l.ip_address ?? '').toLowerCase().includes(q) ||
+      String(l.user_agent ?? '').toLowerCase().includes(q)
     )
   }, [logs, search])
 

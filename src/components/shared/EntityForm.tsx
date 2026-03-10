@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react'
 import LinkedRecordPicker from './LinkedRecordPicker'
 import { parseIds } from '../../utils/linked-records'
+import { normalizeUrl } from '../../utils/normalize-url'
 import { CREATE_FIELD_REGISTRY } from '../../config/create-fields'
 
 export type FormFieldType =
@@ -86,7 +87,14 @@ const EntityForm = forwardRef<EntityFormHandle, EntityFormProps>(function Entity
     setSaving(true)
     setError(null)
     try {
-      await onSave(values)
+      // Auto-prepend https:// to URL fields missing a protocol
+      const normalized = { ...values }
+      for (const field of fields) {
+        if (field.type === 'url' && typeof normalized[field.key] === 'string') {
+          normalized[field.key] = normalizeUrl(normalized[field.key] as string)
+        }
+      }
+      await onSave(normalized)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save'
       console.error('[EntityForm] Save error:', msg)

@@ -49,7 +49,7 @@ export default function InteractionsPage() {
       columns={columns}
       data={interactions}
       onRowClick={(row) => navigate(`/interactions/${row.id}/edit`)}
-      searchKeys={['subject', 'summary', 'type']}
+      searchKeys={['subject', 'summary', 'type', 'direction', 'next_steps', 'logged_by', 'contact_name']}
       emptyMessage="No interactions logged yet. Click + Log Interaction to record your first call, email, or meeting."
       actions={
         <PrimaryButton onClick={() => navigate('/interactions/new')}>

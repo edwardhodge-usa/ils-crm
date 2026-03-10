@@ -24,7 +24,9 @@ export default function RfqListPage() {
     return rfqs.filter(r =>
       r.title.toLowerCase().includes(q) ||
       (r.status ?? '').toLowerCase().includes(q) ||
-      (r.companyName ?? '').toLowerCase().includes(q)
+      (r.companyName ?? '').toLowerCase().includes(q) ||
+      (String(r.raw?.description ?? '')).toLowerCase().includes(q) ||
+      (String(r.raw?.notes ?? '')).toLowerCase().includes(q)
     )
   }, [rfqs, search])
 

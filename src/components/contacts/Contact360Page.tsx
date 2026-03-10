@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ConfirmDialog from '../shared/ConfirmDialog'
 import { Avatar } from '../shared/Avatar'
 import { EmptyState } from '../shared/EmptyState'
 import { ContactStats } from './ContactStats'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
+import LinkedRecordPicker from '../shared/LinkedRecordPicker'
 import { interactionTypeIcon } from '../shared/icons/InteractionIcons'
 import { containsId } from '../../utils/linked-records'
 
 const CONTACT_INFO_FIELDS: EditableField[] = [
   { key: 'job_title', label: 'Title', type: 'text' },
-  { key: 'company', label: 'Company', type: 'text' },
   { key: 'email', label: 'Email', type: 'text', isLink: true },
   { key: 'phone', label: 'Phone', type: 'text' },
   { key: 'mobile_phone', label: 'Mobile', type: 'text' },
@@ -136,6 +136,28 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
   const [photoLoading, setPhotoLoading] = useState(false)
   const [linkedInInput, setLinkedInInput] = useState('')
   const [showLinkedInInput, setShowLinkedInInput] = useState(false)
+  const [companiesData, setCompaniesData] = useState<Record<string, unknown>[]>([])
+
+  useEffect(() => {
+    window.electronAPI.companies.getAll().then(res => {
+      if (res.success && res.data) setCompaniesData(res.data as Record<string, unknown>[])
+    }).catch(() => {})
+  }, [])
+
+  /** Resolve company name from companies_ids linked record */
+  const resolvedCompanyName = useMemo(() => {
+    if (!contact) return null
+    const companiesIds = contact.companies_ids
+    if (!companiesIds) return null
+    try {
+      const ids = typeof companiesIds === 'string' ? JSON.parse(companiesIds as string) : companiesIds
+      if (Array.isArray(ids) && ids.length > 0) {
+        const match = companiesData.find(c => c.id === ids[0])
+        return match ? (match.company_name as string) : null
+      }
+    } catch { /* ignore parse errors */ }
+    return null
+  }, [contact, companiesData])
 
   async function handleFetchLinkedInPhoto(urlOverride?: string) {
     if (!id) return
@@ -414,11 +436,11 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
               <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2, letterSpacing: '-0.3px' }}>
                 {fullName}
               </div>
-              {(Boolean(contact.job_title) || Boolean(contact.company)) && (
+              {(Boolean(contact.job_title) || Boolean(resolvedCompanyName)) && (
                 <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
                   {contact.job_title as string}
-                  {Boolean(contact.job_title) && Boolean(contact.company) ? ' · ' : ''}
-                  {contact.company as string}
+                  {Boolean(contact.job_title) && Boolean(resolvedCompanyName) ? ' · ' : ''}
+                  {resolvedCompanyName}
                 </div>
               )}
             </div>
@@ -482,6 +504,17 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
 
         {/* ── 3. Contact Info — editable form rows ── */}
         <SectionLabel>Contact Info</SectionLabel>
+        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 8, boxShadow: 'var(--shadow-sm)' }}>
+          <LinkedRecordPicker
+            label="Company"
+            entityApi={window.electronAPI.companies}
+            labelField="company_name"
+            value={contact.companies_ids}
+            onChange={val => handleFieldSave('companies_ids', val)}
+            placeholder="Search companies..."
+            multiple={false}
+          />
+        </div>
         <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
           {CONTACT_INFO_FIELDS.map((field, idx) => (
             <EditableFormRow
