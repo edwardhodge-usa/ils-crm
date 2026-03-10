@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
-import UpdateBanner from './UpdateBanner'
 import { NEW_ROUTES } from '../../config/routes'
 
 export interface LayoutOutletContext {
@@ -35,7 +34,6 @@ export default function Layout({ onSignOut }: LayoutProps) {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[var(--bg-window)]">
-      <UpdateBanner />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
