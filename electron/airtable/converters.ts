@@ -56,8 +56,8 @@ function cleanSelectValue(value: unknown): string | null {
     return (value as { name: string }).name || null
   }
   let s = String(value)
-  // Strip wrapping quotes if the value was double-stringified (e.g. '"Medium"' → 'Medium')
-  if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
+  // Strip all wrapping quotes from double/triple-stringified values (e.g. '""Conference""' → 'Conference')
+  while (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
     s = s.slice(1, -1)
   }
   return s || null
@@ -431,7 +431,7 @@ const PORTAL_ACCESS_MAPPINGS: FieldMapping[] = [
   { local: 'email', airtable: PORTAL_ACCESS.email, type: 'text' },
   { local: 'page_address', airtable: PORTAL_ACCESS.pageAddress, type: 'text' },
   { local: 'decision_maker', airtable: PORTAL_ACCESS.decisionMaker, type: 'text' },
-  { local: 'company', airtable: PORTAL_ACCESS.company, type: 'text' },
+  // company field deleted from Airtable (replaced by Contact → Company linked record chain)
   { local: 'address', airtable: PORTAL_ACCESS.address, type: 'text' },
   { local: 'primary_contact', airtable: PORTAL_ACCESS.primaryContact, type: 'text' },
   { local: 'position_title', airtable: PORTAL_ACCESS.positionTitle, type: 'text' },

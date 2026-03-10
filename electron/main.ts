@@ -96,6 +96,15 @@ app.whenReady().then(async () => {
 
   createWindow()
 
+  // Re-create window when dock icon clicked and all windows are closed.
+  // Must be registered inside whenReady() — registering at module scope
+  // causes "Cannot create BrowserWindow before app is ready" on cold launch.
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow()
+    }
+  })
+
   // Auto-update (production only, private GitHub repo requires token)
   if (!isDev) {
     autoUpdater.autoDownload = true
@@ -207,12 +216,6 @@ app.whenReady().then(async () => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
-  }
-})
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
   }
 })
 
