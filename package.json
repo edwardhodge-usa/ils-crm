@@ -1,6 +1,6 @@
 {
   "name": "ils-crm",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "description": "ILS CRM Desktop App — full CRUD interface for Airtable CRM",
   "main": "dist-electron/main.js",
   "author": "Edward Hodge",
@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && electron-builder --dir",
-    "package": "tsc && vite build && electron-builder --mac",
+    "package": "tsc && vite build && electron-builder --mac --config.directories.output=/tmp/ils-crm-release",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -59,17 +59,18 @@
         {
           "target": "dmg",
           "arch": [
-            "arm64"
+            "arm64",
+            "x64"
           ]
         },
         {
           "target": "zip",
           "arch": [
-            "arm64"
+            "arm64",
+            "x64"
           ]
         }
       ],
-      "identity": "-",
       "hardenedRuntime": false,
       "gatekeeperAssess": false
     },

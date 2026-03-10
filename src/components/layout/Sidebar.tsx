@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { NAV_SECTIONS, SETTINGS_ROUTE } from '../../config/routes'
 
@@ -125,6 +126,13 @@ function NavButton({
 export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [version, setVersion] = useState('')
+
+  useEffect(() => {
+    window.electronAPI.app.getVersion().then(res => {
+      if (res.success) setVersion(res.data)
+    })
+  }, [])
 
   function isItemActive(path: string) {
     if (path === '/') return location.pathname === '/'
@@ -182,6 +190,21 @@ export default function Sidebar() {
           onClick={() => navigate(SETTINGS_ROUTE.path)}
         />
       </div>
+
+      {/* Version number */}
+      {version && (
+        <div
+          className="flex-shrink-0 select-none"
+          style={{
+            padding: '4px 20px 10px',
+            fontSize: 11,
+            color: 'var(--text-tertiary)',
+            cursor: 'default',
+          }}
+        >
+          v{version}
+        </div>
+      )}
     </div>
   )
 }

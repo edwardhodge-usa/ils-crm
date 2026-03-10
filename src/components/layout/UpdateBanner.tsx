@@ -1,75 +1,70 @@
 import { useState, useEffect } from 'react'
 
 interface UpdateStatus {
-  status: string
+  status: 'available' | 'downloading' | 'ready' | 'error'
   version?: string
   percent?: number
   message?: string
 }
 
 export default function UpdateBanner() {
-  const [updateReady, setUpdateReady] = useState(false)
-  const [dismissed, setDismissed] = useState(false)
+  const [update, setUpdate] = useState<UpdateStatus | null>(null)
 
   useEffect(() => {
-    window.electronAPI.updater.onStatus((data: UpdateStatus) => {
-      if (data.status === 'ready') {
-        setUpdateReady(true)
-      }
-    })
-
-    return () => {
-      window.electronAPI.updater.removeStatusListener()
-    }
+    window.electronAPI.updater.onStatus((data) => setUpdate(data as UpdateStatus))
+    return () => window.electronAPI.updater.removeStatusListener()
   }, [])
 
-  if (!updateReady || dismissed) return null
+  // Auto-dismiss errors after 5s
+  useEffect(() => {
+    if (update?.status === 'error') {
+      const t = setTimeout(() => setUpdate(null), 5000)
+      return () => clearTimeout(t)
+    }
+  }, [update])
+
+  if (!update) return null
+
+  const messages: Record<string, string> = {
+    available: `Update v${update.version} available — downloading...`,
+    downloading: `Downloading update... ${Math.round(update.percent || 0)}%`,
+    ready: `Update v${update.version} ready`,
+    error: 'Update check failed',
+  }
 
   return (
     <div style={{
-      position: 'relative',
       height: 32,
-      background: 'var(--color-accent)',
-      color: 'var(--text-on-accent)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 12,
-      fontSize: 13,
+      backgroundColor: update.status === 'error' ? 'var(--color-red)' : 'var(--color-accent)',
+      color: 'var(--text-on-accent)',
+      fontSize: 12,
       fontWeight: 500,
+      cursor: 'default',
+      userSelect: 'none',
+      flexShrink: 0,
     }}>
-      <span>A new version is available.</span>
-      <button
-        onClick={() => window.electronAPI.updater.install()}
-        style={{
-          padding: '2px 10px',
-          fontSize: 12,
-          fontWeight: 600,
-          color: 'var(--color-accent)',
-          background: 'var(--text-on-accent)',
-          border: 'none',
-          borderRadius: 4,
-          cursor: 'default',
-        }}
-      >
-        Restart Now
-      </button>
-      <button
-        onClick={() => setDismissed(true)}
-        aria-label="Dismiss"
-        style={{
-          position: 'absolute',
-          right: 12,
-          background: 'none',
-          border: 'none',
-          color: 'var(--text-on-accent)',
-          fontSize: 16,
-          cursor: 'default',
-          opacity: 0.7,
-        }}
-      >
-        ×
-      </button>
+      <span>{messages[update.status]}</span>
+      {update.status === 'ready' && (
+        <button
+          onClick={() => window.electronAPI.updater.install()}
+          style={{
+            background: 'rgba(255,255,255,0.2)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            borderRadius: 4,
+            color: 'var(--text-on-accent)',
+            fontSize: 11,
+            fontWeight: 600,
+            padding: '2px 10px',
+            cursor: 'default',
+          }}
+        >
+          Restart Now
+        </button>
+      )}
     </div>
   )
 }
