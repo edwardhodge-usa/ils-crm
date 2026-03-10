@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM project — Airtable schema management, API integrations, and eventually a full Electron desktop CRM app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Airtable API (backend/data), Anthropic Claude API (AI features)
-- **Status**: v1.1.1 — MVP with app licensing, auto-updates, multi-user deployment. On main.
+- **Status**: v3.2.4 — MVP with app licensing, auto-updates (verified), multi-user deployment (arm64 + x64). On main.
 - **Repo**: edwardhodge-usa/ils-crm
 - **Airtable Base**: ILS CRM (appYXbUdcmSwBoPFU)
 
@@ -112,6 +112,19 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-05** - Electron app shows stale UI despite correct source files → Clear Vite cache: `rm -rf node_modules/.vite dist-electron` then restart dev. Always verify with fresh build when UI doesn't match code
 **2026-03-05** - Stage color maps duplicated in 7 files (KanbanColumn, DealCard, PipelineWidget, StageProgress, StatusBadge, Company360, CompanyDetail) → When changing stage colors, grep for STAGE_COLORS/STAGE_BAR_COLORS/STAGE_BADGE_COLORS across entire src/. Consider centralizing to a single config
 **2026-03-03** - Grouped list section headers blend with list items when using --text-secondary → Use --text-primary color, 0.5px bottom border, 18px top padding for clear group separation. Count: same font size as label (11px), --text-secondary, fontWeight 500
+**2026-03-09** - Auto-updater for private GitHub repos: (1) `publish.private: true` in package.json is REQUIRED — without it, electron-updater hits `releases.atom` (404 for private repos) instead of `api.github.com`. (2) Set BOTH `process.env.GH_TOKEN` and `autoUpdater.requestHeaders = { Authorization: \`token ${TOKEN}\` }` before `checkForUpdatesAndNotify()`. (3) Token lives in gitignored `electron/updater-token.ts`, compiled into the binary
+**2026-03-09** - GitHub release asset naming: GitHub replaces spaces with dots in uploaded filenames. `productName: "ILS CRM"` generates `ILS CRM-*.dmg` but GitHub serves as `ILS.CRM-*.dmg`. Fix: rename all files from `ILS CRM` → `ILS-CRM` (dashes) AND run `sed 's/ILS CRM/ILS-CRM/g'` on `latest-mac.yml` before uploading
+**2026-03-09** - Gatekeeper bypass for unsigned apps: users must right-click → Open on first launch (shows "Open" button in dialog). Double-clicking shows hard block with no option. Only needed once per app install
+**2026-03-09** - Deployment folder: `01_IMAGINE LAB STUDIOS/08_RESOURCES/CRM App Deployment/`. Contains arm64 + x64 DMGs, install guide, API token instructions. Old versions go in `Archive/`
+
+## Deployment Process
+
+1. Bump version in `package.json`
+2. `npm run package` (builds to `/tmp/ils-crm-release/`)
+3. Rename files: `for f in ILS\ CRM-*; do mv "$f" "${f//ILS CRM/ILS-CRM}"; done`
+4. Fix yml: `sed -i '' 's/ILS CRM/ILS-CRM/g' latest-mac.yml`
+5. `gh release create v<version>` with all renamed assets + latest-mac.yml
+6. Copy DMGs to deployment folder (arm64 + x64), move old ones to Archive
 
 ## Key Commands
 
