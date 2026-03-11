@@ -36,7 +36,6 @@ export function createSchema(db: SqlJsDatabase): void {
       review_completion_date TEXT,
       qualification_status TEXT,
       lead_source TEXT,
-      client_type TEXT,
       industry TEXT,
       import_source TEXT,
       onboarding_status TEXT,

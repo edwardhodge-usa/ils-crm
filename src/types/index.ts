@@ -30,7 +30,6 @@ export interface Contact {
   review_completion_date: string | null
   qualification_status: string | null
   lead_source: string | null
-  client_type: string | null
   industry: string | null
   import_source: string | null
   onboarding_status: string | null

@@ -63,7 +63,6 @@ export const CONTACTS = {
   // Single Select
   qualificationStatus: 'fld5Ed1Gg51xRBIrm',
   leadSource: 'fldxxbhPmFaJ7xZeK',
-  clientType: 'fldF8X4HZbybc1Yy6',
   industry: 'fldHoIj9zCNB15avX',
   importSource: 'fldZG5LYBnFcEwhyw',
   onboardingStatus: 'fldbCsU8sEBNRm1kX',

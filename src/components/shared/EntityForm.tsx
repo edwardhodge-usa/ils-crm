@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react'
+import { useState, useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from 'react'
 import LinkedRecordPicker from './LinkedRecordPicker'
 import { parseIds } from '../../utils/linked-records'
 import { normalizeUrl } from '../../utils/normalize-url'
@@ -30,6 +30,7 @@ export interface FormFieldDef {
   entityName?: string
   labelField?: string
   secondaryField?: string
+  allowCreate?: boolean
 }
 
 interface EntityFormProps {
@@ -172,6 +173,92 @@ const EntityForm = forwardRef<EntityFormHandle, EntityFormProps>(function Entity
 
 export default EntityForm
 
+function MultiSelectField({
+  label,
+  labelStyle,
+  options,
+  selected,
+  onChange,
+  allowCreate,
+}: {
+  label: string
+  labelStyle: React.CSSProperties
+  options: string[]
+  selected: string[]
+  onChange: (v: unknown) => void
+  allowCreate?: boolean
+}) {
+  const [newValue, setNewValue] = useState('')
+
+  const handleAddNew = useCallback(() => {
+    const trimmed = newValue.trim()
+    if (!trimmed) return
+    if (!selected.includes(trimmed)) {
+      onChange(JSON.stringify([...selected, trimmed]))
+    }
+    setNewValue('')
+  }, [newValue, selected, onChange])
+
+  return (
+    <div className="py-2">
+      <label style={{ ...labelStyle, display: 'block', width: 'auto', marginBottom: 4 }}>{label}</label>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map(opt => {
+          const isSelected = selected.includes(opt)
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => {
+                const next = isSelected
+                  ? selected.filter(s => s !== opt)
+                  : [...selected, opt]
+                onChange(JSON.stringify(next))
+              }}
+              className={`px-2 py-1 rounded-md transition-colors ${
+                isSelected
+                  ? 'bg-[var(--color-accent-translucent)] text-[var(--color-accent)] border border-[var(--color-accent)]/40'
+                  : 'bg-[var(--separator-opaque)] text-[var(--text-secondary)] border border-transparent hover:bg-[var(--bg-hover)]'
+              }`}
+            >
+              {opt}
+            </button>
+          )
+        })}
+      </div>
+      {allowCreate && (
+        <div style={{ marginTop: 6 }}>
+          <input
+            type="text"
+            value={newValue}
+            onChange={e => setNewValue(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleAddNew()
+              }
+            }}
+            placeholder="Add new..."
+            style={{
+              fontSize: 12,
+              padding: '6px 8px',
+              borderRadius: 6,
+              border: 'none',
+              borderBottom: '1px solid var(--separator)',
+              background: 'var(--bg-input)',
+              color: 'var(--text-primary)',
+              outline: 'none',
+              cursor: 'default',
+              fontFamily: 'inherit',
+              width: 140,
+            }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function FieldRenderer({
   field,
   value,
@@ -289,34 +376,21 @@ export function FieldRenderer({
       return Array.isArray(value) ? value : []
     })()
 
+    // Merge known options with any custom values already selected (from allowCreate)
+    const allOptions = [...(field.options || [])]
+    for (const s of selected) {
+      if (!allOptions.includes(s)) allOptions.push(s)
+    }
+
     return (
-      <div className="py-2">
-        <label style={{ ...labelStyle, display: 'block', width: 'auto', marginBottom: 4 }}>{field.label}</label>
-        <div className="flex flex-wrap gap-1.5">
-          {field.options?.map(opt => {
-            const isSelected = selected.includes(opt)
-            return (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => {
-                  const next = isSelected
-                    ? selected.filter(s => s !== opt)
-                    : [...selected, opt]
-                  onChange(JSON.stringify(next))
-                }}
-                className={`px-2 py-1 rounded-md transition-colors ${
-                  isSelected
-                    ? 'bg-[var(--color-accent-translucent)] text-[var(--color-accent)] border border-[var(--color-accent)]/40'
-                    : 'bg-[var(--separator-opaque)] text-[var(--text-secondary)] border border-transparent hover:bg-[var(--bg-hover)]'
-                }`}
-              >
-                {opt}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      <MultiSelectField
+        label={field.label}
+        labelStyle={labelStyle}
+        options={allOptions}
+        selected={selected}
+        onChange={onChange}
+        allowCreate={field.allowCreate}
+      />
     )
   }
 

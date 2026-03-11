@@ -21,6 +21,7 @@ export interface EditableField {
   type: EditableFieldType
   options?: string[]
   isLink?: boolean
+  allowCreate?: boolean
 }
 
 interface EditableFormRowProps {
@@ -107,6 +108,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
   const [multiSelectValues, setMultiSelectValues] = useState<string[]>([])
   const [showMultiPopover, setShowMultiPopover] = useState(false)
   const [showStatusPopover, setShowStatusPopover] = useState(false)
+  const [newOptionValue, setNewOptionValue] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(false)
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null)
@@ -195,6 +197,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
 
     if (field.type === 'multiSelect') {
       setMultiSelectValues(parseMultiSelectValue(value))
+      setNewOptionValue('')
       setShowMultiPopover(true)
       return
     }
@@ -493,37 +496,76 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
             position: 'absolute', right: 14, top: '100%', zIndex: 200,
             background: 'var(--bg-card)', border: '1px solid var(--color-accent)',
             borderRadius: 8, padding: 8,
-            maxHeight: 200, overflowY: 'auto',
+            maxHeight: 260, overflowY: 'auto',
             minWidth: 180,
             boxShadow: 'var(--shadow-menu)',
           }}
         >
-          {(field.options || []).map(opt => {
-            const checked = multiSelectValues.includes(opt)
-            return (
-              <label
-                key={opt}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '6px 8px', borderRadius: 4,
-                  cursor: 'default', fontSize: 13,
-                  color: 'var(--text-primary)',
-                  background: 'transparent',
-                  transition: 'background 150ms',
+          {/* Merge known options with any custom values already selected */}
+          {(() => {
+            const allOpts = [...(field.options || [])]
+            for (const v of multiSelectValues) {
+              if (!allOpts.includes(v)) allOpts.push(v)
+            }
+            return allOpts.map(opt => {
+              const checked = multiSelectValues.includes(opt)
+              return (
+                <label
+                  key={opt}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '6px 8px', borderRadius: 4,
+                    cursor: 'default', fontSize: 13,
+                    color: 'var(--text-primary)',
+                    background: 'transparent',
+                    transition: 'background 150ms',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => handleMultiToggle(opt)}
+                    style={{ cursor: 'default' }}
+                  />
+                  {opt}
+                </label>
+              )
+            })
+          })()}
+          {field.allowCreate && (
+            <div style={{ borderTop: '1px solid var(--separator)', marginTop: 4, paddingTop: 4 }}>
+              <input
+                type="text"
+                value={newOptionValue}
+                onChange={e => setNewOptionValue(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    const trimmed = newOptionValue.trim()
+                    if (trimmed && !multiSelectValues.includes(trimmed)) {
+                      setMultiSelectValues(prev => [...prev, trimmed])
+                    }
+                    setNewOptionValue('')
+                  }
                 }}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => handleMultiToggle(opt)}
-                  style={{ cursor: 'default' }}
-                />
-                {opt}
-              </label>
-            )
-          })}
+                placeholder="Add new..."
+                style={{
+                  width: '100%',
+                  fontSize: 12,
+                  padding: '6px 8px',
+                  borderRadius: 4,
+                  border: 'none',
+                  background: 'var(--bg-input)',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                  cursor: 'default',
+                  fontFamily: 'inherit',
+                }}
+              />
+            </div>
+          )}
           <button
             onClick={handleMultiDone}
             style={{

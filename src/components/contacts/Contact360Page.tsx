@@ -32,13 +32,15 @@ const CONTACT_CRM_FIELDS: EditableField[] = [
     options: ['New', 'Contacted', 'Qualified', 'Unqualified', 'Nurturing'] },
   { key: 'tags', label: 'Tags', type: 'multiSelect',
     options: ['VIP', 'Investor', 'Speaker', 'Press', 'Influencer', 'Board Member', 'Advisor'] },
+  { key: 'event_tags', label: 'Event Tags', type: 'multiSelect',
+    options: ['IAAPA 2025', 'SATE 2025', 'LDI 2025', 'Soho Holloway', 'LA LGBT', 'EEE 2026'], allowCreate: true },
   { key: 'lead_score', label: 'Lead Score', type: 'number' },
   { key: 'last_contact_date', label: 'Last Contact', type: 'date' },
 ]
 
 const CONTACT_PARTNER_FIELDS: EditableField[] = [
   { key: 'partner_type', label: 'Partner Type', type: 'singleSelect',
-    options: ['Fabricator', 'AV/Lighting', 'Scenic/Set Builder', 'Architect', 'Interior Designer', 'Graphic Designer', 'F&B Consultant', 'Tech/Interactive', 'Operations Consultant', 'Production Company', 'Freelancer/Individual', 'Other', 'Client'] },
+    options: ['Fabricator', 'AV/Lighting', 'Scenic/Set Builder', 'Architect', 'Interior Designer', 'Graphic Designer', 'F&B Consultant', 'Tech/Interactive', 'Operations Consultant', 'Production Company', 'Freelancer/Individual', 'Other'] },
   { key: 'partner_status', label: 'Partner Status', type: 'singleSelect',
     options: ['Active - Preferred', 'Active', 'Inactive', 'Do Not Use'] },
   { key: 'quality_rating', label: 'Quality', type: 'singleSelect',
