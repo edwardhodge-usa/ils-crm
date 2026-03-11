@@ -34,14 +34,9 @@ export const NAV_SECTIONS: NavSection[] = [
     label: 'Activity',
     items: [
       { id: 'portal-cms', label: 'Portal CMS', path: '/portal-cms', icon: 'doc' },
+      { id: 'portal', label: 'Portal Access', path: '/portal', icon: 'lock' },
       { id: 'interactions', label: 'Interactions', path: '/interactions', icon: 'bubble', newPath: '/interactions/new' },
       { id: 'imported', label: 'Imported Contacts', path: '/imported-contacts', icon: 'inbox' },
-    ],
-  },
-  {
-    label: null,
-    items: [
-      { id: 'portal', label: 'Portal Access', path: '/portal', icon: 'lock' },
     ],
   },
 ]

@@ -732,6 +732,14 @@ export default function PortalCmsPage() {
     [clientPages, selectedId]
   )
 
+  const handleNew = useCallback(async () => {
+    const res = await window.electronAPI.clientPages.create({})
+    if (res.success && res.data) {
+      reload()
+      setSelectedId(res.data)
+    }
+  }, [reload])
+
   const handleFieldSave = useCallback(
     async (key: string, value: unknown) => {
       if (!selectedId) return
@@ -783,6 +791,53 @@ export default function PortalCmsPage() {
           overflow: 'hidden',
         }}
       >
+        {/* Header */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '12px 14px 10px', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
+              Client Pages
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {filtered.length}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              onClick={() => window.electronAPI.shell.openExternal('https://framer.com/projects/ImagineLab-Front-Page--qq2NfIkO8OdMKvVMZXJR-8RBFW?node=uzKrlTPBU')}
+              style={{
+                padding: '3px 8px', borderRadius: 6,
+                display: 'flex', alignItems: 'center', gap: 4,
+                background: 'transparent', border: '1px solid var(--separator)',
+                fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)',
+                cursor: 'default',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              title="Open Framer to sync Airtable changes and publish"
+            >
+              Sync & Publish
+            </button>
+            <button
+              onClick={handleNew}
+              style={{
+                width: 24, height: 24, borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'transparent', border: 'none',
+                fontSize: 18, fontWeight: 300, color: 'var(--color-accent)',
+                cursor: 'default',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              title="New Page"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
         {/* Search bar */}
         <div
           style={{
