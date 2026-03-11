@@ -154,7 +154,6 @@ export default function ContactListPage() {
           (String(raw?.mobile_phone ?? '')).toLowerCase().includes(q) ||
           (String(raw?.office_phone ?? '')).toLowerCase().includes(q) ||
           (String(raw?.notes ?? '')).toLowerCase().includes(q) ||
-          (String(raw?.tags ?? '')).toLowerCase().includes(q) ||
           (String(raw?.industry ?? '')).toLowerCase().includes(q) ||
           (String(raw?.linkedin_url ?? '')).toLowerCase().includes(q) ||
           (String(raw?.city ?? '')).toLowerCase().includes(q) ||

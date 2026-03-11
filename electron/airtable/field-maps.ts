@@ -72,9 +72,6 @@ export const CONTACTS = {
   partnerStatus: 'fldIEgv4HtZTr57AX',
   partnerType: 'fldvehyP9Y3Ra2wUM',
 
-  // Multiple Select
-  tags: 'fldO7kfLDA9jZswPB',
-
   // Checkbox
   syncToContacts: 'fldxbLMAKgqeawWkw',
 
@@ -283,9 +280,6 @@ export const IMPORTED_CONTACTS = {
   categorization: 'fldrYKTLd2HnL7GSe',
   onboardingStatus: 'fldncdRP37p6BB9UX',
   importSource: 'fld1fDiNE3vhoyi3P',
-
-  // Multiple Select
-  tags: 'fldn2bUb5Khf7iumL',
 
   // Checkbox
   syncToContacts: 'fldjm5mEIT25nlWjT',

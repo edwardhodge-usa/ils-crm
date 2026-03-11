@@ -9,8 +9,8 @@ export const CONTACT_CREATE_FIELDS: FormFieldDef[] = [
   { key: 'first_name', label: 'First Name', type: 'text', section: 'Basic Info' },
   { key: 'last_name', label: 'Last Name', type: 'text', section: 'Basic Info' },
   { key: 'job_title', label: 'Job Title', type: 'text', section: 'Basic Info' },
-  { key: 'categorization', label: 'Categorization', type: 'singleSelect', section: 'Basic Info',
-    options: ['Lead', 'Customer', 'Partner', 'Other', 'Unknown', 'Vendor', 'Talent'] },
+  { key: 'categorization', label: 'Categorization', type: 'multiSelect', section: 'Basic Info',
+    options: ['Lead', 'Customer', 'Partner', 'Vendor', 'Talent', 'Other', 'Unknown', 'VIP', 'Investor', 'Speaker', 'Press', 'Influencer', 'Board Member', 'Advisor'] },
 
   // Contact Details
   { key: 'email', label: 'Email', type: 'email', section: 'Contact Details' },

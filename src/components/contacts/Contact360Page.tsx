@@ -22,16 +22,14 @@ const CONTACT_INFO_FIELDS: EditableField[] = [
 ]
 
 const CONTACT_CRM_FIELDS: EditableField[] = [
-  { key: 'categorization', label: 'Categorization', type: 'singleSelect',
-    options: ['Lead', 'Customer', 'Partner', 'Other', 'Unknown', 'Vendor', 'Talent'] },
+  { key: 'categorization', label: 'Categorization', type: 'multiSelect',
+    options: ['Lead', 'Customer', 'Partner', 'Vendor', 'Talent', 'Other', 'Unknown', 'VIP', 'Investor', 'Speaker', 'Press', 'Influencer', 'Board Member', 'Advisor'] },
   { key: 'industry', label: 'Industry', type: 'singleSelect',
     options: ['Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing', 'Real Estate', 'Consulting', 'Other', 'Hospitality', 'Logistics', 'Fitness', 'Legal', 'Media', 'Design', 'Venture Capital', 'Retail', 'Entertainment'] },
   { key: 'lead_source', label: 'Lead Source', type: 'singleSelect',
     options: ['Referral', 'Website', 'Inbound', 'Outbound', 'Event', 'Social Media', 'Other', 'LinkedIn', 'Cold Call'] },
   { key: 'qualification_status', label: 'Qualification', type: 'singleSelect',
     options: ['New', 'Contacted', 'Qualified', 'Unqualified', 'Nurturing'] },
-  { key: 'tags', label: 'Tags', type: 'multiSelect',
-    options: ['VIP', 'Investor', 'Speaker', 'Press', 'Influencer', 'Board Member', 'Advisor'] },
   { key: 'event_tags', label: 'Event Tags', type: 'multiSelect',
     options: ['IAAPA 2025', 'SATE 2025', 'LDI 2025', 'Soho Holloway', 'LA LGBT', 'EEE 2026'], allowCreate: true },
   { key: 'lead_score', label: 'Lead Score', type: 'number' },

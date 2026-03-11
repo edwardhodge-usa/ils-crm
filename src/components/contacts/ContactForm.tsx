@@ -8,8 +8,8 @@ const FIELDS: FormFieldDef[] = [
   { key: 'first_name', label: 'First Name', type: 'text', section: 'Basic Info' },
   { key: 'last_name', label: 'Last Name', type: 'text', section: 'Basic Info' },
   { key: 'job_title', label: 'Job Title', type: 'text', section: 'Basic Info' },
-  { key: 'categorization', label: 'Categorization', type: 'singleSelect', section: 'Basic Info',
-    options: ['Lead', 'Customer', 'Partner', 'Other', 'Unknown', 'Vendor', 'Talent'] },
+  { key: 'categorization', label: 'Categorization', type: 'multiSelect', section: 'Basic Info',
+    options: ['Lead', 'Customer', 'Partner', 'Vendor', 'Talent', 'Other', 'Unknown', 'VIP', 'Investor', 'Speaker', 'Press', 'Influencer', 'Board Member', 'Advisor'] },
   { key: 'companies_ids', label: 'Company', type: 'linkedRecord', section: 'Basic Info',
     entityName: 'companies', labelField: 'company_name' },
 
@@ -36,8 +36,6 @@ const FIELDS: FormFieldDef[] = [
   { key: 'last_contact_date', label: 'Last Contact Date', type: 'date', section: 'CRM' },
   { key: 'event_tags', label: 'Event Tags', type: 'multiSelect', section: 'CRM',
     options: ['IAAPA 2025', 'SATE 2025', 'LDI 2025', 'Soho Holloway', 'LA LGBT', 'EEE 2026'], allowCreate: true },
-  { key: 'tags', label: 'Tags', type: 'multiSelect', section: 'CRM',
-    options: ['VIP', 'Investor', 'Speaker', 'Press', 'Influencer', 'Board Member', 'Advisor'] },
   { key: 'qualification_status', label: 'Qualification Status', type: 'singleSelect', section: 'CRM',
     options: ['New', 'Contacted', 'Qualified', 'Unqualified', 'Nurturing'] },
   { key: 'onboarding_status', label: 'Onboarding Status', type: 'singleSelect', section: 'CRM',
@@ -347,7 +345,7 @@ export default function ContactForm() {
                         </div>
                       ) : (
                         <input
-                          type={f.type === 'url' ? 'url' : 'text'}
+                          type="text"
                           value={(createValues[f.key] as string) || ''}
                           onChange={e => setCreateValues(p => ({ ...p, [f.key]: e.target.value || null }))}
                           placeholder={f.label}

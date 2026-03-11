@@ -71,17 +71,16 @@ export default function LinkedRecordPicker({
     return String(r.id || '')
   }
 
-  // Fetch all records on mount
-  const refreshRecords = useCallback(() => {
-    entityApi.getAll().then(res => {
-      if (!res.success || !res.data) return
-      const records = (res.data as Array<Record<string, unknown>>).map(r => ({
-        id: String(r.id || ''),
-        label: buildLabel(r),
-        secondary: secondaryField && r[secondaryField] ? String(r[secondaryField]) : undefined,
-      })).filter(r => r.id)
-      setAllRecords(records)
-    })
+  // Fetch all records on mount and when picker opens
+  const refreshRecords = useCallback(async () => {
+    const res = await entityApi.getAll()
+    if (!res.success || !res.data) return
+    const records = (res.data as Array<Record<string, unknown>>).map(r => ({
+      id: String(r.id || ''),
+      label: buildLabel(r),
+      secondary: secondaryField && r[secondaryField] ? String(r[secondaryField]) : undefined,
+    })).filter(r => r.id)
+    setAllRecords(records)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityApi, labelField, secondaryField])
 
@@ -117,6 +116,7 @@ export default function LinkedRecordPicker({
 
   function handleOpen() {
     updatePosition()
+    refreshRecords()
     setOpen(true)
     setTimeout(() => inputRef.current?.focus(), 0)
   }

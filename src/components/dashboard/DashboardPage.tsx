@@ -456,20 +456,27 @@ export default function DashboardPage() {
                         </div>
                       )}
                     </div>
-                    {Boolean(contact.categorization) && (
-                      <span
-                        style={{
-                          fontSize: 11,
-                          padding: '2px 6px',
-                          borderRadius: 4,
-                          background: 'var(--bg-hover)',
-                          color: 'var(--text-secondary)',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {contact.categorization}
-                      </span>
-                    )}
+                    {Boolean(contact.categorization) && (() => {
+                      let display = contact.categorization || ''
+                      try {
+                        const parsed = JSON.parse(display)
+                        if (Array.isArray(parsed)) display = parsed.join(', ')
+                      } catch { /* use as-is */ }
+                      return display ? (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            background: 'var(--bg-hover)',
+                            color: 'var(--text-secondary)',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {display}
+                        </span>
+                      ) : null
+                    })()}
                     <span
                       style={{
                         fontSize: 11,

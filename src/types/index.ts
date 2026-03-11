@@ -38,7 +38,6 @@ export interface Contact {
   reliability_rating: string | null
   partner_status: string | null
   partner_type: string | null
-  tags: string | null // JSON array of strings
   sync_to_contacts: boolean
   specialties_ids: string | null // JSON array of record IDs
   proposals_ids: string | null
@@ -215,7 +214,6 @@ export interface ImportedContact {
   categorization: string | null
   onboarding_status: string | null
   import_source: string | null
-  tags: string | null // JSON array
   sync_to_contacts: boolean
   specialties_ids: string | null
   related_crm_contact_ids: string | null

@@ -3,14 +3,20 @@ import { Sheet } from '@/components/shared/Sheet'
 import { FormField, inputClass } from './FormField'
 
 const CATEGORIZATION_OPTIONS = [
-  'Theater',
-  'Film',
-  'Live Events',
-  'Television',
-  'Music',
-  'Corporate',
-  'Sports',
+  'Lead',
+  'Customer',
+  'Partner',
+  'Vendor',
+  'Talent',
   'Other',
+  'Unknown',
+  'VIP',
+  'Investor',
+  'Speaker',
+  'Press',
+  'Influencer',
+  'Board Member',
+  'Advisor',
 ]
 
 interface NewContactFormData {
@@ -18,7 +24,7 @@ interface NewContactFormData {
   lastName: string
   company: string
   title: string
-  categorization: string
+  categorization: string[]
   email: string
   mobile: string
   linkedin: string
@@ -39,7 +45,7 @@ const defaultForm: NewContactFormData = {
   lastName: '',
   company: '',
   title: '',
-  categorization: '',
+  categorization: [],
   email: '',
   mobile: '',
   linkedin: '',
@@ -132,17 +138,40 @@ export function NewContactSheet({ isOpen, onClose, onSave }: NewContactSheetProp
             />
           </FormField>
           <FormField label="Categorization" htmlFor="categorization">
-            <select
-              id="categorization"
+            <div
               className={inputClass}
-              value={form.categorization}
-              onChange={(e) => set('categorization', e.target.value)}
+              style={{
+                display: 'flex', flexWrap: 'wrap', gap: 4, padding: '4px 8px',
+                minHeight: 32, alignItems: 'center', cursor: 'default',
+              }}
             >
-              <option value="">Select…</option>
-              {CATEGORIZATION_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
+              {CATEGORIZATION_OPTIONS.map((opt) => {
+                const selected = form.categorization.includes(opt)
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => {
+                      setForm((prev) => ({
+                        ...prev,
+                        categorization: selected
+                          ? prev.categorization.filter((v) => v !== opt)
+                          : [...prev.categorization, opt],
+                      }))
+                    }}
+                    style={{
+                      fontSize: 11, fontWeight: 500, padding: '2px 8px',
+                      borderRadius: 4, border: 'none', cursor: 'default',
+                      background: selected ? 'var(--color-accent)' : 'var(--bg-hover)',
+                      color: selected ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+                      transition: 'background 150ms, color 150ms',
+                    }}
+                  >
+                    {opt}
+                  </button>
+                )
+              })}
+            </div>
           </FormField>
         </div>
 

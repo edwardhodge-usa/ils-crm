@@ -512,7 +512,7 @@ export function FieldRenderer({
   const inputType =
     field.type === 'email' ? 'email' :
     field.type === 'date' ? 'date' :
-    field.type === 'url' ? 'url' :
+    field.type === 'url' ? 'text' :
     field.type === 'phone' ? 'tel' :
     'text'
 

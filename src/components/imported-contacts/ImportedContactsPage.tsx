@@ -383,7 +383,6 @@ export default function ImportedContactsPage() {
         String(c.mobile_phone ?? '').toLowerCase().includes(q) ||
         String(c.city ?? '').toLowerCase().includes(q) ||
         String(c.state ?? '').toLowerCase().includes(q) ||
-        String(c.tags ?? '').toLowerCase().includes(q) ||
         String(c.note ?? '').toLowerCase().includes(q) ||
         String(c.categorization ?? '').toLowerCase().includes(q) ||
         String(c.import_source ?? '').toLowerCase().includes(q) ||

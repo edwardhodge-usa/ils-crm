@@ -111,8 +111,10 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
   const [newOptionValue, setNewOptionValue] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(false)
+  const [popoverPos, setPopoverPos] = useState<{ top: number; right: number } | null>(null)
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
+  const rowRef = useRef<HTMLDivElement>(null)
   const textareaDisplayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -145,6 +147,25 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
     }
     document.addEventListener('mousedown', handleOutsideClick)
     return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [showMultiPopover, showStatusPopover])
+
+  // Compute fixed position for popovers when they open
+  useEffect(() => {
+    if (!showMultiPopover && !showStatusPopover) {
+      setPopoverPos(null)
+      return
+    }
+    if (!rowRef.current) return
+    const rect = rowRef.current.getBoundingClientRect()
+    const popoverMaxHeight = showMultiPopover ? 320 : 240
+    const rightPos = window.innerWidth - rect.right
+    if (rect.bottom + popoverMaxHeight > window.innerHeight) {
+      // Position above the row
+      setPopoverPos({ top: rect.top - popoverMaxHeight, right: rightPos })
+    } else {
+      // Position below the row
+      setPopoverPos({ top: rect.bottom, right: rightPos })
+    }
   }, [showMultiPopover, showStatusPopover])
 
   const doSave = useCallback(async (newValue: unknown) => {
@@ -423,6 +444,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
 
   return (
     <div
+      ref={rowRef}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '10px 14px', minHeight: 36,
@@ -430,7 +452,6 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
         background: editing ? 'var(--bg-hover)' : 'transparent',
         transition: 'background 150ms',
         cursor: 'default',
-        position: 'relative',
       }}
     >
       {/* Label */}
@@ -489,14 +510,17 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
       )}
 
       {/* MultiSelect popover */}
-      {showMultiPopover && (
+      {showMultiPopover && popoverPos && (
         <div
           ref={popoverRef}
           style={{
-            position: 'absolute', right: 14, top: '100%', zIndex: 200,
+            position: 'fixed',
+            top: popoverPos.top,
+            right: popoverPos.right,
+            zIndex: 9999,
             background: 'var(--bg-card)', border: '1px solid var(--color-accent)',
             borderRadius: 8, padding: 8,
-            maxHeight: 260, overflowY: 'auto',
+            maxHeight: 320, overflowY: 'auto',
             minWidth: 180,
             boxShadow: 'var(--shadow-menu)',
           }}
@@ -582,11 +606,14 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
       )}
 
       {/* StatusSelect popover — pill-style options */}
-      {showStatusPopover && (
+      {showStatusPopover && popoverPos && (
         <div
           ref={popoverRef}
           style={{
-            position: 'absolute', right: 14, top: '100%', zIndex: 200,
+            position: 'fixed',
+            top: popoverPos.top,
+            right: popoverPos.right,
+            zIndex: 9999,
             background: 'var(--bg-card)', border: '1px solid var(--separator)',
             borderRadius: 8, padding: 6,
             maxHeight: 240, overflowY: 'auto',
