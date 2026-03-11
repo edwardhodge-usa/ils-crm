@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useDraggable } from '@dnd-kit/core'
 import type { DealItem } from '@/types'
 import { CompanyLogo } from '../shared/CompanyLogo'
 
@@ -15,22 +16,50 @@ const STAGE_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
 }
 
 interface DealCardProps {
+  id: string
   deal: DealItem
   isSelected: boolean
   onClick: () => void
 }
 
-export function DealCard({ deal, isSelected, onClick }: DealCardProps) {
+export function DealCard({ id, deal, isSelected, onClick }: DealCardProps) {
   const { dealName, companyName, value, probability, stage } = deal
   const [hovered, setHovered] = useState(false)
   const badgeColors = STAGE_BADGE_COLORS[stage] ?? { bg: 'var(--bg-tertiary)', text: 'var(--text-secondary)' }
 
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
+  const didDrag = useRef(false)
+
+  // Track whether a drag actually occurred
+  useEffect(() => {
+    if (isDragging) {
+      didDrag.current = true
+    }
+  }, [isDragging])
+
+  function handleClick() {
+    // If a drag just completed, ignore this click
+    if (didDrag.current) {
+      didDrag.current = false
+      return
+    }
+    onClick()
+  }
+
+  const dragStyle = transform
+    ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
+    : undefined
+
   return (
     <div
-      onClick={onClick}
+      ref={setNodeRef}
+      onClick={handleClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      {...listeners}
+      {...attributes}
       style={{
+        ...dragStyle,
         background: isSelected
           ? 'var(--bg-hover)'
           : hovered
@@ -41,6 +70,7 @@ export function DealCard({ deal, isSelected, onClick }: DealCardProps) {
         cursor: 'default',
         transition: 'background 150ms',
         border: isSelected ? '1px solid var(--color-accent)' : '1px solid transparent',
+        opacity: isDragging ? 0.3 : 1,
       }}
     >
       {/* Company name + logo */}

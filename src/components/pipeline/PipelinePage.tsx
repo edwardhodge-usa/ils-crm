@@ -102,6 +102,11 @@ export default function PipelinePage() {
     return mapped
   }, [rawData, companyNames, companyLogos])
 
+  async function handleMove(dealId: string, toStage: string) {
+    await window.electronAPI.opportunities.update(dealId, { sales_stage: toStage })
+    reload()
+  }
+
   if (loading) return <LoadingSpinner />
 
   if (error) {
@@ -147,6 +152,7 @@ export default function PipelinePage() {
           deals={deals}
           selectedDealId={selectedDealId}
           onSelectDeal={(id) => setSelectedDealId(prev => prev === id ? null : id)}
+          onMove={handleMove}
         />
       </div>
 

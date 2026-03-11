@@ -1,3 +1,4 @@
+import { useDroppable } from '@dnd-kit/core'
 import type { DealItem } from '@/types'
 import { DealCard } from './DealCard'
 
@@ -19,6 +20,7 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: KanbanColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({ id: stage })
   const totalValue = deals.reduce((sum, d) => sum + (d.value ?? 0), 0)
   const stageColor = STAGE_COLORS[stage] ?? 'var(--text-secondary)'
 
@@ -77,18 +79,21 @@ export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: Kan
 
       {/* Cards container */}
       <div
+        ref={setNodeRef}
         className="flex flex-col flex-1 min-h-0"
         style={{
-          background: 'var(--bg-tertiary)',
+          background: isOver ? 'var(--bg-hover)' : 'var(--bg-tertiary)',
           borderRadius: 12,
           padding: 8,
           gap: 8,
           overflowY: 'auto',
+          transition: 'background 150ms',
         }}
       >
         {deals.map(deal => (
           <DealCard
             key={deal.id}
+            id={deal.id}
             deal={deal}
             isSelected={selectedDealId === deal.id}
             onClick={() => onSelectDeal(deal.id)}
