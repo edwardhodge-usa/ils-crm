@@ -119,6 +119,8 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-09** - GitHub release asset naming: GitHub replaces spaces with dots in uploaded filenames. `productName: "ILS CRM"` generates `ILS CRM-*.dmg` but GitHub serves as `ILS.CRM-*.dmg`. Fix: rename all files from `ILS CRM` → `ILS-CRM` (dashes) AND run `sed 's/ILS CRM/ILS-CRM/g'` on `latest-mac.yml` before uploading
 **2026-03-09** - Gatekeeper bypass for unsigned apps: users must right-click → Open on first launch (shows "Open" button in dialog). Double-clicking shows hard block with no option. Only needed once per app install
 **2026-03-09** - Deployment folder: `01_IMAGINE LAB STUDIOS/08_RESOURCES/CRM App Deployment/`. Contains arm64 + x64 DMGs, install guide, API token instructions. Old versions go in `Archive/`
+**2026-03-10** - HTML `<input type="url">` triggers native browser validation requiring protocol prefix → Use `type="text"` for URL fields and let normalizeUrl() handle protocol on save
+**2026-03-10** - normalizeUrl() was prepending https:// to email addresses → Skip values containing `@` before adding protocol prefix
 
 ## Deployment Process
 
