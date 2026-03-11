@@ -125,6 +125,7 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-10** - Electron `console.log` throws EPIPE when app launched without terminal (e.g. from Dock) → Add `process.stdout?.on('error', () => {})` and same for stderr early in main.ts, before any console.log calls
 **2026-03-11** - Adding a new Airtable table requires updating VALID_TABLES whitelist in `electron/database/queries/entities.ts` (SQL injection prevention). Without it, all CRUD queries for the new table throw "Invalid table name". Checklist: field-maps → converters → schema → preload → register.ts → sync-engine → **entities.ts VALID_TABLES**
 **2026-03-11** - v3.3.2 released with stale Vite frontend (dist/ compiled at 23:07 for v3.3.1, Portal CMS committed at 00:09 for v3.3.2) — `npm run package` was skipped during high-context session (5 releases in 6h, context rot) → ALWAYS: (1) `rm -rf dist dist-electron node_modules/.vite` before release builds, (2) `grep` the built bundle for recently added features before uploading, (3) max 2 releases per session — context rot causes skipped steps. v3.3.3 is the corrected release
+**2026-03-11** - "dragEvent is not defined" console spam in Pipeline → React 18 dev-mode artifact in react-dom.development.js, absent in production builds. Not a code bug
 
 ## Deployment Process
 
