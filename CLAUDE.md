@@ -123,6 +123,7 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-10** - normalizeUrl() was prepending https:// to email addresses → Skip values containing `@` before adding protocol prefix
 **2026-03-10** - Collaborator converter changed from storing plain name to full JSON (`{id, email, name}`) for write-back support, but UI pages weren't updated → Always update display code when changing storage format. Shared utility: `src/utils/collaborator.ts` (parseCollaboratorName, buildCollaboratorMap, resolveCollaboratorSave)
 **2026-03-10** - Electron `console.log` throws EPIPE when app launched without terminal (e.g. from Dock) → Add `process.stdout?.on('error', () => {})` and same for stderr early in main.ts, before any console.log calls
+**2026-03-11** - Adding a new Airtable table requires updating VALID_TABLES whitelist in `electron/database/queries/entities.ts` (SQL injection prevention). Without it, all CRUD queries for the new table throw "Invalid table name". Checklist: field-maps → converters → schema → preload → register.ts → sync-engine → **entities.ts VALID_TABLES**
 
 ## Deployment Process
 
