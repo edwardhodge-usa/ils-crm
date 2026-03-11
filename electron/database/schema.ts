@@ -395,6 +395,28 @@ export function createSchema(db: SqlJsDatabase): void {
     )
   `)
 
+  // ─── Client Pages ────────────────────────────────────
+  db.run(`
+    CREATE TABLE IF NOT EXISTS client_pages (
+      id TEXT PRIMARY KEY,
+      page_address TEXT,
+      client_name TEXT,
+      page_title TEXT,
+      page_subtitle TEXT,
+      deck_url TEXT,
+      prepared_for TEXT,
+      head INTEGER DEFAULT 0,
+      thank_you TEXT,
+      v_prmagic INTEGER DEFAULT 0,
+      v_highlight INTEGER DEFAULT 0,
+      v_360 INTEGER DEFAULT 0,
+      v_full_l INTEGER DEFAULT 0,
+      _airtable_modified_at TEXT,
+      _local_modified_at TEXT,
+      _pending_push INTEGER DEFAULT 0
+    )
+  `)
+
   // ─── Sync Metadata ────────────────────────────────────
   db.run(`
     CREATE TABLE IF NOT EXISTS sync_status (
@@ -454,7 +476,7 @@ export function createSchema(db: SqlJsDatabase): void {
   const tableNames = [
     'contacts', 'companies', 'opportunities', 'tasks', 'proposals',
     'projects', 'interactions', 'imported_contacts', 'specialties',
-    'portal_access', 'portal_logs',
+    'portal_access', 'portal_logs', 'client_pages',
   ]
   for (const name of tableNames) {
     db.run('INSERT OR IGNORE INTO sync_status (table_name) VALUES (?)', [name])

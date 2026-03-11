@@ -115,6 +115,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
   registerEntityCrud('proposals', 'proposals')
   registerEntityCrud('projects', 'projects')
   registerEntityCrud('portalAccess', 'portal_access')
+  registerEntityCrud('clientPages', 'client_pages')
 
   // Interactions (full CRUD)
   registerEntityCrud('interactions', 'interactions')

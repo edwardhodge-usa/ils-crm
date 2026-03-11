@@ -56,6 +56,7 @@ interface ElectronAPI {
   }
   specialties: ReadOnlyEntityAPI
   portalAccess: EntityAPI
+  clientPages: EntityAPI
   portalLogs: ReadOnlyEntityAPI & {
     delete: (id: string) => Promise<{ success: boolean; error?: string }>
   }

@@ -5,7 +5,7 @@
 import {
   CONTACTS, OPPORTUNITIES, TASKS, PROPOSALS, PROJECTS,
   INTERACTIONS, IMPORTED_CONTACTS, COMPANIES, SPECIALTIES,
-  PORTAL_ACCESS, PORTAL_LOGS,
+  PORTAL_ACCESS, PORTAL_LOGS, CLIENT_PAGES,
 } from './field-maps'
 import type { AirtableRecord } from './client'
 
@@ -477,6 +477,23 @@ const PORTAL_LOG_MAPPINGS: FieldMapping[] = [
   { local: 'timestamp', airtable: PORTAL_LOGS.timestamp, type: 'text' },
 ]
 
+// ─── Client Pages ───────────────────────────────────────────
+
+const CLIENT_PAGES_MAPPINGS: FieldMapping[] = [
+  { local: 'page_address',  airtable: CLIENT_PAGES.pageAddress,  type: 'text' },
+  { local: 'client_name',   airtable: CLIENT_PAGES.clientName,   type: 'text' },
+  { local: 'page_title',    airtable: CLIENT_PAGES.pageTitle,    type: 'text' },
+  { local: 'page_subtitle', airtable: CLIENT_PAGES.pageSubtitle, type: 'text' },
+  { local: 'deck_url',      airtable: CLIENT_PAGES.deckUrl,      type: 'text' },
+  { local: 'prepared_for',  airtable: CLIENT_PAGES.preparedFor,  type: 'text' },
+  { local: 'head',          airtable: CLIENT_PAGES.head,         type: 'checkbox' },
+  { local: 'thank_you',     airtable: CLIENT_PAGES.thankYou,     type: 'text' },
+  { local: 'v_prmagic',     airtable: CLIENT_PAGES.vPrMagic,     type: 'checkbox' },
+  { local: 'v_highlight',   airtable: CLIENT_PAGES.vHighLight,   type: 'checkbox' },
+  { local: 'v_360',         airtable: CLIENT_PAGES.v360,         type: 'checkbox' },
+  { local: 'v_full_l',      airtable: CLIENT_PAGES.vFullL,       type: 'checkbox' },
+]
+
 // ─── Exported converter map ──────────────────────────────────
 
 export const TABLE_CONVERTERS: Record<string, {
@@ -497,6 +514,7 @@ const allTables: Array<[string, FieldMapping[]]> = [
   ['specialties', SPECIALTY_MAPPINGS],
   ['portal_access', PORTAL_ACCESS_MAPPINGS],
   ['portal_logs', PORTAL_LOG_MAPPINGS],
+  ['client_pages', CLIENT_PAGES_MAPPINGS],
 ]
 
 for (const [name, mappings] of allTables) {

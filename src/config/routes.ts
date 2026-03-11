@@ -33,6 +33,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Activity',
     items: [
+      { id: 'portal-cms', label: 'Portal CMS', path: '/portal-cms', icon: 'doc' },
       { id: 'interactions', label: 'Interactions', path: '/interactions', icon: 'bubble', newPath: '/interactions/new' },
       { id: 'imported', label: 'Imported Contacts', path: '/imported-contacts', icon: 'inbox' },
     ],
@@ -68,6 +69,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   '/interactions': 'Interactions',
   '/imported-contacts': 'Imported Contacts',
   '/portal': 'Portal Access',
+  '/portal-cms': 'Portal CMS',
   '/portal-logs': 'Portal Logs',
   '/settings': 'Settings',
 }

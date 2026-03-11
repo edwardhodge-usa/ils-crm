@@ -9,7 +9,7 @@ import { resultToObjects } from '../utils'
 const VALID_TABLES = new Set([
   'contacts', 'companies', 'opportunities', 'tasks', 'proposals',
   'projects', 'interactions', 'imported_contacts', 'specialties',
-  'portal_access', 'portal_logs', 'settings', 'sync_status',
+  'portal_access', 'portal_logs', 'client_pages', 'settings', 'sync_status',
 ])
 
 const VALID_COLUMN = /^[a-z_][a-z0-9_]*$/

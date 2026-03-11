@@ -86,6 +86,7 @@ const TABLE_NAME_TO_ID: Record<string, string> = {
   specialties: TABLES.specialties,
   portal_access: TABLES.portalAccess,
   portal_logs: TABLES.portalLogs,
+  client_pages: TABLES.clientPages,
 }
 
 // Tables that are read-only (no push)
@@ -96,7 +97,7 @@ const READ_ONLY_TABLES = new Set(['specialties', 'portal_logs'])
 const SYNC_ORDER = [
   'contacts', 'companies', 'opportunities', 'tasks', 'proposals',
   'projects', 'interactions', 'imported_contacts', 'specialties',
-  'portal_access', 'portal_logs',
+  'portal_access', 'portal_logs', 'client_pages',
 ]
 
 // ─── Pull (Airtable → Local) ────────────────────────────────

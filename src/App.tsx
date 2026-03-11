@@ -26,6 +26,7 @@ import InteractionsPage from './components/interactions/InteractionsPage'
 import InteractionListPage from './components/interactions/InteractionListPage'
 import InteractionForm from './components/interactions/InteractionForm'
 import PortalAccessPage from './components/portal/PortalAccessPage'
+import PortalCmsPage from './components/portal/PortalCmsPage'
 import PortalLogsPage from './components/portal/PortalLogsPage'
 import CommandPalette from './components/layout/CommandPalette'
 import ErrorBoundary from './components/shared/ErrorBoundary'
@@ -210,6 +211,7 @@ export default function App() {
 
             {/* Portal */}
             <Route path="/portal" element={<PortalAccessPage />} />
+            <Route path="/portal-cms" element={<PortalCmsPage />} />
             <Route path="/portal-logs" element={<PortalLogsPage />} />
 
             <Route path="/settings" element={<SettingsPage />} />

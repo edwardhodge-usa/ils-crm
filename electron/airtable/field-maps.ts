@@ -15,6 +15,7 @@ export const TABLES = {
   specialties: 'tblysTixdxGQQntHO',
   portalAccess: 'tblN1jruT8VeucPKa',
   portalLogs: 'tblj70XPHI7wnUmxO',
+  clientPages: 'tblo5TQos1VUGfuaQ',
 } as const
 
 // ─── Contacts (57 fields) ────────────────────────────────────
@@ -398,6 +399,23 @@ export const PORTAL_LOGS = {
   timestamp: 'fldtntKgWXKanYEWZ',
 } as const
 
+// ─── Client Pages (12 fields) ────────────────────────────────
+
+export const CLIENT_PAGES = {
+  pageAddress:  'fldEEarorxnI0ixpI',  // singleLineText — URL slug
+  clientName:   'fldqvhzAh1w7gwSEb',  // singleLineText
+  pageTitle:    'fldkeQe0ThceEA6OG',  // singleLineText
+  pageSubtitle: 'fldhJNUqqtBQsyYgI',  // singleLineText
+  deckUrl:      'fldYedTCbI633i0fe',  // singleLineText (Plain Text, not URL — Framer requires it)
+  preparedFor:  'fldmWFQ498rXhcb1X',  // singleLineText
+  head:         'fldkHW1Ki7IuK2UaK',  // checkbox
+  thankYou:     'fld7YcLBFE9f8zDmT',  // singleLineText
+  vPrMagic:     'fldmvy3Ta6q4okTee',  // checkbox — Practical Magic video section
+  vHighLight:   'fldtPccbFBs9N4KZ5',  // checkbox — Highlights video section
+  v360:         'fldNE04teEKWxFlZC',  // checkbox — 360 Video section
+  vFullL:       'fldcOCTCLvx36MV5L',  // checkbox — Full Length video section
+} as const
+
 // ─── Primary field IDs (for display name resolution) ─────────
 
 export const PRIMARY_FIELDS: Record<string, string> = {
@@ -412,4 +430,5 @@ export const PRIMARY_FIELDS: Record<string, string> = {
   [TABLES.specialties]: SPECIALTIES.specialty,
   [TABLES.portalAccess]: PORTAL_ACCESS.name,
   [TABLES.portalLogs]: PORTAL_LOGS.id,
+  [TABLES.clientPages]: CLIENT_PAGES.pageAddress,
 }

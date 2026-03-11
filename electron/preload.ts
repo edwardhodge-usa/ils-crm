@@ -98,6 +98,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   proposals: makeCrudBridge('proposals'),
   projects: makeCrudBridge('projects'),
   portalAccess: makeCrudBridge('portalAccess'),
+  clientPages: makeCrudBridge('clientPages'),
 
   // Interactions (full CRUD)
   interactions: makeCrudBridge('interactions'),
