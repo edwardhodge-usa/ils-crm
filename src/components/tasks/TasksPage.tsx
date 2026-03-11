@@ -780,6 +780,9 @@ export default function TasksPage() {
   )
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<'date' | 'priority' | 'alpha'>(
+    () => (localStorage.getItem('tasks-sort') as 'date' | 'priority' | 'alpha') || 'date'
+  )
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
     try { return JSON.parse(localStorage.getItem('tasks-collapsed') || '{}') } catch { return {} }
   })
@@ -805,6 +808,11 @@ export default function TasksPage() {
     setActiveCategory(cat)
     localStorage.setItem('tasks-filter-category', cat)
     setSelectedId(null)
+  }, [])
+
+  const handleSortChange = useCallback((sort: 'date' | 'priority' | 'alpha') => {
+    setSortBy(sort)
+    localStorage.setItem('tasks-sort', sort)
   }, [])
 
   const today = todayStr()
@@ -885,8 +893,27 @@ export default function TasksPage() {
     return tasks
   }, [activeCategory, scopedTasks, sectionGroups, searchQuery])
 
-  // Group filtered tasks into sections (only for "all" view)
-  const showSections = activeCategory === 'all'
+  // Sort filtered tasks for priority/alpha modes
+  const sortedTasks = useMemo(() => {
+    if (sortBy === 'date') return filteredTasks // date mode uses section grouping instead
+    const sorted = [...filteredTasks]
+    if (sortBy === 'priority') {
+      const priorityOrder: Record<string, number> = { 'High': 0, 'Medium': 1, 'Low': 2 }
+      sorted.sort((a, b) => {
+        const pa = a.priorityClean ? (priorityOrder[a.priorityClean] ?? 3) : 3
+        const pb = b.priorityClean ? (priorityOrder[b.priorityClean] ?? 3) : 3
+        if (pa !== pb) return pa - pb
+        // Secondary sort by due date within same priority
+        return (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999')
+      })
+    } else if (sortBy === 'alpha') {
+      sorted.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
+    }
+    return sorted
+  }, [filteredTasks, sortBy])
+
+  // Group filtered tasks into sections (only for "all" view with date sort)
+  const showSections = activeCategory === 'all' && sortBy === 'date'
 
   const selectedTask = useMemo(() => allTasks.find(t => t.id === selectedId) ?? null, [allTasks, selectedId])
 
@@ -996,9 +1023,30 @@ export default function TasksPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '12px 14px 10px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
         }}>
-          <div>
-            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: -0.2 }}>{fullLabel}</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginLeft: 6 }}>{filteredTasks.length}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: -0.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fullLabel}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>{filteredTasks.length}</span>
+            <select
+              value={sortBy}
+              onChange={e => handleSortChange(e.target.value as 'date' | 'priority' | 'alpha')}
+              style={{
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--separator)',
+                borderRadius: 6,
+                fontSize: 11,
+                color: 'var(--text-secondary)',
+                padding: '3px 8px',
+                cursor: 'default',
+                outline: 'none',
+                fontFamily: 'inherit',
+                flexShrink: 0,
+                marginLeft: 'auto',
+              }}
+            >
+              <option value="date">Due Date</option>
+              <option value="priority">Priority</option>
+              <option value="alpha">Name</option>
+            </select>
           </div>
           <button
             onClick={handleNewTask}
@@ -1006,6 +1054,7 @@ export default function TasksPage() {
               background: 'var(--color-accent)', color: 'var(--text-on-accent)',
               fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 8,
               border: 'none', cursor: 'default', minHeight: 24, transition: 'background 150ms',
+              marginLeft: 8, flexShrink: 0,
             }}
           >
             + New Task
@@ -1070,13 +1119,13 @@ export default function TasksPage() {
               )
             })
           ) : (
-            // Flat list (filtered by category)
-            filteredTasks.length === 0 ? (
+            // Flat list (filtered by category, or non-date sort)
+            sortedTasks.length === 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 13, color: 'var(--text-secondary)' }}>
                 No tasks
               </div>
             ) : (
-              filteredTasks.map(t => {
+              sortedTasks.map(t => {
                 const section = classifyTask(t, today)
                 return (
                   <TaskRow

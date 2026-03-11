@@ -69,20 +69,28 @@ function LogRow({ log }: { log: Record<string, unknown> }) {
 
       {/* Client info */}
       <div className="flex-shrink-0 w-[140px] min-w-0">
-        {Boolean(clientName) && (
-          <div className="text-[12px] font-medium text-[var(--text-primary)] truncate leading-tight">
-            {clientName}
+        {!clientName && !clientEmail && !company ? (
+          <div className="text-[12px] text-[var(--text-tertiary)] italic truncate leading-tight">
+            (Unknown visitor)
           </div>
-        )}
-        {Boolean(clientEmail) && (
-          <div className="text-[12px] text-[var(--text-tertiary)] truncate mt-0.5 leading-tight">
-            {clientEmail}
-          </div>
-        )}
-        {Boolean(company) && !clientName && (
-          <div className="text-[12px] text-[var(--text-secondary)] truncate leading-tight">
-            {company}
-          </div>
+        ) : (
+          <>
+            {Boolean(clientName) && (
+              <div className="text-[12px] font-medium text-[var(--text-primary)] truncate leading-tight">
+                {clientName}
+              </div>
+            )}
+            {Boolean(clientEmail) && (
+              <div className="text-[12px] text-[var(--text-tertiary)] truncate mt-0.5 leading-tight">
+                {clientEmail}
+              </div>
+            )}
+            {Boolean(company) && !clientName && (
+              <div className="text-[12px] text-[var(--text-secondary)] truncate leading-tight">
+                {company}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -119,19 +127,28 @@ export default function PortalLogsPage() {
   const [search, setSearch] = useState('')
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return logs as Record<string, unknown>[]
-    const q = search.toLowerCase()
-    return (logs as Record<string, unknown>[]).filter(l =>
-      String(l.client_name ?? '').toLowerCase().includes(q) ||
-      String(l.client_email ?? '').toLowerCase().includes(q) ||
-      String(l.company ?? '').toLowerCase().includes(q) ||
-      String(l.page_url ?? '').toLowerCase().includes(q) ||
-      String(l.city ?? '').toLowerCase().includes(q) ||
-      String(l.country ?? '').toLowerCase().includes(q) ||
-      String(l.region ?? '').toLowerCase().includes(q) ||
-      String(l.ip_address ?? '').toLowerCase().includes(q) ||
-      String(l.user_agent ?? '').toLowerCase().includes(q)
-    )
+    const base = !search.trim()
+      ? (logs as Record<string, unknown>[])
+      : (logs as Record<string, unknown>[]).filter(l => {
+          const q = search.toLowerCase()
+          return (
+            String(l.client_name ?? '').toLowerCase().includes(q) ||
+            String(l.client_email ?? '').toLowerCase().includes(q) ||
+            String(l.company ?? '').toLowerCase().includes(q) ||
+            String(l.page_url ?? '').toLowerCase().includes(q) ||
+            String(l.city ?? '').toLowerCase().includes(q) ||
+            String(l.country ?? '').toLowerCase().includes(q) ||
+            String(l.region ?? '').toLowerCase().includes(q) ||
+            String(l.ip_address ?? '').toLowerCase().includes(q) ||
+            String(l.user_agent ?? '').toLowerCase().includes(q)
+          )
+        })
+    // Sort newest first
+    return base.sort((a, b) => {
+      const ta = String(a.timestamp ?? '')
+      const tb = String(b.timestamp ?? '')
+      return tb.localeCompare(ta)
+    })
   }, [logs, search])
 
   if (loading) return <LoadingSpinner />

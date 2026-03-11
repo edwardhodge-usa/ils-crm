@@ -31,10 +31,10 @@ function applyTheme(mode: ThemeMode) {
 // ────────────────────────────────────────────────────────────
 type FontSize = 'compact' | 'default' | 'large'
 
-const FONT_SIZES: Record<FontSize, { body: string; secondary: string; small: string }> = {
-  compact: { body: '13px', secondary: '11px', small: '10px' },
-  default: { body: '14px', secondary: '12px', small: '11px' },
-  large:   { body: '16px', secondary: '14px', small: '12px' },
+const FONT_SIZES: Record<FontSize, { body: string; secondary: string; small: string; scale: string }> = {
+  compact: { body: '13px', secondary: '11px', small: '10px', scale: '0.93' },
+  default: { body: '14px', secondary: '12px', small: '11px', scale: '1' },
+  large:   { body: '16px', secondary: '14px', small: '12px', scale: '1.07' },
 }
 
 function getStoredFontSize(): FontSize {
@@ -48,6 +48,7 @@ function applyFontSize(size: FontSize) {
   document.documentElement.style.setProperty('--font-body', values.body)
   document.documentElement.style.setProperty('--font-secondary', values.secondary)
   document.documentElement.style.setProperty('--font-small', values.small)
+  document.documentElement.style.setProperty('--ui-scale', values.scale)
   localStorage.setItem('font-size', size)
 }
 

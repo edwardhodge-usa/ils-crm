@@ -51,12 +51,22 @@ button {
   border-radius: 3px;
 }
 
+/* Dark mode: invert native date picker icon so it's visible on dark backgrounds */
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
 html, body { overflow: hidden; height: 100%; }
 
 a { color: var(--color-accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 img { display: block; max-width: 100%; }
+
+/* Font size / UI scale — set by Settings > Appearance > Text Size */
+#root {
+  zoom: var(--ui-scale, 1);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

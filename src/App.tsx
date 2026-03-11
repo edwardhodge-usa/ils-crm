@@ -59,7 +59,7 @@ export default function App() {
       document.documentElement.classList.toggle('dark', mq.matches)
     }
 
-    // Apply font size preference
+    // Apply font size preference + UI scale
     const storedSize = localStorage.getItem('font-size')
     if (storedSize === 'compact' || storedSize === 'default' || storedSize === 'large') {
       const sizes: Record<string, { body: string; secondary: string; small: string }> = {
@@ -67,10 +67,12 @@ export default function App() {
         default: { body: '14px', secondary: '12px', small: '11px' },
         large:   { body: '16px', secondary: '14px', small: '12px' },
       }
+      const scales: Record<string, string> = { compact: '0.93', default: '1', large: '1.07' }
       const v = sizes[storedSize]
       document.documentElement.style.setProperty('--font-body', v.body)
       document.documentElement.style.setProperty('--font-secondary', v.secondary)
       document.documentElement.style.setProperty('--font-small', v.small)
+      document.documentElement.style.setProperty('--ui-scale', scales[storedSize])
     }
 
     mq.addEventListener('change', applySystem)

@@ -13,6 +13,13 @@ import { UPDATER_TOKEN } from './updater-token'
 process.stdout?.on('error', () => {})
 process.stderr?.on('error', () => {})
 
+process.on('uncaughtException', (err) => {
+  console.error('[MAIN] Uncaught exception:', err)
+})
+process.on('unhandledRejection', (reason) => {
+  console.error('[MAIN] Unhandled rejection:', reason)
+})
+
 const isDev = !!process.env.VITE_DEV_SERVER_URL
 
 let mainWindow: BrowserWindow | null = null
