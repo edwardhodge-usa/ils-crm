@@ -15,9 +15,8 @@ const FIELDS: FormFieldDef[] = [
 
   // Contact Details
   { key: 'email', label: 'Email', type: 'email', section: 'Contact Details' },
-  { key: 'phone', label: 'Phone', type: 'phone', section: 'Contact Details' },
   { key: 'mobile_phone', label: 'Mobile Phone', type: 'phone', section: 'Contact Details' },
-  { key: 'work_phone', label: 'Work Phone', type: 'phone', section: 'Contact Details' },
+  { key: 'office_phone', label: 'Office Phone', type: 'phone', section: 'Contact Details' },
   { key: 'linkedin_url', label: 'LinkedIn', type: 'url', section: 'Contact Details' },
   { key: 'website', label: 'Website', type: 'url', section: 'Contact Details' },
 

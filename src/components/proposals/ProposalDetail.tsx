@@ -176,6 +176,7 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
               entityApi={window.electronAPI.contacts}
               labelField="contact_name"
               labelFallbackFields={['first_name', 'last_name']}
+              secondaryField="company"
               value={proposal.client_ids}
               onChange={val => handleLinkedSave('client_ids', val)}
               createFields={CONTACT_CREATE_FIELDS}

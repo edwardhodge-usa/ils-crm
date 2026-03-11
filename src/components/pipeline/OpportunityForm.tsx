@@ -27,7 +27,7 @@ const FIELDS: FormFieldDef[] = [
   { key: 'company_ids', label: 'Company', type: 'linkedRecord', section: 'Linked Records',
     entityName: 'companies', labelField: 'company_name' },
   { key: 'associated_contact_ids', label: 'Contacts', type: 'linkedRecord', section: 'Linked Records',
-    entityName: 'contacts', labelField: 'contact_name' },
+    entityName: 'contacts', labelField: 'contact_name', secondaryField: 'company' },
   { key: 'project_ids', label: 'Projects', type: 'linkedRecord', section: 'Linked Records',
     entityName: 'projects', labelField: 'project_name' },
   { key: 'proposals_ids', label: 'Proposals', type: 'linkedRecord', section: 'Linked Records',

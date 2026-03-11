@@ -26,9 +26,8 @@ export function createSchema(db: SqlJsDatabase): void {
       lead_note TEXT,
       event_tags TEXT,
       email TEXT,
-      phone TEXT,
       mobile_phone TEXT,
-      work_phone TEXT,
+      office_phone TEXT,
       linkedin_url TEXT,
       website TEXT,
       lead_score INTEGER,
@@ -343,6 +342,18 @@ export function createSchema(db: SqlJsDatabase): void {
   for (const sql of portalAccessMigrations) {
     try { db.run(sql) } catch { /* column already exists */ }
   }
+
+  // ─── Phone field consolidation: phone+work_phone → mobile_phone+office_phone
+  const phoneMigrations = [
+    'ALTER TABLE contacts ADD COLUMN office_phone TEXT',
+  ]
+  for (const sql of phoneMigrations) {
+    try { db.run(sql) } catch { /* column already exists */ }
+  }
+  // Migrate work_phone data to office_phone (one-time)
+  try {
+    db.run(`UPDATE contacts SET office_phone = work_phone WHERE work_phone IS NOT NULL AND office_phone IS NULL`)
+  } catch { /* ignore if work_phone column doesn't exist */ }
 
   // ─── Field Audit: add missing sync columns ──────────
   const fieldAuditMigrations = [

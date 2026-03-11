@@ -331,6 +331,7 @@ export function DealDetail({ dealId, onClose, onDeleted, onSaved }: DealDetailPr
                   entityApi={window.electronAPI.contacts}
                   labelField="contact_name"
                   labelFallbackFields={['first_name', 'last_name']}
+                  secondaryField="company"
                   value={deal.associated_contact_ids}
                   onChange={val => handleLinkedSave('associated_contact_ids', val)}
                   createFields={CONTACT_CREATE_FIELDS}

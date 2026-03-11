@@ -12,9 +12,8 @@ import { containsId } from '../../utils/linked-records'
 const CONTACT_INFO_FIELDS: EditableField[] = [
   { key: 'job_title', label: 'Title', type: 'text' },
   { key: 'email', label: 'Email', type: 'text', isLink: true },
-  { key: 'phone', label: 'Phone', type: 'text' },
   { key: 'mobile_phone', label: 'Mobile', type: 'text' },
-  { key: 'work_phone', label: 'Work Phone', type: 'text' },
+  { key: 'office_phone', label: 'Office', type: 'text' },
   { key: 'linkedin_url', label: 'LinkedIn', type: 'text', isLink: true },
   { key: 'website', label: 'Website', type: 'text', isLink: true },
   { key: 'city', label: 'City', type: 'text' },
@@ -463,10 +462,10 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
                 Email
               </button>
             )}
-            {Boolean(contact.phone || contact.mobile_phone) && (
+            {Boolean(contact.mobile_phone || contact.office_phone) && (
               <button
                 onClick={() => {
-                  const num = (contact.mobile_phone || contact.phone) as string
+                  const num = (contact.mobile_phone || contact.office_phone) as string
                   window.electronAPI.shell.openExternal(`tel:${num}`)
                 }}
                 style={{

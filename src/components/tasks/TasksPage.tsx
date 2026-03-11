@@ -699,6 +699,7 @@ function TaskDetail({ task, isNewTask, assigneeOptions, onComplete, onDelete, on
           entityApi={window.electronAPI.contacts}
           labelField="contact_name"
           labelFallbackFields={['first_name', 'last_name']}
+          secondaryField="company"
           value={task.contacts_ids}
           onChange={val => handleLinkedSave('contacts_ids', val)}
           createFields={CONTACT_CREATE_FIELDS}

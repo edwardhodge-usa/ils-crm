@@ -14,7 +14,7 @@ export const CONTACT_CREATE_FIELDS: FormFieldDef[] = [
 
   // Contact Details
   { key: 'email', label: 'Email', type: 'email', section: 'Contact Details' },
-  { key: 'phone', label: 'Phone', type: 'phone', section: 'Contact Details' },
+  { key: 'mobile_phone', label: 'Mobile Phone', type: 'phone', section: 'Contact Details' },
   { key: 'linkedin_url', label: 'LinkedIn', type: 'url', section: 'Contact Details' },
 
   // CRM
@@ -61,9 +61,9 @@ export const PROJECT_CREATE_FIELDS: FormFieldDef[] = [
 
   // Linked Records
   { key: 'contacts_ids', label: 'Contacts', type: 'linkedRecord', section: 'Linked Records',
-    entityName: 'contacts', labelField: 'contact_name' },
+    entityName: 'contacts', labelField: 'contact_name', secondaryField: 'company' },
   { key: 'client_ids', label: 'Client', type: 'linkedRecord', section: 'Linked Records',
-    entityName: 'contacts', labelField: 'contact_name' },
+    entityName: 'contacts', labelField: 'contact_name', secondaryField: 'company' },
   { key: 'sales_opportunities_ids', label: 'Opportunities', type: 'linkedRecord', section: 'Linked Records',
     entityName: 'opportunities', labelField: 'opportunity_name' },
 ]
@@ -81,7 +81,7 @@ export const PROPOSAL_CREATE_FIELDS: FormFieldDef[] = [
 
   // Linked Records
   { key: 'client_ids', label: 'Client (Contact)', type: 'linkedRecord', section: 'Linked Records',
-    entityName: 'contacts', labelField: 'contact_name' },
+    entityName: 'contacts', labelField: 'contact_name', secondaryField: 'company' },
   { key: 'company_ids', label: 'Company', type: 'linkedRecord', section: 'Linked Records',
     entityName: 'companies', labelField: 'company_name' },
   { key: 'related_opportunity_ids', label: 'Opportunity', type: 'linkedRecord', section: 'Linked Records',
@@ -110,7 +110,7 @@ export const OPPORTUNITY_CREATE_FIELDS: FormFieldDef[] = [
   { key: 'company_ids', label: 'Company', type: 'linkedRecord', section: 'Linked Records',
     entityName: 'companies', labelField: 'company_name' },
   { key: 'associated_contact_ids', label: 'Contacts', type: 'linkedRecord', section: 'Linked Records',
-    entityName: 'contacts', labelField: 'contact_name' },
+    entityName: 'contacts', labelField: 'contact_name', secondaryField: 'company' },
 ]
 
 /** Registry: look up create fields and display name by entity API name */

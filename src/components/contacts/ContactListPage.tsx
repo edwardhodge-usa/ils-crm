@@ -151,8 +151,8 @@ export default function ContactListPage() {
           (c.jobTitle ?? '').toLowerCase().includes(q) ||
           (String(raw?.email ?? '')).toLowerCase().includes(q) ||
           (String(raw?.work_email ?? '')).toLowerCase().includes(q) ||
-          (String(raw?.phone ?? '')).toLowerCase().includes(q) ||
           (String(raw?.mobile_phone ?? '')).toLowerCase().includes(q) ||
+          (String(raw?.office_phone ?? '')).toLowerCase().includes(q) ||
           (String(raw?.notes ?? '')).toLowerCase().includes(q) ||
           (String(raw?.tags ?? '')).toLowerCase().includes(q) ||
           (String(raw?.industry ?? '')).toLowerCase().includes(q) ||

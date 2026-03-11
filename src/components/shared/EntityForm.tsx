@@ -29,6 +29,7 @@ export interface FormFieldDef {
   section?: string
   entityName?: string
   labelField?: string
+  secondaryField?: string
 }
 
 interface EntityFormProps {
@@ -366,6 +367,7 @@ export function FieldRenderer({
         <LinkedRecordPicker
           entityApi={api}
           labelField={field.labelField}
+          secondaryField={field.secondaryField}
           label={field.label}
           value={value}
           onChange={onChange}

@@ -554,6 +554,7 @@ function PortalAccessDetail({ record, logs, onFieldSave, onContactFieldSave, onD
               entityApi={window.electronAPI.contacts}
               labelField="contact_name"
               labelFallbackFields={['first_name', 'last_name']}
+              secondaryField="company"
               value={record.contact_ids}
               onChange={val => onFieldSave('contact_ids', val)}
               createFields={CONTACT_CREATE_FIELDS}
@@ -976,7 +977,7 @@ export default function PortalAccessPage() {
   }, [contactMap, companyNameMap])
 
   const handleNew = useCallback(async () => {
-    const res = await window.electronAPI.portalAccess.create({ name: 'New Access' })
+    const res = await window.electronAPI.portalAccess.create({})
     if (res.success && res.data) {
       reload()
       setSelectedId(res.data)

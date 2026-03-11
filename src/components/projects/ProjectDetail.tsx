@@ -158,6 +158,7 @@ export function ProjectDetail({ projectId, leadOptions }: ProjectDetailProps) {
               entityApi={window.electronAPI.contacts}
               labelField="contact_name"
               labelFallbackFields={['first_name', 'last_name']}
+              secondaryField="company"
               value={project.contacts_ids}
               onChange={val => handleLinkedSave('contacts_ids', val)}
               createFields={CONTACT_CREATE_FIELDS}

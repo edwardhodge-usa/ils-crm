@@ -9,6 +9,8 @@ interface LinkedRecordPickerProps {
   labelField: string
   /** Secondary field to build display label (e.g. first_name + last_name for contacts) */
   labelFallbackFields?: string[]
+  /** Field to show as secondary text in dropdown (e.g. 'company' for contacts) */
+  secondaryField?: string
   value: unknown
   onChange: (v: unknown) => void
   /** Legacy: simple create callback (name only) */
@@ -36,12 +38,13 @@ export default function LinkedRecordPicker({
   createFields,
   createTitle,
   createDefaults,
+  secondaryField,
   createApi,
   multiple = true,
   placeholder = 'Search to link...',
   label,
 }: LinkedRecordPickerProps) {
-  const [allRecords, setAllRecords] = useState<Array<{ id: string; label: string }>>([])
+  const [allRecords, setAllRecords] = useState<Array<{ id: string; label: string; secondary?: string }>>([])
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -75,11 +78,12 @@ export default function LinkedRecordPicker({
       const records = (res.data as Array<Record<string, unknown>>).map(r => ({
         id: String(r.id || ''),
         label: buildLabel(r),
+        secondary: secondaryField && r[secondaryField] ? String(r[secondaryField]) : undefined,
       })).filter(r => r.id)
       setAllRecords(records)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entityApi, labelField])
+  }, [entityApi, labelField, secondaryField])
 
   useEffect(() => {
     refreshRecords()
@@ -176,9 +180,10 @@ export default function LinkedRecordPicker({
   }
 
   // Filter records: exclude already linked, match search
+  const q = search.toLowerCase()
   const filtered = allRecords.filter(r =>
     !linkedIds.includes(r.id) &&
-    r.label.toLowerCase().includes(search.toLowerCase())
+    (r.label.toLowerCase().includes(q) || (r.secondary && r.secondary.toLowerCase().includes(q)))
   )
 
   // Resolve linked record names
@@ -342,11 +347,17 @@ export default function LinkedRecordPicker({
                 background: 'transparent',
                 border: 'none', cursor: 'default',
                 transition: 'background 150ms',
+                display: 'flex', alignItems: 'baseline', gap: 6,
               }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              {r.label}
+              <span>{r.label}</span>
+              {r.secondary && (
+                <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 400 }}>
+                  {r.secondary}
+                </span>
+              )}
             </button>
           ))}
 

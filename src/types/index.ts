@@ -20,9 +20,8 @@ export interface Contact {
   lead_note: string | null
   event_tags: string | null
   email: string | null
-  phone: string | null
   mobile_phone: string | null
-  work_phone: string | null
+  office_phone: string | null
   linkedin_url: string | null
   website: string | null
   lead_score: number | null

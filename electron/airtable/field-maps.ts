@@ -45,9 +45,8 @@ export const CONTACTS = {
   email: 'fldBjSvbdd5WXmoIG',
 
   // Phone
-  phone: 'fldwF5NBjGVndCXNV',
   mobilePhone: 'fldwULn4qSjwzSOTj',
-  workPhone: 'fldueNgIMN0Ui5MWw',
+  officePhone: 'fldueNgIMN0Ui5MWw', // renamed from Work Phone → Office Phone
 
   // URL
   linkedInUrl: 'fldWrrBfD7aLxsXT4',

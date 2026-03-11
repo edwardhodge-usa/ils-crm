@@ -34,7 +34,10 @@ Base ID: `appYXbUdcmSwBoPFU`
 | Portal Access | tblN1jruT8VeucPKa | 36 | Client portal access records |
 | Portal Logs | tblj70XPHI7wnUmxO | 12 | Portal activity logging |
 
-## Schema Changes Log (2026-02-27)
+## Schema Changes Log
+*Schema changes are tracked in Airtable directly. See base appYXbUdcmSwBoPFU for current field definitions. Below captures major structural changes only.*
+
+### 2026-02-27
 
 **Fields removed:** AI Categorization Suggestion (Contacts + Imported Contacts), Speciality multi-select (Contacts + Imported Contacts), 25 inline Task fields from Proposals
 **Fields added:** Days Since Last Contact (Contacts), Weighted Value + Days in Stage (Opportunities), Overdue (Tasks)
