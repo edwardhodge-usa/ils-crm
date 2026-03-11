@@ -4,6 +4,7 @@ import ConfirmDialog from '../shared/ConfirmDialog'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import { EmptyState } from '../shared/EmptyState'
 import useEntityList from '../../hooks/useEntityList'
+import { parseCollaboratorName } from '../../utils/collaborator'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -182,8 +183,8 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
   const status = (contact.onboarding_status as string | null) ?? null
   const categorization = (contact.categorization as string | null) ?? null
   const notes = (contact.note as string | null) ?? null
-  const importedBy = (contact.imported_by as string | null) ?? null
-  const assignedAdmin = (contact.assigned_admin as string | null) ?? null
+  const importedBy = parseCollaboratorName((contact.imported_by as string | null) ?? null)
+  const assignedAdmin = parseCollaboratorName((contact.assigned_admin as string | null) ?? null)
 
   const isAlreadyReviewed = status === 'Approved' || status === 'Rejected'
   const color = avatarColor(name)

@@ -8,6 +8,7 @@ import {
   CONTACT_CREATE_FIELDS,
   OPPORTUNITY_CREATE_FIELDS,
 } from '../../config/create-fields'
+import { parseCollaboratorName } from '../../utils/collaborator'
 
 function buildProjectEditableFields(leadOptions: string[]): EditableField[] {
   return [
@@ -27,9 +28,10 @@ function buildProjectEditableFields(leadOptions: string[]): EditableField[] {
 interface ProjectDetailProps {
   projectId: string | null
   leadOptions: string[]
+  collaboratorMap?: Record<string, string>
 }
 
-export function ProjectDetail({ projectId, leadOptions }: ProjectDetailProps) {
+export function ProjectDetail({ projectId, leadOptions, collaboratorMap = {} }: ProjectDetailProps) {
   const [project, setProject] = useState<Record<string, unknown> | null>(null)
 
   const handleFieldSave = useCallback(async (key: string, val: unknown) => {
@@ -135,15 +137,24 @@ export function ProjectDetail({ projectId, leadOptions }: ProjectDetailProps) {
             Project Info
           </div>
           <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            {buildProjectEditableFields(leadOptions).map((field, idx, arr) => (
-              <EditableFormRow
-                key={field.key}
-                field={field}
-                value={(project as Record<string, unknown>)[field.key]}
-                isLast={idx === arr.length - 1}
-                onSave={handleFieldSave}
-              />
-            ))}
+            {buildProjectEditableFields(leadOptions).map((field, idx, arr) => {
+              const raw = (project as Record<string, unknown>)[field.key]
+              const displayVal = field.key === 'project_lead' ? parseCollaboratorName(raw as string | null) : raw
+              return (
+                <EditableFormRow
+                  key={field.key}
+                  field={field}
+                  value={displayVal}
+                  isLast={idx === arr.length - 1}
+                  onSave={async (key, val) => {
+                    const saveVal = key === 'project_lead' && typeof val === 'string'
+                      ? (collaboratorMap[val] || val)
+                      : val
+                    await handleFieldSave(key, saveVal)
+                  }}
+                />
+              )
+            })}
           </div>
         </div>
 

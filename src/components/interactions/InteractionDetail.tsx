@@ -4,6 +4,7 @@ import { EmptyState } from '../shared/EmptyState'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import { interactionTypeIcon } from '../shared/icons/InteractionIcons'
 import { firstId } from '../../utils/linked-records'
+import { parseCollaboratorName } from '../../utils/collaborator'
 
 // ─── Type → color mapping (matches InteractionRow) ───────────────────────────
 
@@ -293,15 +294,19 @@ export function InteractionDetail({ interactionId }: InteractionDetailProps) {
             marginBottom: 16,
           }}
         >
-          {INTERACTION_EDITABLE_FIELDS.map((field, i) => (
-            <EditableFormRow
-              key={field.key}
-              field={field}
-              value={interaction[field.key]}
-              isLast={i === INTERACTION_EDITABLE_FIELDS.length - 1 && relatedFields.length === 0}
-              onSave={handleFieldSave}
-            />
-          ))}
+          {INTERACTION_EDITABLE_FIELDS.map((field, i) => {
+            const raw = interaction[field.key]
+            const displayVal = field.key === 'logged_by' ? parseCollaboratorName(raw as string | null) : raw
+            return (
+              <EditableFormRow
+                key={field.key}
+                field={field}
+                value={displayVal}
+                isLast={i === INTERACTION_EDITABLE_FIELDS.length - 1 && relatedFields.length === 0}
+                onSave={handleFieldSave}
+              />
+            )
+          })}
         </div>
 
         {/* ── Related records (readonly navigational links) ── */}

@@ -7,6 +7,7 @@ import LinkedRecordPicker from '../shared/LinkedRecordPicker'
 import useEntityList from '../../hooks/useEntityList'
 import { CONTACT_CREATE_FIELDS } from '../../config/create-fields'
 import { parseIds } from '../../utils/linked-records'
+import { parseCollaboratorName } from '../../utils/collaborator'
 import { GroupedSectionHeader } from '../shared/GroupedSectionHeader'
 import { ContextMenu } from '../shared/ContextMenu'
 import ConfirmDialog from '../shared/ConfirmDialog'
@@ -148,19 +149,6 @@ const PORTAL_EDITABLE_FIELDS: EditableField[] = [
 const PORTAL_OTHER_FIELDS_STATIC: EditableField[] = [
   { key: 'date_added', label: 'Added', type: 'date' },
 ]
-
-/** Parse a collaborator JSON string to extract the name. Falls back to plain string for legacy data. */
-function parseCollaboratorName(val: unknown): string | null {
-  if (!val || typeof val !== 'string') return null
-  try {
-    const parsed = JSON.parse(val)
-    if (parsed && typeof parsed === 'object' && parsed.name) return parsed.name
-  } catch {
-    // Legacy plain string — return as-is
-    return val || null
-  }
-  return val
-}
 
 /** Extract unique collaborator objects from all portal_access records' assignee fields */
 function buildCollaboratorOptions(records: Record<string, unknown>[]): { id: string; name: string; email: string; json: string }[] {

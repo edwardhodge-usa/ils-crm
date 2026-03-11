@@ -7,6 +7,7 @@ import LinkedRecordPicker from '../shared/LinkedRecordPicker'
 import DateSuggestionPicker from '../shared/DateSuggestionPicker'
 import useEntityList from '../../hooks/useEntityList'
 import useDarkMode from '../../hooks/useDarkMode'
+import { parseCollaboratorName } from '../../utils/collaborator'
 import {
   CONTACT_CREATE_FIELDS,
   PROJECT_CREATE_FIELDS,
@@ -35,18 +36,6 @@ interface TaskItem {
 
 type Section = 'overdue' | 'today' | 'upcoming' | 'waiting' | 'nodate'
 type CategoryFilter = 'all' | Section | 'completed' | string
-
-/** Parse collaborator JSON ({"id":"usrXXX","name":"John"}) to display name. Falls back to raw string. */
-function parseCollaboratorName(val: string | null): string | null {
-  if (!val) return null
-  try {
-    const parsed = JSON.parse(val)
-    if (parsed && typeof parsed === 'object' && parsed.name) return parsed.name
-  } catch {
-    return val  // Legacy plain string
-  }
-  return val
-}
 
 // Named assignee colors — Apple System Blue (Edward), Apple Accessible Pink (Laura)
 const ASSIGNEE_COLOR_OVERRIDES: Record<string, string> = {
