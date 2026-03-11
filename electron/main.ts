@@ -9,6 +9,10 @@ import { checkLicense, setLastVerifiedTime, isWithinGracePeriod, handleRevocatio
 import { buildMenu } from './menu'
 import { UPDATER_TOKEN } from './updater-token'
 
+// Silently ignore EPIPE errors on stdout/stderr (happens when launched without a terminal)
+process.stdout?.on('error', () => {})
+process.stderr?.on('error', () => {})
+
 const isDev = !!process.env.VITE_DEV_SERVER_URL
 
 let mainWindow: BrowserWindow | null = null

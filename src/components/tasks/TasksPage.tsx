@@ -36,6 +36,18 @@ interface TaskItem {
 type Section = 'overdue' | 'today' | 'upcoming' | 'waiting' | 'nodate'
 type CategoryFilter = 'all' | Section | 'completed' | string
 
+/** Parse collaborator JSON ({"id":"usrXXX","name":"John"}) to display name. Falls back to raw string. */
+function parseCollaboratorName(val: string | null): string | null {
+  if (!val) return null
+  try {
+    const parsed = JSON.parse(val)
+    if (parsed && typeof parsed === 'object' && parsed.name) return parsed.name
+  } catch {
+    return val  // Legacy plain string
+  }
+  return val
+}
+
 // Named assignee colors — Apple System Blue (Edward), Apple Accessible Pink (Laura)
 const ASSIGNEE_COLOR_OVERRIDES: Record<string, string> = {
   'Edward Hodge': '#007AFF',
@@ -150,7 +162,7 @@ function toTaskItem(row: Record<string, unknown>): TaskItem {
     sales_opportunities_ids: (row.sales_opportunities_ids as string | null) ?? null,
     projects_ids:  (row.projects_ids as string | null) ?? null,
     proposal_ids:  (row.proposal_ids as string | null) ?? null,
-    assigned_to:   (row.assigned_to as string | null) ?? null,
+    assigned_to:   parseCollaboratorName((row.assigned_to as string | null) ?? null),
   }
 }
 
@@ -546,12 +558,13 @@ interface TaskDetailProps {
   task: TaskItem | null
   isNewTask: boolean
   assigneeOptions: string[]
+  collaboratorMap: Record<string, string>
   onComplete: (id: string) => void
   onDelete: (id: string) => void
   onReload: () => void
 }
 
-function TaskDetail({ task, isNewTask, assigneeOptions, onComplete, onDelete, onReload }: TaskDetailProps) {
+function TaskDetail({ task, isNewTask, assigneeOptions, collaboratorMap, onComplete, onDelete, onReload }: TaskDetailProps) {
 
   // All hooks MUST be above the early return to satisfy React's rules of hooks
   const handleLinkedSave = useCallback(async (key: string, val: unknown) => {
@@ -670,7 +683,10 @@ function TaskDetail({ task, isNewTask, assigneeOptions, onComplete, onDelete, on
             value={task[field.key as keyof TaskItem]}
             isLast={idx === arr.length - 1}
             onSave={async (key, val) => {
-              await window.electronAPI.tasks.update(task.id, { [key]: val })
+              const saveVal = key === 'assigned_to' && typeof val === 'string'
+                ? (collaboratorMap[val] || val)
+                : val
+              await window.electronAPI.tasks.update(task.id, { [key]: saveVal })
               onReload()
             }}
           />
@@ -761,7 +777,14 @@ export default function TasksPage() {
   const isDark = useDarkMode()
   const { data: rawTasks, loading, error, reload } = useEntityList(() => window.electronAPI.tasks.getAll())
   const [activeAssignee, setActiveAssignee] = useState<string | null>(
-    () => localStorage.getItem('tasks-filter-assignee') || null
+    () => {
+      const stored = localStorage.getItem('tasks-filter-assignee')
+      if (!stored) return null
+      // Clean up stale JSON-format assignee from localStorage
+      const parsed = parseCollaboratorName(stored)
+      if (parsed !== stored) localStorage.setItem('tasks-filter-assignee', parsed!)
+      return parsed
+    }
   )
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>(
     () => (localStorage.getItem('tasks-filter-category') as CategoryFilter) || 'all'
@@ -878,13 +901,20 @@ export default function TasksPage() {
 
   const selectedTask = useMemo(() => allTasks.find(t => t.id === selectedId) ?? null, [allTasks, selectedId])
 
-  const assigneeOptions = useMemo(() => {
+  // Build assignee display names + a map from display name → raw JSON for writes
+  const { assigneeOptions, collaboratorMap } = useMemo(() => {
     const names = new Set<string>()
-    for (const t of allTasks) {
-      if (t.assigned_to) names.add(t.assigned_to)
+    const map: Record<string, string> = {}
+    for (const row of rawTasks) {
+      const raw = (row.assigned_to as string | null) ?? null
+      const name = parseCollaboratorName(raw)
+      if (name && raw) {
+        names.add(name)
+        if (!map[name]) map[name] = raw  // Keep original JSON for write-back
+      }
     }
-    return Array.from(names).sort()
-  }, [allTasks])
+    return { assigneeOptions: Array.from(names).sort(), collaboratorMap: map }
+  }, [rawTasks])
 
   const handleComplete = useCallback(async (id: string) => {
     await window.electronAPI.tasks.update(id, { status: 'Completed', completed_date: todayStr() })
@@ -922,14 +952,14 @@ export default function TasksPage() {
       const localDefaults: Record<string, unknown> = { status: 'To Do' }
       if (userName && assigneeOptions.length > 0) {
         const match = assigneeOptions.find(n => n.toLowerCase().startsWith(userName.toLowerCase()))
-        if (match) localDefaults.assigned_to = match
+        if (match) localDefaults.assigned_to = collaboratorMap[match] || match
       }
       await window.electronAPI.tasks.update(result.data, localDefaults)
       setNewTaskId(result.data)
       setSelectedId(result.data)
       reload()
     }
-  }, [userName, assigneeOptions, reload])
+  }, [userName, assigneeOptions, collaboratorMap, reload])
 
   useEffect(() => {
     if (newTaskId && selectedId !== newTaskId) setNewTaskId(null)
@@ -1091,6 +1121,7 @@ export default function TasksPage() {
         task={selectedTask}
         isNewTask={selectedId != null && selectedId === newTaskId}
         assigneeOptions={assigneeOptions}
+        collaboratorMap={collaboratorMap}
         onComplete={handleComplete}
         onDelete={handleDelete}
         onReload={reload}
