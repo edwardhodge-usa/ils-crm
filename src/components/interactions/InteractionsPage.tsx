@@ -26,7 +26,7 @@ export default function InteractionsPage() {
     },
     { key: 'date', label: 'Date', width: '12%' },
     { key: 'logged_by', label: 'Logged By', width: '12%',
-      render: (v: unknown) => <>{parseCollaboratorName(v as string | null) || '—'}</> },
+      render: (v: unknown) => parseCollaboratorName(v as string | null) || '—' },
     {
       key: 'summary',
       label: 'Summary',

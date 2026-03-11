@@ -8,7 +8,7 @@ import {
   CONTACT_CREATE_FIELDS,
   OPPORTUNITY_CREATE_FIELDS,
 } from '../../config/create-fields'
-import { parseCollaboratorName } from '../../utils/collaborator'
+import { parseCollaboratorName, resolveCollaboratorSave } from '../../utils/collaborator'
 
 function buildProjectEditableFields(leadOptions: string[]): EditableField[] {
   return [
@@ -147,10 +147,7 @@ export function ProjectDetail({ projectId, leadOptions, collaboratorMap = {} }: 
                   value={displayVal}
                   isLast={idx === arr.length - 1}
                   onSave={async (key, val) => {
-                    const saveVal = key === 'project_lead' && typeof val === 'string'
-                      ? (collaboratorMap[val] || val)
-                      : val
-                    await handleFieldSave(key, saveVal)
+                    await handleFieldSave(key, resolveCollaboratorSave(key, val, collaboratorMap))
                   }}
                 />
               )

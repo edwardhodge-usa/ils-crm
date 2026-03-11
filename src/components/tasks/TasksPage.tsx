@@ -7,7 +7,7 @@ import LinkedRecordPicker from '../shared/LinkedRecordPicker'
 import DateSuggestionPicker from '../shared/DateSuggestionPicker'
 import useEntityList from '../../hooks/useEntityList'
 import useDarkMode from '../../hooks/useDarkMode'
-import { parseCollaboratorName } from '../../utils/collaborator'
+import { parseCollaboratorName, buildCollaboratorMap, resolveCollaboratorSave } from '../../utils/collaborator'
 import {
   CONTACT_CREATE_FIELDS,
   PROJECT_CREATE_FIELDS,
@@ -672,9 +672,7 @@ function TaskDetail({ task, isNewTask, assigneeOptions, collaboratorMap, onCompl
             value={task[field.key as keyof TaskItem]}
             isLast={idx === arr.length - 1}
             onSave={async (key, val) => {
-              const saveVal = key === 'assigned_to' && typeof val === 'string'
-                ? (collaboratorMap[val] || val)
-                : val
+              const saveVal = resolveCollaboratorSave(key, val, collaboratorMap)
               await window.electronAPI.tasks.update(task.id, { [key]: saveVal })
               onReload()
             }}
@@ -766,15 +764,17 @@ export default function TasksPage() {
   const isDark = useDarkMode()
   const { data: rawTasks, loading, error, reload } = useEntityList(() => window.electronAPI.tasks.getAll())
   const [activeAssignee, setActiveAssignee] = useState<string | null>(
-    () => {
-      const stored = localStorage.getItem('tasks-filter-assignee')
-      if (!stored) return null
-      // Clean up stale JSON-format assignee from localStorage
+    () => parseCollaboratorName(localStorage.getItem('tasks-filter-assignee')) ?? null
+  )
+
+  // Migrate stale JSON-format assignee in localStorage (one-time cleanup)
+  useEffect(() => {
+    const stored = localStorage.getItem('tasks-filter-assignee')
+    if (stored) {
       const parsed = parseCollaboratorName(stored)
       if (parsed !== stored) localStorage.setItem('tasks-filter-assignee', parsed!)
-      return parsed
     }
-  )
+  }, [])
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>(
     () => (localStorage.getItem('tasks-filter-category') as CategoryFilter) || 'all'
   )
@@ -890,20 +890,10 @@ export default function TasksPage() {
 
   const selectedTask = useMemo(() => allTasks.find(t => t.id === selectedId) ?? null, [allTasks, selectedId])
 
-  // Build assignee display names + a map from display name → raw JSON for writes
-  const { assigneeOptions, collaboratorMap } = useMemo(() => {
-    const names = new Set<string>()
-    const map: Record<string, string> = {}
-    for (const row of rawTasks) {
-      const raw = (row.assigned_to as string | null) ?? null
-      const name = parseCollaboratorName(raw)
-      if (name && raw) {
-        names.add(name)
-        if (!map[name]) map[name] = raw  // Keep original JSON for write-back
-      }
-    }
-    return { assigneeOptions: Array.from(names).sort(), collaboratorMap: map }
-  }, [rawTasks])
+  const { options: assigneeOptions, map: collaboratorMap } = useMemo(
+    () => buildCollaboratorMap(rawTasks as Record<string, unknown>[], 'assigned_to'),
+    [rawTasks]
+  )
 
   const handleComplete = useCallback(async (id: string) => {
     await window.electronAPI.tasks.update(id, { status: 'Completed', completed_date: todayStr() })

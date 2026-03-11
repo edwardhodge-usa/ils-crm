@@ -6,7 +6,7 @@ import { GroupedSectionHeader } from '../shared/GroupedSectionHeader'
 import useEntityList from '../../hooks/useEntityList'
 import { ProjectRow } from './ProjectRow'
 import { ProjectDetail } from './ProjectDetail'
-import { parseCollaboratorName } from '../../utils/collaborator'
+import { buildCollaboratorMap } from '../../utils/collaborator'
 
 interface ProjectListItem {
   id: string
@@ -74,19 +74,10 @@ export default function ProjectListPage() {
     return sorted
   }, [projects, search, sortBy])
 
-  const { leadOptions, leadCollaboratorMap } = useMemo(() => {
-    const names = new Set<string>()
-    const map: Record<string, string> = {}
-    for (const p of projects as Record<string, unknown>[]) {
-      const raw = (p.project_lead as string | null) ?? null
-      const name = parseCollaboratorName(raw)
-      if (name && raw) {
-        names.add(name)
-        if (!map[name]) map[name] = raw
-      }
-    }
-    return { leadOptions: Array.from(names).sort(), leadCollaboratorMap: map }
-  }, [projects])
+  const { options: leadOptions, map: leadCollaboratorMap } = useMemo(
+    () => buildCollaboratorMap(projects as Record<string, unknown>[], 'project_lead'),
+    [projects]
+  )
 
   if (loading) return <LoadingSpinner />
 
