@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM project — Airtable schema management, API integrations, and eventually a full Electron desktop CRM app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Airtable API (backend/data), Anthropic Claude API (AI features)
-- **Status**: v3.2.4 — MVP with app licensing, auto-updates (verified), multi-user deployment (arm64 + x64). On main.
+- **Status**: v3.3.3 — MVP with app licensing, auto-updates (verified), multi-user deployment (arm64 + x64). On main.
 - **Repo**: edwardhodge-usa/ils-crm
 - **Airtable Base**: ILS CRM (appYXbUdcmSwBoPFU)
 
@@ -124,6 +124,7 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-10** - Collaborator converter changed from storing plain name to full JSON (`{id, email, name}`) for write-back support, but UI pages weren't updated → Always update display code when changing storage format. Shared utility: `src/utils/collaborator.ts` (parseCollaboratorName, buildCollaboratorMap, resolveCollaboratorSave)
 **2026-03-10** - Electron `console.log` throws EPIPE when app launched without terminal (e.g. from Dock) → Add `process.stdout?.on('error', () => {})` and same for stderr early in main.ts, before any console.log calls
 **2026-03-11** - Adding a new Airtable table requires updating VALID_TABLES whitelist in `electron/database/queries/entities.ts` (SQL injection prevention). Without it, all CRUD queries for the new table throw "Invalid table name". Checklist: field-maps → converters → schema → preload → register.ts → sync-engine → **entities.ts VALID_TABLES**
+**2026-03-11** - v3.3.2 released with stale Vite frontend (dist/ compiled at 23:07 for v3.3.1, Portal CMS committed at 00:09 for v3.3.2) — `npm run package` was skipped during high-context session (5 releases in 6h, context rot) → ALWAYS: (1) `rm -rf dist dist-electron node_modules/.vite` before release builds, (2) `grep` the built bundle for recently added features before uploading, (3) max 2 releases per session — context rot causes skipped steps. v3.3.3 is the corrected release
 
 ## Deployment Process
 
