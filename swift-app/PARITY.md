@@ -10,9 +10,9 @@ Last updated: 2026-03-12
 | Dashboard | 3 | 3 | 100% |
 | Contacts | 5 | 5 | 100% |
 | Companies | 5 | 5 | 100% |
-| Pipeline | 4 | 1 | 25% |
-| Tasks | 4 | 1 | 25% |
-| Proposals | 4 | 1 | 25% |
+| Pipeline | 4 | 3 | 75% |
+| Tasks | 4 | 3 | 75% |
+| Proposals | 4 | 3 | 75% |
 | Projects | 4 | 1 | 25% |
 | Interactions | 4 | 1 | 25% |
 | Portal (Access + Logs) | 4 | 1 | 25% |
@@ -20,7 +20,7 @@ Last updated: 2026-03-12
 | Shared Components | 8 | 8 | 100% |
 | Data Layer | 8 | 7 | 88% |
 | Sync Engine | 5 | 2 | 40% |
-| **TOTAL** | **66** | **44** | **67%** |
+| **TOTAL** | **66** | **50** | **76%** |
 
 ---
 
@@ -65,28 +65,28 @@ Last updated: 2026-03-12
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Kanban board with stage columns | DONE | TODO | Stub: "coming soon" text |
-| List view toggle | DONE | PARTIAL | Basic list exists, no full table view |
-| Deal cards (name, value, company) | DONE | TODO | |
+| Kanban board with stage columns | DONE | DONE | 7 stage columns with color-coded headers, badge counts |
+| Opportunity detail view | DONE | DONE | OpportunityDetailView — header, deal info, stage, engagement, notes, milestones, linked records, details sections. FlowLayout for engagement badges. |
+| Deal cards (name, value, close date) | DONE | DONE | KanbanCard with name, formatted currency, date |
 | Drag-and-drop stage changes | DONE | TODO | SwiftUI .draggable/.dropDestination |
 
 ## Tasks
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Task list with status/priority | DONE | PARTIAL | Basic list, no filters |
-| Due date highlighting (overdue=red) | DONE | DONE | Conditional .red foreground |
-| Task detail view | DONE | TODO | |
+| Task list with filters | DONE | DONE | Segmented picker (All/Active/Completed/Overdue), search by name+notes, priority dots, type+status badges |
+| Due date highlighting (overdue=red) | DONE | DONE | Overdue row background tint + red date text |
+| Task detail view | DONE | DONE | TaskDetailView — overdue banner, priority colors, status/type badges, notes, linked records (opportunities/contacts/projects/proposals), details section |
 | Create/edit form | DONE | TODO | Stub form view exists |
 
 ## Proposals
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Proposal list with name/status | DONE | PARTIAL | Basic list only |
-| Detail view | DONE | TODO | |
+| Proposal list with search | DONE | DONE | Searchable list with name, status/approval badges, version, value, date sent metadata |
+| Proposal detail view | DONE | DONE | ProposalDetailView — header with status+approval badges, proposal info, scope, client feedback, notes, performance metrics, linked records (clients/companies/opportunities/tasks), details section |
 | Create/edit form | DONE | TODO | Stub form view exists |
-| Linked entities (opportunity, tasks) | DONE | TODO | |
+| Linked entities (opportunity, tasks) | DONE | DONE | Linked record counts displayed in detail view |
 
 ## Projects
 
@@ -165,7 +165,7 @@ Last updated: 2026-03-12
 ## Priority Queue (next to implement)
 
 1. **SyncEngine pull/push** — Without this, the app has no data. Highest priority.
-2. **Pipeline Kanban** — Key differentiator, Electron's most-used view.
-3. **Task detail + create/edit** — Daily workflow feature.
-4. **Contact/Company edit forms** — Currently read-only.
-5. **Remaining detail views** — Proposals, Projects, Interactions, Portal.
+2. **Pipeline drag-and-drop** — Kanban board is done but needs drag-to-reorder stage changes.
+3. **Create/edit forms** — Tasks, Proposals, Contacts, Companies all need create/edit forms.
+4. **Remaining detail views** — Projects, Interactions, Portal detail views.
+5. **Projects/Interactions/Portal list upgrades** — Currently basic lists, need filters and richer metadata.
