@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM project — Airtable schema management, API integrations, and eventually a full Electron desktop CRM app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Airtable API (backend/data), Anthropic Claude API (AI features)
-- **Status**: v3.4.0 — MVP with app licensing, auto-updates (verified), multi-user deployment (arm64 + x64). On main.
+- **Status**: v3.4.1 — MVP with app licensing, auto-updates (verified), multi-user deployment (arm64 + x64). On main.
 - **Repo**: edwardhodge-usa/ils-crm
 - **Airtable Base**: ILS CRM (appYXbUdcmSwBoPFU)
 
@@ -128,6 +128,7 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-11** - "dragEvent is not defined" console spam in Pipeline → React 18 dev-mode artifact in react-dom.development.js, absent in production builds. Not a code bug
 **2026-03-11** - multiSelect values stored with extra wrapping quotes (`"\"Business Development\""`) → `jsonArray()` didn't clean elements like `cleanSelectValue()` does for singleSelect. Fixed: both `airtableToLocal` and `localToAirtable` now map multiSelect elements through `cleanSelectValue()`
 **2026-03-12** - Portal Access dropdowns had hardcoded stage/status options that didn't match Airtable schema (same pattern as #7 from 2026-02-28 QA) → When adding select fields to new components, always check Airtable field schema for exact option values. Don't copy options from old/different components
+**2026-03-12** - Portal Page Address with spaces/capitals ("Haus Collection") causes 404 on Framer → page_address must be a URL slug (lowercase, hyphens). Three-layer fix: slugify on edit, cascade Client Pages → Portal Access on rename, validation sweep on load auto-fixes bad slugs from Airtable UI edits
 
 ## Deployment Process
 
