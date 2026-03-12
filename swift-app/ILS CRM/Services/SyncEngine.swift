@@ -23,6 +23,7 @@ final class SyncEngine {
     // MARK: - Private
 
     private static let logger = Logger(subsystem: "com.ils-crm", category: "sync")
+    private static let lockFilePath = "/tmp/ils-crm-sync.lock"
 
     private let modelContainer: ModelContainer
     private var service: AirtableService?
@@ -59,6 +60,39 @@ final class SyncEngine {
         pollingTask = nil
     }
 
+    // MARK: - Cross-App Sync Lock
+
+    /// Acquires the `/tmp/ils-crm-sync.lock` file to prevent simultaneous sync
+    /// from both the Electron and Swift apps against the same Airtable base.
+    /// Returns `true` if the lock was acquired, `false` if another app holds it.
+    private func acquireSyncLock() -> Bool {
+        let fm = FileManager.default
+
+        if fm.fileExists(atPath: Self.lockFilePath) {
+            // Read timestamp from existing lock file
+            if let contents = try? String(contentsOfFile: Self.lockFilePath, encoding: .utf8) {
+                let formatter = ISO8601DateFormatter()
+                if let lockDate = formatter.date(from: contents),
+                   abs(lockDate.timeIntervalSinceNow) < 120 {
+                    // Lock is fresh — another app is syncing
+                    return false
+                }
+            }
+            // Lock is stale or unparseable — remove it
+            try? fm.removeItem(atPath: Self.lockFilePath)
+        }
+
+        // Write current timestamp to lock file
+        let timestamp = Date().ISO8601Format()
+        try? timestamp.write(toFile: Self.lockFilePath, atomically: true, encoding: .utf8)
+        return true
+    }
+
+    /// Releases the cross-app sync lock by deleting the lock file.
+    private func releaseSyncLock() {
+        try? FileManager.default.removeItem(atPath: Self.lockFilePath)
+    }
+
     // MARK: - Sync
 
     /// Full sync: push pending, then pull all tables in order.
@@ -71,11 +105,19 @@ final class SyncEngine {
             return
         }
 
+        guard acquireSyncLock() else {
+            syncError = "Another app is syncing. Try again shortly."
+            Self.logger.warning("Sync skipped — lock held by another app")
+            return
+        }
+        Self.logger.info("Acquired sync lock")
+
         isSyncing = true
         syncError = nil
 
         defer {
             isSyncing = false
+            releaseSyncLock()
         }
 
         let context = modelContainer.mainContext

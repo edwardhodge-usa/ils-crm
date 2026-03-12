@@ -1,6 +1,6 @@
 # ILS CRM — Electron / Swift Parity Tracker
 
-Last updated: 2026-03-12 (Session 4 — CRUD forms + sync push/pull)
+Last updated: 2026-03-12 (Session 5 — final parity)
 
 ## Scorecard
 
@@ -10,18 +10,18 @@ Last updated: 2026-03-12 (Session 4 — CRUD forms + sync push/pull)
 | Dashboard | 3 | 3 | 100% |
 | Contacts | 5 | 5 | 100% |
 | Companies | 5 | 5 | 100% |
-| Pipeline | 4 | 3 | 75% |
+| Pipeline | 4 | 4 | 100% |
 | Tasks | 4 | 4 | 100% |
 | Proposals | 4 | 4 | 100% |
 | Projects | 4 | 4 | 100% |
 | Interactions | 4 | 4 | 100% |
 | Imported Contacts | 4 | 3 | 75% |
-| Portal (Access + Logs) | 5 | 4 | 80% |
+| Portal (Access + Logs) | 5 | 5 | 100% |
 | Settings | 4 | 4 | 100% |
 | Shared Components | 8 | 8 | 100% |
 | Data Layer | 8 | 8 | 100% |
-| Sync Engine | 5 | 4 | 80% |
-| **TOTAL** | **71** | **67** | **94%** |
+| Sync Engine | 5 | 5 | 100% |
+| **TOTAL** | **71** | **70** | **99%** |
 
 ---
 
@@ -69,7 +69,7 @@ Last updated: 2026-03-12 (Session 4 — CRUD forms + sync push/pull)
 | Kanban board with stage columns | DONE | DONE | 7 stage columns with color-coded headers, badge counts |
 | Opportunity detail view | DONE | DONE | OpportunityDetailView — header, deal info, stage, engagement, notes, milestones, linked records, details sections. FlowLayout for engagement badges. |
 | Deal cards (name, value, close date) | DONE | DONE | KanbanCard with name, formatted currency, date |
-| Drag-and-drop stage changes | DONE | TODO | SwiftUI .draggable/.dropDestination |
+| Drag-and-drop stage changes | DONE | DONE | SwiftUI .draggable/.dropDestination with visual column highlighting |
 
 ## Tasks
 
@@ -113,8 +113,8 @@ Last updated: 2026-03-12 (Session 4 — CRUD forms + sync push/pull)
 |---------|----------|-------|-------|
 | Imported contacts list with search | DONE | DONE | Searchable list with name/email/company filtering, status badges (Approved/Rejected/Pending), sheet detail navigation |
 | Detail view | DONE | DONE | ImportedContactDetailView — header with avatar + job title + onboarding status, contact info (email, phone, mobile, LinkedIn, website with tappable links), import info (source, date, categorization, tags with FlowLayout, event tags, sync flag), business (company, industry, type, size, address), company details (revenue, founded, NAICS, address, description), notes (general, review, rejection reason), details section |
-| Create/edit form | DONE | TODO | |
-| Linked entities | DONE | TODO | |
+| Create/edit form | DONE | DONE | ImportedContactFormView — name, email, phone, company, status picker, source, notes |
+| Linked entities | DONE | TODO | Not yet implemented — no linked record resolution for imported contacts |
 
 ## Portal (Access + Logs)
 
@@ -123,7 +123,7 @@ Last updated: 2026-03-12 (Session 4 — CRUD forms + sync push/pull)
 | Portal access list with search | DONE | DONE | Searchable list with name/email/page/company filtering, status badges, stage/company metadata, sheet detail navigation |
 | Portal logs list with search | DONE | DONE | Searchable list with client/email/company/page filtering, sorted newest-first, formatted timestamps |
 | Portal access detail view | DONE | DONE | PortalAccessDetailView — header with avatar + position + status badge, access info (page address, status, stage, email, position, company, decision maker, primary contact, lead source), portal & business (portal URL, website, phone, address, industry, budget), linked contact lookups (name, email, phone, job title, company, industry, website, tags, address), services interested in (FlowLayout badges), notes, key dates (added, expected start, follow-up), details section |
-| By Page / By Person views | DONE | TODO | v3.3.5 Electron feature |
+| By Page / By Person views | DONE | DONE | Segmented picker: All / By Page / By Person with grouped sections |
 
 ## Settings
 
@@ -168,14 +168,19 @@ Last updated: 2026-03-12 (Session 4 — CRUD forms + sync push/pull)
 | Polling timer | DONE | DONE | startPolling/stopPolling |
 | Push pending records | DONE | DONE | pushRecords<T> — creates (local_ prefix → batchCreate) + updates (batchUpdate), ID replacement |
 | Pull all tables in order | DONE | DONE | pullRecords<T> — fetchAll → AirtableRecord → upsert, delete stale (unless pending push) |
-| Cross-app sync lock (/tmp/) | DONE | TODO | |
+| Cross-app sync lock (/tmp/) | DONE | DONE | /tmp/ils-crm-sync.lock with 120s staleness check |
 
 ---
 
-## Priority Queue (next to implement)
+## Status: 99% Parity Achieved (Session 5)
 
-1. **Pipeline drag-and-drop** — Kanban board is done but needs drag-to-reorder stage changes.
-2. **Portal By Page / By Person views** — Electron v3.3.5 feature, currently flat list only.
-3. **Imported Contacts create/edit form** — Last remaining entity without a form.
-4. **Cross-app sync lock** — `/tmp/ils-crm-sync.lock` to prevent simultaneous Electron + Swift sync.
-5. **macOS polish** — Menu bar, keyboard shortcuts, window config.
+All major features implemented. 70 of 71 parity items complete.
+
+**Remaining item (1):**
+- Imported Contacts linked entities — linked record resolution for imported contacts
+
+**Future sessions:**
+1. **Imported Contacts linked entities** — resolve the final parity item
+2. **macOS polish** — Menu bar, keyboard shortcuts, window configuration
+3. **End-to-end testing** — Full sync testing with Electron app, data integrity verification
+4. **Release prep** — Code signing, notarization, DMG packaging, deployment

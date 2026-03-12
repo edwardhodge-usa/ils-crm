@@ -1,15 +1,23 @@
 import SwiftUI
 import SwiftData
 
-/// Portal Access list — flat list of portal access records with search,
-/// status badges, and sheet-based detail presentation.
+/// View mode for portal access records: flat list, grouped by page, or grouped by person.
+enum PortalViewMode: String, CaseIterable {
+    case all = "All"
+    case byPage = "By Page"
+    case byPerson = "By Person"
+}
+
+/// Portal Access list with three viewing modes: All (flat list),
+/// By Page (grouped by page address), and By Person (grouped by email).
 ///
-/// Mirrors the Electron Portal Access page but uses a simpler flat list
-/// instead of the "By Page" / "By Person" tab views.
+/// Mirrors the Electron Portal Access page with the same "By Page" /
+/// "By Person" tab views.
 struct PortalAccessView: View {
     @Query(sort: \PortalAccessRecord.name) private var records: [PortalAccessRecord]
     @State private var searchText = ""
     @State private var selectedRecord: PortalAccessRecord?
+    @State private var viewMode: PortalViewMode = .all
 
     // MARK: - Filtered Data
 
@@ -44,11 +52,29 @@ struct PortalAccessView: View {
                     systemImage: "magnifyingglass"
                 )
             } else {
-                recordList
+                switch viewMode {
+                case .all:
+                    recordList
+                case .byPage:
+                    byPageList
+                case .byPerson:
+                    byPersonList
+                }
             }
         }
         .searchable(text: $searchText, prompt: "Search portal access...")
         .navigationTitle("Client Portal")
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Picker("View", selection: $viewMode) {
+                    ForEach(PortalViewMode.allCases, id: \.self) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 240)
+            }
+        }
         .sheet(item: $selectedRecord) { record in
             PortalAccessDetailView(record: record)
                 .frame(minWidth: 480, minHeight: 600)
@@ -66,6 +92,73 @@ struct PortalAccessView: View {
                     recordRow(record)
                 }
                 .buttonStyle(.plain)
+            }
+        }
+        .listStyle(.inset)
+    }
+
+    // MARK: - By Page List
+
+    private var byPageList: some View {
+        let grouped = Dictionary(grouping: filteredRecords) { $0.pageAddress ?? "No Page" }
+        let sortedKeys = grouped.keys.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+
+        return List {
+            ForEach(sortedKeys, id: \.self) { pageAddress in
+                let records = grouped[pageAddress] ?? []
+                Section {
+                    ForEach(records, id: \.id) { record in
+                        Button { selectedRecord = record } label: { recordRow(record) }
+                            .buttonStyle(.plain)
+                    }
+                } header: {
+                    HStack {
+                        Image(systemName: "doc.text")
+                        Text(pageAddress)
+                        Spacer()
+                        Text("\(records.count)")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .listStyle(.inset)
+    }
+
+    // MARK: - By Person List
+
+    private var byPersonList: some View {
+        let grouped = Dictionary(grouping: filteredRecords) { record in
+            record.email ?? record.contactEmailLookup ?? "No Email"
+        }
+        let sortedKeys = grouped.keys.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+
+        return List {
+            ForEach(sortedKeys, id: \.self) { email in
+                let records = grouped[email] ?? []
+                let bestName = records.first.map { displayName(for: $0) } ?? email
+
+                Section {
+                    ForEach(records, id: \.id) { record in
+                        Button { selectedRecord = record } label: { recordRow(record) }
+                            .buttonStyle(.plain)
+                    }
+                } header: {
+                    HStack {
+                        Image(systemName: "person")
+                        VStack(alignment: .leading) {
+                            Text(bestName)
+                            if email != "No Email" {
+                                Text(email)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer()
+                        Text("\(records.count)")
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
         }
         .listStyle(.inset)

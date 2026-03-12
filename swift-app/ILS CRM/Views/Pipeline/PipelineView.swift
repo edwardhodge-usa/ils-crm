@@ -7,8 +7,10 @@ import SwiftData
 /// with name, deal value, and expected close date. Tap a card to open detail sheet.
 struct PipelineView: View {
     @Query private var opportunities: [Opportunity]
+    @Environment(\.modelContext) private var modelContext
     @State private var selectedOpportunity: Opportunity?
     @State private var showNewOpportunity = false
+    @State private var dropTargetedStage: String?
 
     private let stages = [
         "Prospecting", "Qualified", "Business Development",
@@ -99,6 +101,7 @@ struct PipelineView: View {
                 VStack(spacing: 8) {
                     ForEach(stageOpps, id: \.id) { opp in
                         KanbanCard(opportunity: opp)
+                            .draggable(opp.id)
                             .onTapGesture {
                                 selectedOpportunity = opp
                             }
@@ -112,6 +115,45 @@ struct PipelineView: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .background(Color(.controlBackgroundColor).opacity(0.5))
         .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(
+                    dropTargetedStage == stage ? color : .clear,
+                    lineWidth: 2
+                )
+        )
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(dropTargetedStage == stage ? color.opacity(0.1) : .clear)
+        )
+        .dropDestination(for: String.self) { droppedItems, _ in
+            guard let opportunityId = droppedItems.first else { return false }
+            return moveOpportunity(id: opportunityId, toStage: stage)
+        } isTargeted: { isTargeted in
+            dropTargetedStage = isTargeted ? stage : nil
+        }
+    }
+
+    /// Fetches an Opportunity by ID and moves it to the given stage.
+    /// Returns `true` if the move succeeded.
+    @discardableResult
+    private func moveOpportunity(id: String, toStage stage: String) -> Bool {
+        var descriptor = FetchDescriptor<Opportunity>(
+            predicate: #Predicate { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+
+        guard let opportunity = try? modelContext.fetch(descriptor).first else {
+            return false
+        }
+
+        // No-op if already in the target stage
+        guard opportunity.salesStage != stage else { return false }
+
+        opportunity.salesStage = stage
+        opportunity.isPendingPush = true
+        opportunity.localModifiedAt = Date()
+        return true
     }
 }
 
