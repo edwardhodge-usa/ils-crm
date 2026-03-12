@@ -7,6 +7,7 @@ import FramerSyncBanner from './FramerSyncBanner'
 import ActivityLog from './ActivityLog'
 import { ContextMenu } from '../shared/ContextMenu'
 import { resolvedPortalName, resolvedPortalEmail } from '../../utils/portal-helpers'
+import { slugify } from '../../utils/slugify'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,10 @@ export default function PageDetail({
 
   /** Wrap page field saves to also mark page as dirty */
   const handlePageFieldSave = useCallback(async (key: string, value: unknown) => {
-    await onPageFieldSave(key, value)
+    const finalValue = key === 'page_address' && typeof value === 'string'
+      ? slugify(value)
+      : value
+    await onPageFieldSave(key, finalValue)
     onMarkDirty(pageId)
   }, [onPageFieldSave, onMarkDirty, pageId])
 

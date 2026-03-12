@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import PageList from './PageList'
 import PageDetail from './PageDetail'
 import GrantAccessPopover from './GrantAccessPopover'
@@ -43,6 +43,62 @@ export default function ByPageView({
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [dirtyPages, setDirtyPages] = useState<Set<string>>(new Set())
   const [grantPopover, setGrantPopover] = useState<{ x: number; y: number } | null>(null)
+  const hasValidatedSlugs = useRef(false)
+
+  // ── Auto-fix bad slugs on load ──────────────────────────────────────────
+  // Catches edits made directly in Airtable UI that bypass the CRM's slugify.
+  // Runs once per mount, auto-corrects both Client Pages and Portal Access.
+
+  useEffect(() => {
+    if (hasValidatedSlugs.current || pages.length === 0) return
+    hasValidatedSlugs.current = true
+
+    const fixSlugs = async () => {
+      let pagesFixed = 0
+      let accessFixed = 0
+      // Track old→new slug renames so we cascade to Portal Access
+      const renames = new Map<string, string>()
+
+      // 1. Fix Client Pages with bad slugs
+      for (const page of pages) {
+        const addr = page.page_address as string | null
+        if (!addr || addr === 'null') continue
+        const correct = slugify(addr)
+        if (addr !== correct) {
+          await window.electronAPI.clientPages.update(page.id as string, { page_address: correct })
+          renames.set(addr, correct)
+          pagesFixed++
+        }
+      }
+
+      // 2. Fix Portal Access records — cascade renames + fix independently bad slugs
+      for (const rec of accessRecords) {
+        const addr = rec.page_address as string | null
+        if (!addr || addr === 'null') continue
+        // Check if this was renamed via a Client Page fix
+        const cascaded = renames.get(addr)
+        if (cascaded) {
+          await window.electronAPI.portalAccess.update(rec.id as string, { page_address: cascaded })
+          accessFixed++
+          continue
+        }
+        // Otherwise check if it's independently malformed
+        const correct = slugify(addr)
+        if (addr !== correct) {
+          await window.electronAPI.portalAccess.update(rec.id as string, { page_address: correct })
+          accessFixed++
+        }
+      }
+
+      if (pagesFixed > 0 || accessFixed > 0) {
+        console.log(`[Portal] Auto-fixed slugs: ${pagesFixed} page(s), ${accessFixed} access record(s)`)
+        reloadPages()
+        reloadAccess()
+      }
+    }
+
+    fixSlugs()
+  }, [pages, accessRecords, reloadPages, reloadAccess])
 
   // ── Auto-select first page ────────────────────────────────────────────────
 
@@ -109,8 +165,23 @@ export default function ByPageView({
         await window.electronAPI.clientPages.update(selectedPageId, { page_address: slug })
         reloadPages()
       }
+
+      // Cascade: when page_address changes, update all Portal Access records that reference the old slug
+      if (key === 'page_address' && selectedPage) {
+        const oldSlug = selectedPage.page_address as string | null
+        const newSlug = typeof value === 'string' ? value : null
+        if (oldSlug && oldSlug !== 'null' && newSlug && oldSlug !== newSlug) {
+          const affected = accessRecords.filter(r => r.page_address === oldSlug)
+          await Promise.all(
+            affected.map(r =>
+              window.electronAPI.portalAccess.update(r.id as string, { page_address: newSlug }),
+            ),
+          )
+          if (affected.length > 0) reloadAccess()
+        }
+      }
     },
-    [selectedPageId, selectedPage, pages, reloadPages],
+    [selectedPageId, selectedPage, pages, accessRecords, reloadPages, reloadAccess],
   )
 
   const handleMarkDirty = useCallback((pageId: string) => {
