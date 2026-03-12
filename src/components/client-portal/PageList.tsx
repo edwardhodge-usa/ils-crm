@@ -241,7 +241,7 @@ export default function PageList({
                       minWidth: 0,
                     }}
                   >
-                    /ils-clients/{address ?? '—'}
+                    /ils-clients/{(address && address !== 'null') ? address : '—'}
                   </span>
 
                   {/* Section indicator dots */}

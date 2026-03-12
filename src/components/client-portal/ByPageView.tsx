@@ -4,6 +4,11 @@ import PageDetail from './PageDetail'
 import GrantAccessPopover from './GrantAccessPopover'
 import { slugify, uniqueSlug } from '../../utils/slugify'
 
+/** Treat null, "null", undefined, and empty string as missing */
+function isEmptySlug(val: unknown): boolean {
+  return !val || val === 'null'
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ByPageViewProps {
@@ -94,8 +99,8 @@ export default function ByPageView({
       await window.electronAPI.clientPages.update(selectedPageId, { [key]: value })
       reloadPages()
 
-      // Auto-slugify: if editing client_name and page_address is empty, generate slug
-      if (key === 'client_name' && selectedPage && !selectedPage.page_address) {
+      // Auto-slugify: if editing client_name and page_address is empty/null/"null", generate slug
+      if (key === 'client_name' && selectedPage && isEmptySlug(selectedPage.page_address)) {
         const slug = uniqueSlug(
           slugify(String(value)),
           pages.map(p => String(p.page_address ?? '')),
@@ -141,7 +146,7 @@ export default function ByPageView({
 
   const handleGrantContact = useCallback(
     async (contactId: string, name: string, email: string) => {
-      if (!selectedPage) return
+      if (!selectedPage || isEmptySlug(selectedPage.page_address)) return
       const pa = selectedPage.page_address as string
       await window.electronAPI.portalAccess.create({
         page_address: pa,
@@ -221,7 +226,7 @@ export default function ByPageView({
           </div>
         )}
       </div>
-      {grantPopover && selectedPage && (
+      {grantPopover && selectedPage && !isEmptySlug(selectedPage.page_address) && (
         <GrantAccessPopover
           pageAddress={selectedPage.page_address as string}
           onGrant={handleGrantContact}

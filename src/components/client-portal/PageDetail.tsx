@@ -61,7 +61,8 @@ export default function PageDetail({
   onNavigateToPage,
 }: PageDetailProps) {
   const pageId = page.id as string
-  const pageAddress = page.page_address as string | null
+  const rawAddr = page.page_address as string | null
+  const pageAddress = (rawAddr && rawAddr !== 'null') ? rawAddr : null
   const clientName = (page.client_name as string) || ''
   const subtitle = (page.page_subtitle as string) || ''
 
@@ -225,15 +226,20 @@ export default function PageDetail({
             overflow: 'hidden',
             marginTop: 12,
           }}>
-            {PAGE_FIELDS.map((field, i) => (
-              <EditableFormRow
-                key={field.key}
-                field={field}
-                value={page[field.key]}
-                isLast={i === PAGE_FIELDS.length - 1}
-                onSave={handlePageFieldSave}
-              />
-            ))}
+            {PAGE_FIELDS.map((field, i) => {
+              let val = page[field.key]
+              // Sanitize "null" string from SQLite to actual null
+              if (val === 'null') val = null
+              return (
+                <EditableFormRow
+                  key={field.key}
+                  field={field}
+                  value={val}
+                  isLast={i === PAGE_FIELDS.length - 1}
+                  onSave={handlePageFieldSave}
+                />
+              )
+            })}
           </div>
 
           {/* 6. Section toggles */}
