@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unified Client Portal — Layout</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    background: #1a1a1a;
+    color: #e5e5e5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page-header {
+    padding: 20px 28px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: #1a1a1a;
+  }
+  .page-header h1 { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .page-header .subtitle { font-size: 12px; color: rgba(255,255,255,0.45); }
+
+  .app-layout {
+    display: flex;
+    height: calc(100vh - 60px);
+  }
+
+  /* Left panel — page/person list */
+  .left-panel {
+    width: 260px;
+    min-width: 260px;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .view-toggle {
+    display: flex;
+    margin: 12px 12px 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 2px;
+  }
+  .view-toggle button {
+    flex: 1;
+    padding: 6px 0;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: default;
+    transition: all 0.15s;
+    color: rgba(255,255,255,0.5);
+    background: transparent;
+  }
+  .view-toggle button.active {
+    background: rgba(0,122,255,0.9);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .search-bar {
+    margin: 4px 12px 8px;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    color: rgba(255,255,255,0.35);
+    font-size: 12px;
+  }
+
+  .list-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 8px;
+  }
+  .list-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: default;
+    margin-bottom: 1px;
+    gap: 10px;
+  }
+  .list-item:hover { background: rgba(255,255,255,0.04); }
+  .list-item.selected { background: rgba(0,122,255,0.9); }
+  .list-item.selected .item-sub { color: rgba(255,255,255,0.7); }
+
+  .item-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .item-info { flex: 1; min-width: 0; }
+  .item-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-sub { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 4px;
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5);
+    flex-shrink: 0; font-weight: 500;
+  }
+
+  .add-btn {
+    margin: 8px 12px 12px;
+    padding: 7px 0;
+    background: rgba(0,122,255,0.12);
+    color: rgba(0,122,255,0.9);
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: default;
+    text-align: center;
+  }
+
+  /* Middle panel — page detail */
+  .middle-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    min-width: 400px;
+  }
+
+  .framer-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 20px;
+    padding: 10px 14px;
+    background: rgba(255,165,0,0.08);
+    border: 1px solid rgba(255,165,0,0.15);
+    border-radius: 10px;
+    font-size: 12px;
+    color: rgba(255,165,0,0.9);
+  }
+  .framer-banner .icon { font-size: 14px; }
+  .framer-banner .text { flex: 1; }
+  .framer-banner .action {
+    padding: 4px 12px;
+    background: rgba(255,165,0,0.15);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 11px;
+    color: rgba(255,165,0,0.95);
+    cursor: default;
+    white-space: nowrap;
+  }
+
+  .page-settings {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .page-url-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+  }
+  .page-url-bar .slug { color: #fff; font-weight: 500; }
+  .page-url-bar .open-btn {
+    margin-left: auto;
+    padding: 3px 10px;
+    background: rgba(0,122,255,0.12);
+    color: rgba(0,122,255,0.9);
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .page-title-edit {
+    font-size: 20px; font-weight: 700; color: #fff;
+    margin-bottom: 4px;
+  }
+  .page-subtitle-edit {
+    font-size: 14px; color: rgba(255,255,255,0.5);
+    margin-bottom: 12px;
+  }
+
+  .form-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .form-label {
+    width: 120px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
+    flex-shrink: 0;
+  }
+  .form-value {
+    flex: 1;
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .section-toggles {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .toggle-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .toggle-pill.on { background: rgba(48,209,88,0.12); color: rgba(48,209,88,0.9); }
+  .toggle-pill.off { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); }
+  .toggle-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .toggle-pill.on .toggle-dot { background: rgba(48,209,88,0.9); }
+  .toggle-pill.off .toggle-dot { background: rgba(255,255,255,0.2); }
+
+  /* Access section */
+  .access-section {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.4);
+  }
+  .grant-btn {
+    padding: 5px 14px;
+    background: rgba(0,122,255,0.12);
+    color: rgba(0,122,255,0.9);
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: default;
+  }
+
+  .access-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 2px;
+    gap: 10px;
+    cursor: default;
+  }
+  .access-row:hover { background: rgba(255,255,255,0.04); }
+  .access-row.selected-row { background: rgba(0,122,255,0.1); }
+
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; flex-shrink: 0;
+  }
+  .access-info { flex: 1; min-width: 0; }
+  .access-name { font-size: 13px; font-weight: 500; }
+  .access-email { font-size: 11px; color: rgba(255,255,255,0.4); }
+  .access-meta {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .stage-badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600;
+  }
+  .stage-client { background: rgba(48,209,88,0.12); color: rgba(48,209,88,0.9); }
+  .stage-prospect { background: rgba(0,122,255,0.12); color: rgba(0,122,255,0.9); }
+  .stage-lead { background: rgba(255,159,10,0.12); color: rgba(255,159,10,0.9); }
+  .access-date { font-size: 11px; color: rgba(255,255,255,0.3); }
+  .access-note { font-size: 11px; color: rgba(255,255,255,0.35); font-style: italic; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+
+  /* Activity section */
+  .activity-section {
+    padding: 16px 20px;
+  }
+  .log-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    gap: 10px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+  }
+  .log-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(48,209,88,0.6); flex-shrink: 0; }
+  .log-name { color: rgba(255,255,255,0.8); font-weight: 500; }
+  .log-time { margin-left: auto; color: rgba(255,255,255,0.25); font-size: 11px; }
+
+  /* Right panel — access detail (slide-in) */
+  .right-panel {
+    width: 300px;
+    min-width: 300px;
+    border-left: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .detail-header {
+    text-align: center;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .detail-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 600;
+    margin: 0 auto 8px;
+  }
+  .detail-name { font-size: 15px; font-weight: 600; color: #fff; }
+  .detail-email { font-size: 12px; color: rgba(255,255,255,0.4); }
+
+  .detail-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .detail-label {
+    width: 100px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.35);
+    flex-shrink: 0;
+  }
+  .detail-value {
+    flex: 1;
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .annotation {
+    position: absolute;
+    padding: 6px 12px;
+    background: rgba(255,69,58,0.9);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 10;
+  }
+
+  .mockup-label {
+    text-align: center;
+    padding: 16px 20px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.3px;
+  }
+  .mockup-sublabel {
+    text-align: center;
+    padding: 0 20px 16px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-label">UNIFIED CLIENT PORTAL — "By Page" View</div>
+<div class="mockup-sublabel">Three panels: Page List &rarr; Page Detail (settings + access + logs) &rarr; Person Detail (on click)</div>
+
+<div class="app-layout">
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="view-toggle">
+      <button class="active">By Page</button>
+      <button>By Person</button>
+    </div>
+    <div class="search-bar">Search pages...</div>
+    <div class="list-items">
+      <div class="list-item selected">
+        <div class="item-dot" style="background: #30D158;"></div>
+        <div class="item-info">
+          <div class="item-name" style="color:#fff;">Acme Corporation</div>
+          <div class="item-sub" style="color:rgba(255,255,255,0.7);">/ils-clients/acme-corp</div>
+        </div>
+        <div class="item-badge">3</div>
+      </div>
+      <div class="list-item">
+        <div class="item-dot" style="background: #0A84FF;"></div>
+        <div class="item-info">
+          <div class="item-name">Beta Industries</div>
+          <div class="item-sub">/ils-clients/beta-ind</div>
+        </div>
+        <div class="item-badge">1</div>
+      </div>
+      <div class="list-item">
+        <div class="item-dot" style="background: #FF9F0A;"></div>
+        <div class="item-info">
+          <div class="item-name">Gamma Holdings</div>
+          <div class="item-sub">/ils-clients/gamma</div>
+        </div>
+        <div class="item-badge">2</div>
+      </div>
+      <div class="list-item">
+        <div class="item-dot" style="background: #BF5AF2;"></div>
+        <div class="item-info">
+          <div class="item-name">Delta Partners</div>
+          <div class="item-sub">/ils-clients/delta</div>
+        </div>
+        <div class="item-badge">1</div>
+      </div>
+      <div class="list-item">
+        <div class="item-dot" style="background: #FF375F;"></div>
+        <div class="item-info">
+          <div class="item-name">Epsilon Media</div>
+          <div class="item-sub">/ils-clients/epsilon</div>
+        </div>
+        <div class="item-badge">4</div>
+      </div>
+    </div>
+    <div class="add-btn">+ New Page</div>
+  </div>
+
+  <!-- MIDDLE PANEL -->
+  <div class="middle-panel">
+    <!-- Framer sync banner -->
+    <div class="framer-banner">
+      <span class="icon">&#9888;</span>
+      <span class="text"><strong>Page edited</strong> — Changes need to be published in Framer</span>
+      <span class="action">Open Framer</span>
+    </div>
+
+    <!-- Page settings -->
+    <div class="page-settings">
+      <div class="page-url-bar">
+        imaginelabstudios.com/ils-clients/<span class="slug">acme-corp</span>
+        <span class="open-btn">Open</span>
+      </div>
+      <div class="page-title-edit">Acme Corporation — Project Overview</div>
+      <div class="page-subtitle-edit">Custom creative strategy and production for Q2 2026</div>
+
+      <div class="form-row">
+        <div class="form-label">Deck URL</div>
+        <div class="form-value" style="color: rgba(0,122,255,0.9);">https://pitch.com/acme-q2-2026</div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Prepared For</div>
+        <div class="form-value">Sarah Chen, VP Marketing</div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Thank You</div>
+        <div class="form-value">Thank you for the opportunity to partner with Acme.</div>
+      </div>
+      <div class="form-row" style="border: none;">
+        <div class="form-label">Sections</div>
+        <div class="section-toggles">
+          <div class="toggle-pill on"><div class="toggle-dot"></div> Header</div>
+          <div class="toggle-pill on"><div class="toggle-dot"></div> Practical Magic</div>
+          <div class="toggle-pill off"><div class="toggle-dot"></div> Highlights</div>
+          <div class="toggle-pill on"><div class="toggle-dot"></div> 360 Video</div>
+          <div class="toggle-pill off"><div class="toggle-dot"></div> Full Length</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Access list -->
+    <div class="access-section">
+      <div class="section-header">
+        <span class="section-title">People with Access (3)</span>
+        <button class="grant-btn">+ Grant Access</button>
+      </div>
+
+      <div class="access-row selected-row">
+        <div class="avatar" style="background: rgba(0,122,255,0.15); color: rgba(0,122,255,0.9);">SC</div>
+        <div class="access-info">
+          <div class="access-name">Sarah Chen</div>
+          <div class="access-email">sarah@acme.com &middot; Acme Corp</div>
+          <div class="access-note">Main contact, prefers Tuesday meetings</div>
+        </div>
+        <div class="access-meta">
+          <span class="stage-badge stage-client">Client</span>
+          <span class="access-date">Feb 15</span>
+        </div>
+      </div>
+
+      <div class="access-row">
+        <div class="avatar" style="background: rgba(48,209,88,0.15); color: rgba(48,209,88,0.9);">JR</div>
+        <div class="access-info">
+          <div class="access-name">James Rodriguez</div>
+          <div class="access-email">james@acme.com &middot; Acme Corp</div>
+        </div>
+        <div class="access-meta">
+          <span class="stage-badge stage-client">Client</span>
+          <span class="access-date">Feb 15</span>
+        </div>
+      </div>
+
+      <div class="access-row">
+        <div class="avatar" style="background: rgba(191,90,242,0.15); color: rgba(191,90,242,0.9);">LP</div>
+        <div class="access-info">
+          <div class="access-name">Lisa Park</div>
+          <div class="access-email">lisa@partner-agency.com &middot; Partner Agency</div>
+          <div class="access-note">External creative director on this project</div>
+        </div>
+        <div class="access-meta">
+          <span class="stage-badge stage-lead">Partner</span>
+          <span class="access-date">Mar 2</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity -->
+    <div class="activity-section">
+      <div class="section-header">
+        <span class="section-title">Recent Activity</span>
+      </div>
+      <div class="log-row">
+        <div class="log-dot"></div>
+        <span class="log-name">Sarah Chen</span>
+        visited from New York, NY
+        <span class="log-time">2 hours ago</span>
+      </div>
+      <div class="log-row">
+        <div class="log-dot"></div>
+        <span class="log-name">Lisa Park</span>
+        visited from Los Angeles, CA
+        <span class="log-time">1 day ago</span>
+      </div>
+      <div class="log-row">
+        <div class="log-dot"></div>
+        <span class="log-name">James Rodriguez</span>
+        visited from Chicago, IL
+        <span class="log-time">3 days ago</span>
+      </div>
+      <div class="log-row">
+        <div class="log-dot" style="background: rgba(255,255,255,0.15);"></div>
+        <span class="log-name">Sarah Chen</span>
+        visited from New York, NY
+        <span class="log-time">1 week ago</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL — Person detail (slide-in) -->
+  <div class="right-panel">
+    <div class="detail-header">
+      <div class="detail-avatar" style="background: rgba(0,122,255,0.15); color: rgba(0,122,255,0.9);">SC</div>
+      <div class="detail-name">Sarah Chen</div>
+      <div class="detail-email">sarah@acme.com</div>
+    </div>
+
+    <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.3); margin-bottom: 8px;">Portal Fields</div>
+    <div class="detail-row">
+      <div class="detail-label">Stage</div>
+      <div class="detail-value"><span class="stage-badge stage-client" style="font-size:11px;">Client</span></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Lead Source</div>
+      <div class="detail-value">Referral</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Services</div>
+      <div class="detail-value">Strategy, Video Production</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Budget</div>
+      <div class="detail-value">$45,000</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Follow-Up</div>
+      <div class="detail-value">Mar 18, 2026</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Assignee</div>
+      <div class="detail-value">Edward Hodge</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Decision Maker</div>
+      <div class="detail-value">Sarah Chen</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Start Date</div>
+      <div class="detail-value">Apr 1, 2026</div>
+    </div>
+
+    <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.3); margin: 16px 0 8px;">Contact Info</div>
+    <div class="detail-row">
+      <div class="detail-label">Position</div>
+      <div class="detail-value">VP of Marketing</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Phone</div>
+      <div class="detail-value">+1 (212) 555-0142</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Website</div>
+      <div class="detail-value" style="color: rgba(0,122,255,0.9);">acme.com</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Industry</div>
+      <div class="detail-value">Technology</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Address</div>
+      <div class="detail-value">350 5th Ave, New York, NY</div>
+    </div>
+
+    <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.3); margin: 16px 0 8px;">Notes</div>
+    <div style="font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+      Main contact, prefers Tuesday meetings. Interested in expanding to full campaign management in Q3. Has internal approval for video budget.
+    </div>
+
+    <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.3); margin: 16px 0 8px;">Other Pages</div>
+    <div style="font-size: 12px; color: rgba(255,255,255,0.5); padding: 4px 0;">
+      <span style="color: rgba(0,122,255,0.9);">/ils-clients/acme-q1</span> &middot; Added Jan 10
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

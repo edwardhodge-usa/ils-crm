@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unified Client Portal — By Person View</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    background: #1a1a1a;
+    color: #e5e5e5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mockup-label {
+    text-align: center;
+    padding: 16px 20px 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+  }
+  .mockup-sublabel {
+    text-align: center;
+    padding: 0 20px 16px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .app-layout {
+    display: flex;
+    height: calc(100vh - 56px);
+  }
+
+  /* Left panel */
+  .left-panel {
+    width: 260px;
+    min-width: 260px;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .view-toggle {
+    display: flex;
+    margin: 12px 12px 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 2px;
+  }
+  .view-toggle button {
+    flex: 1;
+    padding: 6px 0;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: default;
+    transition: all 0.15s;
+    color: rgba(255,255,255,0.5);
+    background: transparent;
+  }
+  .view-toggle button.active {
+    background: rgba(0,122,255,0.9);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .search-bar {
+    margin: 4px 12px 8px;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    color: rgba(255,255,255,0.35);
+    font-size: 12px;
+  }
+
+  .group-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0 12px 8px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+  }
+  .group-bar span {
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: default;
+  }
+  .group-bar span.active {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.7);
+    font-weight: 500;
+  }
+
+  .list-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 8px;
+  }
+  .group-header {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.3);
+    padding: 12px 10px 6px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .group-header:first-child { border-top: none; }
+  .list-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: default;
+    margin-bottom: 1px;
+    gap: 10px;
+  }
+  .list-item:hover { background: rgba(255,255,255,0.04); }
+  .list-item.selected { background: rgba(0,122,255,0.9); }
+  .list-item.selected .item-sub { color: rgba(255,255,255,0.7); }
+  .list-item.selected .item-badge { background: rgba(255,255,255,0.2); color: #fff; }
+
+  .avatar-sm {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; flex-shrink: 0;
+  }
+  .item-info { flex: 1; min-width: 0; }
+  .item-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-sub { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 4px;
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5);
+    flex-shrink: 0; font-weight: 500;
+  }
+
+  .add-btn {
+    margin: 8px 12px 12px;
+    padding: 7px 0;
+    background: rgba(0,122,255,0.12);
+    color: rgba(0,122,255,0.9);
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: default;
+    text-align: center;
+  }
+
+  /* Middle panel */
+  .middle-panel {
+    flex: 1;
+    overflow-y: auto;
+    min-width: 400px;
+  }
+
+  .person-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .person-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 600;
+  }
+  .person-info h2 { font-size: 18px; font-weight: 700; color: #fff; }
+  .person-info .email { font-size: 13px; color: rgba(255,255,255,0.45); }
+  .person-info .company { font-size: 13px; color: rgba(255,255,255,0.55); font-weight: 500; }
+  .stage-badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 5px; font-weight: 600;
+    margin-left: auto;
+  }
+  .stage-client { background: rgba(48,209,88,0.12); color: rgba(48,209,88,0.9); }
+  .stage-prospect { background: rgba(0,122,255,0.12); color: rgba(0,122,255,0.9); }
+  .stage-lead { background: rgba(255,159,10,0.12); color: rgba(255,159,10,0.9); }
+  .stage-partner { background: rgba(191,90,242,0.12); color: rgba(191,90,242,0.9); }
+
+  .section-block {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 12px;
+  }
+
+  .page-card {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    gap: 12px;
+    cursor: default;
+  }
+  .page-card:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+  .page-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .page-card-info { flex: 1; min-width: 0; }
+  .page-card-title { font-size: 14px; font-weight: 600; color: #fff; }
+  .page-card-slug { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .page-card-sections {
+    display: flex; gap: 4px; margin-top: 6px;
+  }
+  .mini-pill {
+    font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 500;
+  }
+  .mini-pill.on { background: rgba(48,209,88,0.1); color: rgba(48,209,88,0.8); }
+  .mini-pill.off { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.2); }
+  .page-card-date { font-size: 11px; color: rgba(255,255,255,0.25); flex-shrink: 0; }
+  .page-card-arrow { color: rgba(255,255,255,0.15); font-size: 16px; flex-shrink: 0; }
+
+  .form-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .form-label {
+    width: 120px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    flex-shrink: 0;
+  }
+  .form-value {
+    flex: 1;
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .log-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    gap: 10px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+  }
+  .log-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(48,209,88,0.6); flex-shrink: 0; }
+  .log-page { color: rgba(0,122,255,0.8); font-weight: 500; }
+  .log-time { margin-left: auto; color: rgba(255,255,255,0.25); font-size: 11px; }
+
+  .notes-box {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.6;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-label">UNIFIED CLIENT PORTAL — "By Person" View</div>
+<div class="mockup-sublabel">Same page, toggled to person-centric. Shows all pages a person has access to + their details.</div>
+
+<div class="app-layout">
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="view-toggle">
+      <button>By Page</button>
+      <button class="active">By Person</button>
+    </div>
+    <div class="search-bar">Search people...</div>
+    <div class="group-bar">
+      Group: <span class="active">Company</span> <span>Stage</span> <span>None</span>
+    </div>
+    <div class="list-items">
+      <div class="group-header">Acme Corporation</div>
+      <div class="list-item selected">
+        <div class="avatar-sm" style="background: rgba(0,122,255,0.15); color: rgba(0,122,255,0.9);">SC</div>
+        <div class="item-info">
+          <div class="item-name" style="color:#fff;">Sarah Chen</div>
+          <div class="item-sub" style="color:rgba(255,255,255,0.7);">sarah@acme.com</div>
+        </div>
+        <div class="item-badge" style="background:rgba(255,255,255,0.2); color:#fff;">2</div>
+      </div>
+      <div class="list-item">
+        <div class="avatar-sm" style="background: rgba(48,209,88,0.15); color: rgba(48,209,88,0.9);">JR</div>
+        <div class="item-info">
+          <div class="item-name">James Rodriguez</div>
+          <div class="item-sub">james@acme.com</div>
+        </div>
+        <div class="item-badge">1</div>
+      </div>
+      <div class="list-item">
+        <div class="avatar-sm" style="background: rgba(255,159,10,0.15); color: rgba(255,159,10,0.9);">MW</div>
+        <div class="item-info">
+          <div class="item-name">Mike Walsh</div>
+          <div class="item-sub">mike@acme.com</div>
+        </div>
+        <div class="item-badge">1</div>
+      </div>
+
+      <div class="group-header">Beta Industries</div>
+      <div class="list-item">
+        <div class="avatar-sm" style="background: rgba(191,90,242,0.15); color: rgba(191,90,242,0.9);">AT</div>
+        <div class="item-info">
+          <div class="item-name">Anna Torres</div>
+          <div class="item-sub">anna@beta.com</div>
+        </div>
+        <div class="item-badge">1</div>
+      </div>
+
+      <div class="group-header">Partner Agency</div>
+      <div class="list-item">
+        <div class="avatar-sm" style="background: rgba(255,55,95,0.15); color: rgba(255,55,95,0.9);">LP</div>
+        <div class="item-info">
+          <div class="item-name">Lisa Park</div>
+          <div class="item-sub">lisa@partner-agency.com</div>
+        </div>
+        <div class="item-badge">2</div>
+      </div>
+
+      <div class="group-header">Gamma Holdings</div>
+      <div class="list-item">
+        <div class="avatar-sm" style="background: rgba(64,203,224,0.15); color: rgba(64,203,224,0.9);">DK</div>
+        <div class="item-info">
+          <div class="item-name">David Kim</div>
+          <div class="item-sub">david@gamma.com</div>
+        </div>
+        <div class="item-badge">1</div>
+      </div>
+      <div class="list-item">
+        <div class="avatar-sm" style="background: rgba(255,69,58,0.15); color: rgba(255,69,58,0.9);">RN</div>
+        <div class="item-info">
+          <div class="item-name">Rachel Nguyen</div>
+          <div class="item-sub">rachel@gamma.com</div>
+        </div>
+        <div class="item-badge">1</div>
+      </div>
+    </div>
+    <div class="add-btn">+ Grant Access</div>
+  </div>
+
+  <!-- MIDDLE PANEL -->
+  <div class="middle-panel">
+    <!-- Person header -->
+    <div class="person-header">
+      <div class="person-avatar" style="background: rgba(0,122,255,0.15); color: rgba(0,122,255,0.9);">SC</div>
+      <div class="person-info">
+        <h2>Sarah Chen</h2>
+        <div class="email">sarah@acme.com</div>
+        <div class="company">Acme Corporation &middot; VP of Marketing</div>
+      </div>
+      <span class="stage-badge stage-client">Client</span>
+    </div>
+
+    <!-- Pages this person has access to -->
+    <div class="section-block">
+      <div class="section-title">Pages with Access (2)</div>
+
+      <div class="page-card">
+        <div class="page-dot" style="background: #30D158;"></div>
+        <div class="page-card-info">
+          <div class="page-card-title">Acme Corporation — Project Overview</div>
+          <div class="page-card-slug">/ils-clients/acme-corp</div>
+          <div class="page-card-sections">
+            <span class="mini-pill on">Header</span>
+            <span class="mini-pill on">Practical Magic</span>
+            <span class="mini-pill on">360</span>
+          </div>
+        </div>
+        <div class="page-card-date">Feb 15</div>
+        <div class="page-card-arrow">&rsaquo;</div>
+      </div>
+
+      <div class="page-card">
+        <div class="page-dot" style="background: #FF9F0A;"></div>
+        <div class="page-card-info">
+          <div class="page-card-title">Acme Q1 Review</div>
+          <div class="page-card-slug">/ils-clients/acme-q1</div>
+          <div class="page-card-sections">
+            <span class="mini-pill on">Header</span>
+            <span class="mini-pill on">Highlights</span>
+            <span class="mini-pill on">Full Length</span>
+          </div>
+        </div>
+        <div class="page-card-date">Jan 10</div>
+        <div class="page-card-arrow">&rsaquo;</div>
+      </div>
+    </div>
+
+    <!-- Details -->
+    <div class="section-block">
+      <div class="section-title">Details</div>
+      <div class="form-row">
+        <div class="form-label">Lead Source</div>
+        <div class="form-value">Referral</div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Services</div>
+        <div class="form-value">Strategy / Consulting, Video Production</div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Budget</div>
+        <div class="form-value">$45,000</div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Decision Maker</div>
+        <div class="form-value">Sarah Chen</div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Follow-Up</div>
+        <div class="form-value">Mar 18, 2026</div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Assignee</div>
+        <div class="form-value">Edward Hodge</div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Start Date</div>
+        <div class="form-value">Apr 1, 2026</div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Phone</div>
+        <div class="form-value">+1 (212) 555-0142</div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Website</div>
+        <div class="form-value" style="color: rgba(0,122,255,0.9);">acme.com</div>
+      </div>
+      <div class="form-row" style="border: none;">
+        <div class="form-label">Industry</div>
+        <div class="form-value">Technology</div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="section-block">
+      <div class="section-title">Notes</div>
+      <div class="notes-box">
+        Main contact, prefers Tuesday meetings. Interested in expanding to full campaign management in Q3. Has internal approval for video budget.
+      </div>
+    </div>
+
+    <!-- Activity for this person -->
+    <div class="section-block" style="border: none;">
+      <div class="section-title">Recent Activity</div>
+      <div class="log-row">
+        <div class="log-dot"></div>
+        Visited <span class="log-page">/ils-clients/acme-corp</span> from New York, NY
+        <span class="log-time">2 hours ago</span>
+      </div>
+      <div class="log-row">
+        <div class="log-dot"></div>
+        Visited <span class="log-page">/ils-clients/acme-q1</span> from New York, NY
+        <span class="log-time">5 days ago</span>
+      </div>
+      <div class="log-row">
+        <div class="log-dot"></div>
+        Visited <span class="log-page">/ils-clients/acme-corp</span> from New York, NY
+        <span class="log-time">1 week ago</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,74 @@
+<h2>Which fields matter in the portal context?</h2>
+<p class="subtitle">The current Portal Access tab has 19+ fields. In the unified view, which tier does each field belong to?</p>
+
+<div class="section">
+  <h3>Tier 1 — Always visible in the access list</h3>
+  <p class="subtitle">These show inline on each person's row in the access list</p>
+  <div class="options" data-multiselect>
+    <div class="option selected" data-choice="name" onclick="toggleSelect(this)">
+      <div class="content"><h3>Name</h3><p>Contact's full name</p></div>
+    </div>
+    <div class="option selected" data-choice="email" onclick="toggleSelect(this)">
+      <div class="content"><h3>Email</h3><p>Login credential for portal</p></div>
+    </div>
+    <div class="option selected" data-choice="company" onclick="toggleSelect(this)">
+      <div class="content"><h3>Company</h3><p>From linked contact</p></div>
+    </div>
+    <div class="option selected" data-choice="stage" onclick="toggleSelect(this)">
+      <div class="content"><h3>Stage</h3><p>Prospect / Lead / Client / Past Client / Partner</p></div>
+    </div>
+    <div class="option selected" data-choice="date_added" onclick="toggleSelect(this)">
+      <div class="content"><h3>Date Added</h3><p>When access was granted</p></div>
+    </div>
+    <div class="option" data-choice="assignee" onclick="toggleSelect(this)">
+      <div class="content"><h3>Assignee</h3><p>Who manages this relationship</p></div>
+    </div>
+    <div class="option" data-choice="follow_up" onclick="toggleSelect(this)">
+      <div class="content"><h3>Follow-Up Date</h3><p>Next action date</p></div>
+    </div>
+    <div class="option" data-choice="notes" onclick="toggleSelect(this)">
+      <div class="content"><h3>Notes</h3><p>Internal notes (preview)</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Tier 2 — Detail panel only</h3>
+  <p class="subtitle">These appear when you click a person to expand their details. Click any to promote to Tier 1 instead.</p>
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="promote-budget" onclick="toggleSelect(this)">
+      <div class="content"><h3>Project Budget</h3><p>Currently: detail only. Click to promote.</p></div>
+    </div>
+    <div class="option" data-choice="promote-lead_source" onclick="toggleSelect(this)">
+      <div class="content"><h3>Lead Source</h3><p>Referral / Website / LinkedIn / etc.</p></div>
+    </div>
+    <div class="option" data-choice="promote-services" onclick="toggleSelect(this)">
+      <div class="content"><h3>Services Interested In</h3><p>Strategy, Video, Design, etc.</p></div>
+    </div>
+    <div class="option" data-choice="promote-decision_maker" onclick="toggleSelect(this)">
+      <div class="content"><h3>Decision Maker</h3><p>Who signs off</p></div>
+    </div>
+    <div class="option" data-choice="promote-start_date" onclick="toggleSelect(this)">
+      <div class="content"><h3>Expected Project Start</h3><p>Timeline expectation</p></div>
+    </div>
+    <div class="option" data-choice="promote-position" onclick="toggleSelect(this)">
+      <div class="content"><h3>Position / Title</h3><p>Contact's job title</p></div>
+    </div>
+    <div class="option" data-choice="promote-industry" onclick="toggleSelect(this)">
+      <div class="content"><h3>Industry</h3><p>Contact's industry</p></div>
+    </div>
+    <div class="option" data-choice="promote-phone" onclick="toggleSelect(this)">
+      <div class="content"><h3>Phone Number</h3><p>Direct phone</p></div>
+    </div>
+    <div class="option" data-choice="promote-website" onclick="toggleSelect(this)">
+      <div class="content"><h3>Website</h3><p>Company or personal URL</p></div>
+    </div>
+    <div class="option" data-choice="promote-address" onclick="toggleSelect(this)">
+      <div class="content"><h3>Address</h3><p>Physical address</p></div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 24px; padding: 16px; background: rgba(0,122,255,0.08); border-radius: 12px;">
+  <p style="margin: 0; font-size: 14px; color: #666;"><strong>How this works:</strong> Top section = fields visible at a glance in the access list. Bottom section = fields hidden until you click into a person's detail. I've pre-selected name, email, company, stage, and date added. Toggle anything you'd move between tiers, then let me know in the terminal.</p>
+</div>
