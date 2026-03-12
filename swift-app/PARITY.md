@@ -1,6 +1,6 @@
 # ILS CRM — Electron / Swift Parity Tracker
 
-Last updated: 2026-03-12
+Last updated: 2026-03-12 (Session 3 — detail views complete)
 
 ## Scorecard
 
@@ -13,14 +13,15 @@ Last updated: 2026-03-12
 | Pipeline | 4 | 3 | 75% |
 | Tasks | 4 | 3 | 75% |
 | Proposals | 4 | 3 | 75% |
-| Projects | 4 | 1 | 25% |
-| Interactions | 4 | 1 | 25% |
-| Portal (Access + Logs) | 4 | 1 | 25% |
+| Projects | 4 | 3 | 75% |
+| Interactions | 4 | 3 | 75% |
+| Imported Contacts | 4 | 3 | 75% |
+| Portal (Access + Logs) | 5 | 4 | 80% |
 | Settings | 4 | 4 | 100% |
 | Shared Components | 8 | 8 | 100% |
 | Data Layer | 8 | 7 | 88% |
 | Sync Engine | 5 | 2 | 40% |
-| **TOTAL** | **66** | **50** | **76%** |
+| **TOTAL** | **71** | **60** | **85%** |
 
 ---
 
@@ -92,27 +93,36 @@ Last updated: 2026-03-12
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Project list with name/status | DONE | PARTIAL | Basic list only |
-| Detail view | DONE | TODO | |
+| Project list with search/status | DONE | DONE | Searchable list with status badges, date subtitle, sheet detail navigation |
+| Detail view | DONE | DONE | ProjectDetailView — header with avatar + status, project info (location, contract value, engagement type, dates), description, key milestones, lessons learned, linked records (opportunities, clients, contacts, tasks), details section |
 | Create/edit form | DONE | TODO | Stub form view exists |
-| Linked entities (contacts, tasks) | DONE | TODO | |
+| Linked entities (contacts, tasks) | DONE | DONE | Linked record counts displayed in detail view |
 
 ## Interactions
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Interaction list (subject, type, date) | DONE | PARTIAL | Basic list only |
-| Detail view | DONE | TODO | |
-| Log interaction sheet | DONE | TODO | |
-| Linked contacts/opportunities | DONE | TODO | |
+| Interaction list with search/type icons | DONE | DONE | Searchable list with type-specific SF Symbol icons (phone, email, meeting, video), direction badges, formatted dates, sheet detail navigation |
+| Detail view | DONE | DONE | InteractionDetailView — header with type icon + subject + badges, interaction info (type, date, direction), summary, next steps, linked records (contacts, opportunities), details section |
+| Log interaction sheet | DONE | TODO | Plus button present, sheet not yet implemented |
+| Linked contacts/opportunities | DONE | DONE | Linked record counts displayed in detail view |
+
+## Imported Contacts
+
+| Feature | Electron | Swift | Notes |
+|---------|----------|-------|-------|
+| Imported contacts list with search | DONE | DONE | Searchable list with name/email/company filtering, status badges (Approved/Rejected/Pending), sheet detail navigation |
+| Detail view | DONE | DONE | ImportedContactDetailView — header with avatar + job title + onboarding status, contact info (email, phone, mobile, LinkedIn, website with tappable links), import info (source, date, categorization, tags with FlowLayout, event tags, sync flag), business (company, industry, type, size, address), company details (revenue, founded, NAICS, address, description), notes (general, review, rejection reason), details section |
+| Create/edit form | DONE | TODO | |
+| Linked entities | DONE | TODO | |
 
 ## Portal (Access + Logs)
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Portal access list | DONE | PARTIAL | Basic list with name/stage/company |
-| Portal logs list | DONE | PARTIAL | Basic list with client/page/timestamp |
-| Portal access detail view | DONE | TODO | |
+| Portal access list with search | DONE | DONE | Searchable list with name/email/page/company filtering, status badges, stage/company metadata, sheet detail navigation |
+| Portal logs list with search | DONE | DONE | Searchable list with client/email/company/page filtering, sorted newest-first, formatted timestamps |
+| Portal access detail view | DONE | DONE | PortalAccessDetailView — header with avatar + position + status badge, access info (page address, status, stage, email, position, company, decision maker, primary contact, lead source), portal & business (portal URL, website, phone, address, industry, budget), linked contact lookups (name, email, phone, job title, company, industry, website, tags, address), services interested in (FlowLayout badges), notes, key dates (added, expected start, follow-up), details section |
 | By Page / By Person views | DONE | TODO | v3.3.5 Electron feature |
 
 ## Settings
@@ -166,6 +176,6 @@ Last updated: 2026-03-12
 
 1. **SyncEngine pull/push** — Without this, the app has no data. Highest priority.
 2. **Pipeline drag-and-drop** — Kanban board is done but needs drag-to-reorder stage changes.
-3. **Create/edit forms** — Tasks, Proposals, Contacts, Companies all need create/edit forms.
-4. **Remaining detail views** — Projects, Interactions, Portal detail views.
-5. **Projects/Interactions/Portal list upgrades** — Currently basic lists, need filters and richer metadata.
+3. **Create/edit forms** — Tasks, Proposals, Projects, Contacts, Companies, Imported Contacts all need create/edit forms.
+4. **Portal By Page / By Person views** — Electron v3.3.5 feature, currently flat list only.
+5. **Interaction log sheet** — New interaction creation form.
