@@ -72,10 +72,11 @@ export default function ByPageView({
   )
 
   const pageAccessRecords = useMemo(
-    () =>
-      selectedPage
-        ? accessRecords.filter(r => r.page_address === selectedPage.page_address)
-        : [],
+    () => {
+      const addr = selectedPage?.page_address as string | null
+      if (!selectedPage || !addr || addr === 'null') return []
+      return accessRecords.filter(r => r.page_address === addr)
+    },
     [accessRecords, selectedPage],
   )
 
