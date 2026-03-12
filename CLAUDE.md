@@ -129,6 +129,7 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-11** - multiSelect values stored with extra wrapping quotes (`"\"Business Development\""`) → `jsonArray()` didn't clean elements like `cleanSelectValue()` does for singleSelect. Fixed: both `airtableToLocal` and `localToAirtable` now map multiSelect elements through `cleanSelectValue()`
 **2026-03-12** - Portal Access dropdowns had hardcoded stage/status options that didn't match Airtable schema (same pattern as #7 from 2026-02-28 QA) → When adding select fields to new components, always check Airtable field schema for exact option values. Don't copy options from old/different components
 **2026-03-12** - Portal Page Address with spaces/capitals ("Haus Collection") causes 404 on Framer → page_address must be a URL slug (lowercase, hyphens). Three-layer fix: slugify on edit, cascade Client Pages → Portal Access on rename, validation sweep on load auto-fixes bad slugs from Airtable UI edits
+**2026-03-12** - Airtable REST API returns field **names** as keys by default, not field **IDs** → Swift converters use field IDs (e.g. `fldMkz6x5i8YaofZj`), so `fetchAllRecords` must include `returnFieldsByFieldId=true` query parameter. Without it, all fields parse as nil (records sync with correct count but every property is empty). The Electron app uses field names in converters so it doesn't hit this — but the Swift app was designed around field IDs for schema consistency
 
 ## Deployment Process
 

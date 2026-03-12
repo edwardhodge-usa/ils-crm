@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var showSaveConfirmation = false
 
     @Environment(SyncEngine.self) private var syncEngine
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         Form {
@@ -74,6 +75,11 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("Settings")
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") { dismiss() }
+            }
+        }
         .onAppear {
             loadApiKey()
         }

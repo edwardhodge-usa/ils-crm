@@ -120,7 +120,13 @@ struct AirtableFields {
 /// - Table identity (airtableTableId)
 /// - Airtable → SwiftData (from(record:context:))
 /// - SwiftData → Airtable (toAirtableFields())
-protocol AirtableConvertible {
+protocol AirtableConvertible: PersistentModel {
+    /// Airtable record ID — every @Model has `@Attribute(.unique) var id: String`.
+    var id: String { get }
+
+    /// Whether this record has local changes not yet pushed to Airtable.
+    var isPendingPush: Bool { get }
+
     /// The Airtable table ID (e.g. "tbl9Q8m06ivkTYyvR").
     static var airtableTableId: String { get }
 

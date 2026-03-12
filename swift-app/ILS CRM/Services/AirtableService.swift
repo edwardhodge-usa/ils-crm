@@ -37,15 +37,18 @@ actor AirtableService {
         var offset: String? = nil
 
         repeat {
-            var url = AirtableConfig.apiBaseURL
+            let baseURL = AirtableConfig.apiBaseURL
                 .appendingPathComponent(baseId)
                 .appendingPathComponent(tableId)
 
+            var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
+            // Return field IDs as keys (not field names) — converters use field IDs
+            var queryItems = [URLQueryItem(name: "returnFieldsByFieldId", value: "true")]
             if let offset {
-                var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
-                components.queryItems = [URLQueryItem(name: "offset", value: offset)]
-                url = components.url!
+                queryItems.append(URLQueryItem(name: "offset", value: offset))
             }
+            components.queryItems = queryItems
+            let url = components.url!
 
             let (data, response) = try await session.data(from: url)
 
