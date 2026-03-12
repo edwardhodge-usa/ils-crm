@@ -120,7 +120,7 @@ export default function AccessDetailPanel({
       minWidth: 300,
       height: '100%',
       borderLeft: '1px solid var(--separator)',
-      background: 'var(--bg-primary)',
+      background: 'var(--bg-card)',
       display: 'flex',
       flexDirection: 'column',
       overflowY: 'auto',

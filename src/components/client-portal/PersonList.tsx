@@ -307,7 +307,7 @@ export default function PersonList({
                       background: isSelected
                         ? 'rgba(255,255,255,0.2)'
                         : `${color}22`,
-                      color: isSelected ? '#fff' : color,
+                      color: isSelected ? 'var(--text-on-accent)' : color,
                     }}
                   >
                     {initials(person.name)}
@@ -354,7 +354,7 @@ export default function PersonList({
                         ? 'rgba(255,255,255,0.2)'
                         : 'var(--bg-tertiary)',
                       color: isSelected
-                        ? '#fff'
+                        ? 'var(--text-on-accent)'
                         : 'var(--text-secondary)',
                     }}
                   >

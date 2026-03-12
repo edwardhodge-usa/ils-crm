@@ -178,9 +178,9 @@ export default function GrantAccessPopover({
           top: position.y,
           zIndex: 9999,
           width: 320,
-          background: 'var(--bg-primary)',
+          background: 'var(--bg-popover)',
           borderRadius: 10,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15), 0 0 1px rgba(0,0,0,0.1)',
+          boxShadow: 'var(--shadow-md)',
           padding: 8,
           cursor: 'default',
         }}
