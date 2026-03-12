@@ -4,43 +4,7 @@ import { EmptyState } from '../shared/EmptyState'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import { Avatar } from '../shared/Avatar'
 import useEntityList from '../../hooks/useEntityList'
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Safely extract a display string from a lookup value that may be a JSON array */
-function resolveLookup(val: unknown): string | null {
-  if (!val) return null
-  if (typeof val === 'string') {
-    if (val.startsWith('[')) {
-      try {
-        const arr = JSON.parse(val)
-        if (Array.isArray(arr) && arr.length > 0) return String(arr[0])
-      } catch { /* not JSON, use as-is */ }
-    }
-    return val
-  }
-  if (Array.isArray(val) && val.length > 0) return String(val[0])
-  return String(val)
-}
-
-/** Get best display name for a Portal Access record */
-function resolvedPortalName(row: Record<string, unknown>): string {
-  const name = row.name as string | null
-  if (name && name !== row.airtable_id) return name
-  const contactName = resolveLookup(row.contact_name_lookup)
-  if (contactName) return contactName
-  const email = row.email as string | null
-  if (email) return email
-  const contactEmail = resolveLookup(row.contact_email_lookup)
-  if (contactEmail) return contactEmail
-  return name || 'Unnamed'
-}
-
-function resolvedPortalEmail(row: Record<string, unknown>): string | null {
-  const contactEmail = resolveLookup(row.contact_email_lookup)
-  if (contactEmail) return contactEmail
-  return (row.email as string | null) || null
-}
+import { resolvedPortalName, resolvedPortalEmail } from '../../utils/portal-helpers'
 
 // ─── Toggle switch component ─────────────────────────────────────────────────
 

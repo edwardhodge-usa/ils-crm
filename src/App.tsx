@@ -25,9 +25,11 @@ import ImportedContactsPage from './components/imported-contacts/ImportedContact
 import InteractionsPage from './components/interactions/InteractionsPage'
 import InteractionListPage from './components/interactions/InteractionListPage'
 import InteractionForm from './components/interactions/InteractionForm'
-import PortalAccessPage from './components/portal/PortalAccessPage'
-import PortalCmsPage from './components/portal/PortalCmsPage'
-import PortalLogsPage from './components/portal/PortalLogsPage'
+// Old portal imports — kept for reference, will be removed in Task 12
+// import PortalAccessPage from './components/portal/PortalAccessPage'
+// import PortalCmsPage from './components/portal/PortalCmsPage'
+// import PortalLogsPage from './components/portal/PortalLogsPage'
+import ClientPortalPage from './components/client-portal/ClientPortalPage'
 import CommandPalette from './components/layout/CommandPalette'
 import ErrorBoundary from './components/shared/ErrorBoundary'
 import UpdateBanner from './components/layout/UpdateBanner'
@@ -209,10 +211,8 @@ export default function App() {
             <Route path="/interactions/new" element={<InteractionForm />} />
             <Route path="/interactions/:id/edit" element={<InteractionForm />} />
 
-            {/* Portal */}
-            <Route path="/portal" element={<PortalAccessPage />} />
-            <Route path="/portal-cms" element={<PortalCmsPage />} />
-            <Route path="/portal-logs" element={<PortalLogsPage />} />
+            {/* Client Portal */}
+            <Route path="/client-portal" element={<ClientPortalPage />} />
 
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
