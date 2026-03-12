@@ -154,6 +154,7 @@ export default function ByPageView({
         name,
         email,
         stage: 'Lead',
+        status: 'ACTIVE',
         contact_ids: JSON.stringify([contactId]),
         date_added: new Date().toISOString().split('T')[0],
       })

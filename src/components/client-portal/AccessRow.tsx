@@ -56,6 +56,8 @@ export default function AccessRow({ record, isSelected, onClick, onContextMenu }
   const company = resolvedPortalCompany(record)
   const notes = (record.notes as string | null) || null
   const stage = (record.stage as string | null) || null
+  const status = (record.status as string | null) || null
+  const isActive = status === 'ACTIVE'
   const dateAdded = formatDate(record.date_added)
 
   const avatarColor = hashColor(name)
@@ -84,23 +86,36 @@ export default function AccessRow({ record, isSelected, onClick, onContextMenu }
       onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-hover)' }}
       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = isSelected ? 'var(--bg-selected)' : 'transparent' }}
     >
-      {/* Avatar circle */}
-      <div
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 12,
-          fontWeight: 600,
-          flexShrink: 0,
-          background: `${avatarColor}22`,
-          color: avatarColor,
-        }}
-      >
-        {initials(name)}
+      {/* Avatar circle with status dot */}
+      <div style={{ position: 'relative', flexShrink: 0 }}>
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 12,
+            fontWeight: 600,
+            background: `${avatarColor}22`,
+            color: avatarColor,
+          }}
+        >
+          {initials(name)}
+        </div>
+        {isActive && (
+          <div style={{
+            position: 'absolute',
+            bottom: -1,
+            right: -1,
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            background: 'var(--color-green)',
+            border: '2px solid var(--bg-card)',
+          }} />
+        )}
       </div>
 
       {/* Middle column: name, subtitle, notes preview */}
