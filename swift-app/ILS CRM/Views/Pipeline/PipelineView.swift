@@ -3,7 +3,7 @@ import SwiftData
 
 /// Pipeline / Kanban — mirrors src/components/pipeline/PipelinePage.tsx
 ///
-/// Kanban board with 7 stage columns. Each column shows opportunity cards
+/// Kanban board with 11 stage columns. Each column shows opportunity cards
 /// with name, deal value, and expected close date. Tap a card to open detail sheet.
 struct PipelineView: View {
     @Query private var opportunities: [Opportunity]
@@ -13,18 +13,24 @@ struct PipelineView: View {
     @State private var dropTargetedStage: String?
 
     private let stages = [
-        "Prospecting", "Qualified", "Business Development",
-        "Proposal Sent", "Negotiation", "Closed Won", "Closed Lost"
+        "Initial Contact", "Qualification", "Meeting Scheduled",
+        "Proposal Sent", "Negotiation", "Contract Sent",
+        "Development", "Investment", "Closed Won", "Closed Lost",
+        "Future Client"
     ]
 
     private let stageColors: [String: Color] = [
-        "Prospecting": .yellow,
-        "Qualified": .orange,
-        "Business Development": .purple,
+        "Initial Contact": .blue,
+        "Qualification": .cyan,
+        "Meeting Scheduled": .orange,
         "Proposal Sent": .indigo,
         "Negotiation": .teal,
+        "Contract Sent": .mint,
+        "Development": .purple,
+        "Investment": .pink,
         "Closed Won": .green,
-        "Closed Lost": .red
+        "Closed Lost": .red,
+        "Future Client": .yellow
     ]
 
     var body: some View {
@@ -164,7 +170,10 @@ private struct KanbanCard: View {
 
     private var formattedValue: String? {
         guard let value = opportunity.dealValue, value > 0 else { return nil }
-        return String(format: "$%,.0f", value)
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: value))
     }
 
     private var formattedDate: String? {
@@ -235,7 +244,7 @@ struct OpportunityFormView: View {
     // MARK: - Form State
 
     @State private var opportunityName: String = ""
-    @State private var salesStage: String = "Prospecting"
+    @State private var salesStage: String = "Initial Contact"
     @State private var dealValueText: String = ""
     @State private var probability: String = ""
     @State private var expectedCloseDate: Date = Date()
@@ -248,8 +257,10 @@ struct OpportunityFormView: View {
     private var isEditing: Bool { opportunity != nil }
 
     private let salesStages = [
-        "Prospecting", "Qualified", "Business Development",
-        "Proposal Sent", "Negotiation", "Closed Won", "Closed Lost"
+        "Initial Contact", "Qualification", "Meeting Scheduled",
+        "Proposal Sent", "Negotiation", "Contract Sent",
+        "Development", "Investment", "Closed Won", "Closed Lost",
+        "Future Client"
     ]
 
     // MARK: - Body
@@ -331,7 +342,7 @@ struct OpportunityFormView: View {
     private func loadExisting() {
         guard let opp = opportunity else { return }
         opportunityName = opp.opportunityName ?? ""
-        salesStage = opp.salesStage ?? "Prospecting"
+        salesStage = opp.salesStage ?? "Initial Contact"
         if let value = opp.dealValue, value > 0 {
             dealValueText = String(format: "%.0f", value)
         }
