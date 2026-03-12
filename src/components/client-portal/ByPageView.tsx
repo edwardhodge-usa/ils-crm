@@ -148,14 +148,18 @@ export default function ByPageView({
     async (contactId: string, name: string, email: string) => {
       if (!selectedPage || isEmptySlug(selectedPage.page_address)) return
       const pa = selectedPage.page_address as string
-      await window.electronAPI.portalAccess.create({
+      const result = await window.electronAPI.portalAccess.create({
         page_address: pa,
         name,
         email,
-        stage: 'Prospect',
+        stage: 'Lead',
         contact_ids: JSON.stringify([contactId]),
         date_added: new Date().toISOString().split('T')[0],
       })
+      if (!result.success) {
+        console.error('[Portal] Grant access failed:', result.error)
+        return
+      }
       reloadAccess()
       setGrantPopover(null)
     },

@@ -120,11 +120,11 @@ export default function GrantAccessPopover({
     })
   }, [contacts, search])
 
-  function handleSelectContact(contact: ContactRecord) {
+  async function handleSelectContact(contact: ContactRecord) {
     const name = [(contact.first_name || ''), (contact.last_name || '')]
       .filter(Boolean)
       .join(' ')
-    onGrant(contact.id, name, contact.email || '')
+    await onGrant(contact.id, name, contact.email || '')
   }
 
   async function handleCreateAndGrant() {
