@@ -1,6 +1,6 @@
 # ILS CRM — Electron / Swift Parity Tracker
 
-Last updated: 2026-03-12 (Session 3 — detail views complete)
+Last updated: 2026-03-12 (Session 4 — CRUD forms + sync push/pull)
 
 ## Scorecard
 
@@ -11,17 +11,17 @@ Last updated: 2026-03-12 (Session 3 — detail views complete)
 | Contacts | 5 | 5 | 100% |
 | Companies | 5 | 5 | 100% |
 | Pipeline | 4 | 3 | 75% |
-| Tasks | 4 | 3 | 75% |
-| Proposals | 4 | 3 | 75% |
-| Projects | 4 | 3 | 75% |
-| Interactions | 4 | 3 | 75% |
+| Tasks | 4 | 4 | 100% |
+| Proposals | 4 | 4 | 100% |
+| Projects | 4 | 4 | 100% |
+| Interactions | 4 | 4 | 100% |
 | Imported Contacts | 4 | 3 | 75% |
 | Portal (Access + Logs) | 5 | 4 | 80% |
 | Settings | 4 | 4 | 100% |
 | Shared Components | 8 | 8 | 100% |
-| Data Layer | 8 | 7 | 88% |
-| Sync Engine | 5 | 2 | 40% |
-| **TOTAL** | **71** | **60** | **85%** |
+| Data Layer | 8 | 8 | 100% |
+| Sync Engine | 5 | 4 | 80% |
+| **TOTAL** | **71** | **67** | **94%** |
 
 ---
 
@@ -78,7 +78,7 @@ Last updated: 2026-03-12 (Session 3 — detail views complete)
 | Task list with filters | DONE | DONE | Segmented picker (All/Active/Completed/Overdue), search by name+notes, priority dots, type+status badges |
 | Due date highlighting (overdue=red) | DONE | DONE | Overdue row background tint + red date text |
 | Task detail view | DONE | DONE | TaskDetailView — overdue banner, priority colors, status/type badges, notes, linked records (opportunities/contacts/projects/proposals), details section |
-| Create/edit form | DONE | TODO | Stub form view exists |
+| Create/edit form | DONE | DONE | TaskFormView — name, status/priority/type pickers, due date, completed date, notes |
 
 ## Proposals
 
@@ -86,7 +86,7 @@ Last updated: 2026-03-12 (Session 3 — detail views complete)
 |---------|----------|-------|-------|
 | Proposal list with search | DONE | DONE | Searchable list with name, status/approval badges, version, value, date sent metadata |
 | Proposal detail view | DONE | DONE | ProposalDetailView — header with status+approval badges, proposal info, scope, client feedback, notes, performance metrics, linked records (clients/companies/opportunities/tasks), details section |
-| Create/edit form | DONE | TODO | Stub form view exists |
+| Create/edit form | DONE | DONE | ProposalFormView — name, status/approval pickers, value, date sent, valid until, notes |
 | Linked entities (opportunity, tasks) | DONE | DONE | Linked record counts displayed in detail view |
 
 ## Projects
@@ -95,7 +95,7 @@ Last updated: 2026-03-12 (Session 3 — detail views complete)
 |---------|----------|-------|-------|
 | Project list with search/status | DONE | DONE | Searchable list with status badges, date subtitle, sheet detail navigation |
 | Detail view | DONE | DONE | ProjectDetailView — header with avatar + status, project info (location, contract value, engagement type, dates), description, key milestones, lessons learned, linked records (opportunities, clients, contacts, tasks), details section |
-| Create/edit form | DONE | TODO | Stub form view exists |
+| Create/edit form | DONE | DONE | ProjectFormView — name, status picker, location, contract value, dates, description, milestones, lessons |
 | Linked entities (contacts, tasks) | DONE | DONE | Linked record counts displayed in detail view |
 
 ## Interactions
@@ -104,7 +104,7 @@ Last updated: 2026-03-12 (Session 3 — detail views complete)
 |---------|----------|-------|-------|
 | Interaction list with search/type icons | DONE | DONE | Searchable list with type-specific SF Symbol icons (phone, email, meeting, video), direction badges, formatted dates, sheet detail navigation |
 | Detail view | DONE | DONE | InteractionDetailView — header with type icon + subject + badges, interaction info (type, date, direction), summary, next steps, linked records (contacts, opportunities), details section |
-| Log interaction sheet | DONE | TODO | Plus button present, sheet not yet implemented |
+| Log interaction sheet | DONE | DONE | InteractionFormView — subject, type/direction pickers, date, summary, next steps |
 | Linked contacts/opportunities | DONE | DONE | Linked record counts displayed in detail view |
 
 ## Imported Contacts
@@ -158,7 +158,7 @@ Last updated: 2026-03-12 (Session 3 — detail views complete)
 | AirtableConvertible protocol | DONE | DONE | Protocol + AirtableRecord + AirtableFields + AirtableFieldsBuilder |
 | 11 Converter extensions | DONE | DONE | All tables have +Airtable.swift |
 | KeychainService | DONE | DONE | macOS Keychain for API key |
-| SyncEngine (full sync logic) | DONE | PARTIAL | Shell exists, TODO: actual pull/push implementation |
+| SyncEngine (full sync logic) | DONE | DONE | Push-then-pull architecture, 200ms table stagger, read-only guards |
 
 ## Sync Engine
 
@@ -166,16 +166,16 @@ Last updated: 2026-03-12 (Session 3 — detail views complete)
 |---------|----------|-------|-------|
 | isSyncing mutex | DONE | DONE | Guard in fullSync() |
 | Polling timer | DONE | DONE | startPolling/stopPolling |
-| Push pending records | DONE | TODO | |
-| Pull all tables in order | DONE | TODO | |
+| Push pending records | DONE | DONE | pushRecords<T> — creates (local_ prefix → batchCreate) + updates (batchUpdate), ID replacement |
+| Pull all tables in order | DONE | DONE | pullRecords<T> — fetchAll → AirtableRecord → upsert, delete stale (unless pending push) |
 | Cross-app sync lock (/tmp/) | DONE | TODO | |
 
 ---
 
 ## Priority Queue (next to implement)
 
-1. **SyncEngine pull/push** — Without this, the app has no data. Highest priority.
-2. **Pipeline drag-and-drop** — Kanban board is done but needs drag-to-reorder stage changes.
-3. **Create/edit forms** — Tasks, Proposals, Projects, Contacts, Companies, Imported Contacts all need create/edit forms.
-4. **Portal By Page / By Person views** — Electron v3.3.5 feature, currently flat list only.
-5. **Interaction log sheet** — New interaction creation form.
+1. **Pipeline drag-and-drop** — Kanban board is done but needs drag-to-reorder stage changes.
+2. **Portal By Page / By Person views** — Electron v3.3.5 feature, currently flat list only.
+3. **Imported Contacts create/edit form** — Last remaining entity without a form.
+4. **Cross-app sync lock** — `/tmp/ils-crm-sync.lock` to prevent simultaneous Electron + Swift sync.
+5. **macOS polish** — Menu bar, keyboard shortcuts, window config.

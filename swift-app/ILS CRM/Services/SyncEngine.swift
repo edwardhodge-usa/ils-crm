@@ -81,7 +81,9 @@ final class SyncEngine {
         let context = modelContainer.mainContext
 
         do {
-            // TODO: Implement push pending records
+            // Push pending records before pulling
+            try await pushPendingRecords(context: context, service: service)
+            try context.save()
 
             // Pull each table in sync order with 200ms stagger
             for (index, tableId) in AirtableConfig.syncOrder.enumerated() {
@@ -98,6 +100,110 @@ final class SyncEngine {
             syncError = error.localizedDescription
             Self.logger.error("Sync failed: \(error.localizedDescription)")
         }
+    }
+
+    // MARK: - Push
+
+    /// Pushes all pending local changes to Airtable before pulling.
+    /// Iterates syncOrder, skipping read-only tables. 200ms stagger between tables.
+    @MainActor
+    private func pushPendingRecords(context: ModelContext, service: AirtableService) async throws {
+        var isFirst = true
+
+        for tableId in AirtableConfig.syncOrder {
+            // Never push to read-only tables (Specialties, Portal Logs)
+            guard !AirtableConfig.readOnlyTables.contains(tableId) else { continue }
+
+            if !isFirst {
+                try await Task.sleep(nanoseconds: AirtableConfig.tableSyncStaggerMs)
+            }
+            isFirst = false
+
+            switch tableId {
+            case AirtableConfig.Tables.contacts:
+                try await pushRecords(Contact.self, service: service, context: context)
+            case AirtableConfig.Tables.companies:
+                try await pushRecords(Company.self, service: service, context: context)
+            case AirtableConfig.Tables.opportunities:
+                try await pushRecords(Opportunity.self, service: service, context: context)
+            case AirtableConfig.Tables.projects:
+                try await pushRecords(Project.self, service: service, context: context)
+            case AirtableConfig.Tables.proposals:
+                try await pushRecords(Proposal.self, service: service, context: context)
+            case AirtableConfig.Tables.tasks:
+                try await pushRecords(CRMTask.self, service: service, context: context)
+            case AirtableConfig.Tables.interactions:
+                try await pushRecords(Interaction.self, service: service, context: context)
+            case AirtableConfig.Tables.importedContacts:
+                try await pushRecords(ImportedContact.self, service: service, context: context)
+            case AirtableConfig.Tables.portalAccess:
+                try await pushRecords(PortalAccessRecord.self, service: service, context: context)
+            default:
+                break
+            }
+        }
+    }
+
+    /// Generic push: finds records with isPendingPush == true, separates into creates
+    /// (id starts with "local_") and updates, sends to Airtable, then clears the flag.
+    @MainActor
+    private func pushRecords<T: AirtableConvertible>(_ type: T.Type, service: AirtableService, context: ModelContext) async throws {
+        var descriptor = FetchDescriptor<T>(predicate: #Predicate { $0.isPendingPush == true })
+        let pending = try context.fetch(descriptor)
+
+        guard !pending.isEmpty else { return }
+
+        // Separate creates (local_ prefix) from updates (existing Airtable IDs)
+        var creates: [T] = []
+        var updates: [T] = []
+
+        for record in pending {
+            if record.id.hasPrefix("local_") {
+                creates.append(record)
+            } else {
+                updates.append(record)
+            }
+        }
+
+        let typeName = String(describing: T.self)
+
+        // Handle creates — send fields, get back records with real Airtable IDs
+        if !creates.isEmpty {
+            let fieldsArray = creates.map { $0.toAirtableFields() }
+            let createdRecords = try await service.batchCreate(
+                tableId: T.airtableTableId,
+                records: fieldsArray
+            )
+
+            // Update local records with real Airtable IDs
+            // batchCreate returns records in the same order as the input
+            for (index, airtableRecord) in createdRecords.enumerated() where index < creates.count {
+                if let newId = airtableRecord["id"] as? String {
+                    // Delete old local record and insert fresh from Airtable response
+                    context.delete(creates[index])
+                    if let record = AirtableRecord(json: airtableRecord) {
+                        let model = T.from(record: record, context: context)
+                        context.insert(model)
+                    }
+                }
+            }
+        }
+
+        // Handle updates — send id + fields, then clear isPendingPush
+        if !updates.isEmpty {
+            let updateTuples = updates.map { (id: $0.id, fields: $0.toAirtableFields()) }
+            try await service.batchUpdate(
+                tableId: T.airtableTableId,
+                records: updateTuples
+            )
+
+            // Clear pending flag on successfully pushed updates
+            for record in updates {
+                record.isPendingPush = false
+            }
+        }
+
+        Self.logger.info("Pushed \(creates.count) creates + \(updates.count) updates for \(typeName)")
     }
 
     // MARK: - Pull

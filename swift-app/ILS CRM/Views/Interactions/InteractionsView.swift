@@ -14,6 +14,7 @@ struct InteractionsView: View {
     @Query(sort: \Interaction.date, order: .reverse) private var interactions: [Interaction]
     @State private var searchText = ""
     @State private var selectedInteraction: Interaction?
+    @State private var showingNewInteractionForm = false
 
     // MARK: - Filtered Interactions
 
@@ -43,11 +44,17 @@ struct InteractionsView: View {
         .toolbar {
             ToolbarItem(placement: .automatic) {
                 Button {
-                    // TODO: new interaction / log sheet
+                    showingNewInteractionForm = true
                 } label: {
                     Image(systemName: "plus")
                 }
             }
+        }
+        .sheet(isPresented: $showingNewInteractionForm) {
+            NavigationStack {
+                InteractionFormView(interaction: nil)
+            }
+            .frame(minWidth: 450, minHeight: 550)
         }
         .sheet(item: $selectedInteraction) { interaction in
             NavigationStack {
@@ -180,16 +187,139 @@ private struct InteractionRowView: View {
     }
 }
 
-// MARK: - Interaction Form (placeholder)
+// MARK: - Interaction Form
 
 /// Mirrors src/components/interactions/InteractionForm.tsx
 struct InteractionFormView: View {
-    let interactionId: String?
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    /// nil = create new, non-nil = edit existing
+    let interaction: Interaction?
+
+    private var isNew: Bool { interaction == nil }
+
+    // MARK: - Form State
+
+    @State private var subject: String = ""
+    @State private var selectedType: String = "Phone Call"
+    @State private var date: Date = .now
+    @State private var selectedDirection: String = "Outbound"
+    @State private var summary: String = ""
+    @State private var nextSteps: String = ""
+    @State private var notes: String = ""
+
+    // MARK: - Options
+
+    private let typeOptions = ["Phone Call", "Email", "Meeting", "Video Call", "Other"]
+    private let directionOptions = ["Inbound", "Outbound"]
+
+    // MARK: - Body
 
     var body: some View {
         Form {
-            Text("Interaction form — coming soon")
+            // Interaction section
+            Section("Interaction") {
+                TextField("Subject", text: $subject)
+
+                Picker("Type", selection: $selectedType) {
+                    ForEach(typeOptions, id: \.self) { option in
+                        Text(option).tag(option)
+                    }
+                }
+
+                DatePicker("Date", selection: $date, displayedComponents: .date)
+
+                Picker("Direction", selection: $selectedDirection) {
+                    ForEach(directionOptions, id: \.self) { option in
+                        Text(option).tag(option)
+                    }
+                }
+            }
+
+            // Details section
+            Section("Details") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Summary")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    TextEditor(text: $summary)
+                        .frame(minHeight: 80)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Next Steps")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    TextEditor(text: $nextSteps)
+                        .frame(minHeight: 80)
+                }
+            }
+
+            // Notes section
+            Section("Notes") {
+                TextEditor(text: $notes)
+                    .frame(minHeight: 100)
+            }
         }
-        .navigationTitle(interactionId == nil ? "Log Interaction" : "Edit Interaction")
+        .formStyle(.grouped)
+        .navigationTitle(isNew ? "Log Interaction" : "Edit Interaction")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") {
+                    dismiss()
+                }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    save()
+                }
+                .disabled(subject.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+        .onAppear {
+            if let interaction {
+                subject = interaction.subject ?? ""
+                selectedType = interaction.type ?? "Phone Call"
+                date = interaction.date ?? .now
+                selectedDirection = interaction.direction ?? "Outbound"
+                summary = interaction.summary ?? ""
+                nextSteps = interaction.nextSteps ?? ""
+                // NOTE: "notes" field is in the UI per spec but not on the Interaction model.
+                // Add a `notes` property to Interaction.swift to persist this field.
+            }
+        }
+    }
+
+    // MARK: - Save
+
+    private func save() {
+        if let interaction {
+            // Edit existing
+            interaction.subject = subject
+            interaction.type = selectedType
+            interaction.date = date
+            interaction.direction = selectedDirection
+            interaction.summary = summary
+            interaction.nextSteps = nextSteps
+            interaction.localModifiedAt = .now
+            interaction.isPendingPush = true
+        } else {
+            // Create new
+            let newInteraction = Interaction(
+                id: "local_\(UUID().uuidString)",
+                subject: subject,
+                isPendingPush: true
+            )
+            newInteraction.type = selectedType
+            newInteraction.date = date
+            newInteraction.direction = selectedDirection
+            newInteraction.summary = summary
+            newInteraction.nextSteps = nextSteps
+            newInteraction.localModifiedAt = .now
+            modelContext.insert(newInteraction)
+        }
+
+        dismiss()
     }
 }

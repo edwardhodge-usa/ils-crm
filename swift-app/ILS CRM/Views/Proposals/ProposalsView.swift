@@ -13,6 +13,7 @@ struct ProposalsView: View {
 
     @State private var searchText = ""
     @State private var selectedProposal: Proposal?
+    @State private var showNewProposal = false
 
     private var filteredProposals: [Proposal] {
         guard !searchText.isEmpty else { return proposals }
@@ -50,9 +51,15 @@ struct ProposalsView: View {
         .searchable(text: $searchText, prompt: "Search proposals...")
         .navigationTitle("Proposals")
         .toolbar {
-            Button { /* TODO: new proposal */ } label: {
+            Button { showNewProposal = true } label: {
                 Image(systemName: "plus")
             }
+        }
+        .sheet(isPresented: $showNewProposal) {
+            NavigationStack {
+                ProposalFormView(proposal: nil)
+            }
+            .frame(minWidth: 480, minHeight: 560)
         }
         .sheet(item: $selectedProposal) { proposal in
             NavigationStack {
@@ -161,14 +168,168 @@ private struct ProposalRow: View {
     }
 }
 
-/// Mirrors src/components/proposals/ProposalForm.tsx
+// MARK: - Proposal Form
+
+/// Full create/edit form — mirrors src/components/proposals/ProposalForm.tsx
+///
+/// - `proposal: nil` → create mode (inserts new Proposal with local_ prefix ID)
+/// - `proposal: existing` → edit mode (updates in place)
 struct ProposalFormView: View {
-    let proposalId: String?
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    let proposal: Proposal?  // nil = create, non-nil = edit
+
+    // MARK: - Form State
+
+    @State private var proposalName: String = ""
+    @State private var status: String = "Draft"
+    @State private var approvalStatus: String = "Pending"
+    @State private var proposedValueText: String = ""
+    @State private var version: String = ""
+    @State private var dateSent: Date = Date()
+    @State private var hasDateSent: Bool = false
+    @State private var validUntil: Date = Date()
+    @State private var hasValidUntil: Bool = false
+    @State private var notes: String = ""
+
+    // MARK: - Options
+
+    private let statusOptions = ["Draft", "Sent", "Accepted", "Rejected", "Expired"]
+    private let approvalOptions = ["Pending", "Approved", "Rejected", "Revision Requested"]
+
+    private var isCreate: Bool { proposal == nil }
+
+    // MARK: - Body
 
     var body: some View {
         Form {
-            Text("Proposal form — coming soon")
+            Section("Proposal") {
+                TextField("Proposal Name", text: $proposalName)
+            }
+
+            Section("Status") {
+                Picker("Status", selection: $status) {
+                    ForEach(statusOptions, id: \.self) { option in
+                        Text(option).tag(option)
+                    }
+                }
+                Picker("Approval Status", selection: $approvalStatus) {
+                    ForEach(approvalOptions, id: \.self) { option in
+                        Text(option).tag(option)
+                    }
+                }
+            }
+
+            Section("Value") {
+                TextField("Proposed Value", text: $proposedValueText)
+                #if os(iOS)
+                    .keyboardType(.decimalPad)
+                #endif
+                TextField("Version", text: $version)
+            }
+
+            Section("Dates") {
+                Toggle("Date Sent", isOn: $hasDateSent)
+                if hasDateSent {
+                    DatePicker("Sent", selection: $dateSent, displayedComponents: .date)
+                }
+
+                Toggle("Valid Until", isOn: $hasValidUntil)
+                if hasValidUntil {
+                    DatePicker("Valid Until", selection: $validUntil, displayedComponents: .date)
+                }
+            }
+
+            Section("Notes") {
+                TextEditor(text: $notes)
+                    .frame(minHeight: 100)
+            }
         }
-        .navigationTitle(proposalId == nil ? "New Proposal" : "Edit Proposal")
+        .formStyle(.grouped)
+        .navigationTitle(isCreate ? "New Proposal" : "Edit Proposal")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") { save() }
+                    .disabled(proposalName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+        .onAppear { loadExisting() }
+    }
+
+    // MARK: - Load Existing (edit mode)
+
+    private func loadExisting() {
+        guard let proposal else { return }
+        proposalName = proposal.proposalName ?? ""
+        status = proposal.status ?? "Draft"
+        approvalStatus = proposal.approvalStatus ?? "Pending"
+        if let value = proposal.proposedValue {
+            proposedValueText = String(value)
+        }
+        version = proposal.version ?? ""
+        notes = proposal.notes ?? ""
+
+        if let sent = proposal.dateSent {
+            dateSent = sent
+            hasDateSent = true
+        }
+        if let until = proposal.validUntil {
+            validUntil = until
+            hasValidUntil = true
+        }
+    }
+
+    // MARK: - Save
+
+    private func save() {
+        let trimmedName = proposalName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
+
+        let proposedValue = Double(proposedValueText)
+
+        if let proposal {
+            // Edit mode — update existing
+            proposal.proposalName = trimmedName
+            proposal.status = status.nilIfEmpty
+            proposal.approvalStatus = approvalStatus.nilIfEmpty
+            proposal.proposedValue = proposedValue
+            proposal.version = version.nilIfEmpty
+            proposal.dateSent = hasDateSent ? dateSent : nil
+            proposal.validUntil = hasValidUntil ? validUntil : nil
+            proposal.notes = notes.nilIfEmpty
+            proposal.localModifiedAt = Date()
+            proposal.isPendingPush = true
+        } else {
+            // Create mode — insert new
+            let newProposal = Proposal(
+                id: "local_\(UUID().uuidString)",
+                proposalName: trimmedName,
+                isPendingPush: true
+            )
+            newProposal.status = status.nilIfEmpty
+            newProposal.approvalStatus = approvalStatus.nilIfEmpty
+            newProposal.proposedValue = proposedValue
+            newProposal.version = version.nilIfEmpty
+            newProposal.dateSent = hasDateSent ? dateSent : nil
+            newProposal.validUntil = hasValidUntil ? validUntil : nil
+            newProposal.notes = notes.nilIfEmpty
+            newProposal.localModifiedAt = Date()
+            modelContext.insert(newProposal)
+        }
+
+        dismiss()
+    }
+}
+
+// MARK: - String Extension
+
+private extension String {
+    /// Returns nil if the string is empty, otherwise returns self.
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
 }

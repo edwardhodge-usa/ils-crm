@@ -69,6 +69,10 @@ struct CompaniesView: View {
                 Image(systemName: "plus")
             }
         }
+        .sheet(isPresented: $showNewCompany) {
+            CompanyFormView(company: nil)
+                .frame(minWidth: 480, minHeight: 560)
+        }
     }
 
     // MARK: - Company List
@@ -147,16 +151,146 @@ struct CompaniesView: View {
     }
 }
 
-// MARK: - Company Form (stub)
+// MARK: - Company Form
 
-/// Mirrors src/components/companies/CompanyForm.tsx
+/// Full create/edit form — mirrors src/components/companies/CompanyForm.tsx
+///
+/// - `company: nil` → create mode (inserts new Company with local_ prefix ID)
+/// - `company: existing` → edit mode (updates in place)
 struct CompanyFormView: View {
-    let companyId: String?
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    let company: Company?  // nil = create, non-nil = edit
+
+    // MARK: - Form State
+
+    @State private var companyName: String = ""
+    @State private var companyType: String = ""
+    @State private var industry: String = ""
+    @State private var companySize: String = ""
+    @State private var website: String = ""
+    @State private var address: String = ""
+    @State private var city: String = ""
+    @State private var stateRegion: String = ""
+    @State private var country: String = ""
+    @State private var postalCode: String = ""
+    @State private var notes: String = ""
+
+    private var isCreate: Bool { company == nil }
+
+    // MARK: - Body
 
     var body: some View {
-        Form {
-            Text("Company form — coming soon")
+        NavigationStack {
+            Form {
+                Section("Company") {
+                    TextField("Company Name", text: $companyName)
+                }
+
+                Section("Details") {
+                    TextField("Company Type", text: $companyType)
+                    TextField("Industry", text: $industry)
+                    TextField("Company Size", text: $companySize)
+                    TextField("Website", text: $website)
+                }
+
+                Section("Address") {
+                    TextField("Address", text: $address)
+                    TextField("City", text: $city)
+                    TextField("State / Region", text: $stateRegion)
+                    TextField("Country", text: $country)
+                    TextField("Postal Code", text: $postalCode)
+                }
+
+                Section("Notes") {
+                    TextEditor(text: $notes)
+                        .frame(minHeight: 80)
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle(isCreate ? "New Company" : "Edit Company")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .disabled(companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+            .onAppear { loadExisting() }
         }
-        .navigationTitle(companyId == nil ? "New Company" : "Edit Company")
+    }
+
+    // MARK: - Load Existing (edit mode)
+
+    private func loadExisting() {
+        guard let company else { return }
+        companyName = company.companyName ?? ""
+        companyType = company.companyType ?? ""
+        industry = company.industry ?? ""
+        companySize = company.companySize ?? ""
+        website = company.website ?? ""
+        address = company.address ?? ""
+        city = company.city ?? ""
+        stateRegion = company.stateRegion ?? ""
+        country = company.country ?? ""
+        postalCode = company.postalCode ?? ""
+        notes = company.notes ?? ""
+    }
+
+    // MARK: - Save
+
+    private func save() {
+        let trimmedName = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
+
+        if let company {
+            // Edit mode — update existing
+            company.companyName = trimmedName
+            company.companyType = companyType.nilIfEmpty
+            company.industry = industry.nilIfEmpty
+            company.companySize = companySize.nilIfEmpty
+            company.website = website.nilIfEmpty
+            company.address = address.nilIfEmpty
+            company.city = city.nilIfEmpty
+            company.stateRegion = stateRegion.nilIfEmpty
+            company.country = country.nilIfEmpty
+            company.postalCode = postalCode.nilIfEmpty
+            company.notes = notes.nilIfEmpty
+            company.localModifiedAt = Date()
+            company.isPendingPush = true
+        } else {
+            // Create mode — insert new
+            let newCompany = Company(
+                id: "local_\(UUID().uuidString)",
+                companyName: trimmedName,
+                isPendingPush: true
+            )
+            newCompany.companyType = companyType.nilIfEmpty
+            newCompany.industry = industry.nilIfEmpty
+            newCompany.companySize = companySize.nilIfEmpty
+            newCompany.website = website.nilIfEmpty
+            newCompany.address = address.nilIfEmpty
+            newCompany.city = city.nilIfEmpty
+            newCompany.stateRegion = stateRegion.nilIfEmpty
+            newCompany.country = country.nilIfEmpty
+            newCompany.postalCode = postalCode.nilIfEmpty
+            newCompany.notes = notes.nilIfEmpty
+            newCompany.localModifiedAt = Date()
+            modelContext.insert(newCompany)
+        }
+
+        dismiss()
+    }
+}
+
+// MARK: - String Extension
+
+private extension String {
+    /// Returns nil if the string is empty, otherwise returns self.
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
 }

@@ -24,6 +24,7 @@ struct TasksView: View {
     @State private var searchText = ""
     @State private var statusFilter: StatusFilter = .all
     @State private var selectedTask: CRMTask?
+    @State private var showingCreateForm = false
 
     // MARK: - Filtered Tasks
 
@@ -80,7 +81,7 @@ struct TasksView: View {
             }
             ToolbarItem(placement: .automatic) {
                 Button {
-                    // TODO: new task
+                    showingCreateForm = true
                 } label: {
                     Image(systemName: "plus")
                 }
@@ -97,6 +98,12 @@ struct TasksView: View {
                             }
                         }
                     }
+            }
+            .frame(minWidth: 450, minHeight: 500)
+        }
+        .sheet(isPresented: $showingCreateForm) {
+            NavigationStack {
+                TaskFormView(crmTask: nil)
             }
             .frame(minWidth: 450, minHeight: 500)
         }
@@ -238,16 +245,169 @@ private struct TaskRowView: View {
     }
 }
 
-// MARK: - Task Form (placeholder)
+// MARK: - Task Form
 
-/// Mirrors src/components/tasks/TaskForm.tsx
+/// Full create/edit form — mirrors src/components/tasks/TaskForm.tsx
+///
+/// - `crmTask: nil` → create mode (inserts new CRMTask with local_ prefix ID)
+/// - `crmTask: existing` → edit mode (updates in place)
 struct TaskFormView: View {
-    let taskId: String?
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    let crmTask: CRMTask?  // nil = create, non-nil = edit
+
+    // MARK: - Form State
+
+    @State private var taskName: String = ""
+    @State private var status: String = "Not Started"
+    @State private var priority: String = ""
+    @State private var type: String = ""
+    @State private var dueDate: Date = Date()
+    @State private var hasDueDate: Bool = false
+    @State private var completedDate: Date = Date()
+    @State private var hasCompletedDate: Bool = false
+    @State private var notes: String = ""
+
+    // MARK: - Options (matching Airtable select values)
+
+    private let statusOptions = ["Not Started", "In Progress", "Complete", "Blocked"]
+    private let priorityOptions = ["", "\u{1F534} High", "\u{1F7E1} Medium", "\u{1F7E2} Low"]
+    private let typeOptions = [
+        "", "Follow-up", "Meeting", "Call", "Email", "Research",
+        "Admin", "Review", "Outreach", "Proposal", "Contract", "Onboarding", "Other"
+    ]
+
+    private var isCreate: Bool { crmTask == nil }
+
+    // MARK: - Body
 
     var body: some View {
         Form {
-            Text("Task form — coming soon")
+            // Task Name
+            Section("Task") {
+                TextField("Task name", text: $taskName)
+            }
+
+            // Details
+            Section("Details") {
+                Picker("Status", selection: $status) {
+                    ForEach(statusOptions, id: \.self) { option in
+                        Text(option).tag(option)
+                    }
+                }
+
+                Picker("Priority", selection: $priority) {
+                    Text("None").tag("")
+                    ForEach(priorityOptions.filter { !$0.isEmpty }, id: \.self) { option in
+                        Text(option).tag(option)
+                    }
+                }
+
+                Picker("Type", selection: $type) {
+                    Text("None").tag("")
+                    ForEach(typeOptions.filter { !$0.isEmpty }, id: \.self) { option in
+                        Text(option).tag(option)
+                    }
+                }
+            }
+
+            // Schedule
+            Section("Schedule") {
+                Toggle("Due Date", isOn: $hasDueDate)
+                if hasDueDate {
+                    DatePicker("Due", selection: $dueDate, displayedComponents: .date)
+                }
+
+                if status == "Complete" {
+                    Toggle("Completed Date", isOn: $hasCompletedDate)
+                    if hasCompletedDate {
+                        DatePicker("Completed", selection: $completedDate, displayedComponents: .date)
+                    }
+                }
+            }
+
+            // Notes
+            Section("Notes") {
+                TextEditor(text: $notes)
+                    .frame(minHeight: 100)
+            }
         }
-        .navigationTitle(taskId == nil ? "New Task" : "Edit Task")
+        .formStyle(.grouped)
+        .navigationTitle(isCreate ? "New Task" : "Edit Task")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") {
+                    dismiss()
+                }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    save()
+                }
+                .disabled(taskName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+        .onAppear {
+            loadExistingTask()
+        }
+    }
+
+    // MARK: - Load Existing Task (edit mode)
+
+    private func loadExistingTask() {
+        guard let task = crmTask else { return }
+        taskName = task.task ?? ""
+        status = task.status ?? "Not Started"
+        priority = task.priority ?? ""
+        type = task.type ?? ""
+        notes = task.notes ?? ""
+
+        if let due = task.dueDate {
+            dueDate = due
+            hasDueDate = true
+        }
+
+        if let completed = task.completedDate {
+            completedDate = completed
+            hasCompletedDate = true
+        }
+    }
+
+    // MARK: - Save
+
+    private func save() {
+        let trimmedName = taskName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
+
+        if let task = crmTask {
+            // Edit mode — update existing
+            task.task = trimmedName
+            task.status = status
+            task.priority = priority.isEmpty ? nil : priority
+            task.type = type.isEmpty ? nil : type
+            task.dueDate = hasDueDate ? dueDate : nil
+            task.completedDate = (status == "Complete" && hasCompletedDate) ? completedDate : nil
+            task.notes = notes.isEmpty ? nil : notes
+            task.localModifiedAt = Date()
+            task.isPendingPush = true
+        } else {
+            // Create mode — insert new
+            let newTask = CRMTask(
+                id: "local_\(UUID().uuidString)",
+                task: trimmedName,
+                isPendingPush: true
+            )
+            newTask.status = status
+            newTask.priority = priority.isEmpty ? nil : priority
+            newTask.type = type.isEmpty ? nil : type
+            newTask.dueDate = hasDueDate ? dueDate : nil
+            newTask.completedDate = (status == "Complete" && hasCompletedDate) ? completedDate : nil
+            newTask.notes = notes.isEmpty ? nil : notes
+            newTask.localModifiedAt = Date()
+            modelContext.insert(newTask)
+        }
+
+        dismiss()
     }
 }

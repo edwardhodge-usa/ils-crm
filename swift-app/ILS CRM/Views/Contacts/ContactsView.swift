@@ -69,6 +69,10 @@ struct ContactsView: View {
                 Image(systemName: "plus")
             }
         }
+        .sheet(isPresented: $showNewContact) {
+            ContactFormView(contact: nil)
+                .frame(minWidth: 480, minHeight: 560)
+        }
     }
 
     // MARK: - Contact List
@@ -155,6 +159,7 @@ struct Contact360View: View {
     let contactId: String
 
     @Query private var contacts: [Contact]
+    @State private var showEditContact = false
 
     private var contact: Contact? {
         contacts.first { $0.id == contactId }
@@ -172,6 +177,20 @@ struct Contact360View: View {
                 .padding()
             }
             .navigationTitle(contact.contactName ?? "Contact")
+            .toolbar {
+                ToolbarItem(placement: .automatic) {
+                    Button {
+                        showEditContact = true
+                    } label: {
+                        Image(systemName: "pencil")
+                    }
+                    .help("Edit Contact")
+                }
+            }
+            .sheet(isPresented: $showEditContact) {
+                ContactFormView(contact: contact)
+                    .frame(minWidth: 480, minHeight: 560)
+            }
         } else {
             Text("Contact not found")
                 .foregroundStyle(.secondary)
@@ -182,15 +201,212 @@ struct Contact360View: View {
 // MARK: - Contact Form
 
 /// Mirrors src/components/contacts/ContactForm.tsx
+/// Pass `contact: nil` to create a new contact, or an existing Contact to edit.
 struct ContactFormView: View {
-    let contactId: String?  // nil = create new
+    let contact: Contact?  // nil = create new
+
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+
+    // MARK: - Form State
+
+    @State private var firstName: String = ""
+    @State private var lastName: String = ""
+    @State private var contactName: String = ""
+    @State private var autoComputeName: Bool = true
+
+    @State private var email: String = ""
+    @State private var phone: String = ""
+    @State private var mobilePhone: String = ""
+    @State private var workPhone: String = ""
+
+    @State private var company: String = ""
+    @State private var jobTitle: String = ""
+
+    @State private var categorization: String = ""
+    @State private var leadSource: String = ""
+    @State private var industry: String = ""
+
+    @State private var notes: String = ""
+
+    private var isEditing: Bool { contact != nil }
+
+    private var computedName: String {
+        let parts = [firstName, lastName].filter { !$0.isEmpty }
+        return parts.joined(separator: " ")
+    }
+
+    private static let categorizationOptions = [
+        "", "Client", "Lead", "Partner", "Vendor", "Prospect", "Other"
+    ]
+
+    // MARK: - Body
 
     var body: some View {
-        Form {
-            // TODO: Form fields mirroring Electron's ContactForm
-            // useEntityForm('contacts') equivalent
-            Text("Contact form — coming soon")
+        NavigationStack {
+            Form {
+                nameSection
+                contactInfoSection
+                professionalSection
+                classificationSection
+                notesSection
+            }
+            .formStyle(.grouped)
+            .navigationTitle(isEditing ? "Edit Contact" : "New Contact")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .disabled(firstName.isEmpty && lastName.isEmpty && contactName.isEmpty)
+                }
+            }
+            .onAppear { loadFromContact() }
+            .onChange(of: firstName) { updateComputedName() }
+            .onChange(of: lastName) { updateComputedName() }
         }
-        .navigationTitle(contactId == nil ? "New Contact" : "Edit Contact")
+    }
+
+    // MARK: - Sections
+
+    private var nameSection: some View {
+        Section("Name") {
+            TextField("First Name", text: $firstName)
+            TextField("Last Name", text: $lastName)
+            HStack {
+                TextField("Display Name", text: $contactName)
+                if autoComputeName {
+                    Text("auto")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .onChange(of: contactName) {
+                // If user manually edits the display name, stop auto-computing
+                if contactName != computedName {
+                    autoComputeName = false
+                }
+            }
+        }
+    }
+
+    private var contactInfoSection: some View {
+        Section("Contact Info") {
+            TextField("Email", text: $email)
+                .textContentType(.emailAddress)
+            TextField("Phone", text: $phone)
+                .textContentType(.telephoneNumber)
+            TextField("Mobile Phone", text: $mobilePhone)
+                .textContentType(.telephoneNumber)
+            TextField("Work Phone", text: $workPhone)
+                .textContentType(.telephoneNumber)
+        }
+    }
+
+    private var professionalSection: some View {
+        Section("Professional") {
+            TextField("Company", text: $company)
+            TextField("Job Title", text: $jobTitle)
+        }
+    }
+
+    private var classificationSection: some View {
+        Section("Classification") {
+            Picker("Categorization", selection: $categorization) {
+                ForEach(Self.categorizationOptions, id: \.self) { option in
+                    Text(option.isEmpty ? "None" : option).tag(option)
+                }
+            }
+            TextField("Lead Source", text: $leadSource)
+            TextField("Industry", text: $industry)
+        }
+    }
+
+    private var notesSection: some View {
+        Section("Notes") {
+            TextEditor(text: $notes)
+                .frame(minHeight: 80)
+        }
+    }
+
+    // MARK: - Load / Save
+
+    private func loadFromContact() {
+        guard let contact else { return }
+        firstName = contact.firstName ?? ""
+        lastName = contact.lastName ?? ""
+        contactName = contact.contactName ?? ""
+        email = contact.email ?? ""
+        phone = contact.phone ?? ""
+        mobilePhone = contact.mobilePhone ?? ""
+        workPhone = contact.workPhone ?? ""
+        company = contact.company ?? ""
+        jobTitle = contact.jobTitle ?? ""
+        categorization = contact.categorization ?? ""
+        leadSource = contact.leadSource ?? ""
+        industry = contact.industry ?? ""
+        notes = contact.notes ?? ""
+
+        // Determine if the current name matches auto-computed
+        autoComputeName = contactName == computedName
+    }
+
+    private func save() {
+        if let contact {
+            // Edit existing
+            contact.firstName = firstName.nilIfEmpty
+            contact.lastName = lastName.nilIfEmpty
+            contact.contactName = contactName.nilIfEmpty
+            contact.email = email.nilIfEmpty
+            contact.phone = phone.nilIfEmpty
+            contact.mobilePhone = mobilePhone.nilIfEmpty
+            contact.workPhone = workPhone.nilIfEmpty
+            contact.company = company.nilIfEmpty
+            contact.jobTitle = jobTitle.nilIfEmpty
+            contact.categorization = categorization.nilIfEmpty
+            contact.leadSource = leadSource.nilIfEmpty
+            contact.industry = industry.nilIfEmpty
+            contact.notes = notes.nilIfEmpty
+            contact.localModifiedAt = Date()
+            contact.isPendingPush = true
+        } else {
+            // Create new
+            let newContact = Contact(
+                id: "local_\(UUID().uuidString)",
+                isPendingPush: true
+            )
+            newContact.firstName = firstName.nilIfEmpty
+            newContact.lastName = lastName.nilIfEmpty
+            newContact.contactName = contactName.nilIfEmpty
+            newContact.email = email.nilIfEmpty
+            newContact.phone = phone.nilIfEmpty
+            newContact.mobilePhone = mobilePhone.nilIfEmpty
+            newContact.workPhone = workPhone.nilIfEmpty
+            newContact.company = company.nilIfEmpty
+            newContact.jobTitle = jobTitle.nilIfEmpty
+            newContact.categorization = categorization.nilIfEmpty
+            newContact.leadSource = leadSource.nilIfEmpty
+            newContact.industry = industry.nilIfEmpty
+            newContact.notes = notes.nilIfEmpty
+            newContact.localModifiedAt = Date()
+            context.insert(newContact)
+        }
+        dismiss()
+    }
+
+    private func updateComputedName() {
+        if autoComputeName {
+            contactName = computedName
+        }
+    }
+}
+
+// MARK: - String Extension
+
+private extension String {
+    /// Returns nil if the string is empty, otherwise returns self.
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
 }

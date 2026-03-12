@@ -125,7 +125,7 @@ protocol AirtableConvertible: PersistentModel {
     var id: String { get }
 
     /// Whether this record has local changes not yet pushed to Airtable.
-    var isPendingPush: Bool { get }
+    var isPendingPush: Bool { get set }
 
     /// The Airtable table ID (e.g. "tbl9Q8m06ivkTYyvR").
     static var airtableTableId: String { get }

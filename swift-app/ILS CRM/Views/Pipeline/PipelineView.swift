@@ -8,6 +8,7 @@ import SwiftData
 struct PipelineView: View {
     @Query private var opportunities: [Opportunity]
     @State private var selectedOpportunity: Opportunity?
+    @State private var showNewOpportunity = false
 
     private let stages = [
         "Prospecting", "Qualified", "Business Development",
@@ -44,6 +45,11 @@ struct PipelineView: View {
             }
         }
         .navigationTitle("Pipeline")
+        .toolbar {
+            Button { showNewOpportunity = true } label: {
+                Image(systemName: "plus")
+            }
+        }
         .sheet(item: $selectedOpportunity) { opp in
             NavigationStack {
                 OpportunityDetailView(opportunity: opp)
@@ -55,6 +61,12 @@ struct PipelineView: View {
                             }
                         }
                     }
+            }
+            .frame(minWidth: 500, minHeight: 600)
+        }
+        .sheet(isPresented: $showNewOpportunity) {
+            NavigationStack {
+                OpportunityFormView(opportunity: nil)
             }
             .frame(minWidth: 500, minHeight: 600)
         }
@@ -163,16 +175,171 @@ struct DealDetailView: View {
     }
 }
 
-// MARK: - Opportunity Form (Wave 2 placeholder)
+// MARK: - Opportunity Form
 
 /// Mirrors src/components/pipeline/OpportunityForm.tsx
+///
+/// Create / Edit form for opportunities.
+/// - Pass `opportunity: nil` for create mode (inserts a new record).
+/// - Pass an existing `Opportunity` for edit mode (mutates in place).
+/// Uses `@Environment(\.modelContext)` for insert and `@Environment(\.dismiss)` for closing.
 struct OpportunityFormView: View {
-    let opportunityId: String?
+    /// nil = create new, non-nil = edit existing
+    let opportunity: Opportunity?
+
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    // MARK: - Form State
+
+    @State private var opportunityName: String = ""
+    @State private var salesStage: String = "Prospecting"
+    @State private var dealValueText: String = ""
+    @State private var probability: String = ""
+    @State private var expectedCloseDate: Date = Date()
+    @State private var hasExpectedCloseDate: Bool = false
+    @State private var leadSource: String = ""
+    @State private var qualsType: String = ""
+    @State private var notesAbout: String = ""
+    @State private var contractMilestones: String = ""
+
+    private var isEditing: Bool { opportunity != nil }
+
+    private let salesStages = [
+        "Prospecting", "Qualified", "Business Development",
+        "Proposal Sent", "Negotiation", "Closed Won", "Closed Lost"
+    ]
+
+    // MARK: - Body
 
     var body: some View {
         Form {
-            Text("Opportunity form — coming soon")
+            // Opportunity section
+            Section("Opportunity") {
+                TextField("Opportunity Name", text: $opportunityName)
+            }
+
+            // Deal Info section
+            Section("Deal Info") {
+                Picker("Sales Stage", selection: $salesStage) {
+                    ForEach(salesStages, id: \.self) { stage in
+                        Text(stage).tag(stage)
+                    }
+                }
+
+                TextField("Deal Value", text: $dealValueText)
+                #if os(iOS)
+                    .keyboardType(.decimalPad)
+                #endif
+
+                TextField("Probability", text: $probability)
+
+                Toggle("Set Expected Close Date", isOn: $hasExpectedCloseDate)
+                if hasExpectedCloseDate {
+                    DatePicker(
+                        "Expected Close Date",
+                        selection: $expectedCloseDate,
+                        displayedComponents: .date
+                    )
+                }
+            }
+
+            // Source section
+            Section("Source") {
+                TextField("Lead Source", text: $leadSource)
+                TextField("Quals Type", text: $qualsType)
+            }
+
+            // Notes section
+            Section("Notes") {
+                VStack(alignment: .leading) {
+                    Text("Notes About")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    TextEditor(text: $notesAbout)
+                        .frame(minHeight: 80)
+                }
+
+                VStack(alignment: .leading) {
+                    Text("Contract Milestones")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    TextEditor(text: $contractMilestones)
+                        .frame(minHeight: 80)
+                }
+            }
         }
-        .navigationTitle(opportunityId == nil ? "New Opportunity" : "Edit Opportunity")
+        .formStyle(.grouped)
+        .navigationTitle(isEditing ? "Edit Opportunity" : "New Opportunity")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") { save() }
+                    .disabled(opportunityName.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+        .onAppear { loadExisting() }
+    }
+
+    // MARK: - Load Existing
+
+    /// Populates form state from an existing opportunity (edit mode).
+    private func loadExisting() {
+        guard let opp = opportunity else { return }
+        opportunityName = opp.opportunityName ?? ""
+        salesStage = opp.salesStage ?? "Prospecting"
+        if let value = opp.dealValue, value > 0 {
+            dealValueText = String(format: "%.0f", value)
+        }
+        probability = opp.probability ?? ""
+        if let date = opp.expectedCloseDate {
+            expectedCloseDate = date
+            hasExpectedCloseDate = true
+        }
+        leadSource = opp.leadSource ?? ""
+        qualsType = opp.qualsType ?? ""
+        notesAbout = opp.notesAbout ?? ""
+        contractMilestones = opp.contractMilestones ?? ""
+    }
+
+    // MARK: - Save
+
+    private func save() {
+        let trimmedName = opportunityName.trimmingCharacters(in: .whitespaces)
+        guard !trimmedName.isEmpty else { return }
+
+        let opp: Opportunity
+        if let existing = opportunity {
+            // Edit mode — mutate in place
+            opp = existing
+        } else {
+            // Create mode — new record with local ID
+            opp = Opportunity(
+                id: "local_\(UUID().uuidString)",
+                opportunityName: trimmedName,
+                isPendingPush: true
+            )
+        }
+
+        opp.opportunityName = trimmedName
+        opp.salesStage = salesStage
+        opp.dealValue = Double(dealValueText)
+        opp.probability = probability.isEmpty ? nil : probability
+        opp.expectedCloseDate = hasExpectedCloseDate ? expectedCloseDate : nil
+        opp.leadSource = leadSource.isEmpty ? nil : leadSource
+        opp.qualsType = qualsType.isEmpty ? nil : qualsType
+        opp.notesAbout = notesAbout.isEmpty ? nil : notesAbout
+        opp.contractMilestones = contractMilestones.isEmpty ? nil : contractMilestones
+        opp.localModifiedAt = Date()
+        opp.isPendingPush = true
+
+        if opportunity == nil {
+            // Insert new record
+            modelContext.insert(opp)
+        }
+
+        dismiss()
     }
 }
