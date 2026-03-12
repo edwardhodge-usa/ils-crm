@@ -38,8 +38,10 @@ export function resolvedPortalEmail(row: Record<string, unknown>): string | null
 /** Get the canonical company for a Portal Access record */
 export function resolvedPortalCompany(row: Record<string, unknown>): string | null {
   const contactCompany = resolveLookup(row.contact_company_lookup)
-  if (contactCompany) return contactCompany
-  return (row.company as string | null) || null
+  if (contactCompany && !contactCompany.startsWith('rec')) return contactCompany
+  const company = (row.company as string | null) || null
+  if (company && !company.startsWith('rec')) return company
+  return null
 }
 
 /** Extract the page slug from a full portal log URL */

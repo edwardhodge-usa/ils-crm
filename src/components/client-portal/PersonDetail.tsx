@@ -5,7 +5,7 @@ import {
   resolvedPortalEmail,
   resolvedPortalCompany,
 } from '../../utils/portal-helpers'
-import { buildCollaboratorMap, resolveCollaboratorSave } from '../../utils/collaborator'
+import { parseCollaboratorName, buildCollaboratorMap, resolveCollaboratorSave } from '../../utils/collaborator'
 import { EditableFormRow } from '../shared/EditableFormRow'
 import type { EditableField } from '../shared/EditableFormRow'
 import StatusBadge from '../shared/StatusBadge'
@@ -301,15 +301,20 @@ export default function PersonDetail({
           overflow: 'hidden',
         }}
       >
-        {detailFields.map((field, i) => (
-          <EditableFormRow
-            key={field.key}
-            field={field}
-            value={primaryRecord[field.key]}
-            isLast={i === detailFields.length - 1}
-            onSave={handleFieldSave}
-          />
-        ))}
+        {detailFields.map((field, i) => {
+          let val = primaryRecord[field.key]
+          // Show parsed collaborator name instead of raw JSON for assignee
+          if (field.key === 'assignee') val = parseCollaboratorName(val) ?? val
+          return (
+            <EditableFormRow
+              key={field.key}
+              field={field}
+              value={val}
+              isLast={i === detailFields.length - 1}
+              onSave={handleFieldSave}
+            />
+          )
+        })}
       </div>
 
       {/* ── Notes ──────────────────────────────────────────────────────────── */}

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useLinkedImages } from '../../hooks/useLinkedImages'
 import { resolvedPortalName, resolvedPortalEmail, resolvedPortalCompany } from '../../utils/portal-helpers'
-import { buildCollaboratorMap, resolveCollaboratorSave } from '../../utils/collaborator'
+import { parseCollaboratorName, buildCollaboratorMap, resolveCollaboratorSave } from '../../utils/collaborator'
 import { EditableFormRow } from '../shared/EditableFormRow'
 import type { EditableField } from '../shared/EditableFormRow'
 interface AccessDetailPanelProps {
@@ -228,15 +228,19 @@ export default function AccessDetailPanel({
           border: '1px solid var(--separator)',
           overflow: 'hidden',
         }}>
-          {portalFields.map((field, i) => (
-            <EditableFormRow
-              key={field.key}
-              field={field}
-              value={record[field.key]}
-              isLast={i === portalFields.length - 1}
-              onSave={handleFieldSave}
-            />
-          ))}
+          {portalFields.map((field, i) => {
+            let val = record[field.key]
+            if (field.key === 'assignee') val = parseCollaboratorName(val) ?? val
+            return (
+              <EditableFormRow
+                key={field.key}
+                field={field}
+                value={val}
+                isLast={i === portalFields.length - 1}
+                onSave={handleFieldSave}
+              />
+            )
+          })}
         </div>
 
         {/* ── Contact Info Section ── */}
