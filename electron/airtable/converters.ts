@@ -182,7 +182,7 @@ function localToAirtable(
 // ─── Contacts ────────────────────────────────────────────────
 
 const CONTACT_MAPPINGS: FieldMapping[] = [
-  { local: 'contact_name', airtable: CONTACTS.contactName, type: 'text' },
+  { local: 'contact_name', airtable: CONTACTS.contactName, type: 'readonly' },
   { local: 'first_name', airtable: CONTACTS.firstName, type: 'text' },
   { local: 'last_name', airtable: CONTACTS.lastName, type: 'text' },
   { local: 'job_title', airtable: CONTACTS.jobTitle, type: 'text' },

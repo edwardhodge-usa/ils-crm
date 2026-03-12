@@ -30,6 +30,18 @@ const STAGE_MAP: Record<string, DealStage> = {
   'Contract Sent': 'Negotiation',
 }
 
+// Reverse map: canonical display name → preferred Airtable option value
+// Used when saving stage changes (drag-to-reorder) back to Airtable
+const STAGE_TO_AIRTABLE: Record<string, string> = {
+  'Prospecting': 'Prospecting',
+  'Qualified': 'Qualification',
+  'Business Development': 'Development',
+  'Proposal Sent': 'Proposal Sent',
+  'Negotiation': 'Negotiation',
+  'Closed Won': 'Closed Won',
+  'Closed Lost': 'Closed Lost',
+}
+
 function toStage(raw: string | null | undefined): DealStage | null {
   if (!raw) return 'Prospecting'
   return STAGE_MAP[raw] ?? null
@@ -103,7 +115,8 @@ export default function PipelinePage() {
   }, [rawData, companyNames, companyLogos])
 
   async function handleMove(dealId: string, toStage: string) {
-    await window.electronAPI.opportunities.update(dealId, { sales_stage: toStage })
+    const airtableStage = STAGE_TO_AIRTABLE[toStage] ?? toStage
+    await window.electronAPI.opportunities.update(dealId, { sales_stage: airtableStage })
     reload()
   }
 
