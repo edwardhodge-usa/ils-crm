@@ -1,79 +1,103 @@
 import SwiftUI
 
-/// Root content view — NavigationSplitView with sidebar + detail.
-/// Mirrors: src/components/layout/Layout.tsx (sidebar + topbar + outlet)
-struct ContentView: View {
-    @State private var selectedSection: NavigationSection? = .dashboard
+/// Navigation items for the main sidebar.
+enum NavItem: String, CaseIterable, Hashable {
+    case dashboard
+    case contacts
+    case companies
+    case pipeline
+    case tasks
+    case proposals
+    case projects
+    case interactions
+    case clientPortal
 
-    enum NavigationSection: String, CaseIterable, Identifiable {
-        case dashboard = "Dashboard"
-        case contacts = "Contacts"
-        case companies = "Companies"
-        case pipeline = "Pipeline"
-        case tasks = "Tasks"
-        case proposals = "Proposals"
-        case projects = "Projects"
-        case interactions = "Interactions"
-        case importedContacts = "Imported Contacts"
-        case portalAccess = "Portal Access"
-        case portalLogs = "Portal Logs"
-        case settings = "Settings"
-
-        var id: String { rawValue }
-
-        var systemImage: String {
-            switch self {
-            case .dashboard: return "square.grid.2x2"
-            case .contacts: return "person.2"
-            case .companies: return "building.2"
-            case .pipeline: return "chart.bar"
-            case .tasks: return "checklist"
-            case .proposals: return "doc.text"
-            case .projects: return "folder"
-            case .interactions: return "bubble.left.and.bubble.right"
-            case .importedContacts: return "person.badge.plus"
-            case .portalAccess: return "globe"
-            case .portalLogs: return "list.bullet.rectangle"
-            case .settings: return "gear"
-            }
+    var title: String {
+        switch self {
+        case .dashboard: return "Dashboard"
+        case .contacts: return "Contacts"
+        case .companies: return "Companies"
+        case .pipeline: return "Pipeline"
+        case .tasks: return "Tasks"
+        case .proposals: return "Proposals"
+        case .projects: return "Projects"
+        case .interactions: return "Interactions"
+        case .clientPortal: return "Client Portal"
         }
     }
 
+    var icon: String {
+        switch self {
+        case .dashboard: return "house"
+        case .contacts: return "person.2"
+        case .companies: return "building.2"
+        case .pipeline: return "chart.bar"
+        case .tasks: return "checklist"
+        case .proposals: return "doc.text"
+        case .projects: return "folder"
+        case .interactions: return "bubble.left.and.bubble.right"
+        case .clientPortal: return "globe"
+        }
+    }
+}
+
+/// Root content view — NavigationSplitView with sidebar + detail.
+/// Mirrors: src/components/layout/Layout.tsx (sidebar + topbar + outlet)
+struct ContentView: View {
+    @State private var selection: NavItem? = .dashboard
+    @State private var showSettings = false
+
     var body: some View {
         NavigationSplitView {
-            List(NavigationSection.allCases, selection: $selectedSection) { section in
-                Label(section.rawValue, systemImage: section.systemImage)
+            List(NavItem.allCases, id: \.self, selection: $selection) { item in
+                Label(item.title, systemImage: item.icon)
+                    .tag(item)
             }
+            .listStyle(.sidebar)
+            .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
             .navigationTitle("ILS CRM")
-        } detail: {
-            switch selectedSection {
-            case .dashboard:
-                DashboardView()
-            case .contacts:
-                ContactsView()
-            case .companies:
-                CompaniesView()
-            case .pipeline:
-                PipelineView()
-            case .tasks:
-                TasksView()
-            case .proposals:
-                ProposalsView()
-            case .projects:
-                ProjectsView()
-            case .interactions:
-                InteractionsView()
-            case .importedContacts:
-                ImportedContactsView()
-            case .portalAccess:
-                PortalAccessView()
-            case .portalLogs:
-                PortalLogsView()
-            case .settings:
-                SettingsView()
-            case nil:
-                DashboardView()
+            .toolbar {
+                ToolbarItem(placement: .automatic) {
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gear")
+                    }
+                    .help("Settings")
+                }
             }
+        } detail: {
+            detailView
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+                .frame(minWidth: 480, minHeight: 400)
+        }
+    }
+
+    @ViewBuilder
+    private var detailView: some View {
+        switch selection {
+        case .dashboard:
+            DashboardView()
+        case .contacts:
+            ContactsView()
+        case .companies:
+            CompaniesView()
+        case .pipeline:
+            PipelineView()
+        case .tasks:
+            TasksView()
+        case .proposals:
+            ProposalsView()
+        case .projects:
+            ProjectsView()
+        case .interactions:
+            InteractionsView()
+        case .clientPortal:
+            PortalAccessView()
+        case nil:
+            DashboardView()
         }
     }
 }

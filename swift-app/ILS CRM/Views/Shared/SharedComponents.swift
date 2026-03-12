@@ -93,3 +93,150 @@ struct ConfirmDeleteModifier: ViewModifier {
         }
     }
 }
+
+// MARK: - AvatarView
+
+struct AvatarView: View {
+    let name: String
+    var size: CGFloat = 36
+    var photoURL: URL? = nil
+
+    // 11-color Apple palette for deterministic color from name
+    private static let palette: [Color] = [
+        .red, .orange, .yellow, .green, .mint,
+        .teal, .cyan, .blue, .indigo, .purple, .pink
+    ]
+
+    private var initials: String {
+        let parts = name.split(separator: " ")
+        let first = parts.first?.prefix(1) ?? ""
+        let last = parts.count > 1 ? parts.last!.prefix(1) : ""
+        return String(first + last).uppercased()
+    }
+
+    private var color: Color {
+        let hash = name.utf8.reduce(0) { $0 &+ Int($1) }
+        return Self.palette[abs(hash) % Self.palette.count]
+    }
+
+    var body: some View {
+        if let photoURL {
+            AsyncImage(url: photoURL) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: size, height: size)
+                        .clipShape(Circle())
+                case .failure:
+                    initialsFallback
+                default:
+                    initialsFallback
+                }
+            }
+        } else {
+            initialsFallback
+        }
+    }
+
+    private var initialsFallback: some View {
+        ZStack {
+            Circle()
+                .fill(color)
+                .frame(width: size, height: size)
+            Text(initials)
+                .font(.system(size: size / 2.5, weight: .medium))
+                .foregroundStyle(.white)
+        }
+    }
+}
+
+// MARK: - StatCard
+
+struct StatCard: View {
+    let title: String
+    let value: Int
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundStyle(color)
+            Text("\(value)")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundStyle(.primary)
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .frame(minWidth: 140, alignment: .leading)
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - SectionHeader
+
+struct SectionHeader: View {
+    let title: String
+    var count: Int? = nil
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 11, weight: .bold))
+                .textCase(.uppercase)
+                .tracking(0.5)
+                .foregroundStyle(.secondary)
+            Spacer()
+            if let count {
+                Text("\(count)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+// MARK: - FieldRow
+
+struct FieldRow: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .foregroundStyle(.secondary)
+                .frame(alignment: .leading)
+            Spacer()
+            Text(value)
+                .foregroundStyle(.primary)
+                .frame(alignment: .trailing)
+        }
+        .frame(minHeight: 28)
+    }
+}
+
+// MARK: - BadgeView
+
+struct BadgeView: View {
+    let text: String
+    var color: Color = .blue
+
+    var body: some View {
+        Text(text)
+            .font(.caption)
+            .fontWeight(.medium)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(color.opacity(0.12))
+            .foregroundStyle(color)
+            .clipShape(Capsule())
+    }
+}

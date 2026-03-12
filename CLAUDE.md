@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM project — Airtable schema management, API integrations, and eventually a full Electron desktop CRM app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Airtable API (backend/data), Anthropic Claude API (AI features)
-- **Status**: v3.3.3 — MVP with app licensing, auto-updates (verified), multi-user deployment (arm64 + x64). On main.
+- **Status**: v3.4.0 — MVP with app licensing, auto-updates (verified), multi-user deployment (arm64 + x64). On main.
 - **Repo**: edwardhodge-usa/ils-crm
 - **Airtable Base**: ILS CRM (appYXbUdcmSwBoPFU)
 
@@ -127,6 +127,7 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-11** - v3.3.2 released with stale Vite frontend (dist/ compiled at 23:07 for v3.3.1, Portal CMS committed at 00:09 for v3.3.2) — `npm run package` was skipped during high-context session (5 releases in 6h, context rot) → ALWAYS: (1) `rm -rf dist dist-electron node_modules/.vite` before release builds, (2) `grep` the built bundle for recently added features before uploading, (3) max 2 releases per session — context rot causes skipped steps. v3.3.3 is the corrected release
 **2026-03-11** - "dragEvent is not defined" console spam in Pipeline → React 18 dev-mode artifact in react-dom.development.js, absent in production builds. Not a code bug
 **2026-03-11** - multiSelect values stored with extra wrapping quotes (`"\"Business Development\""`) → `jsonArray()` didn't clean elements like `cleanSelectValue()` does for singleSelect. Fixed: both `airtableToLocal` and `localToAirtable` now map multiSelect elements through `cleanSelectValue()`
+**2026-03-12** - Portal Access dropdowns had hardcoded stage/status options that didn't match Airtable schema (same pattern as #7 from 2026-02-28 QA) → When adding select fields to new components, always check Airtable field schema for exact option values. Don't copy options from old/different components
 
 ## Deployment Process
 
