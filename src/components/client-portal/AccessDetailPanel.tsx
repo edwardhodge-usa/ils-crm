@@ -42,8 +42,8 @@ function formatDate(val: unknown): string {
 // ─── Field Definitions ──────────────────────────────────────────────────────────
 
 const PORTAL_FIELDS = (collaboratorOptions: string[]): EditableField[] => [
-  { key: 'stage', label: 'Stage', type: 'singleSelect', options: ['Prospect', 'Lead', 'Client', 'Past Client', 'Partner'] },
-  { key: 'status', label: 'Status', type: 'singleSelect', options: ['ACTIVE', 'IN-ACTIVE', 'PENDING', 'EXPIRED', 'REVOKED'] },
+  { key: 'stage', label: 'Stage', type: 'singleSelect', options: ['Lead', 'Contacted', 'Qualified', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] },
+  { key: 'status', label: 'Status', type: 'singleSelect', options: ['ACTIVE', 'IN-ACTIVE'] },
   { key: 'lead_source', label: 'Lead Source', type: 'singleSelect', options: [] },
   { key: 'services_interested_in', label: 'Services Interested In', type: 'multiSelect' },
   { key: 'project_budget', label: 'Project Budget', type: 'currency' },
