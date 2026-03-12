@@ -25,10 +25,6 @@ import ImportedContactsPage from './components/imported-contacts/ImportedContact
 import InteractionsPage from './components/interactions/InteractionsPage'
 import InteractionListPage from './components/interactions/InteractionListPage'
 import InteractionForm from './components/interactions/InteractionForm'
-// Old portal imports — kept for reference, will be removed in Task 12
-// import PortalAccessPage from './components/portal/PortalAccessPage'
-// import PortalCmsPage from './components/portal/PortalCmsPage'
-// import PortalLogsPage from './components/portal/PortalLogsPage'
 import ClientPortalPage from './components/client-portal/ClientPortalPage'
 import CommandPalette from './components/layout/CommandPalette'
 import ErrorBoundary from './components/shared/ErrorBoundary'
