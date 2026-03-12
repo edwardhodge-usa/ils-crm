@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { stageBarColor } from '@/config/stages'
 
 interface PipelineStage {
   sales_stage: string
@@ -18,37 +19,6 @@ function formatCurrency(v: number): string {
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
   if (v >= 1_000) return `$${Math.round(v / 1_000)}K`
   return `$${v.toLocaleString()}`
-}
-
-// Map stage names to their token-based colors
-const STAGE_BAR_COLORS: Record<string, string> = {
-  'Prospecting': 'var(--color-yellow)',
-  'Qualified': 'var(--color-orange)',
-  'Business Development': 'var(--color-purple)',
-  'Proposal Sent': 'var(--color-indigo)',
-  'Negotiation': 'var(--color-teal)',
-  'Closed Won': 'var(--color-green)',
-  'Closed Lost': 'var(--color-red)',
-  // Legacy prefixed names
-  '01 Prospecting': 'var(--color-yellow)',
-  '02 Qualified': 'var(--color-orange)',
-  '03 Proposal Sent': 'var(--color-indigo)',
-  '04 Negotiation': 'var(--color-teal)',
-  '05 Closed Won': 'var(--color-green)',
-}
-
-function stageBarColor(stageName: string): string {
-  // Try exact match first, then partial
-  if (STAGE_BAR_COLORS[stageName]) return STAGE_BAR_COLORS[stageName]
-  const lower = stageName.toLowerCase()
-  if (lower.includes('prospect')) return 'var(--color-yellow)'
-  if (lower.includes('qualif')) return 'var(--color-orange)'
-  if (lower.includes('develop')) return 'var(--color-purple)'
-  if (lower.includes('proposal')) return 'var(--color-indigo)'
-  if (lower.includes('negot')) return 'var(--color-teal)'
-  if (lower.includes('won')) return 'var(--color-green)'
-  if (lower.includes('lost')) return 'var(--color-red)'
-  return 'var(--color-accent)'
 }
 
 function PipelineRow({ stage, maxCount, isLast }: { stage: PipelineStage; maxCount: number; isLast: boolean }) {

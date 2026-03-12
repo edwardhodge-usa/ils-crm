@@ -8,17 +8,7 @@ import { CompanyLogo } from '../shared/CompanyLogo'
 import { containsId } from '../../utils/linked-records'
 import { ContactStats } from '../contacts/ContactStats'
 import useDarkMode from '../../hooks/useDarkMode'
-
-/** Stage badge colors for opportunities — Apple system colors */
-const STAGE_COLORS: Record<string, { bg: string; fg: string; fgDark: string }> = {
-  'Prospecting':          { bg: 'rgba(255,204,0,0.22)',   fg: '#9D8500', fgDark: '#FFD60A' },
-  'Qualified':            { bg: 'rgba(255,149,0,0.22)',   fg: '#A04B00', fgDark: '#FF9F0A' },
-  'Business Development': { bg: 'rgba(175,82,222,0.22)',  fg: '#7B4EA8', fgDark: '#BF5AF2' },
-  'Proposal Sent':        { bg: 'rgba(88,86,214,0.22)',   fg: '#3634A3', fgDark: '#5E5CE6' },
-  'Negotiation':          { bg: 'rgba(48,176,199,0.22)',  fg: '#1A8FA8', fgDark: '#40CBE0' },
-  'Closed Won':           { bg: 'rgba(52,199,89,0.22)',   fg: '#1A7834', fgDark: '#30D158' },
-  'Closed Lost':          { bg: 'rgba(255,59,48,0.22)',   fg: '#CC2D22', fgDark: '#FF453A' },
-}
+import { stageFullColors } from '@/config/stages'
 
 interface CompanyDetailProps {
   companyId: string | null
@@ -441,7 +431,7 @@ export function CompanyDetail({ companyId, onDeleted }: CompanyDetailProps) {
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
               {openOpps.slice(0, 3).map((opp, idx) => {
                 const stage = (opp.sales_stage as string | null) ?? null
-                const stageColor = stage ? (STAGE_COLORS[stage] || { bg: 'rgba(118,118,128,0.10)', fg: 'var(--text-secondary)', fgDark: 'var(--text-secondary)' }) : null
+                const stageColor = stage ? stageFullColors(stage) : null
                 return (
                   <div
                     key={opp.id as string}

@@ -1,16 +1,15 @@
-const STAGES = ['Prospecting', 'Qualified', 'Business Development', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] as const
-type Stage = typeof STAGES[number]
+import { PIPELINE_STAGES, type PipelineStage } from '@/config/stages'
 
 interface StageProgressProps {
-  currentStage: Stage | string
+  currentStage: PipelineStage | string
 }
 
 export function StageProgress({ currentStage }: StageProgressProps) {
-  const idx = STAGES.indexOf(currentStage as Stage)
+  const idx = PIPELINE_STAGES.indexOf(currentStage as PipelineStage)
 
   return (
     <div className="flex gap-1">
-      {STAGES.map((stage, i) => (
+      {PIPELINE_STAGES.map((stage, i) => (
         <div
           key={stage}
           title={stage}

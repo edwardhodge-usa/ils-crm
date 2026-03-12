@@ -2,18 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import type { DealItem } from '@/types'
 import { CompanyLogo } from '../shared/CompanyLogo'
-
-/** Raw stage color hex values for the badge formula (rgba with 0.10 alpha) */
-/** Stage badge colors — uses CSS tokens from tokens.css */
-const STAGE_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
-  'Prospecting':          { bg: 'var(--stage-prospecting-bg)',  text: 'var(--stage-prospecting)' },
-  'Qualified':            { bg: 'var(--stage-qualified-bg)',    text: 'var(--stage-qualified)' },
-  'Business Development': { bg: 'var(--stage-bizdev-bg)',       text: 'var(--stage-bizdev)' },
-  'Proposal Sent':        { bg: 'var(--stage-proposal-bg)',     text: 'var(--stage-proposal)' },
-  'Negotiation':          { bg: 'var(--stage-negotiation-bg)',  text: 'var(--stage-negotiation)' },
-  'Closed Won':           { bg: 'var(--stage-won-bg)',          text: 'var(--stage-won)' },
-  'Closed Lost':          { bg: 'var(--stage-lost-bg)',         text: 'var(--stage-lost)' },
-}
+import { stageBadgeTokens } from '@/config/stages'
 
 interface DealCardProps {
   id: string
@@ -25,7 +14,7 @@ interface DealCardProps {
 export function DealCard({ id, deal, isSelected, onClick }: DealCardProps) {
   const { dealName, companyName, value, probability, stage } = deal
   const [hovered, setHovered] = useState(false)
-  const badgeColors = STAGE_BADGE_COLORS[stage] ?? { bg: 'var(--bg-tertiary)', text: 'var(--text-secondary)' }
+  const badgeColors = stageBadgeTokens(stage)
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
   const didDrag = useRef(false)

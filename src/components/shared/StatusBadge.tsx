@@ -3,8 +3,14 @@
  * Uses Apple accessible darker text (light mode) and brighter text (dark mode).
  */
 import useDarkMode from '../../hooks/useDarkMode'
+import { PIPELINE_STAGES, stageStatusBadgeColors } from '@/config/stages'
 
 type BadgeSize = 'sm' | 'md'
+
+// Build pipeline stage entries from centralized config
+const pipelineStageColors = Object.fromEntries(
+  PIPELINE_STAGES.map(s => [s, stageStatusBadgeColors(s)])
+) as Record<string, { text: string; textDark: string; bg: string }>
 
 // Apple color pairs: text (light accessible) / textDark (dark mode bright) / bg
 export const colorMap: Record<string, { text: string; textDark: string; bg: string }> = {
@@ -20,15 +26,9 @@ export const colorMap: Record<string, { text: string; textDark: string; bg: stri
   'Rejected':          { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
   'Sent to Client':    { text: '#0055B3',  textDark: '#409CFF',  bg: 'rgba(0,122,255,0.22)' },
 
-  // Pipeline stages (canonical)
-  'Prospecting':       { text: '#9D8500',  textDark: '#FFD60A',  bg: 'rgba(255,204,0,0.22)' },
-  'Qualified':         { text: '#A04B00',  textDark: '#FF9F0A',  bg: 'rgba(255,149,0,0.22)' },
-  'Business Development': { text: '#8944AB',  textDark: '#BF5AF2',  bg: 'rgba(175,82,222,0.22)' },
-  'Development':       { text: '#8944AB',  textDark: '#BF5AF2',  bg: 'rgba(175,82,222,0.22)' },
-  'Proposal Sent':     { text: '#3634A3',  textDark: '#5E5CE6',  bg: 'rgba(88,86,214,0.22)' },
-  'Negotiation':       { text: '#0E7A8D',  textDark: '#40CBE0',  bg: 'rgba(48,176,199,0.22)' },
-  'Closed Won':        { text: '#248A3D',  textDark: '#30D158',  bg: 'rgba(52,199,89,0.22)' },
-  'Closed Lost':       { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
+  // Pipeline stages (canonical) — from centralized config
+  ...pipelineStageColors,
+  'Development':       stageStatusBadgeColors('Business Development'),
   // Legacy stage names (still in Airtable data)
   'Initial Contact':   { text: '#0E7A8D',  textDark: '#40CBE0',  bg: 'rgba(48,176,199,0.22)' },
   'Qualification':     { text: '#0055B3',  textDark: '#409CFF',  bg: 'rgba(0,122,255,0.22)' },

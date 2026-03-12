@@ -91,7 +91,11 @@ function airtableToLocal(
         result[m.local] = jsonArray(val)
         break
       case 'multiSelect':
-        result[m.local] = jsonArray(val)
+        if (Array.isArray(val)) {
+          result[m.local] = JSON.stringify(val.map(v => cleanSelectValue(v) ?? String(v)))
+        } else {
+          result[m.local] = null
+        }
         break
       case 'singleSelect':
         result[m.local] = cleanSelectValue(val)
@@ -165,7 +169,7 @@ function localToAirtable(
         fields[m.airtable] = safeParseArray(val)
         break
       case 'multiSelect':
-        fields[m.airtable] = safeParseArray(val)
+        fields[m.airtable] = safeParseArray(val).map(v => cleanSelectValue(v) ?? String(v))
         break
       case 'singleSelect':
         fields[m.airtable] = cleanSelectValue(val)

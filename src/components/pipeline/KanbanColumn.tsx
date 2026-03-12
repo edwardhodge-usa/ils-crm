@@ -1,16 +1,7 @@
 import { useDroppable } from '@dnd-kit/core'
 import type { DealItem } from '@/types'
 import { DealCard } from './DealCard'
-
-const STAGE_COLORS: Record<string, string> = {
-  'Prospecting': 'var(--color-yellow)',
-  'Qualified': 'var(--color-orange)',
-  'Business Development': 'var(--color-purple)',
-  'Proposal Sent': 'var(--color-indigo)',
-  'Negotiation': 'var(--color-teal)',
-  'Closed Won': 'var(--color-green)',
-  'Closed Lost': 'var(--color-red)',
-}
+import { stageDotColor } from '@/config/stages'
 
 interface KanbanColumnProps {
   stage: string
@@ -22,7 +13,7 @@ interface KanbanColumnProps {
 export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage })
   const totalValue = deals.reduce((sum, d) => sum + (d.value ?? 0), 0)
-  const stageColor = STAGE_COLORS[stage] ?? 'var(--text-secondary)'
+  const stageColor = stageDotColor(stage)
 
   return (
     <div className="flex flex-col flex-shrink-0 w-[200px]">
