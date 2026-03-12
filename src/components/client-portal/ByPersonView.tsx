@@ -76,6 +76,7 @@ export default function ByPersonView({
         onGroupByChange={setGroupBy}
         view={view}
         onViewChange={onViewChange}
+        onGrantAccess={() => onViewChange('byPage')}
       />
       <div
         style={{

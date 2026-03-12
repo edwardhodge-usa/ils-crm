@@ -19,6 +19,7 @@ interface PersonListProps {
   onGroupByChange: (g: GroupBy) => void
   view: 'byPage' | 'byPerson'
   onViewChange: (v: 'byPage' | 'byPerson') => void
+  onGrantAccess?: () => void
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
@@ -67,6 +68,7 @@ export default function PersonList({
   onGroupByChange,
   view,
   onViewChange,
+  onGrantAccess,
 }: PersonListProps) {
   // Build unique person entries from grouped access records
   const people = useMemo<PersonEntry[]>(() => {
@@ -382,6 +384,7 @@ export default function PersonList({
 
       {/* + Grant Access button */}
       <button
+        onClick={onGrantAccess}
         style={{
           margin: '8px 12px 12px',
           padding: '7px 0',
