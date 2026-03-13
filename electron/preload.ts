@@ -152,7 +152,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Framer page health
   framer: {
-    checkPageHealth: (slug: string) => ipcRenderer.invoke('framer:checkPageHealth', slug),
+    checkPageHealth: (slug: string, cmsState?: Record<string, { draft: boolean }> | null) => ipcRenderer.invoke('framer:checkPageHealth', slug, cmsState),
+    getCmsCache: () => ipcRenderer.invoke('framer:getCmsCache'),
   },
 
   // System appearance

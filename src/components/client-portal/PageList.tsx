@@ -27,8 +27,11 @@ interface PageListProps {
   onNewPage: () => void
   view: 'byPage' | 'byPerson'
   onViewChange: (v: 'byPage' | 'byPerson') => void
-  healthMap?: Map<string, { status: number; ok: boolean }>
+  healthMap?: Map<string, { status: number; ok: boolean; cmsStatus: string }>
   healthSummary?: { liveCount: number; sluggedPages: number; checkedCount: number }
+  cmsLastSynced?: string | null
+  hasCmsCache?: boolean
+  statusCounts?: { live: number; draft: number; not_in_framer: number; needs_publish: number; error: number; no_cache: number }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -43,17 +46,42 @@ function matchesSearch(page: Record<string, unknown>, term: string): boolean {
   return name.includes(lower) || address.includes(lower) || title.includes(lower)
 }
 
-/** Derive health dot color and tooltip from health map entry */
+/** Derive health dot color and tooltip from health result */
 function healthDotStyle(
   slug: string | null,
-  healthMap: Map<string, { status: number; ok: boolean }> | undefined,
+  health: { status: number; ok: boolean; cmsStatus: string } | undefined,
 ): { color: string; title: string } {
   if (!slug || slug === 'null') return { color: 'transparent', title: '' }
-  if (!healthMap || !healthMap.has(slug)) return { color: 'var(--color-fill-tertiary)', title: 'Checking...' }
-  const h = healthMap.get(slug)!
-  if (h.ok) return { color: 'var(--color-green)', title: 'Page live' }
-  if (h.status === 404) return { color: 'var(--color-red)', title: 'Page not found' }
-  return { color: 'var(--color-orange)', title: 'Error checking page' }
+  if (!health) return { color: 'var(--color-fill-tertiary)', title: 'Checking...' }
+  switch (health.cmsStatus) {
+    case 'live': return { color: 'var(--color-green)', title: 'Page live' }
+    case 'draft': return { color: 'var(--color-yellow)', title: 'Draft — not published in Framer' }
+    case 'not_in_framer': return { color: 'var(--color-fill-tertiary)', title: 'Not in Framer CMS' }
+    case 'needs_publish': return { color: 'var(--color-orange)', title: 'In Framer but site needs publish' }
+    case 'error': return { color: 'var(--color-red)', title: 'Error checking page' }
+    case 'no_cache': return { color: 'var(--color-red)', title: 'Page not found' }
+    default: return { color: 'var(--color-fill-tertiary)', title: 'Unknown' }
+  }
+}
+
+/** Simple relative time display */
+function timeAgo(iso: string): string {
+  const now = Date.now()
+  const then = new Date(iso).getTime()
+  const diffMs = now - then
+  if (diffMs < 0) return 'just now'
+  const minutes = Math.floor(diffMs / 60000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
+
+/** Whether a time string is older than 24 hours */
+function isOlderThan24h(iso: string): boolean {
+  return Date.now() - new Date(iso).getTime() > 86400000
 }
 
 /** Count how many access records share a page_address with a given page */
@@ -80,6 +108,9 @@ export default function PageList({
   onViewChange,
   healthMap,
   healthSummary,
+  cmsLastSynced,
+  hasCmsCache,
+  statusCounts,
 }: PageListProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
@@ -186,7 +217,9 @@ export default function PageList({
           const address = page.page_address as string | null
           const access = countAccess(page, accessRecords)
           const dotColor = DOT_COLORS[index % DOT_COLORS.length]
-          const health = healthDotStyle(address, healthMap)
+          const healthEntry = address && address !== 'null' ? healthMap?.get(address) : undefined
+          const health = healthDotStyle(address, healthEntry)
+          const cmsStatus = healthEntry?.cmsStatus
 
           return (
             <div
@@ -247,32 +280,54 @@ export default function PageList({
                     marginTop: 3,
                   }}
                 >
-                  {/* OFF AIR / ERROR badge for not-live pages */}
-                  {health.color !== 'transparent' && health.color !== 'var(--color-green)' && health.color !== 'var(--color-fill-tertiary)' && (
-                    <span
-                      title={health.title}
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 600,
-                        letterSpacing: 0.4,
-                        padding: '2px 6px',
-                        borderRadius: 4,
-                        flexShrink: 0,
-                        background: isSelected
-                          ? 'rgba(255,255,255,0.2)'
-                          : health.color === 'var(--color-red)'
-                            ? 'rgba(255,59,48,0.12)'
-                            : 'rgba(255,159,10,0.12)',
-                        color: isSelected
-                          ? 'rgba(255,255,255,0.85)'
-                          : health.color === 'var(--color-red)'
-                            ? 'var(--color-red)'
-                            : 'var(--color-orange)',
-                      }}
-                    >
-                      {health.color === 'var(--color-red)' ? 'OFF AIR' : 'ERROR'}
-                    </span>
-                  )}
+                  {/* Status badge for non-live pages */}
+                  {cmsStatus && cmsStatus !== 'live' && (() => {
+                    let label = ''
+                    let bg = ''
+                    let fg = ''
+                    switch (cmsStatus) {
+                      case 'no_cache':
+                      case 'not_in_framer':
+                        label = 'OFF AIR'
+                        bg = 'rgba(255,59,48,0.12)'
+                        fg = 'var(--color-red)'
+                        break
+                      case 'draft':
+                        label = 'DRAFT'
+                        bg = 'rgba(255,204,0,0.12)'
+                        fg = 'var(--color-yellow)'
+                        break
+                      case 'needs_publish':
+                        label = 'UNPUBLISHED'
+                        bg = 'rgba(255,149,0,0.12)'
+                        fg = 'var(--color-orange)'
+                        break
+                      case 'error':
+                        label = 'ERROR'
+                        bg = 'rgba(255,59,48,0.12)'
+                        fg = 'var(--color-red)'
+                        break
+                      default:
+                        return null
+                    }
+                    return (
+                      <span
+                        title={health.title}
+                        style={{
+                          fontSize: 9,
+                          fontWeight: 600,
+                          letterSpacing: 0.4,
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                          flexShrink: 0,
+                          background: isSelected ? 'rgba(255,255,255,0.2)' : bg,
+                          color: isSelected ? 'rgba(255,255,255,0.85)' : fg,
+                        }}
+                      >
+                        {label}
+                      </span>
+                    )
+                  })()}
 
                   {/* Section indicator dots */}
                   <div
@@ -332,39 +387,78 @@ export default function PageList({
         })}
       </div>
 
-      {/* ── Health Summary + New Page Button ─────────────────── */}
+      {/* ── Health Summary + CMS Cache Info + New Page Button ── */}
       <div style={{ padding: '8px 12px 12px' }}>
         {healthSummary && healthSummary.sluggedPages > 0 && (
           <div
             style={{
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
+              gap: 4,
               padding: '6px 0',
               marginBottom: 8,
-              fontSize: 11,
-              fontWeight: 500,
-              color: 'var(--text-secondary)',
             }}
           >
+            {/* Summary line */}
             <div
               style={{
-                width: 7,
-                height: 7,
-                borderRadius: '50%',
-                background: healthSummary.checkedCount === 0
-                  ? 'var(--color-fill-tertiary)'
-                  : healthSummary.liveCount === healthSummary.sluggedPages
-                    ? 'var(--color-green)'
-                    : 'var(--color-orange)',
-                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                fontSize: 11,
+                fontWeight: 500,
+                color: 'var(--text-secondary)',
               }}
-            />
-            {healthSummary.checkedCount === 0
-              ? 'Checking pages...'
-              : `${healthSummary.liveCount}/${healthSummary.sluggedPages} Pages Live`
-            }
+            >
+              <div
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  background: healthSummary.checkedCount === 0
+                    ? 'var(--color-fill-tertiary)'
+                    : healthSummary.liveCount === healthSummary.sluggedPages
+                      ? 'var(--color-green)'
+                      : 'var(--color-orange)',
+                  flexShrink: 0,
+                }}
+              />
+              {healthSummary.checkedCount === 0
+                ? 'Checking pages...'
+                : hasCmsCache && statusCounts
+                  ? (() => {
+                      const parts: string[] = []
+                      if (statusCounts.live > 0) parts.push(`${statusCounts.live} Live`)
+                      if (statusCounts.draft > 0) parts.push(`${statusCounts.draft} Draft`)
+                      if (statusCounts.needs_publish > 0) parts.push(`${statusCounts.needs_publish} Unpublished`)
+                      if (statusCounts.not_in_framer > 0) parts.push(`${statusCounts.not_in_framer} Not Synced`)
+                      if (statusCounts.error > 0) parts.push(`${statusCounts.error} Error`)
+                      if (statusCounts.no_cache > 0) parts.push(`${statusCounts.no_cache} Not Found`)
+                      return parts.length > 0 ? parts.join(' \u00b7 ') : `${healthSummary.liveCount}/${healthSummary.sluggedPages} Pages Live`
+                    })()
+                  : `${healthSummary.liveCount}/${healthSummary.sluggedPages} Pages Live`
+              }
+            </div>
+
+            {/* CMS cache freshness */}
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 400,
+                color: cmsLastSynced
+                  ? isOlderThan24h(cmsLastSynced)
+                    ? 'var(--color-orange)'
+                    : 'var(--color-green)'
+                  : 'var(--text-tertiary)',
+              }}
+            >
+              {cmsLastSynced
+                ? `Framer CMS synced ${timeAgo(cmsLastSynced)}`
+                : 'Framer CMS: not synced'
+              }
+            </div>
           </div>
         )}
         <button
