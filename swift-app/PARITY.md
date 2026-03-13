@@ -15,13 +15,13 @@ Last updated: 2026-03-12 (Session 6 — visual parity with Electron)
 | Proposals | 4 | 4 | 100% |
 | Projects | 4 | 4 | 100% |
 | Interactions | 4 | 4 | 100% |
-| Imported Contacts | 4 | 3 | 75% |
+| Imported Contacts | 4 | 4 | 100% |
 | Portal (Access + Logs) | 5 | 5 | 100% |
 | Settings | 4 | 4 | 100% |
 | Shared Components | 9 | 9 | 100% |
 | Data Layer | 8 | 8 | 100% |
 | Sync Engine | 5 | 5 | 100% |
-| **TOTAL** | **72** | **71** | **99%** |
+| **TOTAL** | **72** | **72** | **100%** |
 
 ---
 
@@ -118,7 +118,7 @@ Last updated: 2026-03-12 (Session 6 — visual parity with Electron)
 | Imported contacts list with search | DONE | DONE | Searchable list with name/email/company filtering, status badges (Approved/Rejected/Pending), sheet detail navigation |
 | Detail view | DONE | DONE | ImportedContactDetailView — header with avatar + job title + onboarding status, contact info (email, phone, mobile, LinkedIn, website with tappable links), import info (source, date, categorization, tags with FlowLayout, event tags, sync flag), business (company, industry, type, size, address), company details (revenue, founded, NAICS, address, description), notes (general, review, rejection reason), details section |
 | Create/edit form | DONE | DONE | ImportedContactFormView — name, email, phone, company, status picker, source, notes |
-| Linked entities | DONE | TODO | Not yet implemented — no linked record resolution for imported contacts |
+| Linked entities | DONE | DONE | **Session 7:** @Query resolves specialtiesIds → Specialty names, relatedCrmContactIds → Contact names via RelatedRecordRow |
 
 ## Portal (Access + Logs)
 
@@ -177,9 +177,12 @@ Last updated: 2026-03-12 (Session 6 — visual parity with Electron)
 
 ---
 
-## Status: 99% Parity Achieved (Session 6 — Visual Parity)
+## Status: 100% Parity Achieved (Session 7)
 
-Session 6 was a major visual overhaul: every list view converted from flat-list+modal to inline list+detail split layouts matching Electron. 71 of 72 parity items complete.
+Session 7 completed the final parity item: Imported Contacts linked entity resolution. All 72 of 72 items now match between Electron and Swift.
+
+**Session 7:**
+- Imported Contacts linked entities — `@Query` fetches all Specialties and Contacts, filters by `specialtiesIds`/`relatedCrmContactIds`, renders via `RelatedRecordRow` in a "Related" section
 
 **Session 6 highlights:**
 - Sidebar redesigned with 3 grouped sections (CRM/WORK/ACTIVITY) + Settings footer + version
@@ -191,11 +194,7 @@ Session 6 was a major visual overhaul: every list view converted from flat-list+
 - AvatarSize enum added (.small=28, .medium=36, .large=48, .xlarge=64)
 - `assignedTo` property added to CRMTask model + Airtable converter
 
-**Remaining item (1):**
-- Imported Contacts linked entities — linked record resolution for imported contacts
-
 **Future sessions:**
-1. **Imported Contacts linked entities** — resolve the final parity item
-2. **macOS polish** — Menu bar, keyboard shortcuts, window configuration
-3. **End-to-end testing** — Full sync testing with Electron app, data integrity verification
-4. **Release prep** — Code signing, notarization, DMG packaging, deployment
+1. **macOS polish** — Menu bar, keyboard shortcuts, window configuration
+2. **End-to-end testing** — Full sync testing with Electron app, data integrity verification
+3. **Release prep** — Code signing, notarization, DMG packaging, deployment

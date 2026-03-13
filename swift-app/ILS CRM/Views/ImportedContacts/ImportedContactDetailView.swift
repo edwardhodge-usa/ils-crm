@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 /// Imported Contact detail view — displays key fields from the staging record.
 ///
@@ -12,6 +13,18 @@ struct ImportedContactDetailView: View {
     let importedContact: ImportedContact
 
     @Environment(\.dismiss) private var dismiss
+
+    // Linked entity queries — fetch all, filter by imported contact's ID arrays
+    @Query(sort: \Specialty.specialty) private var allSpecialties: [Specialty]
+    @Query(sort: \Contact.importedContactName) private var allContacts: [Contact]
+
+    private var linkedSpecialties: [Specialty] {
+        allSpecialties.filter { importedContact.specialtiesIds.contains($0.id) }
+    }
+
+    private var linkedContacts: [Contact] {
+        allContacts.filter { importedContact.relatedCrmContactIds.contains($0.id) }
+    }
 
     private var displayName: String {
         if let name = importedContact.importedContactName, !name.isEmpty {
@@ -35,6 +48,7 @@ struct ImportedContactDetailView: View {
                 Form {
                     contactInfoSection
                     importInfoSection
+                    relatedSection
                     businessSection
                     companyDetailsSection
                     notesSection
@@ -193,6 +207,32 @@ struct ImportedContactDetailView: View {
                             .foregroundStyle(.green)
                     }
                     .frame(minHeight: 28)
+                }
+            }
+        }
+    }
+
+    // MARK: - Related (Linked Entities)
+
+    @ViewBuilder
+    private var relatedSection: some View {
+        let hasSpecialties = !linkedSpecialties.isEmpty
+        let hasContacts = !linkedContacts.isEmpty
+
+        if hasSpecialties || hasContacts {
+            Section("Related") {
+                if hasSpecialties {
+                    RelatedRecordRow(
+                        label: "Specialties",
+                        items: linkedSpecialties.compactMap { $0.specialty }
+                    )
+                }
+
+                if hasContacts {
+                    RelatedRecordRow(
+                        label: "CRM Contacts",
+                        items: linkedContacts.compactMap { $0.importedContactName }
+                    )
                 }
             }
         }
