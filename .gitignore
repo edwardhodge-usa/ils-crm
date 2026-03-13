@@ -16,5 +16,7 @@ build/
 *.log
 .claude/
 .worktrees/
+.superpowers/
+xcuserdata/
 electron/updater-token.ts
 electron/license-config.ts
