@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 /// Pipeline / Kanban — mirrors src/components/pipeline/PipelinePage.tsx
 ///
@@ -129,6 +130,9 @@ struct PipelineView: View {
                 OpportunityFormView(opportunity: nil)
             }
             .frame(minWidth: 500, minHeight: 600)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .createNewRecord)) { _ in
+            showNewOpportunity = true
         }
     }
 

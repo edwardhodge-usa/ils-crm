@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 /// Imported Contacts staging view — mirrors src/components/imported-contacts/ImportedContactsPage.tsx
 ///
@@ -66,6 +67,9 @@ struct ImportedContactsView: View {
                 ImportedContactFormView(importedContact: nil)
             }
             .frame(minWidth: 500, minHeight: 600)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .createNewRecord)) { _ in
+            showNewContact = true
         }
     }
 

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 // MARK: - TasksView
 
@@ -190,6 +191,9 @@ struct TasksView: View {
                 TaskFormView(crmTask: nil)
             }
             .frame(minWidth: 450, minHeight: 500)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .createNewRecord)) { _ in
+            showNewTask = true
         }
     }
 

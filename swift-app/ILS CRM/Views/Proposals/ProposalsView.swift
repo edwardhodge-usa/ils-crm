@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 // MARK: - ProposalSortMode
 
@@ -151,6 +152,9 @@ struct ProposalsView: View {
                 ProposalFormView(proposal: nil)
             }
             .frame(minWidth: 480, minHeight: 560)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .createNewRecord)) { _ in
+            showNewProposal = true
         }
     }
 

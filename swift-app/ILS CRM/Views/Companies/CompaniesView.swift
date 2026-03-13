@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 /// Companies list+detail split — mirrors src/components/companies/CompanyListPage.tsx
 ///
@@ -80,6 +81,9 @@ struct CompaniesView: View {
         .sheet(isPresented: $showNewCompany) {
             CompanyFormView(company: nil)
                 .frame(minWidth: 480, minHeight: 560)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .createNewRecord)) { _ in
+            showNewCompany = true
         }
     }
 

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 // MARK: - SortMode
 
@@ -204,6 +205,9 @@ struct ContactsView: View {
         .sheet(isPresented: $showingNewContact) {
             ContactFormView(contact: nil)
                 .frame(minWidth: 480, minHeight: 560)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .createNewRecord)) { _ in
+            showingNewContact = true
         }
     }
 

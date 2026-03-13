@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 /// Projects list — mirrors src/components/projects/ProjectListPage.tsx
 ///
@@ -84,6 +85,9 @@ struct ProjectsView: View {
                 }
                 .frame(minWidth: 480, minHeight: 560)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .createNewRecord)) { _ in
+            showNewProject = true
         }
     }
 

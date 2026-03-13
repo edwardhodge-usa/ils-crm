@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 // MARK: - InteractionsView
 
@@ -69,6 +70,9 @@ struct InteractionsView: View {
                     }
             }
             .frame(minWidth: 450, minHeight: 500)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .createNewRecord)) { _ in
+            showingNewInteractionForm = true
         }
     }
 
