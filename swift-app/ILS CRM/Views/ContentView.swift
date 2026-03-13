@@ -56,7 +56,6 @@ private let activityItems: [NavItem] = [.clientPortal, .interactions, .importedC
 /// Mirrors: src/components/layout/Layout.tsx (sidebar + topbar + outlet)
 struct ContentView: View {
     @State private var selection: NavItem? = .dashboard
-    @State private var showSettings = false
 
     var body: some View {
         NavigationSplitView {
@@ -67,10 +66,6 @@ struct ContentView: View {
             detailView
         }
         .frame(minWidth: 900, minHeight: 600)
-        .sheet(isPresented: $showSettings) {
-            SettingsView()
-                .frame(minWidth: 480, minHeight: 400)
-        }
     }
 
     // MARK: - Sidebar
@@ -106,22 +101,12 @@ struct ContentView: View {
     private var settingsFooter: some View {
         VStack(spacing: 0) {
             Divider()
-            Button {
-                showSettings = true
-            } label: {
-                Label("Settings", systemImage: "gear")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
-            }
-            .buttonStyle(.plain)
-
-            Text("v3.4.1")
+            Text("v3.4.3")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.leading, 14)
-                .padding(.bottom, 10)
+                .padding(.vertical, 8)
         }
         .background(.bar)
     }

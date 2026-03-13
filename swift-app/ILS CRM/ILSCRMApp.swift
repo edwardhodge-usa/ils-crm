@@ -11,6 +11,7 @@ import SwiftData
 @main
 struct ILSCRMApp: App {
     let container: ModelContainer
+    @State private var syncEngine: SyncEngine
 
     init() {
         let schema = Schema([
@@ -34,7 +35,9 @@ struct ILSCRMApp: App {
         )
 
         do {
-            container = try ModelContainer(for: schema, configurations: [config])
+            let c = try ModelContainer(for: schema, configurations: [config])
+            container = c
+            _syncEngine = State(initialValue: SyncEngine(modelContainer: c))
         } catch {
             fatalError("Failed to initialize SwiftData container: \(error)")
         }
@@ -43,7 +46,7 @@ struct ILSCRMApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(SyncEngine(modelContainer: container))
+                .environment(syncEngine)
         }
         .modelContainer(container)
         .defaultSize(width: 1200, height: 800)
@@ -52,6 +55,7 @@ struct ILSCRMApp: App {
         #if os(macOS)
         Settings {
             SettingsView()
+                .environment(syncEngine)
         }
         .modelContainer(container)
         #endif
