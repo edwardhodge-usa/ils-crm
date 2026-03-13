@@ -66,6 +66,7 @@ struct ContentView: View {
         } detail: {
             detailView
         }
+        .frame(minWidth: 900, minHeight: 600)
         .sheet(isPresented: $showSettings) {
             SettingsView()
                 .frame(minWidth: 480, minHeight: 400)

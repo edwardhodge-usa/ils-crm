@@ -46,6 +46,8 @@ struct ILSCRMApp: App {
                 .environment(SyncEngine(modelContainer: container))
         }
         .modelContainer(container)
+        .defaultSize(width: 1200, height: 800)
+        .windowResizability(.contentMinSize)
 
         #if os(macOS)
         Settings {
