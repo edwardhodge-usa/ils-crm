@@ -61,9 +61,22 @@ extension Notification.Name {
 /// Root content view — NavigationSplitView with sidebar + detail.
 /// Mirrors: src/components/layout/Layout.tsx (sidebar + topbar + outlet)
 struct ContentView: View {
-    @State private var selection: NavItem? = .dashboard
+    @SceneStorage("selectedNavItem") private var selectedRawValue: String = "dashboard"
     @State private var sidebarSearchText = ""
     @Environment(SyncEngine.self) private var syncEngine
+
+    /// Computed selection derived from persisted raw value.
+    private var selection: NavItem? {
+        NavItem(rawValue: selectedRawValue)
+    }
+
+    /// Two-way binding for List/NavigationSplitView selection.
+    private var selectionBinding: Binding<NavItem?> {
+        Binding(
+            get: { NavItem(rawValue: selectedRawValue) },
+            set: { selectedRawValue = $0?.rawValue ?? "dashboard" }
+        )
+    }
 
     var body: some View {
         NavigationSplitView {
@@ -150,7 +163,7 @@ struct ContentView: View {
     }
 
     private var sidebarContent: some View {
-        List(selection: $selection) {
+        List(selection: selectionBinding) {
             let filteredCrm = filterItems(crmItems)
             let filteredWork = filterItems(workItems)
             let filteredActivity = filterItems(activityItems)
