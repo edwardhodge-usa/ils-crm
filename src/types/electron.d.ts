@@ -95,8 +95,7 @@ interface ElectronAPI {
     removeOfflineLockedListener: () => void
   }
   framer: {
-    checkPageHealth: (slug: string, cmsState?: Record<string, { draft: boolean }> | null) => Promise<{ status: number; ok: boolean; cmsStatus: string; error?: string }>
-    getCmsCache: () => Promise<{ lastSynced: string | null; items: Record<string, { draft: boolean; name: string }> } | null>
+    checkPageHealth: (slug: string) => Promise<{ status: number; ok: boolean; error?: string }>
   }
   onAccentColor: (cb: (color: string) => void) => void
 }

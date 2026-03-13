@@ -1,8 +1,6 @@
 // Central IPC handler registration
 // Wires up all entity CRUD, settings, sync, dashboard, and search handlers
 
-import fs from 'fs'
-import path from 'path'
 import { app, ipcMain, BrowserWindow, shell, dialog, net } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { getAll, getById, getSetting, setSetting, getAllSyncStatuses, deleteRecord } from '../database/queries/entities'
@@ -530,21 +528,9 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
 
   // ─── Framer Page Health ───────────────────────────────────────────────────
 
-  ipcMain.handle('framer:getCmsCache', async () => {
-    try {
-      const cachePath = path.join(app.getPath('userData'), 'framer-cms-cache.json')
-      const raw = await fs.promises.readFile(cachePath, 'utf-8')
-      const parsed = JSON.parse(raw)
-      return parsed as { lastSynced: string | null; items: Record<string, { draft: boolean; name: string }> }
-    } catch {
-      // File doesn't exist or is malformed — graceful degradation
-      return null
-    }
-  })
-
-  ipcMain.handle('framer:checkPageHealth', async (_event, slug: string, cmsState?: Record<string, { draft: boolean }> | null) => {
+  ipcMain.handle('framer:checkPageHealth', async (_event, slug: string) => {
     if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
-      return { status: 0, ok: false, cmsStatus: 'error', error: 'Invalid slug' }
+      return { status: 0, ok: false, error: 'Invalid slug' }
     }
     const url = `https://www.imaginelabstudios.com/ils-clients/${slug}`
     let headStatus = 0
@@ -561,23 +547,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       headError = String(error)
     }
 
-    // Determine cmsStatus by cross-referencing HEAD result with CMS state
-    let cmsStatus: string
-    if (headOk) {
-      cmsStatus = 'live'
-    } else if (headStatus === 0) {
-      cmsStatus = 'error'
-    } else if (!cmsState) {
-      cmsStatus = 'no_cache'
-    } else if (!cmsState[slug]) {
-      cmsStatus = 'not_in_framer'
-    } else if (cmsState[slug].draft) {
-      cmsStatus = 'draft'
-    } else {
-      cmsStatus = 'needs_publish'
-    }
-
-    return { status: headStatus, ok: headOk, cmsStatus, ...(headError ? { error: headError } : {}) }
+    return { status: headStatus, ok: headOk, ...(headError ? { error: headError } : {}) }
   })
 
 }

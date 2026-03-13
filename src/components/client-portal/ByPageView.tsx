@@ -44,7 +44,6 @@ export default function ByPageView({
   const [dirtyPages, setDirtyPages] = useState<Set<string>>(new Set())
   const [grantPopover, setGrantPopover] = useState<{ x: number; y: number } | null>(null)
   const [healthMap, setHealthMap] = useState<Map<string, { status: number; ok: boolean; cmsStatus: string }>>(new Map())
-  const [cmsCache, setCmsCache] = useState<{ lastSynced: string | null; items: Record<string, { draft: boolean; name: string }> } | null>(null)
   const hasValidatedSlugs = useRef(false)
 
   // ── Auto-fix bad slugs on load ──────────────────────────────────────────
@@ -102,14 +101,6 @@ export default function ByPageView({
     fixSlugs()
   }, [pages, accessRecords, reloadPages, reloadAccess])
 
-  // ── Load Framer CMS cache on mount ──────────────────────────────────────────
-
-  useEffect(() => {
-    window.electronAPI.framer.getCmsCache().then(cache => {
-      if (cache) setCmsCache(cache)
-    }).catch(() => {})  // silently handle if unavailable
-  }, [])
-
   // ── Batch Framer page health check on mount ────────────────────────────────
 
   useEffect(() => {
@@ -122,8 +113,24 @@ export default function ByPageView({
         const slug = page.page_address as string
         if (!slug || slug === 'null') continue
         try {
-          const result = await window.electronAPI.framer.checkPageHealth(slug, cmsCache?.items ?? null)
-          results.set(slug, result)
+          const result = await window.electronAPI.framer.checkPageHealth(slug)
+          // Determine cmsStatus from HEAD result + page data completeness
+          const isComplete = Boolean(
+            page.page_address && page.page_address !== 'null' &&
+            page.client_name && page.client_name !== 'null' &&
+            page.thank_you && page.thank_you !== 'null'
+          )
+          let cmsStatus: string
+          if (result.ok) {
+            cmsStatus = 'live'
+          } else if (result.status === 0) {
+            cmsStatus = 'error'
+          } else if (isComplete) {
+            cmsStatus = 'ready'
+          } else {
+            cmsStatus = 'incomplete'
+          }
+          results.set(slug, { ...result, cmsStatus })
           if (!cancelled) setHealthMap(new Map(results))
         } catch { /* skip */ }
         // Stagger 200ms between requests (5 req/sec limit)
@@ -132,7 +139,7 @@ export default function ByPageView({
     }
     checkAll()
     return () => { cancelled = true }
-  }, [pages, cmsCache])
+  }, [pages])
 
   // ── Auto-select first page ────────────────────────────────────────────────
 
@@ -289,7 +296,7 @@ export default function ByPageView({
   const checkedCount = healthMap.size
   const liveCount = Array.from(healthMap.values()).filter(v => v.ok).length
   const sluggedPages = pages.filter(p => p.page_address && p.page_address !== 'null').length
-  const statusCounts = { live: 0, draft: 0, not_in_framer: 0, needs_publish: 0, error: 0, no_cache: 0 }
+  const statusCounts = { live: 0, ready: 0, incomplete: 0, error: 0 }
   healthMap.forEach(v => { statusCounts[v.cmsStatus as keyof typeof statusCounts]++ })
 
   return (
@@ -306,8 +313,6 @@ export default function ByPageView({
         onViewChange={onViewChange}
         healthMap={healthMap}
         healthSummary={{ liveCount, sluggedPages, checkedCount }}
-        cmsLastSynced={cmsCache?.lastSynced}
-        hasCmsCache={cmsCache !== null}
         statusCounts={statusCounts}
       />
       <div
