@@ -62,6 +62,7 @@ extension Notification.Name {
 /// Mirrors: src/components/layout/Layout.tsx (sidebar + topbar + outlet)
 struct ContentView: View {
     @State private var selection: NavItem? = .dashboard
+    @State private var sidebarSearchText = ""
     @Environment(SyncEngine.self) private var syncEngine
 
     var body: some View {
@@ -143,13 +144,29 @@ struct ContentView: View {
 
     // MARK: - Sidebar
 
+    private func filterItems(_ items: [NavItem]) -> [NavItem] {
+        guard !sidebarSearchText.isEmpty else { return items }
+        return items.filter { $0.title.localizedCaseInsensitiveContains(sidebarSearchText) }
+    }
+
     private var sidebarContent: some View {
         List(selection: $selection) {
-            sidebarSection(title: "CRM", items: crmItems)
-            sidebarSection(title: "WORK", items: workItems)
-            sidebarSection(title: "ACTIVITY", items: activityItems)
+            let filteredCrm = filterItems(crmItems)
+            let filteredWork = filterItems(workItems)
+            let filteredActivity = filterItems(activityItems)
+
+            if !filteredCrm.isEmpty {
+                sidebarSection(title: "CRM", items: filteredCrm)
+            }
+            if !filteredWork.isEmpty {
+                sidebarSection(title: "WORK", items: filteredWork)
+            }
+            if !filteredActivity.isEmpty {
+                sidebarSection(title: "ACTIVITY", items: filteredActivity)
+            }
         }
         .listStyle(.sidebar)
+        .searchable(text: $sidebarSearchText, placement: .sidebar, prompt: "Filter")
         .safeAreaInset(edge: .bottom, spacing: 0) {
             settingsFooter
         }
