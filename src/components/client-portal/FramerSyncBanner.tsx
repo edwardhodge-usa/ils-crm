@@ -21,7 +21,7 @@ export default function FramerSyncBanner({ visible, onDismiss }: FramerSyncBanne
   if (!visible) return null
 
   const handleOpenFramer = () => {
-    window.electronAPI?.shell?.openExternal?.('https://framer.com/projects')
+    window.electronAPI?.shell?.openExternal?.('https://framer.com/projects/ImagineLab-Front-Page--qq2NfIkO8OdMKvVMZXJR-8RBFW?node=uzKrlTPBU')
   }
 
   return (

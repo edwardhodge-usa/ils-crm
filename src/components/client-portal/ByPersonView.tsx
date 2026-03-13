@@ -100,7 +100,7 @@ export default function ByPersonView({
           }}
         >
           <button
-            onClick={() => window.electronAPI?.shell?.openExternal?.('https://framer.com/projects')}
+            onClick={() => window.electronAPI?.shell?.openExternal?.('https://framer.com/projects/ImagineLab-Front-Page--qq2NfIkO8OdMKvVMZXJR-8RBFW?node=uzKrlTPBU')}
             title="Open Framer editor to sync and publish changes"
             style={{
               padding: '5px 12px',
