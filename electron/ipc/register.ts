@@ -1,7 +1,7 @@
 // Central IPC handler registration
 // Wires up all entity CRUD, settings, sync, dashboard, and search handlers
 
-import { app, ipcMain, BrowserWindow, shell, dialog } from 'electron'
+import { app, ipcMain, BrowserWindow, shell, dialog, net } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { getAll, getById, getSetting, setSetting, getAllSyncStatuses, deleteRecord } from '../database/queries/entities'
 import { getDashboardStats, getTasksDueToday, getFollowUpAlerts, getPipelineSnapshot } from '../database/queries/dashboard'
@@ -523,6 +523,24 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
     } catch (error) {
       console.error('[IPC] license:revoke failed:', String(error))
       return { success: false, error: String(error) }
+    }
+  })
+
+  // ─── Framer Page Health ───────────────────────────────────────────────────
+
+  ipcMain.handle('framer:checkPageHealth', async (_event, slug: string) => {
+    if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
+      return { status: 0, ok: false, error: 'Invalid slug' }
+    }
+    const url = `https://www.imaginelabstudios.com/ils-clients/${slug}`
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
+      const response = await net.fetch(url, { method: 'HEAD', signal: controller.signal })
+      clearTimeout(timeout)
+      return { status: response.status, ok: response.ok }
+    } catch (error) {
+      return { status: 0, ok: false, error: String(error) }
     }
   })
 

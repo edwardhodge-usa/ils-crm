@@ -150,6 +150,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     selectFile: () => ipcRenderer.invoke('contact:select-photo-file'),
   },
 
+  // Framer page health
+  framer: {
+    checkPageHealth: (slug: string) => ipcRenderer.invoke('framer:checkPageHealth', slug),
+  },
+
   // System appearance
   onAccentColor: (cb: (color: string) => void) => {
     ipcRenderer.on('accent-color', (_e, color) => cb(color))

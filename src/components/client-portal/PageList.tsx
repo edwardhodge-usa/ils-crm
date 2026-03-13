@@ -27,6 +27,8 @@ interface PageListProps {
   onNewPage: () => void
   view: 'byPage' | 'byPerson'
   onViewChange: (v: 'byPage' | 'byPerson') => void
+  healthMap?: Map<string, { status: number; ok: boolean }>
+  healthSummary?: { liveCount: number; sluggedPages: number; checkedCount: number }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -39,6 +41,19 @@ function matchesSearch(page: Record<string, unknown>, term: string): boolean {
   const address = String(page.page_address ?? '').toLowerCase()
   const title = String(page.page_title ?? '').toLowerCase()
   return name.includes(lower) || address.includes(lower) || title.includes(lower)
+}
+
+/** Derive health dot color and tooltip from health map entry */
+function healthDotStyle(
+  slug: string | null,
+  healthMap: Map<string, { status: number; ok: boolean }> | undefined,
+): { color: string; title: string } {
+  if (!slug || slug === 'null') return { color: 'transparent', title: '' }
+  if (!healthMap || !healthMap.has(slug)) return { color: 'var(--color-fill-tertiary)', title: 'Checking...' }
+  const h = healthMap.get(slug)!
+  if (h.ok) return { color: 'var(--color-green)', title: 'Page live' }
+  if (h.status === 404) return { color: 'var(--color-red)', title: 'Page not found' }
+  return { color: 'var(--color-orange)', title: 'Error checking page' }
 }
 
 /** Count how many access records share a page_address with a given page */
@@ -63,6 +78,8 @@ export default function PageList({
   onNewPage,
   view,
   onViewChange,
+  healthMap,
+  healthSummary,
 }: PageListProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
@@ -169,6 +186,7 @@ export default function PageList({
           const address = page.page_address as string | null
           const access = countAccess(page, accessRecords)
           const dotColor = DOT_COLORS[index % DOT_COLORS.length]
+          const health = healthDotStyle(address, healthMap)
 
           return (
             <div
@@ -220,36 +238,48 @@ export default function PageList({
                   {clientName}
                 </div>
 
-                {/* Subtitle: slug + section dots */}
+                {/* Status row: OFF AIR badge + section dots */}
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,
-                    marginTop: 2,
+                    marginTop: 3,
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: isSelected
-                        ? 'rgba(255,255,255,0.7)'
-                        : 'var(--text-tertiary)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      minWidth: 0,
-                    }}
-                  >
-                    /ils-clients/{(address && address !== 'null') ? address : '—'}
-                  </span>
+                  {/* OFF AIR / ERROR badge for not-live pages */}
+                  {health.color !== 'transparent' && health.color !== 'var(--color-green)' && health.color !== 'var(--color-fill-tertiary)' && (
+                    <span
+                      title={health.title}
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 600,
+                        letterSpacing: 0.4,
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                        flexShrink: 0,
+                        background: isSelected
+                          ? 'rgba(255,255,255,0.2)'
+                          : health.color === 'var(--color-red)'
+                            ? 'rgba(255,59,48,0.12)'
+                            : 'rgba(255,159,10,0.12)',
+                        color: isSelected
+                          ? 'rgba(255,255,255,0.85)'
+                          : health.color === 'var(--color-red)'
+                            ? 'var(--color-red)'
+                            : 'var(--color-orange)',
+                      }}
+                    >
+                      {health.color === 'var(--color-red)' ? 'OFF AIR' : 'ERROR'}
+                    </span>
+                  )}
 
                   {/* Section indicator dots */}
                   <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 3,
+                      gap: 4,
                       flexShrink: 0,
                     }}
                   >
@@ -259,8 +289,8 @@ export default function PageList({
                         <div
                           key={key}
                           style={{
-                            width: 5,
-                            height: 5,
+                            width: 6,
+                            height: 6,
                             borderRadius: '50%',
                             background: isEnabled
                               ? isSelected
@@ -302,8 +332,41 @@ export default function PageList({
         })}
       </div>
 
-      {/* ── New Page Button ─────────────────────────────────── */}
+      {/* ── Health Summary + New Page Button ─────────────────── */}
       <div style={{ padding: '8px 12px 12px' }}>
+        {healthSummary && healthSummary.sluggedPages > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              padding: '6px 0',
+              marginBottom: 8,
+              fontSize: 11,
+              fontWeight: 500,
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <div
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: healthSummary.checkedCount === 0
+                  ? 'var(--color-fill-tertiary)'
+                  : healthSummary.liveCount === healthSummary.sluggedPages
+                    ? 'var(--color-green)'
+                    : 'var(--color-orange)',
+                flexShrink: 0,
+              }}
+            />
+            {healthSummary.checkedCount === 0
+              ? 'Checking pages...'
+              : `${healthSummary.liveCount}/${healthSummary.sluggedPages} Pages Live`
+            }
+          </div>
+        )}
         <button
           onClick={onNewPage}
           style={{

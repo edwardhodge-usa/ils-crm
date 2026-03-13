@@ -1,14 +1,22 @@
 import { Badge } from './Badge'
 import type { BadgeVariant } from './Badge'
+import type { PipelineStage } from '@/config/stages'
 
-export type Stage = 'Prospecting' | 'Qualified' | 'Proposal Sent' | 'Negotiation' | 'Closed Won'
+// Re-export PipelineStage as Stage for backward compatibility
+export type Stage = PipelineStage
 
-const stageToVariant: Record<Stage, BadgeVariant> = {
-  'Prospecting': 'prospecting',
-  'Qualified': 'qualified',
-  'Proposal Sent': 'proposal',
-  'Negotiation': 'negotiation',
-  'Closed Won': 'won',
+const stageToVariant: Partial<Record<Stage, BadgeVariant>> = {
+  'Initial Contact':   'prospecting',
+  'Qualification':     'qualified',
+  'Meeting Scheduled': 'negotiation',
+  'Proposal Sent':     'proposal',
+  'Contract Sent':     'contract',
+  'Negotiation':       'negotiation',
+  'Development':       'bizdev',
+  'Investment':        'investment',
+  'Future Client':     'future',
+  'Closed Won':        'won',
+  'Closed Lost':       'lost',
 }
 
 export function StageBadge({ stage, className }: { stage: Stage; className?: string }) {

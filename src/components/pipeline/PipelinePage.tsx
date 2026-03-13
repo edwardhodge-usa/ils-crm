@@ -5,46 +5,18 @@ import PrimaryButton from '../shared/PrimaryButton'
 import useEntityList from '../../hooks/useEntityList'
 import { KanbanBoard } from './KanbanBoard'
 import { DealDetail } from './DealDetail'
+import { PIPELINE_STAGES } from '@/config/stages'
 import type { DealItem } from '@/types'
 
 type DealStage = DealItem['stage']
 
-// Map all legacy/extended Airtable stage values to the 5 canonical Kanban stages
-const STAGE_MAP: Record<string, DealStage> = {
-  // Canonical stages (pass-through)
-  'Prospecting': 'Prospecting',
-  'Qualified': 'Qualified',
-  'Business Development': 'Business Development',
-  'Proposal Sent': 'Proposal Sent',
-  'Negotiation': 'Negotiation',
-  'Closed Won': 'Closed Won',
-  'Closed Lost': 'Closed Lost',
-  // Legacy Airtable values → canonical
-  'Development': 'Business Development',
-  'Initial Contact': 'Prospecting',
-  'Outbound Prospecting': 'Prospecting',
-  'Future Client': 'Prospecting',
-  'Investment': 'Prospecting',
-  'Qualification': 'Qualified',
-  'Meeting Scheduled': 'Qualified',
-  'Contract Sent': 'Negotiation',
-}
-
-// Reverse map: canonical display name → preferred Airtable option value
-// Used when saving stage changes (drag-to-reorder) back to Airtable
-const STAGE_TO_AIRTABLE: Record<string, string> = {
-  'Prospecting': 'Prospecting',
-  'Qualified': 'Qualification',
-  'Business Development': 'Development',
-  'Proposal Sent': 'Proposal Sent',
-  'Negotiation': 'Negotiation',
-  'Closed Won': 'Closed Won',
-  'Closed Lost': 'Closed Lost',
-}
+// All 11 Airtable stage names are now canonical — no mapping needed.
+// Stage names in the app match Airtable exactly (verified 2026-03-12).
+const VALID_STAGES = new Set<string>(PIPELINE_STAGES)
 
 function toStage(raw: string | null | undefined): DealStage | null {
-  if (!raw) return 'Prospecting'
-  return STAGE_MAP[raw] ?? null
+  if (!raw) return null
+  return VALID_STAGES.has(raw) ? (raw as DealStage) : null
 }
 
 function resolveLinkedName(idsJson: unknown, nameMap: Map<string, string>): string | null {
@@ -115,8 +87,8 @@ export default function PipelinePage() {
   }, [rawData, companyNames, companyLogos])
 
   async function handleMove(dealId: string, toStage: string) {
-    const airtableStage = STAGE_TO_AIRTABLE[toStage] ?? toStage
-    await window.electronAPI.opportunities.update(dealId, { sales_stage: airtableStage })
+    // Stage names now match Airtable exactly — save directly
+    await window.electronAPI.opportunities.update(dealId, { sales_stage: toStage })
     reload()
   }
 

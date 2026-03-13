@@ -1,75 +1,207 @@
 import SwiftUI
 import SwiftData
 
-/// Contacts list — mirrors src/components/contacts/ContactListPage.tsx
+// MARK: - SortMode
+
+enum ContactSortMode: String, CaseIterable, CustomStringConvertible {
+    case company   = "Company"
+    case nameAZ    = "Name A–Z"
+    case nameZA    = "Name Z–A"
+
+    var description: String { rawValue }
+}
+
+// MARK: - ContactsView
+
+/// Contacts list + inline detail — mirrors src/components/contacts/ContactListPage.tsx
 ///
-/// Features:
-/// - Searchable list with contacts sorted by name, grouped by first letter
-/// - Contact row with avatar, name, company/email subtitle
-/// - Navigation via NavigationLink(value:) for parent NavigationSplitView
-/// - Empty state when no contacts exist
-///
-/// Electron hooks: useEntityList('contacts')
+/// Layout: fixed 380pt list panel | Divider | flex detail panel
+/// List supports three sort modes: Company grouping (default), A–Z, Z–A.
 struct ContactsView: View {
     @Query(sort: \Contact.contactName) private var contacts: [Contact]
+    @Query private var companies: [Company]
+
     @State private var searchText = ""
     @State private var selectedContact: Contact?
-    @State private var showNewContact = false
+    @State private var sortMode: ContactSortMode = .company
+    @State private var showingNewContact = false
 
-    // MARK: - Filtered & Grouped Data
+    // MARK: - Derived Data
+
+    /// Company ID → company name lookup built from the Companies query.
+    private var companyNameById: [String: String] {
+        Dictionary(uniqueKeysWithValues: companies.compactMap { c in
+            guard let name = c.companyName else { return nil }
+            return (c.id, name)
+        })
+    }
 
     private var filteredContacts: [Contact] {
-        if searchText.isEmpty { return contacts }
-        let query = searchText
+        guard !searchText.isEmpty else { return contacts }
+        let query = searchText.lowercased()
         return contacts.filter { contact in
-            (contact.contactName?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (contact.email?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (contact.company?.localizedCaseInsensitiveContains(query) ?? false)
+            (contact.contactName?.lowercased().contains(query) ?? false) ||
+            (contact.email?.lowercased().contains(query) ?? false) ||
+            (contact.company?.lowercased().contains(query) ?? false) ||
+            (contact.jobTitle?.lowercased().contains(query) ?? false)
         }
     }
 
-    /// Contacts grouped by the first letter of contactName, with keys sorted alphabetically.
-    /// Contacts with no name or names starting with non-letter characters go under "#".
-    private var groupedContacts: [(letter: String, contacts: [Contact])] {
+    // MARK: - Grouping
+
+    /// Returns contacts grouped by first company name (or "NO COMPANY"), sorted alphabetically
+    /// with "NO COMPANY" first.
+    private var groupedByCompany: [(key: String, contacts: [Contact])] {
         let grouped = Dictionary(grouping: filteredContacts) { contact -> String in
-            guard let name = contact.contactName,
-                  let first = name.first else { return "#" }
+            // Use the first linked company ID to resolve a name
+            if let firstId = contact.companiesIds.first,
+               let name = companyNameById[firstId],
+               !name.isEmpty {
+                return name.uppercased()
+            }
+            // Fall back to the free-text company field
+            if let name = contact.company, !name.isEmpty {
+                return name.uppercased()
+            }
+            return "NO COMPANY"
+        }
+
+        let sorted = grouped.sorted { a, b in
+            if a.key == "NO COMPANY" { return true }
+            if b.key == "NO COMPANY" { return false }
+            return a.key < b.key
+        }
+
+        return sorted.map { (key: $0.key, contacts: $0.value) }
+    }
+
+    /// Returns contacts grouped by first letter of sort name.
+    private var groupedAlpha: [(key: String, contacts: [Contact])] {
+        let ascending = sortMode != .nameZA
+
+        let sorted = filteredContacts.sorted { a, b in
+            let nameA = sortKey(for: a)
+            let nameB = sortKey(for: b)
+            return ascending ? nameA < nameB : nameA > nameB
+        }
+
+        let grouped = Dictionary(grouping: sorted) { contact -> String in
+            let name = sortKey(for: contact)
+            guard let first = name.first else { return "#" }
             let upper = String(first).uppercased()
             return upper.rangeOfCharacter(from: .letters) != nil ? upper : "#"
         }
-        return grouped
-            .sorted { $0.key < $1.key }
-            .map { (letter: $0.key, contacts: $0.value) }
+
+        // Sort group keys to match ascending/descending
+        let sortedKeys = grouped.keys.sorted { ascending ? $0 < $1 : $0 > $1 }
+        return sortedKeys.compactMap { key in
+            guard let contacts = grouped[key] else { return nil }
+            return (key: key, contacts: contacts)
+        }
+    }
+
+    private func sortKey(for contact: Contact) -> String {
+        if let ln = contact.lastName, !ln.isEmpty { return ln }
+        if let cn = contact.contactName, !cn.isEmpty { return cn }
+        return ""
     }
 
     // MARK: - Body
 
     var body: some View {
-        Group {
-            if contacts.isEmpty {
-                EmptyStateView(
-                    title: "No contacts yet",
-                    description: "Contacts will appear here once synced from Airtable.",
-                    systemImage: "person.crop.circle"
+        HStack(spacing: 0) {
+            // ── Left: List Panel ──────────────────────────────────────
+            VStack(spacing: 0) {
+                ListHeader(
+                    title: "Contacts",
+                    count: contacts.count,
+                    buttonLabel: "+ New Contact",
+                    onButton: { showingNewContact = true }
                 )
-            } else if filteredContacts.isEmpty {
-                EmptyStateView(
-                    title: "No results",
-                    description: "No contacts match \"\(searchText)\".",
-                    systemImage: "magnifyingglass"
-                )
-            } else {
-                contactList
+
+                Divider()
+
+                // Search bar
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.tertiary)
+                        .font(.system(size: 13))
+                    TextField("Search contacts…", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 13))
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.tertiary)
+                                .font(.system(size: 13))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(.controlBackgroundColor))
+
+                Divider()
+
+                // Sort control bar
+                HStack(spacing: 6) {
+                    Text("\(filteredContacts.count) contacts")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    SortDropdown(
+                        options: ContactSortMode.allCases,
+                        selection: $sortMode
+                    )
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+
+                Divider()
+
+                // Contact list
+                if contacts.isEmpty {
+                    EmptyStateView(
+                        title: "No contacts yet",
+                        description: "Contacts will appear here once synced from Airtable.",
+                        systemImage: "person.crop.circle"
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if filteredContacts.isEmpty {
+                    EmptyStateView(
+                        title: "No results",
+                        description: "No contacts match "\(searchText)".",
+                        systemImage: "magnifyingglass"
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    contactList
+                }
             }
-        }
-        .searchable(text: $searchText, prompt: "Search contacts...")
-        .navigationTitle("Contacts")
-        .toolbar {
-            Button { showNewContact = true } label: {
-                Image(systemName: "plus")
+            .frame(width: 380)
+            .background(Color(.controlBackgroundColor))
+
+            Divider()
+
+            // ── Right: Detail Panel ───────────────────────────────────
+            Group {
+                if let contact = selectedContact {
+                    ContactDetailView(contact: contact)
+                        .id(contact.id) // Force re-render when selection changes
+                } else {
+                    EmptyStateView(
+                        title: "Select a contact",
+                        description: "Choose a contact from the list to view details.",
+                        systemImage: "person.crop.circle"
+                    )
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .sheet(isPresented: $showNewContact) {
+        .sheet(isPresented: $showingNewContact) {
             ContactFormView(contact: nil)
                 .frame(minWidth: 480, minHeight: 560)
         }
@@ -77,124 +209,131 @@ struct ContactsView: View {
 
     // MARK: - Contact List
 
+    @ViewBuilder
     private var contactList: some View {
-        List(selection: $selectedContact) {
-            ForEach(groupedContacts, id: \.letter) { group in
-                Section {
-                    ForEach(group.contacts, id: \.id) { contact in
-                        NavigationLink(value: contact.id) {
-                            contactRow(contact)
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
+                if sortMode == .company {
+                    ForEach(groupedByCompany, id: \.key) { group in
+                        Section {
+                            ForEach(group.contacts, id: \.id) { contact in
+                                contactRow(contact)
+                            }
+                        } header: {
+                            groupHeader(title: group.key, count: group.contacts.count)
                         }
                     }
-                } header: {
-                    SectionHeader(title: group.letter, count: group.contacts.count)
+                } else {
+                    ForEach(groupedAlpha, id: \.key) { group in
+                        Section {
+                            ForEach(group.contacts, id: \.id) { contact in
+                                contactRow(contact)
+                            }
+                        } header: {
+                            groupHeader(title: group.key, count: group.contacts.count)
+                        }
+                    }
                 }
             }
         }
-        .listStyle(.sidebar)
+        .scrollIndicators(.hidden)
+    }
+
+    // MARK: - Group Header
+
+    private func groupHeader(title: String, count: Int) -> some View {
+        HStack {
+            Text(title.uppercased())
+                .font(.system(size: 11, weight: .bold))
+                .tracking(0.4)
+                .foregroundStyle(.primary)
+            Spacer()
+            Text("\(count)")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 5)
+        .background(Color(.windowBackgroundColor).opacity(0.95))
     }
 
     // MARK: - Contact Row
 
     private func contactRow(_ contact: Contact) -> some View {
-        HStack(spacing: 12) {
-            AvatarView(name: contact.contactName ?? "?", size: 32)
+        let isSelected = selectedContact?.id == contact.id
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(contact.contactName ?? "Unknown")
-                    .font(.body)
-                    .lineLimit(1)
+        return Button {
+            selectedContact = contact
+        } label: {
+            HStack(spacing: 10) {
+                AvatarView(
+                    name: contact.contactName ?? "?",
+                    avatarSize: .medium
+                )
 
-                // Show company if available, otherwise email
-                if let subtitle = contactSubtitle(for: contact) {
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(contact.contactName ?? "Unknown")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(isSelected ? .white : .primary)
                         .lineLimit(1)
+
+                    if let subtitle = rowSubtitle(for: contact) {
+                        Text(subtitle)
+                            .font(.caption)
+                            .foregroundStyle(isSelected ? .white.opacity(0.75) : .secondary)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                if let cat = contact.categorization, !cat.isEmpty {
+                    StatusBadge(
+                        text: cat,
+                        color: isSelected ? .white : categorizationColor(cat)
+                    )
                 }
             }
-
-            Spacer()
-
-            // Categorization badge if available
-            if let categorization = contact.categorization, !categorization.isEmpty {
-                BadgeView(
-                    text: categorization,
-                    color: categorizationColor(categorization)
-                )
-            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(isSelected ? Color.accentColor : Color.clear)
+            .contentShape(Rectangle())
         }
-        .padding(.vertical, 2)
+        .buttonStyle(.plain)
     }
 
     // MARK: - Helpers
 
-    /// Returns the best subtitle for a contact row: company, then email, then nil.
-    private func contactSubtitle(for contact: Contact) -> String? {
-        if let company = contact.company, !company.isEmpty {
-            return company
+    /// Best subtitle for a list row: job title + company, or email.
+    private func rowSubtitle(for contact: Contact) -> String? {
+        var parts: [String] = []
+        if let title = contact.jobTitle, !title.isEmpty {
+            parts.append(title)
         }
-        if let email = contact.email, !email.isEmpty {
-            return email
+        // Try linked company first, then free-text field
+        let companyName: String? = {
+            if let firstId = contact.companiesIds.first,
+               let name = companyNameById[firstId],
+               !name.isEmpty {
+                return name
+            }
+            return contact.company
+        }()
+        if let company = companyName, !company.isEmpty {
+            parts.append(company)
         }
-        return nil
+        if !parts.isEmpty { return parts.joined(separator: " · ") }
+        return contact.email
     }
 
-    /// Deterministic color for categorization badges.
-    private func categorizationColor(_ categorization: String) -> Color {
-        let lower = categorization.lowercased()
-        if lower.contains("client") { return .blue }
-        if lower.contains("lead") { return .orange }
+    private func categorizationColor(_ value: String) -> Color {
+        let lower = value.lowercased()
+        if lower.contains("client")  { return .blue }
+        if lower.contains("lead")    { return .orange }
         if lower.contains("partner") { return .purple }
-        if lower.contains("vendor") { return .green }
-        if lower.contains("prospect") { return .teal }
+        if lower.contains("vendor")  { return .green }
+        if lower.contains("prospect"){ return .teal }
         return .secondary
-    }
-}
-
-// MARK: - Contact Detail (360 View)
-
-/// Mirrors src/components/contacts/Contact360Page.tsx
-struct Contact360View: View {
-    let contactId: String
-
-    @Query private var contacts: [Contact]
-    @State private var showEditContact = false
-
-    private var contact: Contact? {
-        contacts.first { $0.id == contactId }
-    }
-
-    var body: some View {
-        if let contact {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(contact.contactName ?? "—")
-                        .font(.title)
-                    // TODO: Full 360 detail — contact info, linked records,
-                    // interactions timeline, tasks, proposals
-                }
-                .padding()
-            }
-            .navigationTitle(contact.contactName ?? "Contact")
-            .toolbar {
-                ToolbarItem(placement: .automatic) {
-                    Button {
-                        showEditContact = true
-                    } label: {
-                        Image(systemName: "pencil")
-                    }
-                    .help("Edit Contact")
-                }
-            }
-            .sheet(isPresented: $showEditContact) {
-                ContactFormView(contact: contact)
-                    .frame(minWidth: 480, minHeight: 560)
-            }
-        } else {
-            Text("Contact not found")
-                .foregroundStyle(.secondary)
-        }
     }
 }
 
@@ -283,7 +422,6 @@ struct ContactFormView: View {
                 }
             }
             .onChange(of: contactName) {
-                // If user manually edits the display name, stop auto-computing
                 if contactName != computedName {
                     autoComputeName = false
                 }
@@ -348,13 +486,11 @@ struct ContactFormView: View {
         industry = contact.industry ?? ""
         notes = contact.notes ?? ""
 
-        // Determine if the current name matches auto-computed
         autoComputeName = contactName == computedName
     }
 
     private func save() {
         if let contact {
-            // Edit existing
             contact.firstName = firstName.nilIfEmpty
             contact.lastName = lastName.nilIfEmpty
             contact.contactName = contactName.nilIfEmpty
@@ -371,7 +507,6 @@ struct ContactFormView: View {
             contact.localModifiedAt = Date()
             contact.isPendingPush = true
         } else {
-            // Create new
             let newContact = Contact(
                 id: "local_\(UUID().uuidString)",
                 isPendingPush: true
@@ -405,7 +540,6 @@ struct ContactFormView: View {
 // MARK: - String Extension
 
 private extension String {
-    /// Returns nil if the string is empty, otherwise returns self.
     var nilIfEmpty: String? {
         isEmpty ? nil : self
     }

@@ -1,9 +1,19 @@
 // Centralized pipeline stage colors — single source of truth
 // Previously duplicated across 6+ component files
+// Stages match Airtable Opportunities "Sales Stage" field exactly (verified 2026-03-12)
 
 export const PIPELINE_STAGES = [
-  'Prospecting', 'Qualified', 'Business Development',
-  'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost',
+  'Initial Contact',
+  'Qualification',
+  'Meeting Scheduled',
+  'Proposal Sent',
+  'Contract Sent',
+  'Negotiation',
+  'Development',
+  'Investment',
+  'Future Client',
+  'Closed Won',
+  'Closed Lost',
 ] as const
 
 export type PipelineStage = typeof PIPELINE_STAGES[number]
@@ -21,23 +31,23 @@ interface StageColorConfig {
 }
 
 const STAGE_MAP: Record<PipelineStage, StageColorConfig> = {
-  'Prospecting': {
-    cssVar: 'var(--color-yellow)',
-    tokenBg: 'var(--stage-prospecting-bg)', tokenFg: 'var(--stage-prospecting)',
-    hex: { light: '#9D8500', dark: '#FFD60A' },
-    bg: 'rgba(255,204,0,0.22)',
+  'Initial Contact': {
+    cssVar: 'var(--color-accent)',
+    tokenBg: 'var(--stage-initial-bg)', tokenFg: 'var(--stage-initial)',
+    hex: { light: '#3634A3', dark: '#5E5CE6' },
+    bg: 'rgba(88,86,214,0.22)',
   },
-  'Qualified': {
+  'Qualification': {
     cssVar: 'var(--color-orange)',
-    tokenBg: 'var(--stage-qualified-bg)', tokenFg: 'var(--stage-qualified)',
+    tokenBg: 'var(--stage-qualification-bg)', tokenFg: 'var(--stage-qualification)',
     hex: { light: '#A04B00', dark: '#FF9F0A' },
     bg: 'rgba(255,149,0,0.22)',
   },
-  'Business Development': {
-    cssVar: 'var(--color-purple)',
-    tokenBg: 'var(--stage-bizdev-bg)', tokenFg: 'var(--stage-bizdev)',
-    hex: { light: '#8944AB', dark: '#BF5AF2' },
-    bg: 'rgba(175,82,222,0.22)',
+  'Meeting Scheduled': {
+    cssVar: 'var(--color-teal)',
+    tokenBg: 'var(--stage-meeting-bg)', tokenFg: 'var(--stage-meeting)',
+    hex: { light: '#0E7A8D', dark: '#40CBE0' },
+    bg: 'rgba(48,176,199,0.22)',
   },
   'Proposal Sent': {
     cssVar: 'var(--color-indigo)',
@@ -45,11 +55,35 @@ const STAGE_MAP: Record<PipelineStage, StageColorConfig> = {
     hex: { light: '#3634A3', dark: '#5E5CE6' },
     bg: 'rgba(88,86,214,0.22)',
   },
+  'Contract Sent': {
+    cssVar: 'var(--color-pink)',
+    tokenBg: 'var(--stage-contract-bg)', tokenFg: 'var(--stage-contract)',
+    hex: { light: '#D30047', dark: '#FF375F' },
+    bg: 'rgba(255,45,85,0.22)',
+  },
   'Negotiation': {
-    cssVar: 'var(--color-teal)',
+    cssVar: 'var(--color-yellow)',
     tokenBg: 'var(--stage-negotiation-bg)', tokenFg: 'var(--stage-negotiation)',
-    hex: { light: '#0E7A8D', dark: '#40CBE0' },
-    bg: 'rgba(48,176,199,0.22)',
+    hex: { light: '#9D8500', dark: '#FFD60A' },
+    bg: 'rgba(255,204,0,0.22)',
+  },
+  'Development': {
+    cssVar: 'var(--color-purple)',
+    tokenBg: 'var(--stage-development-bg)', tokenFg: 'var(--stage-development)',
+    hex: { light: '#8944AB', dark: '#BF5AF2' },
+    bg: 'rgba(175,82,222,0.22)',
+  },
+  'Investment': {
+    cssVar: 'var(--color-pink)',
+    tokenBg: 'var(--stage-investment-bg)', tokenFg: 'var(--stage-investment)',
+    hex: { light: '#D70015', dark: '#FF375F' },
+    bg: 'rgba(255,45,85,0.22)',
+  },
+  'Future Client': {
+    cssVar: 'var(--color-teal)',
+    tokenBg: 'var(--stage-future-bg)', tokenFg: 'var(--stage-future)',
+    hex: { light: '#00827A', dark: '#63E6E2' },
+    bg: 'rgba(0,199,190,0.22)',
   },
   'Closed Won': {
     cssVar: 'var(--color-green)',
@@ -71,7 +105,7 @@ const FALLBACK_BG = 'rgba(142,142,147,0.20)'
 
 function lookup(stage: string): StageColorConfig | null {
   if (stage in STAGE_MAP) return STAGE_MAP[stage as PipelineStage]
-  // Legacy prefixed names (e.g. "01 Prospecting")
+  // Legacy prefixed names (e.g. "01 Prospecting", "02 Qualified")
   for (const [name, config] of Object.entries(STAGE_MAP)) {
     if (stage.includes(name)) return config
   }

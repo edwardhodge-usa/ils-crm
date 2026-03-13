@@ -94,12 +94,57 @@ struct ConfirmDeleteModifier: ViewModifier {
     }
 }
 
+// MARK: - AvatarSize
+
+/// Named size presets for AvatarView.
+/// Use these instead of raw CGFloat values for consistent sizing across views.
+enum AvatarSize {
+    case small   // 28pt — used in compact lists and related-record rows
+    case medium  // 36pt — default, used in standard list rows
+    case large   // 48pt — used in detail view headers
+    case xlarge  // 64pt — used in full-screen hero headers
+
+    var dimension: CGFloat {
+        switch self {
+        case .small:  return 28
+        case .medium: return 36
+        case .large:  return 48
+        case .xlarge: return 64
+        }
+    }
+
+    var fontSize: CGFloat {
+        switch self {
+        case .small:  return 11
+        case .medium: return 14
+        case .large:  return 19
+        case .xlarge: return 25
+        }
+    }
+}
+
 // MARK: - AvatarView
 
 struct AvatarView: View {
     let name: String
+    /// Raw point size. Prefer using the `init(name:avatarSize:photoURL:)` overload
+    /// with a named `AvatarSize` for consistency across views.
     var size: CGFloat = 36
     var photoURL: URL? = nil
+
+    /// Convenience initializer accepting a named size preset.
+    init(name: String, avatarSize: AvatarSize, photoURL: URL? = nil) {
+        self.name = name
+        self.size = avatarSize.dimension
+        self.photoURL = photoURL
+    }
+
+    /// Raw CGFloat initializer — kept for backward compatibility.
+    init(name: String, size: CGFloat = 36, photoURL: URL? = nil) {
+        self.name = name
+        self.size = size
+        self.photoURL = photoURL
+    }
 
     // 11-color Apple palette for deterministic color from name
     private static let palette: [Color] = [

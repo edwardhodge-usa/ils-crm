@@ -5,6 +5,7 @@ import LinkedRecordPicker from '../shared/LinkedRecordPicker'
 import ConfirmDialog from '../shared/ConfirmDialog'
 import DateSuggestionPicker from '../shared/DateSuggestionPicker'
 import { StageProgress } from './StageProgress'
+import { PIPELINE_STAGES } from '@/config/stages'
 import {
   CONTACT_CREATE_FIELDS,
   COMPANY_CREATE_FIELDS,
@@ -21,7 +22,7 @@ interface DealDetailProps {
 
 const DEAL_EDITABLE_FIELDS: EditableField[] = [
   { key: 'sales_stage', label: 'Stage', type: 'singleSelect',
-    options: ['Prospecting', 'Qualified', 'Business Development', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] },
+    options: [...PIPELINE_STAGES] },
   { key: 'deal_value', label: 'Value', type: 'currency' },
   { key: 'probability', label: 'Probability', type: 'singleSelect',
     options: ['Cold', 'Low', '02 Medium', '01 High', '04 FUTURE ROADMAP'] },

@@ -14,14 +14,11 @@ const INTERACTION_TYPES: { type: InteractionType; icon: ReactNode }[] = [
   { type: 'Other', icon: interactionTypeIcon('Note', 18) },
 ]
 
-const SHOW_DURATION: InteractionType[] = ['Call', 'Meeting']
-
 export interface LogInteractionFormData {
   type: InteractionType | null
   contacts: string
   date: string
-  duration: number | ''
-  notes: string
+  summary: string  // maps to Airtable "Summary" field (fldqqHNLs8mXW2RRA)
   followUp: boolean
   followUpTaskName: string
   followUpDueDate: string
@@ -43,8 +40,7 @@ const defaultForm = (contact: string): LogInteractionFormData => ({
   type: null,
   contacts: contact,
   date: todayIso(),
-  duration: '',
-  notes: '',
+  summary: '',
   followUp: false,
   followUpTaskName: '',
   followUpDueDate: '',
@@ -83,8 +79,6 @@ export function LogInteractionSheet({
     setForm(defaultForm(defaultContact))
     onClose()
   }
-
-  const showDuration = form.type !== null && SHOW_DURATION.includes(form.type)
 
   return (
     <Sheet isOpen={isOpen} onClose={handleCancel} title="Log Interaction">
@@ -128,47 +122,25 @@ export function LogInteractionSheet({
           />
         </FormField>
 
-        {/* Date + Duration (conditional) */}
-        <div className={showDuration ? 'grid grid-cols-2 gap-3' : ''}>
-          <FormField label="Date" htmlFor="interaction-date">
-            <input
-              id="interaction-date"
-              type="date"
-              className={inputClass}
-              value={form.date}
-              onChange={(e) => set('date', e.target.value)}
-            />
-          </FormField>
-          {showDuration && (
-            <FormField label="Duration" htmlFor="interaction-duration">
-              <div className="flex items-center gap-2">
-                <input
-                  id="interaction-duration"
-                  type="number"
-                  min={1}
-                  className={`${inputClass} flex-1`}
-                  placeholder="30"
-                  value={form.duration}
-                  onChange={(e) =>
-                    set('duration', e.target.value === '' ? '' : Number(e.target.value))
-                  }
-                />
-                <span className="text-[13px] text-[var(--text-secondary)] whitespace-nowrap">
-                  min
-                </span>
-              </div>
-            </FormField>
-          )}
-        </div>
+        {/* Date */}
+        <FormField label="Date" htmlFor="interaction-date">
+          <input
+            id="interaction-date"
+            type="date"
+            className={inputClass}
+            value={form.date}
+            onChange={(e) => set('date', e.target.value)}
+          />
+        </FormField>
 
-        {/* Notes */}
-        <FormField label="Notes" htmlFor="interaction-notes">
+        {/* Summary (maps to Airtable Summary field) */}
+        <FormField label="Summary" htmlFor="interaction-summary">
           <textarea
-            id="interaction-notes"
+            id="interaction-summary"
             className={`${inputClass} min-h-[80px] resize-none`}
             placeholder="What was discussed…"
-            value={form.notes}
-            onChange={(e) => set('notes', e.target.value)}
+            value={form.summary}
+            onChange={(e) => set('summary', e.target.value)}
           />
         </FormField>
 

@@ -52,7 +52,6 @@ const INTERACTION_EDITABLE_FIELDS: EditableField[] = [
   { key: 'direction', label: 'Direction', type: 'singleSelect',
     options: ['Outbound (we initiated)', 'Inbound (they initiated)'] },
   { key: 'date', label: 'Date', type: 'date' },
-  { key: 'duration', label: 'Duration', type: 'text' },
   { key: 'logged_by', label: 'Logged By', type: 'text' },
   { key: 'summary', label: 'Summary', type: 'textarea' },
   { key: 'next_steps', label: 'Next Steps', type: 'textarea' },

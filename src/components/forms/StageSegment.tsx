@@ -1,33 +1,40 @@
-import type { Stage } from '@/components/shared/StageBadge'
+import { PIPELINE_STAGES, type PipelineStage } from '@/config/stages'
 
-export const STAGE_PROBABILITIES: Record<Stage, number> = {
-  'Prospecting': 25,
-  'Qualified': 45,
-  'Proposal Sent': 65,
-  'Negotiation': 80,
-  'Closed Won': 100,
+// Active (non-terminal) stages for the segmented picker
+const ACTIVE_STAGES = PIPELINE_STAGES.filter(s => s !== 'Closed Won' && s !== 'Closed Lost')
+
+export const STAGE_PROBABILITIES: Partial<Record<PipelineStage, number>> = {
+  'Initial Contact':   10,
+  'Qualification':     25,
+  'Meeting Scheduled': 35,
+  'Proposal Sent':     50,
+  'Contract Sent':     70,
+  'Negotiation':       80,
+  'Development':       60,
+  'Investment':        40,
+  'Future Client':     15,
+  'Closed Won':        100,
+  'Closed Lost':       0,
 }
 
-const STAGES: Stage[] = ['Prospecting', 'Qualified', 'Proposal Sent', 'Negotiation', 'Closed Won']
-
 interface StageSegmentProps {
-  value: Stage | null
-  onChange: (stage: Stage, probability: number) => void
+  value: PipelineStage | null
+  onChange: (stage: PipelineStage, probability: number) => void
 }
 
 export function StageSegment({ value, onChange }: StageSegmentProps) {
   return (
-    <div className="flex gap-1.5">
-      {STAGES.map((stage) => {
+    <div className="flex gap-1.5 flex-wrap">
+      {ACTIVE_STAGES.map((stage) => {
         const isSelected = value === stage
         return (
           <button
             key={stage}
             type="button"
-            onClick={() => onChange(stage, STAGE_PROBABILITIES[stage])}
+            onClick={() => onChange(stage, STAGE_PROBABILITIES[stage] ?? 0)}
             aria-pressed={isSelected}
             className={[
-              'flex-1 rounded-md border text-[11px] font-semibold py-1.5 px-1 transition-colors duration-150',
+              'rounded-md border text-[11px] font-semibold py-1.5 px-2 transition-colors duration-150',
               isSelected
                 ? 'bg-[var(--color-accent)] text-[var(--text-on-accent)] border-[var(--color-accent)]'
                 : 'bg-transparent text-[var(--text-secondary)] border-[var(--separator-strong)] hover:bg-[var(--bg-hover)]',

@@ -26,15 +26,8 @@ export const colorMap: Record<string, { text: string; textDark: string; bg: stri
   'Rejected':          { text: '#D70015',  textDark: '#FF453A',  bg: 'rgba(255,59,48,0.22)' },
   'Sent to Client':    { text: '#0055B3',  textDark: '#409CFF',  bg: 'rgba(0,122,255,0.22)' },
 
-  // Pipeline stages (canonical) — from centralized config
+  // Pipeline stages (all 11 Airtable options) — from centralized config
   ...pipelineStageColors,
-  'Development':       stageStatusBadgeColors('Business Development'),
-  // Legacy stage names (still in Airtable data)
-  'Initial Contact':   { text: '#0E7A8D',  textDark: '#40CBE0',  bg: 'rgba(48,176,199,0.22)' },
-  'Qualification':     { text: '#0055B3',  textDark: '#409CFF',  bg: 'rgba(0,122,255,0.22)' },
-  'Meeting Scheduled': { text: '#0E7A8D',  textDark: '#40CBE0',  bg: 'rgba(48,176,199,0.22)' },
-  'Contract Sent':     { text: '#D30047',  textDark: '#FF375F',  bg: 'rgba(255,45,85,0.22)' },
-  'Future Client':     { text: '#0E7A8D',  textDark: '#40CBE0',  bg: 'rgba(48,176,199,0.22)' },
 
   // Categorization
   'Lead':              { text: '#0055B3',  textDark: '#409CFF',  bg: 'rgba(0,122,255,0.22)' },

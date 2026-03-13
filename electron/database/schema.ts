@@ -435,6 +435,19 @@ export function createSchema(db: SqlJsDatabase): void {
     )
   `)
 
+  // ─── Pipeline Stage Migration ─────────────────────────
+  // Old Electron code used display names ("Business Development", "Qualified", "Prospecting")
+  // that differ from actual Airtable option values. Migrate local records to match Airtable.
+  const stageMigrations = [
+    `UPDATE opportunities SET sales_stage = 'Development' WHERE sales_stage = 'Business Development'`,
+    `UPDATE opportunities SET sales_stage = 'Qualification' WHERE sales_stage = 'Qualified'`,
+    `UPDATE opportunities SET sales_stage = 'Initial Contact' WHERE sales_stage = 'Prospecting'`,
+    `UPDATE opportunities SET sales_stage = 'Initial Contact' WHERE sales_stage = 'Outbound Prospecting'`,
+  ]
+  for (const sql of stageMigrations) {
+    try { db.run(sql) } catch { /* ignore */ }
+  }
+
   // ─── Indexes ───────────────────────────────────────────
   db.run(`CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts(contact_name)`)
   db.run(`CREATE INDEX IF NOT EXISTS idx_contacts_company ON contacts(company)`)

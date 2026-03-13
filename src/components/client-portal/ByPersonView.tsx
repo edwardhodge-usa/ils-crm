@@ -83,9 +83,49 @@ export default function ByPersonView({
           flex: 1,
           minWidth: 0,
           borderLeft: '1px solid var(--separator)',
-          overflow: 'auto',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
+        {/* ── Content Toolbar ─────────────────────────────────── */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            padding: '8px 12px',
+            borderBottom: '1px solid var(--color-separator)',
+            flexShrink: 0,
+          }}
+        >
+          <button
+            onClick={() => window.electronAPI?.shell?.openExternal?.('https://framer.com/projects')}
+            title="Open Framer editor to sync and publish changes"
+            style={{
+              padding: '5px 12px',
+              fontSize: 12,
+              fontWeight: 500,
+              color: 'var(--text-secondary)',
+              background: 'var(--color-fill-tertiary)',
+              border: '1px solid var(--color-separator)',
+              borderRadius: 6,
+              cursor: 'default',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
+              <path d="M9.5 6.5v3a1 1 0 01-1 1h-6a1 1 0 01-1-1v-6a1 1 0 011-1h3M7.5 1.5h3v3M5.5 6.5l4-4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Publish to Framer
+          </button>
+        </div>
+
+        {/* ── Detail Content ───────────────────────────────────── */}
+        <div style={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
         {selectedEmail && selectedRecords.length > 0 ? (
           <PersonDetail
             email={selectedEmail}
@@ -110,6 +150,7 @@ export default function ByPersonView({
             Select a person to view details
           </div>
         )}
+        </div>
       </div>
     </div>
   )

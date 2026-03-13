@@ -49,16 +49,25 @@
   --color-indigo: #5856D6;
 
   /* ── Stage colors — Light (text on tinted badge bg) ── */
-  --stage-prospecting: #9D8500;
-  --stage-prospecting-bg: rgba(255,204,0,0.15);
-  --stage-qualified: #A04B00;
-  --stage-qualified-bg: rgba(255,149,0,0.15);
-  --stage-bizdev: #7B4EA8;
-  --stage-bizdev-bg: rgba(175,82,222,0.15);
+  /* Matches Airtable "Sales Stage" field options exactly (verified 2026-03-12) */
+  --stage-initial: #3634A3;
+  --stage-initial-bg: rgba(88,86,214,0.15);
+  --stage-qualification: #A04B00;
+  --stage-qualification-bg: rgba(255,149,0,0.15);
+  --stage-meeting: #0E7A8D;
+  --stage-meeting-bg: rgba(48,176,199,0.15);
   --stage-proposal: #3634A3;
   --stage-proposal-bg: rgba(88,86,214,0.15);
-  --stage-negotiation: #1A8FA8;
-  --stage-negotiation-bg: rgba(48,176,199,0.15);
+  --stage-contract: #D30047;
+  --stage-contract-bg: rgba(255,45,85,0.15);
+  --stage-negotiation: #9D8500;
+  --stage-negotiation-bg: rgba(255,204,0,0.15);
+  --stage-development: #7B4EA8;
+  --stage-development-bg: rgba(175,82,222,0.15);
+  --stage-investment: #D70015;
+  --stage-investment-bg: rgba(255,45,85,0.15);
+  --stage-future: #00827A;
+  --stage-future-bg: rgba(0,199,190,0.15);
   --stage-won: #1A7834;
   --stage-won-bg: rgba(48,209,88,0.15);
   --stage-lost: #CC2D22;
@@ -172,16 +181,25 @@
   --color-teal: #40CBE0;
   --color-indigo: #5E5CE6;
 
-  --stage-prospecting: #FFD60A;
-  --stage-prospecting-bg: rgba(255,214,10,0.15);
-  --stage-qualified: #FF9F0A;
-  --stage-qualified-bg: rgba(255,159,10,0.15);
-  --stage-bizdev: #BF5AF2;
-  --stage-bizdev-bg: rgba(191,90,242,0.15);
+  /* ── Stage colors — Dark (bright system colors for dark tinted bg) ── */
+  --stage-initial: #5E5CE6;
+  --stage-initial-bg: rgba(94,92,230,0.15);
+  --stage-qualification: #FF9F0A;
+  --stage-qualification-bg: rgba(255,159,10,0.15);
+  --stage-meeting: #40CBE0;
+  --stage-meeting-bg: rgba(64,203,224,0.15);
   --stage-proposal: #5E5CE6;
   --stage-proposal-bg: rgba(94,92,230,0.15);
-  --stage-negotiation: #40CBE0;
-  --stage-negotiation-bg: rgba(64,203,224,0.15);
+  --stage-contract: #FF375F;
+  --stage-contract-bg: rgba(255,55,95,0.15);
+  --stage-negotiation: #FFD60A;
+  --stage-negotiation-bg: rgba(255,214,10,0.15);
+  --stage-development: #BF5AF2;
+  --stage-development-bg: rgba(191,90,242,0.15);
+  --stage-investment: #FF375F;
+  --stage-investment-bg: rgba(255,55,95,0.15);
+  --stage-future: #63E6E2;
+  --stage-future-bg: rgba(99,230,226,0.15);
   --stage-won: #30D158;
   --stage-won-bg: rgba(48,209,88,0.15);
   --stage-lost: #FF453A;

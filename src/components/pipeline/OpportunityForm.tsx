@@ -1,10 +1,11 @@
 import EntityForm, { type FormFieldDef } from '../shared/EntityForm'
 import useEntityForm from '../../hooks/useEntityForm'
+import { PIPELINE_STAGES } from '@/config/stages'
 
 const FIELDS: FormFieldDef[] = [
   { key: 'opportunity_name', label: 'Opportunity Name', type: 'text', required: true, section: 'Basic Info' },
   { key: 'sales_stage', label: 'Sales Stage', type: 'singleSelect', section: 'Basic Info',
-    options: ['Prospecting', 'Qualified', 'Business Development', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'] },
+    options: [...PIPELINE_STAGES] },
   { key: 'probability', label: 'Probability', type: 'singleSelect', section: 'Basic Info',
     options: ['Cold', 'Low', '02 Medium', '01 High', '04 FUTURE ROADMAP'] },
 

@@ -43,6 +43,7 @@ export default function ByPageView({
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [dirtyPages, setDirtyPages] = useState<Set<string>>(new Set())
   const [grantPopover, setGrantPopover] = useState<{ x: number; y: number } | null>(null)
+  const [healthMap, setHealthMap] = useState<Map<string, { status: number; ok: boolean }>>(new Map())
   const hasValidatedSlugs = useRef(false)
 
   // ── Auto-fix bad slugs on load ──────────────────────────────────────────
@@ -99,6 +100,30 @@ export default function ByPageView({
 
     fixSlugs()
   }, [pages, accessRecords, reloadPages, reloadAccess])
+
+  // ── Batch Framer page health check on mount ────────────────────────────────
+
+  useEffect(() => {
+    if (pages.length === 0) return
+    let cancelled = false
+    const checkAll = async () => {
+      const results = new Map<string, { status: number; ok: boolean }>()
+      for (const page of pages) {
+        if (cancelled) break
+        const slug = page.page_address as string
+        if (!slug || slug === 'null') continue
+        try {
+          const result = await window.electronAPI.framer.checkPageHealth(slug)
+          results.set(slug, result)
+          if (!cancelled) setHealthMap(new Map(results))
+        } catch { /* skip */ }
+        // Stagger 200ms between requests (5 req/sec limit)
+        await new Promise(r => setTimeout(r, 200))
+      }
+    }
+    checkAll()
+    return () => { cancelled = true }
+  }, [pages])
 
   // ── Auto-select first page ────────────────────────────────────────────────
 
@@ -251,6 +276,11 @@ export default function ByPageView({
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  // ── Health summary for toolbar ─────────────────────────────────────────────
+  const checkedCount = healthMap.size
+  const liveCount = Array.from(healthMap.values()).filter(v => v.ok).length
+  const sluggedPages = pages.filter(p => p.page_address && p.page_address !== 'null').length
+
   return (
     <div style={{ display: 'flex', height: '100%', width: '100%' }}>
       <PageList
@@ -263,6 +293,8 @@ export default function ByPageView({
         onNewPage={handleNewPage}
         view={view}
         onViewChange={onViewChange}
+        healthMap={healthMap}
+        healthSummary={{ liveCount, sluggedPages, checkedCount }}
       />
       <div
         style={{
@@ -270,8 +302,48 @@ export default function ByPageView({
           minWidth: 0,
           borderLeft: '1px solid var(--separator)',
           overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
+        {/* ── Content Toolbar ─────────────────────────────────── */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            padding: '8px 12px',
+            borderBottom: '1px solid var(--color-separator)',
+            flexShrink: 0,
+          }}
+        >
+          <button
+            onClick={() => window.electronAPI?.shell?.openExternal?.('https://framer.com/projects')}
+            title="Open Framer editor to sync and publish changes"
+            style={{
+              padding: '5px 12px',
+              fontSize: 12,
+              fontWeight: 500,
+              color: 'var(--text-secondary)',
+              background: 'var(--color-fill-tertiary)',
+              border: '1px solid var(--color-separator)',
+              borderRadius: 6,
+              cursor: 'default',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
+              <path d="M9.5 6.5v3a1 1 0 01-1 1h-6a1 1 0 01-1-1v-6a1 1 0 011-1h3M7.5 1.5h3v3M5.5 6.5l4-4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Publish to Framer
+          </button>
+        </div>
+
+        {/* ── Detail Content ───────────────────────────────────── */}
+        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
         {selectedPage ? (
           <PageDetail
             page={selectedPage}
@@ -302,6 +374,7 @@ export default function ByPageView({
             Select a page to view details
           </div>
         )}
+        </div>
       </div>
       {grantPopover && selectedPage && !isEmptySlug(selectedPage.page_address) && (
         <GrantAccessPopover

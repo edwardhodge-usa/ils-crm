@@ -182,7 +182,7 @@ export function ProjectDetail({ projectId, leadOptions, collaboratorMap = {} }: 
               onChange={val => handleLinkedSave('sales_opportunities_ids', val)}
               createFields={OPPORTUNITY_CREATE_FIELDS}
               createTitle="New Opportunity"
-              createDefaults={{ sales_stage: 'Prospecting' }}
+              createDefaults={{ sales_stage: 'Initial Contact' }}
               createApi={window.electronAPI.opportunities}
               placeholder="Search opportunities..."
             />

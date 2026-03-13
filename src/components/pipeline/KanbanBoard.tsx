@@ -12,8 +12,10 @@ import {
 import type { DealItem } from '@/types'
 import { KanbanColumn } from './KanbanColumn'
 import { DealCard } from './DealCard'
+import { PIPELINE_STAGES } from '@/config/stages'
 
-const STAGES = ['Prospecting', 'Qualified', 'Business Development', 'Proposal Sent', 'Negotiation'] as const
+// Active pipeline columns — exclude terminal stages from the Kanban board
+const STAGES = PIPELINE_STAGES.filter(s => s !== 'Closed Won' && s !== 'Closed Lost')
 
 interface KanbanBoardProps {
   deals: DealItem[]

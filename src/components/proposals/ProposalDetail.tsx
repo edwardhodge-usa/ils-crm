@@ -203,7 +203,7 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
               onChange={val => handleLinkedSave('related_opportunity_ids', val)}
               createFields={OPPORTUNITY_CREATE_FIELDS}
               createTitle="New Opportunity"
-              createDefaults={{ sales_stage: 'Prospecting' }}
+              createDefaults={{ sales_stage: 'Initial Contact' }}
               createApi={window.electronAPI.opportunities}
               placeholder="Search opportunities..."
             />

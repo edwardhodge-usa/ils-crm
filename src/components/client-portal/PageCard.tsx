@@ -4,6 +4,7 @@ interface PageCardProps {
   page: Record<string, unknown>
   dateAdded: string
   onNavigate: () => void
+  health?: { status: number; ok: boolean } | null
 }
 
 const SECTION_LABELS: { key: string; label: string }[] = [
@@ -20,12 +21,21 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-export default function PageCard({ page, dateAdded, onNavigate }: PageCardProps) {
+function deriveHealthDot(slug: string | null, health?: { status: number; ok: boolean } | null): { color: string; title: string } | null {
+  if (!slug || slug === 'null') return null
+  if (health === undefined || health === null) return { color: 'var(--color-fill-tertiary)', title: 'Checking...' }
+  if (health.ok) return { color: 'var(--color-green)', title: 'Page live' }
+  if (health.status === 404) return { color: 'var(--color-red)', title: 'Page not found' }
+  return { color: 'var(--color-orange)', title: 'Error checking page' }
+}
+
+export default function PageCard({ page, dateAdded, onNavigate, health }: PageCardProps) {
   const [hovered, setHovered] = useState(false)
 
   const title = (page.client_name as string) || 'Untitled Page'
   const slug = page.page_address as string | null
   const urlPath = slug ? `/ils-clients/${slug}` : ''
+  const healthDot = deriveHealthDot(slug, health)
 
   const activeSections = SECTION_LABELS.filter(s => {
     const val = page[s.key]
@@ -77,15 +87,36 @@ export default function PageCard({ page, dateAdded, onNavigate }: PageCardProps)
         {Boolean(urlPath) && (
           <div
             style={{
-              fontSize: 12,
-              color: 'var(--text-tertiary)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
               marginTop: 2,
             }}
           >
-            {urlPath}
+            <span
+              style={{
+                fontSize: 12,
+                color: 'var(--text-tertiary)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                minWidth: 0,
+              }}
+            >
+              {urlPath}
+            </span>
+            {healthDot && (
+              <div
+                title={healthDot.title}
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: healthDot.color,
+                  flexShrink: 0,
+                }}
+              />
+            )}
           </div>
         )}
 

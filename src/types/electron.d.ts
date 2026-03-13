@@ -94,6 +94,9 @@ interface ElectronAPI {
     removeRevokedListener: () => void
     removeOfflineLockedListener: () => void
   }
+  framer: {
+    checkPageHealth: (slug: string) => Promise<{ status: number; ok: boolean; error?: string }>
+  }
   onAccentColor: (cb: (color: string) => void) => void
 }
 

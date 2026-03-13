@@ -58,6 +58,7 @@
 		E5771CEA27AB55A6E7E40925 /* Contact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFC604A95E0A130C6EAFC7C /* Contact.swift */; };
 		ED94318657AEC4D283753738 /* InteractionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46488C4FC77689E54BDF129 /* InteractionsView.swift */; };
 		FB6619F611CA54671C544752 /* Opportunity+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794C572B0816746F1F6DD1EF /* Opportunity+Airtable.swift */; };
+		DC1A4F28B3E97C2A5F0D6841 /* DetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E3920C4A16F5D83C9B2E7A /* DetailComponents.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -98,6 +99,7 @@
 		96E233D4EA498B4D591789D1 /* PortalLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalLog.swift; sourceTree = "<group>"; };
 		99535FE1159A16F2D4297A81 /* ContactDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactDetailView.swift; sourceTree = "<group>"; };
 		A1A161B8DCBD0CDF39AAA10C /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
+		B7E3920C4A16F5D83C9B2E7A /* DetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailComponents.swift; sourceTree = "<group>"; };
 		A49F9AFC3A3BFE5B1C86EAC7 /* ImportedContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedContactsView.swift; sourceTree = "<group>"; };
 		A85AC6A57D105A7C7B62A7BD /* Specialty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Specialty.swift; sourceTree = "<group>"; };
 		AD5AC5FD0C4B654A1AC21455 /* Opportunity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Opportunity.swift; sourceTree = "<group>"; };
@@ -196,6 +198,7 @@
 			isa = PBXGroup;
 			children = (
 				A1A161B8DCBD0CDF39AAA10C /* SharedComponents.swift */,
+				B7E3920C4A16F5D83C9B2E7A /* DetailComponents.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -425,6 +428,7 @@
 				577D8DAFD2F517D9CB1FBE10 /* ProposalsView.swift in Sources */,
 				43DC7BE3CE7479FF375655DA /* SettingsView.swift in Sources */,
 				5E3277207BAB0C745FF8D7F7 /* SharedComponents.swift in Sources */,
+				DC1A4F28B3E97C2A5F0D6841 /* DetailComponents.swift in Sources */,
 				7476753DF05C0CD03C7076FA /* Specialty+Airtable.swift in Sources */,
 				0945ADA4071C21E97B28C933 /* Specialty.swift in Sources */,
 				A696ACC6AA8099D470D104DB /* SyncEngine.swift in Sources */,

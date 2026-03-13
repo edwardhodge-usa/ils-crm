@@ -1,6 +1,7 @@
 // Sync engine: polls Airtable, pushes local changes, manages PrimaryFieldCache
 // "Airtable wins" conflict resolution — remote overwrites local on pull
 
+import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'fs'
 import { BrowserWindow } from 'electron'
 import { fetchAllRecords, fetchRecord, batchCreate, batchUpdate, batchDelete, resetRateLimitState, shouldAbortSync, getStaggerMs } from './client'
 import { TABLES, PRIMARY_FIELDS } from './field-maps'
@@ -12,6 +13,7 @@ import {
 } from '../database/queries/entities'
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL
+const SYNC_LOCK_PATH = '/tmp/ils-crm-sync.lock'
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -26,6 +28,28 @@ export interface SyncProgress {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
+
+function acquireSyncLock(): boolean {
+  try {
+    if (existsSync(SYNC_LOCK_PATH)) {
+      const content = readFileSync(SYNC_LOCK_PATH, 'utf-8').trim()
+      const lockTime = new Date(content).getTime()
+      if (!isNaN(lockTime) && Date.now() - lockTime < 120_000) {
+        return false // Another app is syncing
+      }
+      unlinkSync(SYNC_LOCK_PATH) // Stale lock
+    }
+    writeFileSync(SYNC_LOCK_PATH, new Date().toISOString(), 'utf-8')
+    if (isDev) console.log('[Sync] Acquired lock file')
+    return true
+  } catch {
+    return true // If we can't check, proceed anyway
+  }
+}
+
+function releaseSyncLock(): void {
+  try { unlinkSync(SYNC_LOCK_PATH) } catch { /* ignore */ }
+}
 
 function getApiConfig(): { apiKey: string; baseId: string } | null {
   const apiKey = getSetting('airtable_api_key')
@@ -199,8 +223,14 @@ export async function fullSync(
   isSyncing = true
   resetRateLimitState()
 
+  if (!acquireSyncLock()) {
+    isSyncing = false
+    return { success: false, error: 'Another app is currently syncing. Try again in a moment.' }
+  }
+
   const config = getApiConfig()
   if (!config) {
+    releaseSyncLock()
     isSyncing = false
     return { success: false, error: 'No API key or base ID configured' }
   }
@@ -279,6 +309,7 @@ export async function fullSync(
     sendProgress(progress)
     return { success: false, error: String(error) }
   } finally {
+    releaseSyncLock()
     isSyncing = false
   }
 }
