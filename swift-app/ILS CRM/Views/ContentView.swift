@@ -52,10 +52,17 @@ private let crmItems: [NavItem]      = [.dashboard, .contacts, .companies, .pipe
 private let workItems: [NavItem]     = [.tasks, .projects, .proposals]
 private let activityItems: [NavItem] = [.clientPortal, .interactions, .importedContacts]
 
+// MARK: - Notifications
+
+extension Notification.Name {
+    static let createNewRecord = Notification.Name("createNewRecord")
+}
+
 /// Root content view — NavigationSplitView with sidebar + detail.
 /// Mirrors: src/components/layout/Layout.tsx (sidebar + topbar + outlet)
 struct ContentView: View {
     @State private var selection: NavItem? = .dashboard
+    @Environment(SyncEngine.self) private var syncEngine
 
     var body: some View {
         NavigationSplitView {
@@ -66,6 +73,72 @@ struct ContentView: View {
             detailView
         }
         .frame(minWidth: 900, minHeight: 600)
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                syncStatusView
+            }
+            ToolbarItem(placement: .primaryAction) {
+                if creatableEntities.contains(selection ?? .dashboard) {
+                    Button {
+                        NotificationCenter.default.post(name: .createNewRecord, object: selection)
+                    } label: {
+                        Label("New \(createEntityLabel)", systemImage: "plus")
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Toolbar Helpers
+
+    /// Entities that support creation via the toolbar button.
+    private var creatableEntities: Set<NavItem> {
+        [.contacts, .companies, .pipeline, .tasks, .projects, .proposals, .interactions, .importedContacts]
+    }
+
+    private var createEntityLabel: String {
+        switch selection {
+        case .contacts: return "Contact"
+        case .companies: return "Company"
+        case .pipeline: return "Opportunity"
+        case .tasks: return "Task"
+        case .projects: return "Project"
+        case .proposals: return "Proposal"
+        case .interactions: return "Interaction"
+        case .importedContacts: return "Imported Contact"
+        default: return "Record"
+        }
+    }
+
+    @ViewBuilder
+    private var syncStatusView: some View {
+        if syncEngine.isSyncing {
+            HStack(spacing: 6) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Syncing…")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } else if let lastSync = syncEngine.lastSyncDate {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(syncEngine.syncError != nil ? Color.red : Color.green)
+                    .frame(width: 7, height: 7)
+                Text(lastSync, style: .relative)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } else {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(Color.gray)
+                    .frame(width: 7, height: 7)
+                Text("Not synced")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     // MARK: - Sidebar
