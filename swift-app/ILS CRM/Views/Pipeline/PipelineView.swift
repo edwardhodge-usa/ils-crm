@@ -4,9 +4,11 @@ import SwiftData
 /// Pipeline / Kanban — mirrors src/components/pipeline/PipelinePage.tsx
 ///
 /// Kanban board with 11 stage columns. Each column shows opportunity cards
-/// with name, deal value, and expected close date. Tap a card to open detail sheet.
+/// with company name, deal name, value, stage badge, and probability.
+/// Summary header shows active total, won total, and deal count.
 struct PipelineView: View {
     @Query private var opportunities: [Opportunity]
+    @Query private var companies: [Company]
     @Environment(\.modelContext) private var modelContext
     @State private var selectedOpportunity: Opportunity?
     @State private var showNewOpportunity = false
@@ -33,8 +35,58 @@ struct PipelineView: View {
         "Future Client": .yellow
     ]
 
+    // MARK: - Computed Properties
+
+    /// Dictionary from Airtable record ID → company name for fast lookup
+    private var companyNameById: [String: String] {
+        Dictionary(uniqueKeysWithValues: companies.compactMap { company in
+            guard let name = company.companyName else { return nil }
+            return (company.id, name)
+        })
+    }
+
+    /// Total deal value for non-closed stages (active pipeline)
+    private var activeTotalValue: Double {
+        let closedStages: Set<String> = ["Closed Won", "Closed Lost"]
+        return opportunities
+            .filter { opp in
+                guard let stage = opp.salesStage else { return true }
+                return !closedStages.contains(stage)
+            }
+            .compactMap { $0.dealValue }
+            .reduce(0, +)
+    }
+
+    /// Total deal value for Closed Won stage
+    private var wonTotalValue: Double {
+        opportunities
+            .filter { $0.salesStage == "Closed Won" }
+            .compactMap { $0.dealValue }
+            .reduce(0, +)
+    }
+
+    /// Currency formatter — no decimal places (e.g. "$1,065,000")
+    private var currencyFormatter: NumberFormatter {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.maximumFractionDigits = 0
+        return f
+    }
+
+    private func formatCurrency(_ value: Double) -> String {
+        currencyFormatter.string(from: NSNumber(value: value)) ?? "$0"
+    }
+
+    // MARK: - Body
+
     var body: some View {
-        Group {
+        VStack(spacing: 0) {
+            // Summary header bar
+            summaryHeader
+
+            Divider()
+
+            // Kanban board
             if opportunities.isEmpty {
                 EmptyStateView(
                     title: "No Opportunities",
@@ -80,24 +132,109 @@ struct PipelineView: View {
         }
     }
 
+    // MARK: - Summary Header
+
+    private var summaryHeader: some View {
+        HStack(spacing: 16) {
+            Text("Pipeline")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Spacer()
+
+            // Active total
+            HStack(spacing: 4) {
+                Text("Active")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(formatCurrency(activeTotalValue))
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+            }
+
+            Divider()
+                .frame(height: 16)
+
+            // Won total
+            HStack(spacing: 4) {
+                Text("Won")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(formatCurrency(wonTotalValue))
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.green)
+            }
+
+            Divider()
+                .frame(height: 16)
+
+            // Deal count
+            HStack(spacing: 4) {
+                Text("Deals")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text("\(opportunities.count)")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+            }
+
+            // New Deal button
+            Button {
+                showNewOpportunity = true
+            } label: {
+                Text("+ New Deal")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Color.accentColor)
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color(.windowBackgroundColor))
+    }
+
     // MARK: - Stage Column
 
     private func stageColumn(_ stage: String) -> some View {
         let stageOpps = opportunities.filter { $0.salesStage == stage }
         let color = stageColors[stage] ?? .gray
+        let stageTotalValue = stageOpps.compactMap { $0.dealValue }.reduce(0, +)
 
         return VStack(alignment: .leading, spacing: 8) {
-            // Header
-            HStack {
-                Circle()
-                    .fill(color)
-                    .frame(width: 8, height: 8)
-                Text(stage)
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .lineLimit(1)
-                Spacer()
-                BadgeView(text: "\(stageOpps.count)", color: color)
+            // Column header
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Circle()
+                        .fill(color)
+                        .frame(width: 8, height: 8)
+                    Text(stage)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .lineLimit(1)
+                    Spacer()
+                    // Count badge in gray
+                    Text("\(stageOpps.count)")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Color.secondary.opacity(0.2))
+                        .foregroundStyle(.secondary)
+                        .clipShape(Capsule())
+                }
+                // Dollar total below stage name
+                if stageTotalValue > 0 {
+                    Text(formatCurrency(stageTotalValue))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 16) // indent to align under stage name (past dot)
+                }
             }
             .padding(.horizontal, 10)
             .padding(.top, 10)
@@ -105,12 +242,25 @@ struct PipelineView: View {
             // Cards
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 8) {
-                    ForEach(stageOpps, id: \.id) { opp in
-                        KanbanCard(opportunity: opp)
+                    if stageOpps.isEmpty {
+                        Text("No deals")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                    } else {
+                        ForEach(stageOpps, id: \.id) { opp in
+                            KanbanCard(
+                                opportunity: opp,
+                                companyName: opp.companyIds.first.flatMap { companyNameById[$0] },
+                                stageColor: color,
+                                formatCurrency: formatCurrency
+                            )
                             .draggable(opp.id)
                             .onTapGesture {
                                 selectedOpportunity = opp
                             }
+                        }
                     }
                 }
                 .padding(.horizontal, 10)
@@ -167,45 +317,65 @@ struct PipelineView: View {
 
 private struct KanbanCard: View {
     let opportunity: Opportunity
+    let companyName: String?
+    let stageColor: Color
+    let formatCurrency: (Double) -> String
 
-    private var formattedValue: String? {
-        guard let value = opportunity.dealValue, value > 0 else { return nil }
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: value))
+    private var formattedValue: String {
+        guard let value = opportunity.dealValue, value > 0 else { return "—" }
+        return formatCurrency(value)
     }
 
-    private var formattedDate: String? {
-        guard let date = opportunity.expectedCloseDate else { return nil }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
-        return formatter.string(from: date)
+    /// Display probability string — strips numeric prefix (e.g. "01 High" → "01 High").
+    /// If probability is a raw number string (legacy), shows as-is.
+    private var probabilityDisplay: String? {
+        guard let prob = opportunity.probability, !prob.isEmpty else { return nil }
+        return prob
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
+            // Company name (above deal name)
+            if let company = companyName {
+                Text(company)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            // Deal name
             Text(opportunity.opportunityName ?? "Untitled")
                 .font(.body)
                 .fontWeight(.medium)
                 .lineLimit(2)
 
-            if let value = formattedValue {
-                Text(value)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            // Dollar value
+            Text(formattedValue)
+                .font(.subheadline)
+                .fontWeight(.medium)
 
-            if let date = formattedDate {
-                Text(date)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+            // Bottom row: stage badge + probability
+            HStack {
+                StatusBadge(
+                    text: opportunity.salesStage ?? "—",
+                    color: stageColor
+                )
+                Spacer()
+                if let prob = probabilityDisplay {
+                    Text(prob)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.regularMaterial)
+        .background(Color(.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+        )
     }
 }
 

@@ -1,107 +1,191 @@
 import SwiftUI
 import SwiftData
 
-// MARK: - Status Filter
-
-enum StatusFilter: String, CaseIterable {
-    case all = "All"
-    case active = "Active"
-    case completed = "Completed"
-    case overdue = "Overdue"
-}
-
 // MARK: - TasksView
 
-/// Tasks list view — mirrors src/components/tasks/TasksPage.tsx + TaskListPage.tsx
+/// Tasks — 4-column layout mirroring the Electron TasksPage.tsx + TaskListPage.tsx.
 ///
-/// Features:
-/// - Segmented filter (All / Active / Completed / Overdue)
-/// - Search by task name and notes
-/// - Priority color dots, due date, type badges, status badges
-/// - Overdue row highlighting
+/// Column 1 (170pt) — Assigned sidebar: All + per-assignee rows with avatar + count badge
+/// Column 2 (170pt) — Smart Lists + By Type filter panel
+/// Column 3 (380pt) — Task list: grouped into Overdue / Today / Waiting On / No Date sections
+/// Column 4 (flex)  — Inline TaskDetailView or empty state
 struct TasksView: View {
-    @Query(sort: \CRMTask.dueDate) private var tasks: [CRMTask]
-    @State private var searchText = ""
-    @State private var statusFilter: StatusFilter = .all
-    @State private var selectedTask: CRMTask?
-    @State private var showingCreateForm = false
 
-    // MARK: - Filtered Tasks
+    @Query(sort: \CRMTask.dueDate) private var tasks: [CRMTask]
+    @Environment(\.modelContext) private var modelContext
+
+    // Column 1 — Assignee filter
+    @State private var selectedAssignee: String? = nil   // nil = All
+
+    // Column 2 — Smart list OR type filter (mutually exclusive)
+    @State private var selectedSmartList: String = "All Tasks"
+    @State private var selectedType: String? = nil
+
+    // Column 3
+    @State private var searchText: String = ""
+    @State private var selectedTask: CRMTask?
+
+    // Sheet
+    @State private var showNewTask = false
+
+    // MARK: - Constants
+
+    private static let taskTypes: [String] = [
+        "Schedule Meeting", "Send Qualifications", "Follow-up Email",
+        "Follow-up Call", "Other", "Presentation Deck", "Research",
+        "Administrative", "Send Proposal", "Internal Review", "Project", "Travel"
+    ]
+
+    /// 12-color deterministic palette for type squares
+    private static let typePalette: [Color] = [
+        .blue, .purple, .orange, .green, .teal, .red,
+        .indigo, .pink, .mint, .yellow, .cyan, .brown
+    ]
+
+    private static let dueDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return f
+    }()
+
+    // MARK: - Date helpers
+
+    private var today: Date { Calendar.current.startOfDay(for: Date()) }
+
+    private func isOverdue(_ task: CRMTask) -> Bool {
+        guard let due = task.dueDate else { return false }
+        let isComplete = task.status?.localizedCaseInsensitiveContains("complet") ?? false
+        return Calendar.current.startOfDay(for: due) < today && !isComplete
+    }
+
+    private func isToday(_ task: CRMTask) -> Bool {
+        guard let due = task.dueDate else { return false }
+        return Calendar.current.startOfDay(for: due) == today
+    }
+
+    private func isScheduled(_ task: CRMTask) -> Bool {
+        guard let due = task.dueDate else { return false }
+        return Calendar.current.startOfDay(for: due) > today
+    }
+
+    private func isCompleted(_ task: CRMTask) -> Bool {
+        task.status?.localizedCaseInsensitiveContains("complet") ?? false
+    }
+
+    private func isWaiting(_ task: CRMTask) -> Bool {
+        task.status?.localizedCaseInsensitiveContains("waiting") ?? false
+    }
+
+    // MARK: - Unique Assignees
+
+    private var sortedAssignees: [String] {
+        Array(Set(tasks.compactMap(\.assignedTo))).sorted()
+    }
+
+    // MARK: - Assignee-filtered tasks (Column 1 gate)
+
+    private var assigneeFilteredTasks: [CRMTask] {
+        guard let assignee = selectedAssignee else { return Array(tasks) }
+        return tasks.filter { $0.assignedTo == assignee }
+    }
+
+    // MARK: - Smart list counts (computed on full tasks list, not filtered)
+
+    private func smartListCount(_ name: String) -> Int {
+        switch name {
+        case "All Tasks":   return tasks.filter { !isCompleted($0) }.count
+        case "Overdue":     return tasks.filter { isOverdue($0) }.count
+        case "Today":       return tasks.filter { isToday($0) }.count
+        case "Scheduled":   return tasks.filter { isScheduled($0) }.count
+        case "No Date":     return tasks.filter { $0.dueDate == nil && !isCompleted($0) }.count
+        case "Waiting":     return tasks.filter { isWaiting($0) }.count
+        case "Completed":   return tasks.filter { isCompleted($0) }.count
+        default:            return 0
+        }
+    }
+
+    private func typeCount(_ type: String) -> Int {
+        tasks.filter { task in
+            guard let t = task.type else { return false }
+            return t.localizedCaseInsensitiveContains(type)
+        }.count
+    }
+
+    // MARK: - Fully filtered tasks for Column 3
 
     private var filteredTasks: [CRMTask] {
-        var result: [CRMTask]
+        var result = assigneeFilteredTasks
 
-        switch statusFilter {
-        case .all:
-            result = tasks
-        case .active:
-            result = tasks.filter { task in
-                !(task.status?.localizedCaseInsensitiveContains("complete") ?? false)
+        // Smart list filter
+        if let type = selectedType {
+            result = result.filter { task in
+                guard let t = task.type else { return false }
+                return t.localizedCaseInsensitiveContains(type)
             }
-        case .completed:
-            result = tasks.filter { task in
-                task.status?.localizedCaseInsensitiveContains("complete") ?? false
+        } else {
+            switch selectedSmartList {
+            case "All Tasks":   result = result.filter { !isCompleted($0) }
+            case "Overdue":     result = result.filter { isOverdue($0) }
+            case "Today":       result = result.filter { isToday($0) }
+            case "Scheduled":   result = result.filter { isScheduled($0) }
+            case "No Date":     result = result.filter { $0.dueDate == nil && !isCompleted($0) }
+            case "Waiting":     result = result.filter { isWaiting($0) }
+            case "Completed":   result = result.filter { isCompleted($0) }
+            default:            break
             }
-        case .overdue:
-            result = tasks.filter { isOverdue($0) }
         }
 
-        // Apply search filter
+        // Search filter
         if !searchText.isEmpty {
             result = result.filter { task in
-                let matchesName = task.task?.localizedCaseInsensitiveContains(searchText) ?? false
-                let matchesNotes = task.notes?.localizedCaseInsensitiveContains(searchText) ?? false
-                return matchesName || matchesNotes
+                (task.task?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (task.notes?.localizedCaseInsensitiveContains(searchText) ?? false)
             }
         }
 
         return result
     }
 
+    // MARK: - Grouped sections
+
+    private var overdueTasks:   [CRMTask] { filteredTasks.filter { isOverdue($0) } }
+    private var todayTasks:     [CRMTask] { filteredTasks.filter { isToday($0) && !isOverdue($0) } }
+    private var waitingTasks:   [CRMTask] { filteredTasks.filter { isWaiting($0) && !isOverdue($0) && !isToday($0) } }
+    private var noDateTasks:    [CRMTask] { filteredTasks.filter { $0.dueDate == nil && !isCompleted($0) && !isWaiting($0) } }
+    private var scheduledTasks: [CRMTask] { filteredTasks.filter { isScheduled($0) && !isWaiting($0) } }
+    private var completedTasks: [CRMTask] { filteredTasks.filter { isCompleted($0) } }
+
+    private var filterName: String {
+        if let type = selectedType { return type }
+        return selectedSmartList
+    }
+
     // MARK: - Body
 
     var body: some View {
-        Group {
-            if filteredTasks.isEmpty {
-                emptyState
-            } else {
-                taskList
-            }
+        HStack(spacing: 0) {
+            // Column 1 — Assigned
+            assignedColumn
+                .frame(width: 170)
+
+            Divider()
+
+            // Column 2 — Smart Lists + By Type
+            filterColumn
+                .frame(width: 170)
+
+            Divider()
+
+            // Column 3 — Task List
+            taskListColumn
+                .frame(width: 380)
+
+            Divider()
+
+            // Column 4 — Detail
+            detailColumn
         }
-        .searchable(text: $searchText, prompt: "Search tasks...")
-        .navigationTitle("Tasks")
-        .toolbar {
-            ToolbarItem(placement: .automatic) {
-                Picker("Filter", selection: $statusFilter) {
-                    ForEach(StatusFilter.allCases, id: \.self) { filter in
-                        Text(filter.rawValue).tag(filter)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-            ToolbarItem(placement: .automatic) {
-                Button {
-                    showingCreateForm = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-            }
-        }
-        .sheet(item: $selectedTask) { task in
-            NavigationStack {
-                TaskDetailView(crmTask: task)
-                    .navigationTitle("Task")
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Done") {
-                                selectedTask = nil
-                            }
-                        }
-                    }
-            }
-            .frame(minWidth: 450, minHeight: 500)
-        }
-        .sheet(isPresented: $showingCreateForm) {
+        .sheet(isPresented: $showNewTask) {
             NavigationStack {
                 TaskFormView(crmTask: nil)
             }
@@ -109,305 +193,391 @@ struct TasksView: View {
         }
     }
 
-    // MARK: - Task List
+    // MARK: - Column 1: Assigned
 
-    private var taskList: some View {
-        List(filteredTasks, id: \.id, selection: $selectedTask) { task in
-            TaskRowView(task: task, isOverdue: isOverdue(task))
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    selectedTask = task
+    private var assignedColumn: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                // Header
+                Text("ASSIGNED")
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(0.5)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 14)
+                    .padding(.bottom, 6)
+
+                // "All" row
+                assigneeRow(name: nil, count: tasks.count)
+
+                // Per-assignee rows
+                ForEach(sortedAssignees, id: \.self) { assignee in
+                    assigneeRow(name: assignee, count: tasks.filter { $0.assignedTo == assignee }.count)
                 }
-                .listRowBackground(
-                    isOverdue(task)
-                        ? Color.red.opacity(0.06)
-                        : nil
-                )
+            }
         }
     }
 
-    // MARK: - Empty State
+    @ViewBuilder
+    private func assigneeRow(name: String?, count: Int) -> some View {
+        let isSelected = (name == selectedAssignee)
+        HStack(spacing: 8) {
+            if let name {
+                AvatarView(name: name, avatarSize: .small)
+                Text(name)
+                    .font(.caption)
+                    .foregroundStyle(isSelected ? .white : .primary)
+                    .lineLimit(1)
+            } else {
+                Text("All")
+                    .font(.caption)
+                    .foregroundStyle(isSelected ? .white : .primary)
+            }
+            Spacer()
+            // Count badge
+            Text("\(count)")
+                .font(.caption2)
+                .fontWeight(.medium)
+                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(isSelected ? Color.white.opacity(0.2) : Color.secondary.opacity(0.12))
+                .clipShape(Capsule())
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(isSelected ? Color.accentColor : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .padding(.horizontal, 4)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectedAssignee = name
+        }
+    }
+
+    // MARK: - Column 2: Filter Panel
+
+    private static let smartLists: [(name: String, dotColor: Color)] = [
+        ("All Tasks",  .blue),
+        ("Overdue",    .red),
+        ("Today",      .blue),
+        ("Scheduled",  .blue),
+        ("No Date",    .gray),
+        ("Waiting",    .yellow),
+        ("Completed",  .green),
+    ]
+
+    private var filterColumn: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+
+                // SMART LISTS header
+                Text("SMART LISTS")
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(0.5)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 14)
+                    .padding(.bottom, 6)
+
+                ForEach(Self.smartLists, id: \.name) { item in
+                    smartListRow(name: item.name, dotColor: item.dotColor, count: smartListCount(item.name))
+                }
+
+                // BY TYPE header
+                Text("BY TYPE")
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(0.5)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 14)
+                    .padding(.bottom, 6)
+
+                ForEach(Array(Self.taskTypes.enumerated()), id: \.offset) { index, type in
+                    typeRow(name: type, color: Self.typePalette[index % Self.typePalette.count], count: typeCount(type))
+                }
+
+                // Footer
+                Text("Auto-populated from Airtable")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+                    .padding(.bottom, 12)
+            }
+        }
+    }
 
     @ViewBuilder
-    private var emptyState: some View {
-        switch statusFilter {
-        case .all:
-            if searchText.isEmpty {
+    private func smartListRow(name: String, dotColor: Color, count: Int) -> some View {
+        let isSelected = (selectedType == nil && selectedSmartList == name)
+        HStack(spacing: 8) {
+            Circle()
+                .fill(dotColor)
+                .frame(width: 8, height: 8)
+            Text(name)
+                .font(.caption)
+                .foregroundStyle(isSelected ? .white : .primary)
+                .lineLimit(1)
+            Spacer()
+            if count > 0 {
+                Text("\(count)")
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                    .foregroundStyle(isSelected ? Color.accentColor : (name == "All Tasks" ? .red : .secondary))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(isSelected ? Color.white.opacity(0.2) : Color.secondary.opacity(0.12))
+                    .clipShape(Capsule())
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(isSelected ? Color.accentColor : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .padding(.horizontal, 4)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectedSmartList = name
+            selectedType = nil
+        }
+    }
+
+    @ViewBuilder
+    private func typeRow(name: String, color: Color, count: Int) -> some View {
+        let isSelected = (selectedType == name)
+        HStack(spacing: 8) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(color)
+                .frame(width: 8, height: 8)
+            Text(name)
+                .font(.caption)
+                .foregroundStyle(isSelected ? .white : .primary)
+                .lineLimit(1)
+            Spacer()
+            Text("\(count)")
+                .font(.caption2)
+                .fontWeight(.medium)
+                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(isSelected ? Color.white.opacity(0.2) : Color.secondary.opacity(0.12))
+                .clipShape(Capsule())
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(isSelected ? Color.accentColor : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .padding(.horizontal, 4)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectedType = name
+        }
+    }
+
+    // MARK: - Column 3: Task List
+
+    private var taskListColumn: some View {
+        VStack(spacing: 0) {
+            // Header
+            ListHeader(
+                title: filterName,
+                count: filteredTasks.count,
+                buttonLabel: "+ New Task",
+                onButton: { showNewTask = true }
+            )
+
+            Divider()
+
+            // Search bar
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+                TextField("Search tasks...", text: $searchText)
+                    .font(.subheadline)
+                    .textFieldStyle(.plain)
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Color(.controlBackgroundColor))
+
+            Divider()
+
+            // Grouped list
+            if filteredTasks.isEmpty {
                 EmptyStateView(
                     title: "No Tasks",
-                    description: "Tasks will appear here once synced from Airtable.",
+                    description: searchText.isEmpty
+                        ? "No tasks match the current filter."
+                        : "No tasks match \"\(searchText)\".",
                     systemImage: "checklist"
                 )
             } else {
-                EmptyStateView(
-                    title: "No Results",
-                    description: "No tasks match \"\(searchText)\".",
-                    systemImage: "magnifyingglass"
-                )
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
+                        taskSection(
+                            tasks: overdueTasks,
+                            icon: { AnyView(Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)) },
+                            label: "OVERDUE",
+                            labelColor: .red
+                        )
+                        taskSection(
+                            tasks: todayTasks,
+                            icon: { AnyView(Circle().fill(Color.orange).frame(width: 8, height: 8)) },
+                            label: "TODAY",
+                            labelColor: .orange
+                        )
+                        taskSection(
+                            tasks: waitingTasks,
+                            icon: { AnyView(Image(systemName: "diamond.fill").foregroundStyle(.yellow)) },
+                            label: "WAITING ON",
+                            labelColor: .yellow
+                        )
+                        taskSection(
+                            tasks: noDateTasks,
+                            icon: { AnyView(Circle().fill(Color.secondary).frame(width: 8, height: 8)) },
+                            label: "NO DATE",
+                            labelColor: .secondary
+                        )
+                        taskSection(
+                            tasks: scheduledTasks,
+                            icon: { AnyView(Image(systemName: "calendar").foregroundStyle(.blue)) },
+                            label: "SCHEDULED",
+                            labelColor: .blue
+                        )
+                        taskSection(
+                            tasks: completedTasks,
+                            icon: { AnyView(Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)) },
+                            label: "COMPLETED",
+                            labelColor: .green
+                        )
+                    }
+                }
             }
-        case .active:
-            EmptyStateView(
-                title: "No Active Tasks",
-                description: searchText.isEmpty
-                    ? "All tasks are completed."
-                    : "No active tasks match \"\(searchText)\".",
-                systemImage: "checkmark.circle"
-            )
-        case .completed:
-            EmptyStateView(
-                title: "No Completed Tasks",
-                description: searchText.isEmpty
-                    ? "No tasks have been completed yet."
-                    : "No completed tasks match \"\(searchText)\".",
-                systemImage: "circle"
-            )
-        case .overdue:
-            EmptyStateView(
-                title: "No Overdue Tasks",
-                description: searchText.isEmpty
-                    ? "All tasks are on schedule."
-                    : "No overdue tasks match \"\(searchText)\".",
-                systemImage: "clock.badge.checkmark"
-            )
         }
     }
 
-    // MARK: - Helpers
-
-    private func isOverdue(_ task: CRMTask) -> Bool {
-        guard let due = task.dueDate else { return false }
-        let isComplete = task.status?.localizedCaseInsensitiveContains("complete") ?? false
-        return due < Date.now && !isComplete
+    @ViewBuilder
+    private func taskSection<Icon: View>(
+        tasks: [CRMTask],
+        icon: () -> Icon,
+        label: String,
+        labelColor: Color
+    ) -> some View {
+        if !tasks.isEmpty {
+            Section {
+                ForEach(tasks) { task in
+                    taskRow(task)
+                    Divider().padding(.leading, 32)
+                }
+            } header: {
+                HStack(spacing: 6) {
+                    icon()
+                        .font(.system(size: 10, weight: .semibold))
+                    Text(label)
+                        .font(.system(size: 11, weight: .bold))
+                        .tracking(0.5)
+                        .foregroundStyle(labelColor)
+                    Text("(\(tasks.count))")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color(.windowBackgroundColor).opacity(0.95))
+            }
+        }
     }
-}
 
-// MARK: - Task Row
+    @ViewBuilder
+    private func taskRow(_ task: CRMTask) -> some View {
+        let isSelected = (selectedTask?.id == task.id)
+        let overdue = isOverdue(task)
+        let isHighPriority = task.priority?.localizedCaseInsensitiveContains("high") ?? false
 
-private struct TaskRowView: View {
-    let task: CRMTask
-    let isOverdue: Bool
-
-    private var priorityColor: Color {
-        guard let priority = task.priority else { return .gray }
-        if priority.localizedCaseInsensitiveContains("high") { return .red }
-        if priority.localizedCaseInsensitiveContains("medium") { return .yellow }
-        if priority.localizedCaseInsensitiveContains("low") { return .green }
-        return .gray
-    }
-
-    private static let dueDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return formatter
-    }()
-
-    var body: some View {
-        HStack(spacing: 12) {
-            // Priority dot
+        HStack(spacing: 10) {
+            // Priority circle
             Circle()
-                .fill(priorityColor)
-                .frame(width: 10, height: 10)
+                .fill(priorityColor(for: task.priority))
+                .frame(width: 8, height: 8)
 
-            // Task info
-            VStack(alignment: .leading, spacing: 3) {
+            // Name + meta
+            VStack(alignment: .leading, spacing: 2) {
                 Text(task.task ?? "Untitled")
-                    .font(.body)
+                    .font(.subheadline)
+                    .foregroundStyle(isSelected ? .white : .primary)
                     .lineLimit(1)
 
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     if let due = task.dueDate {
                         Text(Self.dueDateFormatter.string(from: due))
                             .font(.caption)
-                            .foregroundStyle(isOverdue ? .red : .secondary)
+                            .foregroundStyle(overdue ? .red : (isSelected ? Color.white.opacity(0.8) : .secondary))
                     }
                     if let type = task.type, !type.isEmpty {
-                        BadgeView(text: type, color: .secondary)
+                        StatusBadge(text: type, color: isSelected ? .white : .blue)
                     }
                 }
             }
 
             Spacer()
 
-            // Status badge
-            if let status = task.status, !status.isEmpty {
-                BadgeView(text: status, color: statusColor(for: status))
+            // High priority indicator
+            if isHighPriority {
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 6, height: 6)
             }
         }
-        .padding(.vertical, 2)
-    }
-
-    private func statusColor(for status: String) -> Color {
-        if status.localizedCaseInsensitiveContains("complete") { return .green }
-        if status.localizedCaseInsensitiveContains("progress") { return .blue }
-        if status.localizedCaseInsensitiveContains("blocked") { return .red }
-        if status.localizedCaseInsensitiveContains("review") { return .orange }
-        return .secondary
-    }
-}
-
-// MARK: - Task Form
-
-/// Full create/edit form — mirrors src/components/tasks/TaskForm.tsx
-///
-/// - `crmTask: nil` → create mode (inserts new CRMTask with local_ prefix ID)
-/// - `crmTask: existing` → edit mode (updates in place)
-struct TaskFormView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
-
-    let crmTask: CRMTask?  // nil = create, non-nil = edit
-
-    // MARK: - Form State
-
-    @State private var taskName: String = ""
-    @State private var status: String = "Not Started"
-    @State private var priority: String = ""
-    @State private var type: String = ""
-    @State private var dueDate: Date = Date()
-    @State private var hasDueDate: Bool = false
-    @State private var completedDate: Date = Date()
-    @State private var hasCompletedDate: Bool = false
-    @State private var notes: String = ""
-
-    // MARK: - Options (matching Airtable select values)
-
-    private let statusOptions = ["Not Started", "In Progress", "Complete", "Blocked"]
-    private let priorityOptions = ["", "\u{1F534} High", "\u{1F7E1} Medium", "\u{1F7E2} Low"]
-    private let typeOptions = [
-        "", "Follow-up", "Meeting", "Call", "Email", "Research",
-        "Admin", "Review", "Outreach", "Proposal", "Contract", "Onboarding", "Other"
-    ]
-
-    private var isCreate: Bool { crmTask == nil }
-
-    // MARK: - Body
-
-    var body: some View {
-        Form {
-            // Task Name
-            Section("Task") {
-                TextField("Task name", text: $taskName)
-            }
-
-            // Details
-            Section("Details") {
-                Picker("Status", selection: $status) {
-                    ForEach(statusOptions, id: \.self) { option in
-                        Text(option).tag(option)
-                    }
-                }
-
-                Picker("Priority", selection: $priority) {
-                    Text("None").tag("")
-                    ForEach(priorityOptions.filter { !$0.isEmpty }, id: \.self) { option in
-                        Text(option).tag(option)
-                    }
-                }
-
-                Picker("Type", selection: $type) {
-                    Text("None").tag("")
-                    ForEach(typeOptions.filter { !$0.isEmpty }, id: \.self) { option in
-                        Text(option).tag(option)
-                    }
-                }
-            }
-
-            // Schedule
-            Section("Schedule") {
-                Toggle("Due Date", isOn: $hasDueDate)
-                if hasDueDate {
-                    DatePicker("Due", selection: $dueDate, displayedComponents: .date)
-                }
-
-                if status == "Complete" {
-                    Toggle("Completed Date", isOn: $hasCompletedDate)
-                    if hasCompletedDate {
-                        DatePicker("Completed", selection: $completedDate, displayedComponents: .date)
-                    }
-                }
-            }
-
-            // Notes
-            Section("Notes") {
-                TextEditor(text: $notes)
-                    .frame(minHeight: 100)
-            }
-        }
-        .formStyle(.grouped)
-        .navigationTitle(isCreate ? "New Task" : "Edit Task")
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
-                }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    save()
-                }
-                .disabled(taskName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-        }
-        .onAppear {
-            loadExistingTask()
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(isSelected ? Color.accentColor : Color.clear)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectedTask = task
         }
     }
 
-    // MARK: - Load Existing Task (edit mode)
+    // MARK: - Column 4: Detail
 
-    private func loadExistingTask() {
-        guard let task = crmTask else { return }
-        taskName = task.task ?? ""
-        status = task.status ?? "Not Started"
-        priority = task.priority ?? ""
-        type = task.type ?? ""
-        notes = task.notes ?? ""
-
-        if let due = task.dueDate {
-            dueDate = due
-            hasDueDate = true
+    private var detailColumn: some View {
+        Group {
+            if let task = selectedTask {
+                TaskDetailView(task: task)
+            } else {
+                EmptyStateView(
+                    title: "Select a task",
+                    description: "Select a task to view details",
+                    systemImage: "checklist"
+                )
+            }
         }
-
-        if let completed = task.completedDate {
-            completedDate = completed
-            hasCompletedDate = true
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    // MARK: - Save
+    // MARK: - Helpers
 
-    private func save() {
-        let trimmedName = taskName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else { return }
-
-        if let task = crmTask {
-            // Edit mode — update existing
-            task.task = trimmedName
-            task.status = status
-            task.priority = priority.isEmpty ? nil : priority
-            task.type = type.isEmpty ? nil : type
-            task.dueDate = hasDueDate ? dueDate : nil
-            task.completedDate = (status == "Complete" && hasCompletedDate) ? completedDate : nil
-            task.notes = notes.isEmpty ? nil : notes
-            task.localModifiedAt = Date()
-            task.isPendingPush = true
-        } else {
-            // Create mode — insert new
-            let newTask = CRMTask(
-                id: "local_\(UUID().uuidString)",
-                task: trimmedName,
-                isPendingPush: true
-            )
-            newTask.status = status
-            newTask.priority = priority.isEmpty ? nil : priority
-            newTask.type = type.isEmpty ? nil : type
-            newTask.dueDate = hasDueDate ? dueDate : nil
-            newTask.completedDate = (status == "Complete" && hasCompletedDate) ? completedDate : nil
-            newTask.notes = notes.isEmpty ? nil : notes
-            newTask.localModifiedAt = Date()
-            modelContext.insert(newTask)
-        }
-
-        dismiss()
+    private func priorityColor(for priority: String?) -> Color {
+        guard let p = priority else { return .gray }
+        if p.localizedCaseInsensitiveContains("high")   { return .red }
+        if p.localizedCaseInsensitiveContains("medium") { return .orange }
+        if p.localizedCaseInsensitiveContains("low")    { return .green }
+        return .gray
     }
 }

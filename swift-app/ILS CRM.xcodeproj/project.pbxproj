@@ -15,6 +15,7 @@
 		2F2B540BE6651C6070BB48A6 /* Project+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C07D862A21FBBB8121DAE0 /* Project+Airtable.swift */; };
 		32A37AC7A71BCA3C59781505 /* PortalLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */; };
 		35C3F4BEF1740DA2C7220139 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668D676CC891E3198DACD13B /* TaskDetailView.swift */; };
+		4B671DD6473F35D63A82CB13 /* TaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24041823CCBE820C34C99C43 /* TaskFormView.swift */; };
 		36EBBB07DE34F8F950564A28 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AEF7B9304DFAE44834536F /* ProjectDetailView.swift */; };
 		38AC88CA3F769FD350136A46 /* Proposal+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */; };
 		3B9FF2F195EB914F5F66299A /* Company+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */; };
@@ -80,6 +81,7 @@
 		52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Proposal+Airtable.swift"; sourceTree = "<group>"; };
 		649C44D1AA43D3C6B31DC0B2 /* Company.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Company.swift; sourceTree = "<group>"; };
 		668D676CC891E3198DACD13B /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
+		24041823CCBE820C34C99C43 /* TaskFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskFormView.swift; sourceTree = "<group>"; };
 		66D7C2ED321ED09895486FDF /* CompanyDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanyDetailView.swift; sourceTree = "<group>"; };
 		67C683F26915642FCBFD399A /* SyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncEngine.swift; sourceTree = "<group>"; };
 		68503FBF62BB4C58531F734C /* Interaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Interaction.swift; sourceTree = "<group>"; };
@@ -262,6 +264,7 @@
 			isa = PBXGroup;
 			children = (
 				668D676CC891E3198DACD13B /* TaskDetailView.swift */,
+				24041823CCBE820C34C99C43 /* TaskFormView.swift */,
 				C6F940D1601214B19B51F716 /* TasksView.swift */,
 			);
 			path = Tasks;
@@ -433,6 +436,7 @@
 				0945ADA4071C21E97B28C933 /* Specialty.swift in Sources */,
 				A696ACC6AA8099D470D104DB /* SyncEngine.swift in Sources */,
 				35C3F4BEF1740DA2C7220139 /* TaskDetailView.swift in Sources */,
+				4B671DD6473F35D63A82CB13 /* TaskFormView.swift in Sources */,
 				141E801CD0E7D895A261D4AD /* TasksView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

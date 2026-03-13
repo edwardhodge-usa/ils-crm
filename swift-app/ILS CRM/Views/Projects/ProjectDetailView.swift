@@ -1,24 +1,21 @@
 import SwiftUI
 import SwiftData
 
-/// Project detail view — mirrors src/components/projects/Project360Page.tsx
+/// Project detail view — inline right-pane detail.
+/// Mirrors src/components/projects/Project360Page.tsx
 ///
-/// Displays all project fields organized into Form sections:
-/// - Header with avatar, name, status
-/// - Project Info (location, contract value, engagement type, dates)
-/// - Description
-/// - Key Milestones
-/// - Lessons Learned
-/// - Linked Records (opportunities, clients, contacts, tasks)
-/// - Details (modified date, record ID)
-///
-/// Only shows sections/rows where data is non-nil and non-empty.
+/// Sections:
+/// - Breadcrumb + Name + StatusBadge
+/// - StatsRow: Contract Value
+/// - PROJECT INFO: Lead, Start/End Date, Status, Engagement Type, Contract Value, Location
+/// - RELATED: Contacts, Opportunities
+/// - NOTES: Description, Key Milestones
 struct ProjectDetailView: View {
     let project: Project
+    var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
 
-    private var displayName: String {
-        project.projectName ?? "Unknown"
-    }
+    @State private var showDeleteConfirm = false
 
     // MARK: - Formatters
 
@@ -37,210 +34,178 @@ struct ProjectDetailView: View {
         return f
     }()
 
+    // MARK: - Computed Properties
+
+    private var displayName: String {
+        project.projectName ?? "Unknown"
+    }
+
+    private var formattedContractValue: String {
+        guard let value = project.contractValue else { return "—" }
+        return Self.currencyFormatter.string(from: NSNumber(value: value)) ?? "—"
+    }
+
+    private var formattedStartDate: String {
+        guard let date = project.startDate else { return "—" }
+        return Self.dateFormatter.string(from: date)
+    }
+
+    private var formattedEndDate: String {
+        guard let date = project.targetCompletion else { return "—" }
+        return Self.dateFormatter.string(from: date)
+    }
+
+    private var engagementTypeDisplay: String {
+        project.engagementType.isEmpty ? "—" : project.engagementType.joined(separator: ", ")
+    }
+
     // MARK: - Body
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                headerSection
-                    .padding(.bottom, 16)
+            VStack(alignment: .leading, spacing: 0) {
+                // Header area with edit/delete actions
+                headerArea
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 12)
 
-                Form {
-                    projectInfoSection
-                    descriptionSection
-                    milestonesSection
-                    lessonsLearnedSection
-                    linkedRecordsSection
-                    detailsSection
+                // Stats row
+                StatsRow(items: [
+                    (label: "Value", value: formattedContractValue)
+                ])
+                .padding(.horizontal, 16)
+                .padding(.bottom, 4)
+
+                // PROJECT INFO section
+                DetailSection(title: "PROJECT INFO") {
+                    DetailFieldRow(label: "Project Lead", value: "—")
+                    DetailFieldRow(label: "Start Date", value: formattedStartDate)
+                    DetailFieldRow(label: "End Date", value: formattedEndDate)
+                    DetailFieldRow(
+                        label: "Status",
+                        value: project.status ?? "—",
+                        showChevron: true
+                    )
+                    DetailFieldRow(
+                        label: "Engagement Type",
+                        value: engagementTypeDisplay,
+                        showChevron: true
+                    )
+                    DetailFieldRow(label: "Contract Value", value: formattedContractValue)
+                    DetailFieldRow(label: "Location", value: project.location ?? "—")
                 }
-                .formStyle(.grouped)
-            }
-        }
-        .navigationTitle(displayName)
-    }
+                .padding(.horizontal, 16)
 
-    // MARK: - Header
-
-    private var headerSection: some View {
-        VStack(spacing: 8) {
-            AvatarView(name: displayName, size: 64)
-
-            Text(displayName)
-                .font(.title2)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
-
-            if let location = project.location, !location.isEmpty {
-                Text(location)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            if let status = project.status, !status.isEmpty {
-                StatusBadge(text: status, color: statusColor(status))
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 20)
-    }
-
-    // MARK: - Project Info
-
-    @ViewBuilder
-    private var projectInfoSection: some View {
-        let hasLocation = project.location?.isEmpty == false
-        let hasContractValue = project.contractValue != nil
-        let hasEngagement = !project.engagementType.isEmpty
-        let hasStartDate = project.startDate != nil
-        let hasTargetCompletion = project.targetCompletion != nil
-        let hasActualCompletion = project.actualCompletion != nil
-        let hasStatus = project.status?.isEmpty == false
-
-        let hasAny = hasLocation || hasContractValue || hasEngagement ||
-                     hasStartDate || hasTargetCompletion || hasActualCompletion || hasStatus
-
-        if hasAny {
-            Section("Project Info") {
-                if let status = project.status, !status.isEmpty {
-                    FieldRow(label: "Status", value: status)
-                }
-
-                if let location = project.location, !location.isEmpty {
-                    FieldRow(label: "Location", value: location)
-                }
-
-                if let contractValue = project.contractValue {
-                    FieldRow(
-                        label: "Contract Value",
-                        value: Self.currencyFormatter.string(from: NSNumber(value: contractValue)) ?? "$\(Int(contractValue))"
+                // RELATED section
+                DetailSection(title: "RELATED") {
+                    RelatedRecordRow(
+                        label: "Contacts",
+                        items: [],
+                        onAdd: {}
+                    )
+                    RelatedRecordRow(
+                        label: "Opportunities",
+                        items: [],
+                        onAdd: {}
                     )
                 }
+                .padding(.horizontal, 16)
 
-                if !project.engagementType.isEmpty {
-                    FieldRow(label: "Engagement Type", value: project.engagementType.joined(separator: ", "))
+                // NOTES section
+                DetailSection(title: "NOTES") {
+                    notesBlock(label: "Description", text: project.projectDescription)
+                    notesBlock(label: "Key Milestones", text: project.keyMilestones)
                 }
-
-                if let startDate = project.startDate {
-                    FieldRow(label: "Start Date", value: Self.dateFormatter.string(from: startDate))
-                }
-
-                if let targetCompletion = project.targetCompletion {
-                    FieldRow(label: "Target Completion", value: Self.dateFormatter.string(from: targetCompletion))
-                }
-
-                if let actualCompletion = project.actualCompletion {
-                    FieldRow(label: "Actual Completion", value: Self.dateFormatter.string(from: actualCompletion))
-                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 32)
             }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .confirmationDialog(
+            "Delete \(displayName)?",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) { onDelete?() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This action cannot be undone.")
         }
     }
 
-    // MARK: - Description
+    // MARK: - Header Area
 
-    @ViewBuilder
-    private var descriptionSection: some View {
-        if let description = project.projectDescription, !description.isEmpty {
-            Section("Description") {
-                Text(description)
-                    .font(.body)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
+    private var headerArea: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Breadcrumb
+            Text(displayName)
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
-    // MARK: - Key Milestones
+            // Name + badge + actions row
+            HStack(alignment: .center, spacing: 10) {
+                Text(displayName)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .lineLimit(2)
 
-    @ViewBuilder
-    private var milestonesSection: some View {
-        if let milestones = project.keyMilestones, !milestones.isEmpty {
-            Section("Key Milestones") {
-                Text(milestones)
-                    .font(.body)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-
-    // MARK: - Lessons Learned
-
-    @ViewBuilder
-    private var lessonsLearnedSection: some View {
-        if let lessons = project.lessonsLearned, !lessons.isEmpty {
-            Section("Lessons Learned") {
-                Text(lessons)
-                    .font(.body)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-
-    // MARK: - Linked Records
-
-    @ViewBuilder
-    private var linkedRecordsSection: some View {
-        let hasOpportunities = !project.salesOpportunitiesIds.isEmpty
-        let hasClients = !project.clientIds.isEmpty
-        let hasPrimaryContacts = !project.primaryContactIds.isEmpty
-        let hasContacts = !project.contactsIds.isEmpty
-        let hasTasks = !project.tasksIds.isEmpty
-
-        let hasAny = hasOpportunities || hasClients || hasPrimaryContacts || hasContacts || hasTasks
-
-        if hasAny {
-            Section("Linked Records") {
-                if hasOpportunities {
-                    FieldRow(label: "Opportunities", value: "\(project.salesOpportunitiesIds.count)")
+                if let status = project.status, !status.isEmpty {
+                    StatusBadge(text: status, color: statusColor(status))
                 }
 
-                if hasClients {
-                    FieldRow(label: "Clients", value: "\(project.clientIds.count)")
-                }
-
-                if hasPrimaryContacts {
-                    FieldRow(label: "Primary Contacts", value: "\(project.primaryContactIds.count)")
-                }
-
-                if hasContacts {
-                    FieldRow(label: "Contacts", value: "\(project.contactsIds.count)")
-                }
-
-                if hasTasks {
-                    FieldRow(label: "Tasks", value: "\(project.tasksIds.count)")
-                }
-            }
-        }
-    }
-
-    // MARK: - Details
-
-    @ViewBuilder
-    private var detailsSection: some View {
-        Section("Details") {
-            if let modified = project.airtableModifiedAt {
-                FieldRow(label: "Last Modified", value: modified.formatted(date: .abbreviated, time: .shortened))
-            }
-
-            if let localModified = project.localModifiedAt {
-                FieldRow(label: "Local Modified", value: localModified.formatted(date: .abbreviated, time: .shortened))
-            }
-
-            HStack {
-                Text("Record ID")
-                    .foregroundStyle(.secondary)
                 Spacer()
-                Text(project.id)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .textSelection(.enabled)
+
+                // Edit button
+                Button {
+                    onEdit?()
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Edit project")
+
+                // Delete button
+                Button {
+                    showDeleteConfirm = true
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Delete project")
             }
-            .frame(minHeight: 28)
         }
     }
 
-    // MARK: - Helpers
+    // MARK: - Notes Block
+
+    private func notesBlock(label: String, text: String?) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(label)
+                    .foregroundStyle(.primary)
+                Spacer()
+            }
+            .padding(.horizontal, 12)
+            .frame(minHeight: 36)
+
+            Text(text?.isEmpty == false ? text! : "—")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.bottom, 10)
+                .textSelection(.enabled)
+
+            Divider()
+        }
+    }
+
+    // MARK: - Status Color
 
     private func statusColor(_ status: String) -> Color {
         let lower = status.lowercased()
@@ -249,7 +214,7 @@ struct ProjectDetailView: View {
         if lower.contains("on hold") || lower.contains("paused") { return .orange }
         if lower.contains("cancel") { return .red }
         if lower.contains("planning") || lower.contains("planned") { return .purple }
-        if lower.contains("proposal") { return .teal }
+        if lower.contains("discovery") { return .cyan }
         return .secondary
     }
 }

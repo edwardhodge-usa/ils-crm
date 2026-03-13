@@ -173,7 +173,7 @@ struct ContactsView: View {
                 } else if filteredContacts.isEmpty {
                     EmptyStateView(
                         title: "No results",
-                        description: "No contacts match "\(searchText)".",
+                        description: "No contacts match \"\(searchText)\".",
                         systemImage: "magnifyingglass"
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -287,10 +287,10 @@ struct ContactsView: View {
 
                 Spacer()
 
-                if let cat = contact.categorization, !cat.isEmpty {
+                if let cat = contact.categorization, !cat.isEmpty, !isSelected {
                     StatusBadge(
                         text: cat,
-                        color: isSelected ? .white : categorizationColor(cat)
+                        color: categorizationColor(cat)
                     )
                 }
             }

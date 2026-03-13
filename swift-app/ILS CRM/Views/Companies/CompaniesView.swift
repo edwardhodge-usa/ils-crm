@@ -1,35 +1,38 @@
 import SwiftUI
 import SwiftData
 
-/// Companies list — mirrors src/components/companies/CompanyListPage.tsx
+/// Companies list+detail split — mirrors src/components/companies/CompanyListPage.tsx
 ///
 /// Features:
-/// - Searchable list with company name, industry, website filtering
-/// - Grouped by first letter of company name
-/// - Navigation to CompanyDetailView
-/// - Empty state when no companies exist
-///
-/// Electron hooks: useEntityList('companies')
+/// - HStack split: 380pt fixed list + flex detail
+/// - ListHeader, search bar, SortDropdown
+/// - Grouped by first letter (alphabetical, "#" for non-letters)
+/// - Company row: AvatarView + name + subtitle + company type badge + contact count
+/// - Detail pane: CompanyDetailView or EmptyStateView
 struct CompaniesView: View {
     @Query(sort: \Company.companyName) private var companies: [Company]
+    @Query private var allContacts: [Contact]
     @State private var searchText = ""
+    @State private var sortOrder: CompanySortOrder = .nameAZ
     @State private var selectedCompany: Company?
     @State private var showNewCompany = false
 
     // MARK: - Filtered & Grouped Data
 
     private var filteredCompanies: [Company] {
-        if searchText.isEmpty { return companies }
+        let sorted = sortOrder == .nameAZ
+            ? companies
+            : companies.sorted { ($0.companyName ?? "") > ($1.companyName ?? "") }
+        if searchText.isEmpty { return sorted }
         let query = searchText
-        return companies.filter { company in
+        return sorted.filter { company in
             (company.companyName?.localizedCaseInsensitiveContains(query) ?? false) ||
             (company.industry?.localizedCaseInsensitiveContains(query) ?? false) ||
             (company.website?.localizedCaseInsensitiveContains(query) ?? false)
         }
     }
 
-    /// Companies grouped by the first letter of companyName, with keys sorted alphabetically.
-    /// Companies with no name or names starting with non-letter characters go under "#".
+    /// Companies grouped by first letter. "#" bucket for non-letter names.
     private var groupedCompanies: [(letter: String, companies: [Company])] {
         let grouped = Dictionary(grouping: filteredCompanies) { company -> String in
             guard let name = company.companyName,
@@ -37,41 +40,104 @@ struct CompaniesView: View {
             let upper = String(first).uppercased()
             return upper.rangeOfCharacter(from: .letters) != nil ? upper : "#"
         }
+        // Sort alphabetically; keep "#" at the end
         return grouped
-            .sorted { $0.key < $1.key }
+            .sorted {
+                if $0.key == "#" { return false }
+                if $1.key == "#" { return true }
+                return $0.key < $1.key
+            }
             .map { (letter: $0.key, companies: $0.value) }
     }
 
     // MARK: - Body
 
     var body: some View {
-        Group {
-            if companies.isEmpty {
-                EmptyStateView(
-                    title: "No companies yet",
-                    description: "Companies will appear here once synced from Airtable.",
-                    systemImage: "building.2"
-                )
-            } else if filteredCompanies.isEmpty {
-                EmptyStateView(
-                    title: "No results",
-                    description: "No companies match \"\(searchText)\".",
-                    systemImage: "magnifyingglass"
+        HStack(spacing: 0) {
+            // Left list pane
+            leftPane
+                .frame(width: 380)
+
+            Divider()
+
+            // Right detail pane
+            if let company = selectedCompany {
+                CompanyDetailView(
+                    company: company,
+                    allContacts: allContacts,
+                    onEdit: {},
+                    onDelete: { deleteCompany(company) }
                 )
             } else {
-                companyList
-            }
-        }
-        .searchable(text: $searchText, prompt: "Search companies...")
-        .navigationTitle("Companies")
-        .toolbar {
-            Button { showNewCompany = true } label: {
-                Image(systemName: "plus")
+                EmptyStateView(
+                    title: "Select a company",
+                    description: "Choose a company to view details",
+                    systemImage: "building.2"
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .sheet(isPresented: $showNewCompany) {
             CompanyFormView(company: nil)
                 .frame(minWidth: 480, minHeight: 560)
+        }
+    }
+
+    // MARK: - Left Pane
+
+    private var leftPane: some View {
+        VStack(spacing: 0) {
+            ListHeader(
+                title: "Companies",
+                count: companies.count,
+                buttonLabel: "+ New Company",
+                onButton: { showNewCompany = true }
+            )
+
+            Divider()
+
+            // Search + Sort bar
+            HStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    TextField("Search companies...", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 13))
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(Color(.controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                SortDropdown(options: CompanySortOrder.allCases, selection: $sortOrder)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+
+            Divider()
+
+            // List content
+            if companies.isEmpty {
+                Spacer()
+                EmptyStateView(
+                    title: "No companies yet",
+                    description: "Companies will appear here once synced from Airtable.",
+                    systemImage: "building.2"
+                )
+                Spacer()
+            } else if filteredCompanies.isEmpty {
+                Spacer()
+                EmptyStateView(
+                    title: "No results",
+                    description: "No companies match \"\(searchText)\".",
+                    systemImage: "magnifyingglass"
+                )
+                Spacer()
+            } else {
+                companyList
+            }
         }
     }
 
@@ -82,9 +148,9 @@ struct CompaniesView: View {
             ForEach(groupedCompanies, id: \.letter) { group in
                 Section {
                     ForEach(group.companies, id: \.id) { company in
-                        NavigationLink(value: company.id) {
-                            companyRow(company)
-                        }
+                        companyRow(company)
+                            .tag(company)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
                     }
                 } header: {
                     SectionHeader(title: group.letter, count: group.companies.count)
@@ -97,12 +163,12 @@ struct CompaniesView: View {
     // MARK: - Company Row
 
     private func companyRow(_ company: Company) -> some View {
-        HStack(spacing: 12) {
-            AvatarView(name: company.companyName ?? "?", size: 32)
+        HStack(spacing: 10) {
+            AvatarView(name: company.companyName ?? "?", avatarSize: .medium)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(company.companyName ?? "Unknown")
-                    .font(.body)
+                    .font(.system(size: 13, weight: .medium))
                     .lineLimit(1)
 
                 if let subtitle = companySubtitle(for: company) {
@@ -115,11 +181,17 @@ struct CompaniesView: View {
 
             Spacer()
 
-            if let companyType = company.companyType, !companyType.isEmpty {
-                BadgeView(
-                    text: companyType,
-                    color: companyTypeColor(companyType)
-                )
+            VStack(alignment: .trailing, spacing: 3) {
+                if let companyType = company.companyType, !companyType.isEmpty {
+                    StatusBadge(text: companyType, color: companyTypeColor(companyType))
+                }
+
+                let count = contactCount(for: company)
+                if count > 0 {
+                    Text(count == 1 ? "1 contact" : "\(count) contacts")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(.vertical, 2)
@@ -127,27 +199,45 @@ struct CompaniesView: View {
 
     // MARK: - Helpers
 
-    /// Returns the best subtitle for a company row: industry, then website, then nil.
+    private func contactCount(for company: Company) -> Int {
+        allContacts.filter { $0.companiesIds.contains(company.id) }.count
+    }
+
     private func companySubtitle(for company: Company) -> String? {
-        if let industry = company.industry, !industry.isEmpty {
-            return industry
-        }
-        if let website = company.website, !website.isEmpty {
-            return website
-        }
+        if let industry = company.industry, !industry.isEmpty { return industry }
+        if let website = company.website, !website.isEmpty { return website }
         return nil
     }
 
-    /// Deterministic color for company type badges.
     private func companyTypeColor(_ type: String) -> Color {
         let lower = type.lowercased()
-        if lower.contains("client") { return .blue }
+        if lower.contains("client")  { return .blue }
         if lower.contains("partner") { return .purple }
-        if lower.contains("vendor") { return .green }
-        if lower.contains("prospect") { return .orange }
-        if lower.contains("lead") { return .teal }
-        if lower.contains("agency") { return .indigo }
+        if lower.contains("vendor")  { return .green }
+        if lower.contains("prospect"){ return .orange }
+        if lower.contains("lead")    { return .teal }
+        if lower.contains("agency")  { return .indigo }
         return .secondary
+    }
+
+    private func deleteCompany(_ company: Company) {
+        if selectedCompany?.id == company.id {
+            selectedCompany = nil
+        }
+    }
+}
+
+// MARK: - Sort Order
+
+enum CompanySortOrder: CaseIterable, Hashable, CustomStringConvertible {
+    case nameAZ
+    case nameZA
+
+    var description: String {
+        switch self {
+        case .nameAZ: return "Name A–Z"
+        case .nameZA: return "Name Z–A"
+        }
     }
 }
 
@@ -227,17 +317,17 @@ struct CompanyFormView: View {
 
     private func loadExisting() {
         guard let company else { return }
-        companyName = company.companyName ?? ""
-        companyType = company.companyType ?? ""
-        industry = company.industry ?? ""
-        companySize = company.companySize ?? ""
-        website = company.website ?? ""
-        address = company.address ?? ""
-        city = company.city ?? ""
-        stateRegion = company.stateRegion ?? ""
-        country = company.country ?? ""
-        postalCode = company.postalCode ?? ""
-        notes = company.notes ?? ""
+        companyName  = company.companyName ?? ""
+        companyType  = company.companyType ?? ""
+        industry     = company.industry ?? ""
+        companySize  = company.companySize ?? ""
+        website      = company.website ?? ""
+        address      = company.address ?? ""
+        city         = company.city ?? ""
+        stateRegion  = company.stateRegion ?? ""
+        country      = company.country ?? ""
+        postalCode   = company.postalCode ?? ""
+        notes        = company.notes ?? ""
     }
 
     // MARK: - Save
@@ -248,19 +338,19 @@ struct CompanyFormView: View {
 
         if let company {
             // Edit mode — update existing
-            company.companyName = trimmedName
-            company.companyType = companyType.nilIfEmpty
-            company.industry = industry.nilIfEmpty
-            company.companySize = companySize.nilIfEmpty
-            company.website = website.nilIfEmpty
-            company.address = address.nilIfEmpty
-            company.city = city.nilIfEmpty
-            company.stateRegion = stateRegion.nilIfEmpty
-            company.country = country.nilIfEmpty
-            company.postalCode = postalCode.nilIfEmpty
-            company.notes = notes.nilIfEmpty
+            company.companyName  = trimmedName
+            company.companyType  = companyType.nilIfEmpty
+            company.industry     = industry.nilIfEmpty
+            company.companySize  = companySize.nilIfEmpty
+            company.website      = website.nilIfEmpty
+            company.address      = address.nilIfEmpty
+            company.city         = city.nilIfEmpty
+            company.stateRegion  = stateRegion.nilIfEmpty
+            company.country      = country.nilIfEmpty
+            company.postalCode   = postalCode.nilIfEmpty
+            company.notes        = notes.nilIfEmpty
             company.localModifiedAt = Date()
-            company.isPendingPush = true
+            company.isPendingPush   = true
         } else {
             // Create mode — insert new
             let newCompany = Company(
@@ -268,16 +358,16 @@ struct CompanyFormView: View {
                 companyName: trimmedName,
                 isPendingPush: true
             )
-            newCompany.companyType = companyType.nilIfEmpty
-            newCompany.industry = industry.nilIfEmpty
-            newCompany.companySize = companySize.nilIfEmpty
-            newCompany.website = website.nilIfEmpty
-            newCompany.address = address.nilIfEmpty
-            newCompany.city = city.nilIfEmpty
-            newCompany.stateRegion = stateRegion.nilIfEmpty
-            newCompany.country = country.nilIfEmpty
-            newCompany.postalCode = postalCode.nilIfEmpty
-            newCompany.notes = notes.nilIfEmpty
+            newCompany.companyType  = companyType.nilIfEmpty
+            newCompany.industry     = industry.nilIfEmpty
+            newCompany.companySize  = companySize.nilIfEmpty
+            newCompany.website      = website.nilIfEmpty
+            newCompany.address      = address.nilIfEmpty
+            newCompany.city         = city.nilIfEmpty
+            newCompany.stateRegion  = stateRegion.nilIfEmpty
+            newCompany.country      = country.nilIfEmpty
+            newCompany.postalCode   = postalCode.nilIfEmpty
+            newCompany.notes        = notes.nilIfEmpty
             newCompany.localModifiedAt = Date()
             modelContext.insert(newCompany)
         }

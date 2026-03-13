@@ -4,35 +4,125 @@ import SwiftData
 /// Projects list — mirrors src/components/projects/ProjectListPage.tsx
 ///
 /// Features:
-/// - Searchable list with project name, notes filtering
-/// - Status badge per row, date subtitle
-/// - Navigation to ProjectDetailView via sheet
-/// - Empty state when no projects exist
+/// - List + detail split (HStack with ~380pt left pane)
+/// - Searchable list with project name and notes filtering
+/// - Sort dropdown: Name A-Z / Name Z-A
+/// - Status badge per row
+/// - Inline detail pane (ProjectDetailView) or EmptyStateView when none selected
 ///
 /// Electron hooks: useEntityList('projects')
+
+// MARK: - Sort Order
+
+enum ProjectSortOrder: String, CaseIterable, CustomStringConvertible {
+    case nameAZ = "Name A-Z"
+    case nameZA = "Name Z-A"
+
+    var description: String { rawValue }
+}
+
+// MARK: - ProjectsView
+
 struct ProjectsView: View {
-    @Query(sort: \Project.projectName) private var projects: [Project]
+    @Query private var projects: [Project]
     @State private var searchText = ""
+    @State private var sortOrder: ProjectSortOrder = .nameAZ
     @State private var selectedProject: Project?
     @State private var showNewProject = false
+    @State private var showEditProject = false
+    @State private var showDeleteConfirm = false
 
-    // MARK: - Filtered Data
+    @Environment(\.modelContext) private var modelContext
+
+    // MARK: - Filtered & Sorted Data
 
     private var filteredProjects: [Project] {
-        if searchText.isEmpty { return projects }
-        let query = searchText
-        return projects.filter { project in
-            (project.projectName?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (project.projectDescription?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (project.keyMilestones?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (project.lessonsLearned?.localizedCaseInsensitiveContains(query) ?? false)
+        let filtered: [Project]
+        if searchText.isEmpty {
+            filtered = projects
+        } else {
+            let query = searchText
+            filtered = projects.filter { project in
+                (project.projectName?.localizedCaseInsensitiveContains(query) ?? false) ||
+                (project.projectDescription?.localizedCaseInsensitiveContains(query) ?? false) ||
+                (project.keyMilestones?.localizedCaseInsensitiveContains(query) ?? false) ||
+                (project.lessonsLearned?.localizedCaseInsensitiveContains(query) ?? false)
+            }
+        }
+
+        switch sortOrder {
+        case .nameAZ:
+            return filtered.sorted { ($0.projectName ?? "").localizedCaseInsensitiveCompare($1.projectName ?? "") == .orderedAscending }
+        case .nameZA:
+            return filtered.sorted { ($0.projectName ?? "").localizedCaseInsensitiveCompare($1.projectName ?? "") == .orderedDescending }
         }
     }
 
     // MARK: - Body
 
     var body: some View {
-        Group {
+        HStack(spacing: 0) {
+            // Left list pane — ~380pt
+            leftPane
+                .frame(width: 380)
+
+            Divider()
+
+            // Right detail pane
+            rightPane
+        }
+        .sheet(isPresented: $showNewProject) {
+            NavigationStack {
+                ProjectFormView(project: nil)
+            }
+            .frame(minWidth: 480, minHeight: 560)
+        }
+        .sheet(isPresented: $showEditProject) {
+            if let project = selectedProject {
+                NavigationStack {
+                    ProjectFormView(project: project)
+                }
+                .frame(minWidth: 480, minHeight: 560)
+            }
+        }
+    }
+
+    // MARK: - Left Pane
+
+    private var leftPane: some View {
+        VStack(spacing: 0) {
+            ListHeader(
+                title: "Projects",
+                count: projects.count,
+                buttonLabel: "+ New Project",
+                onButton: { showNewProject = true }
+            )
+
+            Divider()
+
+            // Search + Sort bar
+            HStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    TextField("Search projects...", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .font(.subheadline)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(Color(.textBackgroundColor).opacity(0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                SortDropdown(options: ProjectSortOrder.allCases, selection: $sortOrder)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+
+            Divider()
+
+            // Project list
             if projects.isEmpty {
                 EmptyStateView(
                     title: "No projects yet",
@@ -49,41 +139,17 @@ struct ProjectsView: View {
                 projectList
             }
         }
-        .searchable(text: $searchText, prompt: "Search projects...")
-        .navigationTitle("Projects")
-        .toolbar {
-            Button { showNewProject = true } label: {
-                Image(systemName: "plus")
-            }
-        }
-        .sheet(isPresented: $showNewProject) {
-            NavigationStack {
-                ProjectFormView(project: nil)
-            }
-            .frame(minWidth: 480, minHeight: 560)
-        }
-        .sheet(item: $selectedProject) { project in
-            NavigationStack {
-                ProjectDetailView(project: project)
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Done") { selectedProject = nil }
-                        }
-                    }
-            }
-            .frame(minWidth: 500, minHeight: 600)
-        }
     }
 
     // MARK: - Project List
 
     private var projectList: some View {
-        List(filteredProjects, id: \.id) { project in
+        List(filteredProjects, id: \.id, selection: Binding(
+            get: { selectedProject?.id },
+            set: { id in selectedProject = filteredProjects.first { $0.id == id } }
+        )) { project in
             projectRow(project)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    selectedProject = project
-                }
+                .tag(project.id)
         }
         .listStyle(.sidebar)
     }
@@ -92,63 +158,55 @@ struct ProjectsView: View {
 
     private func projectRow(_ project: Project) -> some View {
         HStack(spacing: 12) {
-            AvatarView(name: project.projectName ?? "?", size: 32)
-
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(project.projectName ?? "Unknown")
                     .font(.body)
                     .fontWeight(.medium)
                     .lineLimit(1)
-
-                if let subtitle = projectSubtitle(for: project) {
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
             }
 
             Spacer()
 
             if let status = project.status, !status.isEmpty {
-                BadgeView(
-                    text: status,
-                    color: statusColor(status)
-                )
+                StatusBadge(text: status, color: projectStatusColor(status))
             }
         }
         .padding(.vertical, 2)
     }
 
-    // MARK: - Helpers
+    // MARK: - Right Pane
 
-    private static let dateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        f.timeStyle = .none
-        return f
-    }()
-
-    /// Returns the best subtitle: location, then start date, then nil.
-    private func projectSubtitle(for project: Project) -> String? {
-        if let location = project.location, !location.isEmpty {
-            return location
+    @ViewBuilder
+    private var rightPane: some View {
+        if let project = selectedProject {
+            ProjectDetailView(
+                project: project,
+                onEdit: { showEditProject = true },
+                onDelete: {
+                    modelContext.delete(project)
+                    selectedProject = nil
+                }
+            )
+        } else {
+            EmptyStateView(
+                title: "No project selected",
+                description: "Select a project from the list to view details.",
+                systemImage: "folder"
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        if let startDate = project.startDate {
-            return "Started \(Self.dateFormatter.string(from: startDate))"
-        }
-        return nil
     }
 
-    /// Deterministic color for project status badges.
-    private func statusColor(_ status: String) -> Color {
+    // MARK: - Helpers
+
+    private func projectStatusColor(_ status: String) -> Color {
         let lower = status.lowercased()
         if lower.contains("active") || lower.contains("in progress") { return .blue }
         if lower.contains("complete") || lower.contains("done") { return .green }
         if lower.contains("on hold") || lower.contains("paused") { return .orange }
         if lower.contains("cancel") { return .red }
         if lower.contains("planning") || lower.contains("planned") { return .purple }
-        if lower.contains("proposal") { return .teal }
+        if lower.contains("discovery") { return .cyan }
         return .secondary
     }
 }

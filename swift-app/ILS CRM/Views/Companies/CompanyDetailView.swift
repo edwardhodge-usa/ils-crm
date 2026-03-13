@@ -1,150 +1,61 @@
 import SwiftUI
 import SwiftData
 
-/// Company detail view — mirrors src/components/companies/Company360Page.tsx
+/// Company detail pane — mirrors src/components/companies/Company360Page.tsx
 ///
-/// Displays all company fields organized into Form sections:
-/// - Header with avatar, name, industry
-/// - Company Info (website, phone, industry, type, size, revenue, etc.)
-/// - Address (combined from street, city, state, zip, country)
-/// - Description & Notes
-/// - Details (created, modified, record ID)
-///
-/// Only shows sections/rows where data is non-nil and non-empty.
+/// Displays:
+/// - Breadcrumb (small company name)
+/// - DetailHeader: avatar + name + location subtitle + Website button
+/// - StatsRow: Contacts | Open Opps | Total Value
+/// - COMPANY INFO section: Website (link), Address, Founded
+/// - CONTACTS section: resolved contacts with avatar + name + title + chevron
+/// - OPEN OPPORTUNITIES section: resolved opportunities or empty state
+/// - Edit / Delete actions
 struct CompanyDetailView: View {
     let company: Company
+    let allContacts: [Contact]
+    var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
 
-    private var displayName: String {
-        company.companyName ?? "Unknown"
+    @State private var showEdit = false
+    @State private var showDeleteConfirm = false
+    @Environment(\.modelContext) private var modelContext
+
+    @Query private var allOpportunities: [Opportunity]
+
+    // MARK: - Derived data
+
+    private var linkedContacts: [Contact] {
+        allContacts.filter { company.contactsIds.contains($0.id) }
     }
 
-    // MARK: - Body
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                headerSection
-                    .padding(.bottom, 16)
-
-                Form {
-                    companyInfoSection
-                    addressSection
-                    descriptionSection
-                    notesSection
-                    detailsSection
-                }
-                .formStyle(.grouped)
-            }
-        }
-        .navigationTitle(displayName)
-    }
-
-    // MARK: - Header
-
-    private var headerSection: some View {
-        VStack(spacing: 8) {
-            AvatarView(name: displayName, size: 64)
-
-            Text(displayName)
-                .font(.title2)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
-
-            if let industry = company.industry, !industry.isEmpty {
-                Text(industry)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            if let companyType = company.companyType, !companyType.isEmpty {
-                BadgeView(text: companyType, color: companyTypeColor(companyType))
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 20)
-    }
-
-    // MARK: - Company Info
-
-    @ViewBuilder
-    private var companyInfoSection: some View {
-        let hasWebsite = company.website?.isEmpty == false
-        let hasIndustry = company.industry?.isEmpty == false
-        let hasType = company.companyType?.isEmpty == false
-        let hasSize = company.companySize?.isEmpty == false
-        let hasRevenue = company.annualRevenue?.isEmpty == false
-        let hasFoundingYear = company.foundingYear != nil
-        let hasNaics = company.naicsCode?.isEmpty == false
-        let hasLeadSource = company.leadSource?.isEmpty == false
-        let hasReferredBy = company.referredBy?.isEmpty == false
-        let hasEntityType = company.type?.isEmpty == false
-
-        let hasAny = hasWebsite || hasIndustry || hasType || hasSize ||
-                     hasRevenue || hasFoundingYear || hasNaics || hasLeadSource ||
-                     hasReferredBy || hasEntityType
-
-        if hasAny {
-            Section("Company Info") {
-                if let website = company.website, !website.isEmpty {
-                    Button {
-                        let urlString = website.contains("://") ? website : "https://\(website)"
-                        openURL(urlString)
-                    } label: {
-                        HStack {
-                            Text("Website")
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Text(website)
-                                .foregroundStyle(.blue)
-                        }
-                        .frame(minHeight: 28)
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                if let industry = company.industry, !industry.isEmpty {
-                    FieldRow(label: "Industry", value: industry)
-                }
-
-                if let companyType = company.companyType, !companyType.isEmpty {
-                    FieldRow(label: "Company Type", value: companyType)
-                }
-
-                if let entityType = company.type, !entityType.isEmpty {
-                    FieldRow(label: "Type", value: entityType)
-                }
-
-                if let size = company.companySize, !size.isEmpty {
-                    FieldRow(label: "Company Size", value: size)
-                }
-
-                if let revenue = company.annualRevenue, !revenue.isEmpty {
-                    FieldRow(label: "Annual Revenue", value: revenue)
-                }
-
-                if let year = company.foundingYear {
-                    FieldRow(label: "Founded", value: "\(year)")
-                }
-
-                if let naics = company.naicsCode, !naics.isEmpty {
-                    FieldRow(label: "NAICS Code", value: naics)
-                }
-
-                if let leadSource = company.leadSource, !leadSource.isEmpty {
-                    FieldRow(label: "Lead Source", value: leadSource)
-                }
-
-                if let referredBy = company.referredBy, !referredBy.isEmpty {
-                    FieldRow(label: "Referred By", value: referredBy)
-                }
-            }
+    private var openOpportunities: [Opportunity] {
+        allOpportunities.filter {
+            $0.companyIds.contains(company.id) && isOpenStage($0.salesStage)
         }
     }
 
-    // MARK: - Address
+    private var locationSubtitle: String {
+        let parts: [String] = [company.city, company.stateRegion, company.country]
+            .compactMap { $0?.isEmpty == false ? $0 : nil }
+        return parts.joined(separator: ", ")
+    }
 
-    @ViewBuilder
-    private var addressSection: some View {
+    private var websiteURL: String? {
+        guard let w = company.website, !w.isEmpty else { return nil }
+        return w.contains("://") ? w : "https://\(w)"
+    }
+
+    private var totalValue: String {
+        let sum = openOpportunities.compactMap { $0.dealValue }.reduce(0, +)
+        if sum == 0 { return "—" }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: sum)) ?? "—"
+    }
+
+    private var fullAddress: String {
         let parts: [String] = [
             company.address,
             company.city,
@@ -152,99 +63,246 @@ struct CompanyDetailView: View {
             company.postalCode,
             company.country
         ].compactMap { $0?.isEmpty == false ? $0 : nil }
-
-        if !parts.isEmpty {
-            Section("Address") {
-                if let street = company.address, !street.isEmpty {
-                    FieldRow(label: "Street", value: street)
-                }
-                if let city = company.city, !city.isEmpty {
-                    FieldRow(label: "City", value: city)
-                }
-                if let state = company.stateRegion, !state.isEmpty {
-                    FieldRow(label: "State/Region", value: state)
-                }
-                if let zip = company.postalCode, !zip.isEmpty {
-                    FieldRow(label: "Postal Code", value: zip)
-                }
-                if let country = company.country, !country.isEmpty {
-                    FieldRow(label: "Country", value: country)
-                }
-            }
-        }
+        return parts.joined(separator: ", ")
     }
 
-    // MARK: - Description
+    // MARK: - Body
 
-    @ViewBuilder
-    private var descriptionSection: some View {
-        if let description = company.companyDescription, !description.isEmpty {
-            Section("Description") {
-                Text(description)
-                    .font(.body)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
 
-    // MARK: - Notes
-
-    @ViewBuilder
-    private var notesSection: some View {
-        if let notes = company.notes, !notes.isEmpty {
-            Section("Notes") {
-                Text(notes)
-                    .font(.body)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-
-    // MARK: - Details
-
-    @ViewBuilder
-    private var detailsSection: some View {
-        Section("Details") {
-            if let created = company.createdDate {
-                FieldRow(label: "Created", value: created.formatted(date: .abbreviated, time: .shortened))
-            }
-
-            if let modified = company.airtableModifiedAt {
-                FieldRow(label: "Last Modified", value: modified.formatted(date: .abbreviated, time: .shortened))
-            }
-
-            HStack {
-                Text("Record ID")
+                // Breadcrumb
+                Text(company.companyName ?? "")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-                Spacer()
-                Text(company.id)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .textSelection(.enabled)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                    .padding(.bottom, 4)
+
+                // Edit / Delete toolbar row
+                HStack {
+                    Spacer()
+                    Button {
+                        showEdit = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                            .font(.system(size: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+
+                    Button {
+                        showDeleteConfirm = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                            .font(.system(size: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.red.opacity(0.8))
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
+
+                // Header
+                DetailHeader(
+                    name: company.companyName ?? "Unknown",
+                    subtitle: locationSubtitle.isEmpty ? nil : locationSubtitle,
+                    actionLabel: websiteURL != nil ? "Website" : nil,
+                    actionURL: websiteURL
+                )
+                .padding(.horizontal, 20)
+                .padding(.bottom, 16)
+
+                // Stats Row
+                StatsRow(items: [
+                    (label: "Contacts",    value: "\(linkedContacts.count)"),
+                    (label: "Open Opps",   value: "\(openOpportunities.count)"),
+                    (label: "Total Value", value: totalValue)
+                ])
+                .padding(.horizontal, 20)
+                .padding(.bottom, 4)
+
+                // Company Info
+                companyInfoSection
+                    .padding(.horizontal, 20)
+
+                // Contacts
+                contactsSection
+                    .padding(.horizontal, 20)
+
+                // Open Opportunities
+                opportunitiesSection
+                    .padding(.horizontal, 20)
+
+                Spacer(minLength: 32)
             }
-            .frame(minHeight: 28)
         }
+        .sheet(isPresented: $showEdit) {
+            CompanyFormView(company: company)
+                .frame(minWidth: 480, minHeight: 560)
+        }
+        .confirmationDialog(
+            "Delete \"\(company.companyName ?? "company")\"?",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                modelContext.delete(company)
+                onDelete?()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This action cannot be undone.")
+        }
+    }
+
+    // MARK: - Company Info Section
+
+    @ViewBuilder
+    private var companyInfoSection: some View {
+        let hasWebsite = websiteURL != nil
+        let hasAddress = !fullAddress.isEmpty
+        let hasYear    = company.foundingYear != nil
+
+        if hasWebsite || hasAddress || hasYear {
+            DetailSection(title: "COMPANY INFO") {
+                if let url = websiteURL, let displayWeb = company.website {
+                    DetailFieldRow(
+                        label: "Website",
+                        value: displayWeb,
+                        isLink: true,
+                        linkURL: url
+                    )
+                }
+
+                if !fullAddress.isEmpty {
+                    DetailFieldRow(label: "Address", value: fullAddress)
+                }
+
+                if let year = company.foundingYear {
+                    DetailFieldRow(label: "Founded", value: "\(year)")
+                }
+            }
+        }
+    }
+
+    // MARK: - Contacts Section
+
+    private var contactsSection: some View {
+        DetailSection(title: "CONTACTS") {
+            if linkedContacts.isEmpty {
+                Text("No contacts")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(linkedContacts, id: \.id) { contact in
+                        contactRow(contact)
+                        if contact.id != linkedContacts.last?.id {
+                            Divider()
+                                .padding(.leading, 52)
+                        }
+                    }
+                }
+                .background(Color(.controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+        }
+    }
+
+    private func contactRow(_ contact: Contact) -> some View {
+        HStack(spacing: 10) {
+            AvatarView(name: contact.contactName ?? "?", avatarSize: .small)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(contact.contactName ?? "Unknown")
+                    .font(.system(size: 13, weight: .medium))
+
+                if let title = contact.jobTitle, !title.isEmpty {
+                    Text(title)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+
+    // MARK: - Opportunities Section
+
+    private var opportunitiesSection: some View {
+        DetailSection(title: "OPEN OPPORTUNITIES") {
+            if openOpportunities.isEmpty {
+                Text("No open opportunities")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(openOpportunities, id: \.id) { opp in
+                        opportunityRow(opp)
+                        if opp.id != openOpportunities.last?.id {
+                            Divider()
+                                .padding(.leading, 12)
+                        }
+                    }
+                }
+                .background(Color(.controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+        }
+    }
+
+    private func opportunityRow(_ opp: Opportunity) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(opp.opportunityName ?? "Untitled")
+                    .font(.system(size: 13, weight: .medium))
+
+                if let stage = opp.salesStage, !stage.isEmpty {
+                    Text(stage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            if let value = opp.dealValue, value > 0 {
+                Text(formattedCurrency(value))
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+
+    private func formattedCurrency(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))"
     }
 
     // MARK: - Helpers
 
-    private func openURL(_ urlString: String) {
-        guard let url = URL(string: urlString),
-              let scheme = url.scheme,
-              ["https", "http", "mailto", "tel"].contains(scheme) else { return }
-        NSWorkspace.shared.open(url)
-    }
-
-    private func companyTypeColor(_ type: String) -> Color {
-        let lower = type.lowercased()
-        if lower.contains("client") { return .blue }
-        if lower.contains("partner") { return .purple }
-        if lower.contains("vendor") { return .green }
-        if lower.contains("prospect") { return .orange }
-        if lower.contains("lead") { return .teal }
-        if lower.contains("agency") { return .indigo }
-        return .secondary
+    /// Determines whether a sales stage should be counted as "open".
+    /// Closed/won/lost stages are excluded.
+    private func isOpenStage(_ stage: String?) -> Bool {
+        guard let stage else { return true }
+        let lower = stage.lowercased()
+        return !lower.contains("closed") && !lower.contains("won") && !lower.contains("lost")
     }
 }

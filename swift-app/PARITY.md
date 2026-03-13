@@ -1,6 +1,6 @@
 # ILS CRM — Electron / Swift Parity Tracker
 
-Last updated: 2026-03-12 (Session 5 — final parity)
+Last updated: 2026-03-12 (Session 6 — visual parity with Electron)
 
 ## Scorecard
 
@@ -18,10 +18,10 @@ Last updated: 2026-03-12 (Session 5 — final parity)
 | Imported Contacts | 4 | 3 | 75% |
 | Portal (Access + Logs) | 5 | 5 | 100% |
 | Settings | 4 | 4 | 100% |
-| Shared Components | 8 | 8 | 100% |
+| Shared Components | 9 | 9 | 100% |
 | Data Layer | 8 | 8 | 100% |
 | Sync Engine | 5 | 5 | 100% |
-| **TOTAL** | **71** | **70** | **99%** |
+| **TOTAL** | **72** | **71** | **99%** |
 
 ---
 
@@ -29,74 +29,78 @@ Last updated: 2026-03-12 (Session 5 — final parity)
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Sidebar with 9 nav items | DONE | DONE | NavItem enum + NavigationSplitView |
+| Sidebar with grouped sections (CRM/WORK/ACTIVITY) | DONE | DONE | **Session 6:** 3 Section groups, Settings footer, version number |
 | Selection binding | DONE | DONE | @State selection: NavItem? |
-| Settings gear button | DONE | DONE | Toolbar button + .sheet |
+| Settings pinned at bottom + version | DONE | DONE | **Session 6:** .safeAreaInset(edge: .bottom) + "v3.4.1" |
 | Detail view routing | DONE | DONE | @ViewBuilder switch on selection |
+| Imported Contacts nav item | DONE | DONE | **Session 6:** Added to ACTIVITY group |
 
 ## Dashboard
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Greeting with time-of-day | DONE | DONE | Calendar.current hour check |
-| 6 stat cards with live counts | DONE | DONE | @Query counts for all 6 entities |
-| Tasks due today section | DONE | DONE | Filtered CRMTask list with priority badges |
+| Greeting with time-of-day + date | DONE | DONE | **Session 6:** Full greeting + formatted date |
+| 4 stat cards (Tasks/Follow-ups/Contracts/Proposals) | DONE | DONE | **Session 6:** Matched Electron layout — colored icons, live counts |
+| Tasks due today section + Follow-up Alerts | DONE | DONE | **Session 6:** Two-column layout with avatar rows, days badges |
+| Pipeline summary bar chart | DONE | DONE | **Session 6:** GeometryReader proportional bars, stage colors, dollar values |
 
 ## Contacts
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Searchable list (name, email, company) | DONE | DONE | .searchable + filter |
-| Grouped by first letter | DONE | DONE | Dictionary grouping + sorted sections |
-| Avatar + name + subtitle rows | DONE | DONE | AvatarView + contactSubtitle helper |
-| Categorization badges | DONE | DONE | BadgeView with color mapping |
-| Detail view (all key fields) | DONE | DONE | ContactDetailView — header, contact info, classification, business, notes, details sections. Tappable links (email, phone, LinkedIn, website). Tags flow layout. Address formatting. |
+| List+detail split layout | DONE | DONE | **Session 6:** HStack split — 380pt list + flex detail pane |
+| Company grouping + sort dropdown | DONE | DONE | **Session 6:** Group by Company (default), Name A-Z, Name Z-A |
+| Avatar + name + subtitle + badges | DONE | DONE | AvatarView + categorization StatusBadge |
+| Inline detail with sections | DONE | DONE | **Session 6:** DetailHeader, StatsRow, DetailSection, DetailFieldRow for all fields |
+| Stats row (Opps/Meetings/Days Since) | DONE | DONE | **Session 6:** Live counts from @Query |
 
 ## Companies
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Searchable list (name, industry, website) | DONE | DONE | .searchable + filter |
-| Grouped by first letter | DONE | DONE | Dictionary grouping + sorted sections |
-| Avatar + name + subtitle rows | DONE | DONE | AvatarView + companySubtitle helper |
-| Company type badges | DONE | DONE | BadgeView with color mapping |
-| Detail view (all key fields) | DONE | DONE | CompanyDetailView — header, company info, address, description, notes, details sections. Tappable website link. |
+| List+detail split layout | DONE | DONE | **Session 6:** HStack split — 380pt list + flex detail pane |
+| Alpha grouping + sort dropdown | DONE | DONE | **Session 6:** Group by letter, SortDropdown |
+| Avatar + industry badge + contact count | DONE | DONE | **Session 6:** StatusBadge + resolved contact count |
+| Inline detail with stats + linked records | DONE | DONE | **Session 6:** StatsRow (Contacts/Opps/Value), CONTACTS section, OPPORTUNITIES section |
+| Detail with breadcrumb + action button | DONE | DONE | **Session 6:** DetailHeader + Website action |
 
 ## Pipeline
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Kanban board with stage columns | DONE | DONE | 7 stage columns with color-coded headers, badge counts |
-| Opportunity detail view | DONE | DONE | OpportunityDetailView — header, deal info, stage, engagement, notes, milestones, linked records, details sections. FlowLayout for engagement badges. |
-| Deal cards (name, value, close date) | DONE | DONE | KanbanCard with name, formatted currency, date |
-| Drag-and-drop stage changes | DONE | DONE | SwiftUI .draggable/.dropDestination with visual column highlighting |
+| Summary header (Active$/Won$/Deals) | DONE | DONE | **Session 6:** Pipeline totals + New Deal button |
+| Kanban with enriched cards | DONE | DONE | **Session 6:** Company name, deal name, value, stage badge, probability on each card |
+| Column headers with dollar totals | DONE | DONE | **Session 6:** Colored dot + stage + count + $ total |
+| Drag-and-drop stage changes | DONE | DONE | .draggable/.dropDestination preserved |
 
 ## Tasks
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Task list with filters | DONE | DONE | Segmented picker (All/Active/Completed/Overdue), search by name+notes, priority dots, type+status badges |
-| Due date highlighting (overdue=red) | DONE | DONE | Overdue row background tint + red date text |
-| Task detail view | DONE | DONE | TaskDetailView — overdue banner, priority colors, status/type badges, notes, linked records (opportunities/contacts/projects/proposals), details section |
-| Create/edit form | DONE | DONE | TaskFormView — name, status/priority/type pickers, due date, completed date, notes |
+| 4-column layout (Assigned/Filters/List/Detail) | DONE | DONE | **Session 6:** Complete rewrite — 170+170+380+flex columns |
+| Assigned sidebar with avatars + counts | DONE | DONE | **Session 6:** All + per-assignee filtering |
+| Smart Lists + By Type filters | DONE | DONE | **Session 6:** 7 smart lists (Overdue/Today/etc) + 12 task types |
+| Grouped task list (Overdue/Today/Waiting/No Date) | DONE | DONE | **Session 6:** Section headers with colored icons |
+| Inline detail pane with editing | DONE | DONE | **Session 6:** Bindable task, pickers, related records |
+| Create/edit form | DONE | DONE | TaskFormView extracted to separate file |
 
 ## Proposals
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Proposal list with search | DONE | DONE | Searchable list with name, status/approval badges, version, value, date sent metadata |
-| Proposal detail view | DONE | DONE | ProposalDetailView — header with status+approval badges, proposal info, scope, client feedback, notes, performance metrics, linked records (clients/companies/opportunities/tasks), details section |
+| Proposal list with search | DONE | DONE | **Session 6:** List+detail split with 380pt list + flex detail pane, status/approval badges, sort dropdown |
+| Proposal detail view | DONE | DONE | **Session 6:** Inline detail — DetailHeader with badges, PROPOSAL INFO/RELATED/NOTES sections |
 | Create/edit form | DONE | DONE | ProposalFormView — name, status/approval pickers, value, date sent, valid until, notes |
-| Linked entities (opportunity, tasks) | DONE | DONE | Linked record counts displayed in detail view |
+| Linked entities (opportunity, tasks) | DONE | DONE | **Session 6:** RelatedRecordRow with count badges in detail pane |
 
 ## Projects
 
 | Feature | Electron | Swift | Notes |
 |---------|----------|-------|-------|
-| Project list with search/status | DONE | DONE | Searchable list with status badges, date subtitle, sheet detail navigation |
-| Detail view | DONE | DONE | ProjectDetailView — header with avatar + status, project info (location, contract value, engagement type, dates), description, key milestones, lessons learned, linked records (opportunities, clients, contacts, tasks), details section |
+| Project list with search/status | DONE | DONE | **Session 6:** List+detail split with 380pt list + flex detail pane, status badges, sort dropdown |
+| Detail view | DONE | DONE | **Session 6:** Inline detail — DetailHeader, StatsRow (Value), PROJECT INFO/RELATED/NOTES sections |
 | Create/edit form | DONE | DONE | ProjectFormView — name, status picker, location, contract value, dates, description, milestones, lessons |
-| Linked entities (contacts, tasks) | DONE | DONE | Linked record counts displayed in detail view |
+| Linked entities (contacts, tasks) | DONE | DONE | **Session 6:** RelatedRecordRow with count badges in detail pane |
 
 ## Interactions
 
@@ -146,6 +150,7 @@ Last updated: 2026-03-12 (Session 5 — final parity)
 | AvatarView | DONE | DONE | Initials + deterministic color + async photo |
 | StatCard | DONE | DONE | Icon + value + title + material bg |
 | SectionHeader / FieldRow / BadgeView | DONE | DONE | Reusable layout components |
+| DetailComponents (DetailHeader, StatsRow, DetailSection, DetailFieldRow, RelatedRecordRow, SortDropdown, ListHeader) | DONE | DONE | **Session 6:** 7 shared components in DetailComponents.swift — used across all list+detail views |
 
 ## Data Layer
 
@@ -172,9 +177,19 @@ Last updated: 2026-03-12 (Session 5 — final parity)
 
 ---
 
-## Status: 99% Parity Achieved (Session 5)
+## Status: 99% Parity Achieved (Session 6 — Visual Parity)
 
-All major features implemented. 70 of 71 parity items complete.
+Session 6 was a major visual overhaul: every list view converted from flat-list+modal to inline list+detail split layouts matching Electron. 71 of 72 parity items complete.
+
+**Session 6 highlights:**
+- Sidebar redesigned with 3 grouped sections (CRM/WORK/ACTIVITY) + Settings footer + version
+- 7 shared detail components extracted (DetailHeader, StatsRow, DetailSection, DetailFieldRow, RelatedRecordRow, SortDropdown, ListHeader)
+- Contacts, Companies, Projects, Proposals all converted to HStack split (380pt list + flex detail)
+- Dashboard completely rebuilt: greeting, 4 stat cards, tasks/follow-ups two-column, pipeline bar chart
+- Pipeline enriched: summary header, company names on cards, column dollar totals
+- Tasks rewritten as 4-column layout (Assigned/Filters/List/Detail) matching Electron exactly
+- AvatarSize enum added (.small=28, .medium=36, .large=48, .xlarge=64)
+- `assignedTo` property added to CRMTask model + Airtable converter
 
 **Remaining item (1):**
 - Imported Contacts linked entities — linked record resolution for imported contacts

@@ -33,6 +33,7 @@ extension CRMTask: AirtableConvertible {
         model.contactsIds = f.stringArray(for: F.contacts)
         model.projectsIds = f.stringArray(for: F.projects)
         model.proposalIds = f.stringArray(for: F.proposal)
+        model.assignedTo = f.collaboratorName(for: F.assignedTo)
         return model
     }
 

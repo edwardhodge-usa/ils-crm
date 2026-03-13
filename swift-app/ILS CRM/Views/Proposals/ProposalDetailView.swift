@@ -1,14 +1,24 @@
 import SwiftUI
 import SwiftData
 
+/// Proposal detail pane — mirrors src/components/proposals/Proposal360Page.tsx
+///
+/// Renders inline in the split-view right panel (not as a sheet).
+/// Uses shared DetailSection / DetailFieldRow / RelatedRecordRow components.
 struct ProposalDetailView: View {
+    @Environment(\.modelContext) private var modelContext
+
     let proposal: Proposal
+
+    @State private var showEditSheet = false
+    @State private var showDeleteConfirm = false
 
     // MARK: - Formatters
 
     private static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "MMM d, yyyy"
+        f.dateStyle = .medium
+        f.timeStyle = .none
         return f
     }()
 
@@ -20,46 +30,27 @@ struct ProposalDetailView: View {
         return f
     }()
 
-    private func formatted(_ date: Date?) -> String? {
-        guard let date else { return nil }
+    // MARK: - Helpers
+
+    private func formatted(_ date: Date?) -> String {
+        guard let date else { return "—" }
         return Self.dateFormatter.string(from: date)
     }
 
-    private func formattedCurrency(_ value: Double?) -> String? {
-        guard let value, value > 0 else { return nil }
-        return Self.currencyFormatter.string(from: NSNumber(value: value))
+    private func formattedCurrency(_ value: Double?) -> String {
+        guard let value, value > 0 else { return "—" }
+        return Self.currencyFormatter.string(from: NSNumber(value: value)) ?? "—"
     }
 
-    // MARK: - Color Helpers
-
-    private func statusColor(_ status: String?) -> Color {
-        switch status?.lowercased() {
-        case "draft": return .gray
-        case "sent": return .blue
-        case "accepted": return .green
-        case "rejected": return .red
-        case "revised": return .orange
-        default: return .secondary
+    private func statusColor(for status: String) -> Color {
+        switch status {
+        case "Draft":    return .gray
+        case "Sent":     return .blue
+        case "Accepted": return .green
+        case "Rejected": return .red
+        case "Revised":  return .orange
+        default:         return .secondary
         }
-    }
-
-    private func approvalColor(_ approval: String?) -> Color {
-        switch approval?.lowercased() {
-        case "approved": return .green
-        case "pending": return .orange
-        case "rejected": return .red
-        default: return .secondary
-        }
-    }
-
-    // MARK: - Linked Record Counts
-
-    private var linkedClients: Int { proposal.clientIds.count }
-    private var linkedCompanies: Int { proposal.companyIds.count }
-    private var linkedOpportunities: Int { proposal.relatedOpportunityIds.count }
-    private var linkedTasks: Int { proposal.tasksIds.count }
-    private var hasLinkedRecords: Bool {
-        linkedClients > 0 || linkedCompanies > 0 || linkedOpportunities > 0 || linkedTasks > 0
     }
 
     // MARK: - Body
@@ -67,186 +58,118 @@ struct ProposalDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                header
-                    .padding(.horizontal)
-                    .padding(.top)
+                // ── Header ────────────────────────────────────────────
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(proposal.proposalName ?? "Untitled")
+                        .font(.title2)
+                        .fontWeight(.bold)
 
-                Form {
-                    proposalInfoSection
-
-                    if let scope = proposal.scopeSummary, !scope.isEmpty {
-                        scopeSection(scope)
+                    if let status = proposal.status, !status.isEmpty {
+                        StatusBadge(text: status, color: statusColor(for: status))
                     }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 8)
 
-                    if let feedback = proposal.clientFeedback, !feedback.isEmpty {
-                        clientFeedbackSection(feedback)
+                // ── Proposal Info ─────────────────────────────────────
+                DetailSection(title: "PROPOSAL INFO") {
+                    DetailFieldRow(label: "Proposal Date", value: formatted(proposal.dateSent))
+                    DetailFieldRow(label: "Expiration Date", value: formatted(proposal.validUntil))
+                    DetailFieldRow(label: "Amount", value: formattedCurrency(proposal.proposedValue))
+                    DetailFieldRow(label: "Currency", value: "USD")
+                    DetailFieldRow(label: "Sent To", value: proposal.clientIds.isEmpty ? "—" : "\(proposal.clientIds.count) contact(s)")
+                    DetailFieldRow(label: "Status", value: proposal.status ?? "—", showChevron: true)
+                }
+                .padding(.horizontal, 20)
+
+                // ── Related ───────────────────────────────────────────
+                DetailSection(title: "RELATED") {
+                    RelatedRecordRow(
+                        label: "Companies",
+                        items: [],
+                        onAdd: nil
+                    )
+                    RelatedRecordRow(
+                        label: "Contacts",
+                        items: [],
+                        onAdd: nil
+                    )
+                    RelatedRecordRow(
+                        label: "Opportunities",
+                        items: [],
+                        onAdd: nil
+                    )
+                }
+                .padding(.horizontal, 20)
+
+                // ── Notes ─────────────────────────────────────────────
+                DetailSection(title: "NOTES") {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(proposal.notes?.isEmpty == false ? proposal.notes! : "—")
+                            .font(.system(size: 13))
+                            .foregroundStyle(proposal.notes?.isEmpty == false ? .primary : .secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .textSelection(.enabled)
+                        Divider()
                     }
+                }
+                .padding(.horizontal, 20)
 
-                    if let notes = proposal.notes, !notes.isEmpty {
-                        notesSection(notes)
+                // ── Actions ───────────────────────────────────────────
+                HStack(spacing: 12) {
+                    Button {
+                        showEditSheet = true
+                    } label: {
+                        Text("Edit")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(Color.accentColor)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
+                    .buttonStyle(.plain)
 
-                    if let metrics = proposal.performanceMetrics, !metrics.isEmpty {
-                        performanceSection(metrics)
+                    Button {
+                        showDeleteConfirm = true
+                    } label: {
+                        Text("Delete")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(Color.red.opacity(0.12))
+                            .foregroundStyle(.red)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
-
-                    if hasLinkedRecords {
-                        linkedRecordsSection
-                    }
-
-                    detailsSection
+                    .buttonStyle(.plain)
                 }
-                .formStyle(.grouped)
+                .padding(.horizontal, 20)
+                .padding(.top, 24)
+                .padding(.bottom, 20)
             }
         }
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(proposal.proposalName ?? "Untitled")
-                .font(.title2)
-                .fontWeight(.bold)
-
-            HStack(spacing: 8) {
-                if let status = proposal.status, !status.isEmpty {
-                    BadgeView(text: status, color: statusColor(status))
-                }
-                if let approval = proposal.approvalStatus, !approval.isEmpty {
-                    BadgeView(text: approval, color: approvalColor(approval))
-                }
+        .sheet(isPresented: $showEditSheet) {
+            NavigationStack {
+                ProposalFormView(proposal: proposal)
             }
-
-            if let formatted = formattedCurrency(proposal.proposedValue) {
-                Text(formatted)
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-            }
+            .frame(minWidth: 480, minHeight: 560)
         }
-    }
-
-    // MARK: - Proposal Info Section
-
-    private var proposalInfoSection: some View {
-        Section("Proposal Info") {
-            if let status = proposal.status, !status.isEmpty {
-                HStack {
-                    Text("Status")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    BadgeView(text: status, color: statusColor(status))
-                }
-                .frame(minHeight: 28)
+        .confirmationDialog(
+            "Delete Proposal?",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                modelContext.delete(proposal)
             }
-
-            if let approval = proposal.approvalStatus, !approval.isEmpty {
-                HStack {
-                    Text("Approval Status")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    BadgeView(text: approval, color: approvalColor(approval))
-                }
-                .frame(minHeight: 28)
-            }
-
-            if let version = proposal.version, !version.isEmpty {
-                FieldRow(label: "Version", value: version)
-            }
-
-            if let template = proposal.templateUsed, !template.isEmpty {
-                FieldRow(label: "Template Used", value: template)
-            }
-
-            if let currency = formattedCurrency(proposal.proposedValue) {
-                FieldRow(label: "Proposed Value", value: currency)
-            }
-
-            if let dateSent = formatted(proposal.dateSent) {
-                FieldRow(label: "Date Sent", value: dateSent)
-            }
-
-            if let validUntil = formatted(proposal.validUntil) {
-                FieldRow(label: "Valid Until", value: validUntil)
-            }
-        }
-    }
-
-    // MARK: - Scope Section
-
-    private func scopeSection(_ scope: String) -> some View {
-        Section("Scope") {
-            Text(scope)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    // MARK: - Client Feedback Section
-
-    private func clientFeedbackSection(_ feedback: String) -> some View {
-        Section("Client Feedback") {
-            Text(feedback)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    // MARK: - Notes Section
-
-    private func notesSection(_ notes: String) -> some View {
-        Section("Notes") {
-            Text(notes)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    // MARK: - Performance Section
-
-    private func performanceSection(_ metrics: String) -> some View {
-        Section("Performance") {
-            Text(metrics)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    // MARK: - Linked Records Section
-
-    private var linkedRecordsSection: some View {
-        Section("Linked Records") {
-            if linkedClients > 0 {
-                FieldRow(label: "Clients", value: "\(linkedClients)")
-            }
-            if linkedCompanies > 0 {
-                FieldRow(label: "Companies", value: "\(linkedCompanies)")
-            }
-            if linkedOpportunities > 0 {
-                FieldRow(label: "Opportunities", value: "\(linkedOpportunities)")
-            }
-            if linkedTasks > 0 {
-                FieldRow(label: "Tasks", value: "\(linkedTasks)")
-            }
-        }
-    }
-
-    // MARK: - Details Section
-
-    private var detailsSection: some View {
-        Section("Details") {
-            if let created = formatted(proposal.airtableModifiedAt) {
-                FieldRow(label: "Created", value: created)
-            }
-
-            if let modified = formatted(proposal.localModifiedAt) {
-                FieldRow(label: "Last Modified", value: modified)
-            }
-
-            Text(proposal.id)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .textSelection(.enabled)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This action cannot be undone.")
         }
     }
 }

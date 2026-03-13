@@ -96,6 +96,13 @@ struct AirtableFields {
         return []
     }
 
+    /// Collaborator fields: returns the `.name` string from `{id, email, name}` object.
+    /// Collaborator fields are read-only — never included in push payloads.
+    func collaboratorName(for fieldId: String) -> String? {
+        guard let dict = raw[fieldId] as? [String: Any] else { return nil }
+        return dict["name"] as? String
+    }
+
     // MARK: - Date Formatters (static, reused)
 
     private static let iso8601Formatter: ISO8601DateFormatter = {

@@ -1,59 +1,150 @@
 import SwiftUI
 import SwiftData
 
-/// Proposals list — mirrors src/components/proposals/ProposalListPage.tsx
+// MARK: - ProposalSortMode
+
+enum ProposalSortMode: String, CaseIterable, CustomStringConvertible {
+    case nameAZ    = "Name A–Z"
+    case nameZA    = "Name Z–A"
+    case newest    = "Newest First"
+    case oldest    = "Oldest First"
+
+    var description: String { rawValue }
+}
+
+// MARK: - ProposalsView
+
+/// Proposals list + inline detail — mirrors src/components/proposals/ProposalListPage.tsx
 ///
-/// Features:
-/// - Searchable list with proposal name, status badges, approval status
-/// - Color-coded status/approval badges
-/// - Proposed value, version, and date sent metadata
-/// - Detail sheet on selection
+/// Layout: fixed 380pt list panel | Divider | flex detail panel
 struct ProposalsView: View {
     @Query(sort: \Proposal.proposalName) private var proposals: [Proposal]
 
     @State private var searchText = ""
     @State private var selectedProposal: Proposal?
+    @State private var sortMode: ProposalSortMode = .nameAZ
     @State private var showNewProposal = false
 
+    // MARK: - Filtered Data
+
     private var filteredProposals: [Proposal] {
-        guard !searchText.isEmpty else { return proposals }
-        let query = searchText.lowercased()
-        return proposals.filter { proposal in
-            (proposal.proposalName?.lowercased().contains(query) ?? false)
-                || (proposal.notes?.lowercased().contains(query) ?? false)
+        let base: [Proposal]
+        if searchText.isEmpty {
+            base = proposals
+        } else {
+            let query = searchText.lowercased()
+            base = proposals.filter { proposal in
+                (proposal.proposalName?.lowercased().contains(query) ?? false)
+                    || (proposal.notes?.lowercased().contains(query) ?? false)
+            }
+        }
+
+        switch sortMode {
+        case .nameAZ:
+            return base.sorted { ($0.proposalName ?? "") < ($1.proposalName ?? "") }
+        case .nameZA:
+            return base.sorted { ($0.proposalName ?? "") > ($1.proposalName ?? "") }
+        case .newest:
+            return base.sorted { ($0.dateSent ?? .distantPast) > ($1.dateSent ?? .distantPast) }
+        case .oldest:
+            return base.sorted { ($0.dateSent ?? .distantPast) < ($1.dateSent ?? .distantPast) }
         }
     }
 
+    // MARK: - Body
+
     var body: some View {
-        Group {
-            if proposals.isEmpty {
-                EmptyStateView(
-                    title: "No Proposals",
-                    description: "Proposals will appear here once synced from Airtable.",
-                    systemImage: "doc.text"
+        HStack(spacing: 0) {
+            // ── Left: List Panel ──────────────────────────────────────
+            VStack(spacing: 0) {
+                ListHeader(
+                    title: "Proposals",
+                    count: proposals.count,
+                    buttonLabel: "+ New Proposal",
+                    onButton: { showNewProposal = true }
                 )
-            } else if filteredProposals.isEmpty {
-                EmptyStateView(
-                    title: "No Results",
-                    description: "No proposals match \"\(searchText)\".",
-                    systemImage: "magnifyingglass"
-                )
-            } else {
-                List(filteredProposals, id: \.id) { proposal in
-                    ProposalRow(proposal: proposal)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedProposal = proposal
+
+                Divider()
+
+                // Search bar
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.tertiary)
+                        .font(.system(size: 13))
+                    TextField("Search proposals…", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 13))
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.tertiary)
+                                .font(.system(size: 13))
                         }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(.controlBackgroundColor))
+
+                Divider()
+
+                // Sort control bar
+                HStack(spacing: 6) {
+                    Text("\(filteredProposals.count) proposals")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    SortDropdown(
+                        options: ProposalSortMode.allCases,
+                        selection: $sortMode
+                    )
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+
+                Divider()
+
+                // Proposal list
+                if proposals.isEmpty {
+                    EmptyStateView(
+                        title: "No proposals yet",
+                        description: "Proposals will appear here once synced from Airtable.",
+                        systemImage: "doc.text"
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if filteredProposals.isEmpty {
+                    EmptyStateView(
+                        title: "No results",
+                        description: "No proposals match \"\(searchText)\".",
+                        systemImage: "magnifyingglass"
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    proposalList
                 }
             }
-        }
-        .searchable(text: $searchText, prompt: "Search proposals...")
-        .navigationTitle("Proposals")
-        .toolbar {
-            Button { showNewProposal = true } label: {
-                Image(systemName: "plus")
+            .frame(width: 380)
+            .background(Color(.controlBackgroundColor))
+
+            Divider()
+
+            // ── Right: Detail Panel ───────────────────────────────────
+            Group {
+                if let proposal = selectedProposal {
+                    ProposalDetailView(proposal: proposal)
+                        .id(proposal.id) // Force re-render when selection changes
+                } else {
+                    EmptyStateView(
+                        title: "Select a proposal",
+                        description: "Choose a proposal to view details.",
+                        systemImage: "doc.text"
+                    )
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .sheet(isPresented: $showNewProposal) {
             NavigationStack {
@@ -61,109 +152,65 @@ struct ProposalsView: View {
             }
             .frame(minWidth: 480, minHeight: 560)
         }
-        .sheet(item: $selectedProposal) { proposal in
-            NavigationStack {
-                ProposalDetailView(proposal: proposal)
-                    .navigationTitle("Proposal")
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Done") {
-                                selectedProposal = nil
-                            }
-                        }
-                    }
-            }
-            .frame(minWidth: 500, minHeight: 600)
-        }
     }
-}
 
-// MARK: - Proposal Row
+    // MARK: - Proposal List
 
-private struct ProposalRow: View {
-    let proposal: Proposal
-
-    private static let currencyFormatter: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "USD"
-        f.maximumFractionDigits = 0
-        return f
-    }()
-
-    private static let dateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MMM d"
-        return f
-    }()
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // Proposal name
-            Text(proposal.proposalName ?? "Untitled")
-                .font(.body)
-                .fontWeight(.medium)
-
-            // Status + Approval badges
-            let hasStatus = proposal.status != nil
-            let hasApproval = proposal.approvalStatus != nil
-            if hasStatus || hasApproval {
-                HStack(spacing: 8) {
-                    if let status = proposal.status {
-                        BadgeView(text: status, color: statusColor(for: status))
-                    }
-                    if let approval = proposal.approvalStatus {
-                        BadgeView(text: approval, color: approvalColor(for: approval))
-                    }
-                }
-            }
-
-            // Metadata row: version, value, date sent
-            let hasVersion = proposal.version != nil
-            let hasValue = (proposal.proposedValue ?? 0) > 0
-            let hasDate = proposal.dateSent != nil
-            if hasVersion || hasValue || hasDate {
-                HStack(spacing: 8) {
-                    if let version = proposal.version {
-                        Text("v\(version)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    if let value = proposal.proposedValue, value > 0 {
-                        Text(Self.currencyFormatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    if let dateSent = proposal.dateSent {
-                        Text("Sent \(Self.dateFormatter.string(from: dateSent))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+    private var proposalList: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(filteredProposals, id: \.id) { proposal in
+                    proposalRow(proposal)
                 }
             }
         }
-        .padding(.vertical, 2)
+        .scrollIndicators(.hidden)
     }
 
-    // MARK: - Color Mappings
+    // MARK: - Proposal Row
+
+    private func proposalRow(_ proposal: Proposal) -> some View {
+        let isSelected = selectedProposal?.id == proposal.id
+
+        return Button {
+            selectedProposal = proposal
+        } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(proposal.proposalName ?? "Untitled")
+                    .font(.system(size: 13))
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                if let status = proposal.status, !status.isEmpty {
+                    StatusBadge(text: status, color: statusColor(for: status))
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(isSelected ? Color.accentColor : Color.clear)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .overlay(alignment: .bottom) {
+            if !isSelected {
+                Divider()
+                    .padding(.leading, 12)
+            }
+        }
+    }
+
+    // MARK: - Status Color
 
     private func statusColor(for status: String) -> Color {
         switch status {
-        case "Draft": return .gray
-        case "Sent": return .blue
+        case "Draft":    return .gray
+        case "Sent":     return .blue
         case "Accepted": return .green
         case "Rejected": return .red
-        case "Revised": return .orange
-        default: return .secondary
-        }
-    }
-
-    private func approvalColor(for approval: String) -> Color {
-        switch approval {
-        case "Approved": return .green
-        case "Pending": return .orange
-        case "Rejected": return .red
-        default: return .secondary
+        case "Revised":  return .orange
+        default:         return .secondary
         }
     }
 }
