@@ -171,6 +171,182 @@ struct DetailFieldRow: View {
     }
 }
 
+// MARK: - EditableFieldRow
+
+enum EditableFieldType {
+    case text
+    case textarea
+    case singleSelect(options: [String])
+    case date
+    case checkbox
+    case readonly
+}
+
+/// Click-to-edit form row — label left, value/editor right.
+/// Matches Electron's EditableFormRow: tap value → inline editor → auto-save on blur/commit.
+struct EditableFieldRow: View {
+    let label: String
+    let key: String
+    let type: EditableFieldType
+    let value: String?
+    var onSave: ((String, Any?) -> Void)? = nil
+
+    @State private var isEditing = false
+    @State private var editText = ""
+    @FocusState private var textFieldFocused: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(label)
+                    .foregroundStyle(.primary)
+                Spacer()
+                valueView
+            }
+            .padding(.horizontal, 12)
+            .frame(minHeight: 36)
+            .contentShape(Rectangle())
+            .applyTapGesture(type: type, isEditing: isEditing) {
+                editText = value ?? ""
+                isEditing = true
+            }
+
+            Divider()
+        }
+    }
+
+    @ViewBuilder
+    private var valueView: some View {
+        switch type {
+        case .readonly:
+            Text(value ?? "—")
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+
+        case .text:
+            if isEditing {
+                TextField("", text: $editText)
+                    .font(.system(size: 13))
+                    .textFieldStyle(.plain)
+                    .focused($textFieldFocused)
+                    .onSubmit { commitEdit() }
+                    .onAppear { textFieldFocused = true }
+                    .onChange(of: textFieldFocused) { _, focused in
+                        if !focused { commitEdit() }
+                    }
+            } else {
+                Text(value.isNilOrEmpty ? "—" : value!)
+                    .font(.system(size: 13))
+                    .foregroundStyle(value.isNilOrEmpty ? .tertiary : .secondary)
+            }
+
+        case .textarea:
+            if isEditing {
+                TextEditor(text: $editText)
+                    .font(.system(size: 13))
+                    .frame(minHeight: 60)
+                    .focused($textFieldFocused)
+                    .onAppear { textFieldFocused = true }
+                    .onChange(of: textFieldFocused) { _, focused in
+                        if !focused { commitEdit() }
+                    }
+            } else {
+                Text(value.isNilOrEmpty ? "—" : value!)
+                    .font(.system(size: 13))
+                    .foregroundStyle(value.isNilOrEmpty ? .tertiary : .secondary)
+                    .lineLimit(3)
+            }
+
+        case .singleSelect(let options):
+            Menu {
+                Button("None") { onSave?(key, nil) }
+                Divider()
+                ForEach(options, id: \.self) { option in
+                    Button(option) { onSave?(key, option) }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(value ?? "—")
+                        .font(.system(size: 13))
+                        .foregroundStyle(value != nil ? .primary : .tertiary)
+                    Text("⌃")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .menuStyle(.borderlessButton)
+
+        case .date:
+            DatePicker("", selection: dateBinding, displayedComponents: .date)
+                .labelsHidden()
+                .datePickerStyle(.compact)
+
+        case .checkbox:
+            Toggle("", isOn: checkBinding)
+                .labelsHidden()
+                .toggleStyle(.checkbox)
+        }
+    }
+
+    private func commitEdit() {
+        isEditing = false
+        let trimmed = editText.trimmingCharacters(in: .whitespacesAndNewlines)
+        onSave?(key, trimmed.isEmpty ? nil : trimmed)
+    }
+
+    private var dateBinding: Binding<Date> {
+        Binding<Date>(
+            get: {
+                guard let value else { return Date() }
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withFullDate]
+                return formatter.date(from: value)
+                    ?? ISO8601DateFormatter().date(from: value)
+                    ?? Date()
+            },
+            set: { newDate in
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withFullDate]
+                onSave?(key, formatter.string(from: newDate))
+            }
+        )
+    }
+
+    private var checkBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: { value == "true" || value == "1" },
+            set: { newValue in onSave?(key, newValue) }
+        )
+    }
+}
+
+// MARK: - EditableFieldRow Helpers
+
+private extension Optional where Wrapped == String {
+    var isNilOrEmpty: Bool {
+        switch self {
+        case .none: return true
+        case .some(let str): return str.isEmpty
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func applyTapGesture(type: EditableFieldType, isEditing: Bool, action: @escaping () -> Void) -> some View {
+        switch type {
+        case .text, .textarea:
+            if !isEditing {
+                self.onTapGesture { action() }
+            } else {
+                self
+            }
+        default:
+            self
+        }
+    }
+}
+
 // MARK: - RelatedRecordRow
 
 /// For linked-records sections with a "+" add button.
