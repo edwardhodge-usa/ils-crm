@@ -235,12 +235,12 @@ struct TasksView: View {
                     .padding(.top, 14)
                     .padding(.bottom, 6)
 
-                // "All" row
-                assigneeRow(name: nil, count: tasks.count)
+                // "All" row (excludes completed tasks)
+                assigneeRow(name: nil, count: tasks.filter { !isCompleted($0) }.count)
 
-                // Per-assignee rows
+                // Per-assignee rows (excludes completed tasks)
                 ForEach(sortedAssignees, id: \.self) { assignee in
-                    assigneeRow(name: assignee, count: tasks.filter { $0.assignedTo == assignee }.count)
+                    assigneeRow(name: assignee, count: tasks.filter { $0.assignedTo == assignee && !isCompleted($0) }.count)
                 }
 
                 // SMART LISTS section
@@ -619,6 +619,7 @@ struct TasksView: View {
         Group {
             if let task = selectedTask {
                 TaskDetailView(task: task)
+                    .id(task.id)
             } else {
                 EmptyStateView(
                     title: "Select a task",

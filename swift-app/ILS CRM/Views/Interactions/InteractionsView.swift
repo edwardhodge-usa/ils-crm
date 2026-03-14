@@ -213,7 +213,7 @@ struct InteractionFormView: View {
     @State private var selectedDirection: String = "Outbound"
     @State private var summary: String = ""
     @State private var nextSteps: String = ""
-    @State private var notes: String = ""
+    // No "notes" field in Airtable Interactions table — summary + nextSteps cover text content
 
     // MARK: - Options
 
@@ -262,11 +262,6 @@ struct InteractionFormView: View {
                 }
             }
 
-            // Notes section
-            Section("Notes") {
-                TextEditor(text: $notes)
-                    .frame(minHeight: 100)
-            }
         }
         .formStyle(.grouped)
         .navigationTitle(isNew ? "Log Interaction" : "Edit Interaction")
@@ -291,8 +286,6 @@ struct InteractionFormView: View {
                 selectedDirection = interaction.direction ?? "Outbound"
                 summary = interaction.summary ?? ""
                 nextSteps = interaction.nextSteps ?? ""
-                // NOTE: "notes" field is in the UI per spec but not on the Interaction model.
-                // Add a `notes` property to Interaction.swift to persist this field.
             }
         }
     }

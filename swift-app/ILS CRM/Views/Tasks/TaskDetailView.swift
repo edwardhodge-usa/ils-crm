@@ -14,8 +14,16 @@ import SwiftData
 struct TaskDetailView: View {
     @Bindable var task: CRMTask
     @Environment(\.modelContext) private var modelContext
+    @Environment(SyncEngine.self) private var syncEngine
 
     @State private var showDeleteConfirm = false
+
+    /// Unique assignees for the dropdown, queried from all tasks.
+    private var assigneeOptions: [String] {
+        let descriptor = FetchDescriptor<CRMTask>()
+        let allTasks = (try? modelContext.fetch(descriptor)) ?? []
+        return Array(Set(allTasks.compactMap(\.assignedTo))).sorted()
+    }
 
     private static let isoFormatter: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
@@ -109,6 +117,7 @@ struct TaskDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete", role: .destructive) {
+                syncEngine.trackDeletion(tableId: CRMTask.airtableTableId, recordId: task.id)
                 modelContext.delete(task)
             }
             Button("Cancel", role: .cancel) {}
@@ -200,7 +209,7 @@ struct TaskDetailView: View {
             EditableFieldRow(
                 label: "Assigned To",
                 key: "assignedTo",
-                type: .text,
+                type: .singleSelect(options: assigneeOptions),
                 value: task.assignedTo,
                 onSave: { key, val in saveField(key, val) }
             )
@@ -238,23 +247,19 @@ struct TaskDetailView: View {
         VStack(spacing: 0) {
             RelatedRecordRow(
                 label: "Opportunities",
-                items: salesOpportunityLabels,
-                onAdd: { /* future: link picker */ }
+                items: salesOpportunityLabels
             )
             RelatedRecordRow(
                 label: "Contacts",
-                items: contactLabels,
-                onAdd: { /* future: link picker */ }
+                items: contactLabels
             )
             RelatedRecordRow(
                 label: "Projects",
-                items: projectLabels,
-                onAdd: { /* future: link picker */ }
+                items: projectLabels
             )
             RelatedRecordRow(
                 label: "Proposals",
-                items: proposalLabels,
-                onAdd: { /* future: link picker */ }
+                items: proposalLabels
             )
         }
     }

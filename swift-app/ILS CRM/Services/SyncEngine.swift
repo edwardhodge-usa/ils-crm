@@ -29,6 +29,17 @@ final class SyncEngine {
     private var service: AirtableService?
     private var pollingTask: Task<Void, Never>?
 
+    /// Tracks record IDs deleted locally that need DELETE requests sent to Airtable.
+    /// Key: tableId, Value: set of Airtable record IDs (not local_ prefixed)
+    private var pendingDeletes: [String: Set<String>] = [:]
+
+    /// Call this before deleting a record from SwiftData to queue the Airtable DELETE.
+    /// Skips local-only records (local_ prefix) since they don't exist in Airtable.
+    func trackDeletion(tableId: String, recordId: String) {
+        guard !recordId.hasPrefix("local_") else { return }
+        pendingDeletes[tableId, default: []].insert(recordId)
+    }
+
     init(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
     }
@@ -150,6 +161,15 @@ final class SyncEngine {
     /// Iterates syncOrder, skipping read-only tables. 200ms stagger between tables.
     @MainActor
     private func pushPendingRecords(context: ModelContext, service: AirtableService) async throws {
+        // Process pending deletes first
+        for (tableId, recordIds) in pendingDeletes {
+            guard !recordIds.isEmpty else { continue }
+            let ids = Array(recordIds)
+            Self.logger.info("Deleting \(ids.count) records from \(tableId)")
+            try await service.batchDelete(tableId: tableId, recordIds: ids)
+            pendingDeletes[tableId] = nil
+        }
+
         var isFirst = true
 
         for tableId in AirtableConfig.syncOrder {

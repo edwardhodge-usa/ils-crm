@@ -1,4 +1,5 @@
 import Foundation
+import os.log
 
 /// Airtable REST API client — mirrors electron/airtable/client.ts
 ///
@@ -12,6 +13,8 @@ import Foundation
 /// - JSON.parse failures on linked record arrays must not crash the whole sync
 /// - URL scheme validation: only allow https://, http://, mailto:, tel:// for openExternal
 actor AirtableService {
+    private static let logger = Logger(subsystem: "com.ils-crm", category: "AirtableService")
+
     private let apiKey: String
     private let baseId: String
     private let session: URLSession
@@ -255,6 +258,8 @@ actor AirtableService {
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let responseBody = String(data: data, encoding: .utf8) ?? "(no body)"
+            Self.logger.error("POST \(statusCode, privacy: .public) for \(tableId, privacy: .public): \(responseBody, privacy: .public)")
             throw AirtableError.httpError(statusCode: statusCode, tableId: tableId)
         }
 
@@ -275,6 +280,8 @@ actor AirtableService {
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let responseBody = String(data: data, encoding: .utf8) ?? "(no body)"
+            Self.logger.error("PATCH \(statusCode, privacy: .public) for \(tableId, privacy: .public): \(responseBody, privacy: .public)")
             throw AirtableError.httpError(statusCode: statusCode, tableId: tableId)
         }
 
