@@ -80,11 +80,13 @@ struct InteractionsView: View {
 
     private var interactionList: some View {
         List(filteredInteractions, id: \.id, selection: $selectedInteraction) { interaction in
-            InteractionRowView(interaction: interaction)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    selectedInteraction = interaction
-                }
+            Button {
+                selectedInteraction = interaction
+            } label: {
+                InteractionRowView(interaction: interaction)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
     }
 

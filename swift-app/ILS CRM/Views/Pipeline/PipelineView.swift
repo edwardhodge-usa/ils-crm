@@ -141,18 +141,17 @@ struct PipelineView: View {
     private var summaryHeader: some View {
         HStack(spacing: 16) {
             Text("Pipeline")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(.system(size: 15, weight: .bold))
 
             Spacer()
 
             // Active total
             HStack(spacing: 4) {
                 Text("Active")
-                    .font(.subheadline)
+                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                 Text(formatCurrency(activeTotalValue))
-                    .font(.subheadline)
+                    .font(.system(size: 13))
                     .fontWeight(.semibold)
             }
 
@@ -162,10 +161,10 @@ struct PipelineView: View {
             // Won total
             HStack(spacing: 4) {
                 Text("Won")
-                    .font(.subheadline)
+                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                 Text(formatCurrency(wonTotalValue))
-                    .font(.subheadline)
+                    .font(.system(size: 13))
                     .fontWeight(.semibold)
                     .foregroundStyle(.green)
             }
@@ -176,10 +175,10 @@ struct PipelineView: View {
             // Deal count
             HStack(spacing: 4) {
                 Text("Deals")
-                    .font(.subheadline)
+                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                 Text("\(opportunities.count)")
-                    .font(.subheadline)
+                    .font(.system(size: 13))
                     .fontWeight(.semibold)
             }
 
@@ -188,7 +187,7 @@ struct PipelineView: View {
                 showNewOpportunity = true
             } label: {
                 Text("+ New Deal")
-                    .font(.subheadline)
+                    .font(.system(size: 13))
                     .fontWeight(.medium)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
@@ -218,8 +217,7 @@ struct PipelineView: View {
                         .fill(color)
                         .frame(width: 8, height: 8)
                     Text(stage)
-                        .font(.headline)
-                        .fontWeight(.semibold)
+                        .font(.system(size: 14, weight: .semibold))
                         .lineLimit(1)
                     Spacer()
                     // Count badge in gray
@@ -254,16 +252,18 @@ struct PipelineView: View {
                             .padding(.vertical, 16)
                     } else {
                         ForEach(stageOpps, id: \.id) { opp in
-                            KanbanCard(
-                                opportunity: opp,
-                                companyName: opp.companyIds.first.flatMap { companyNameById[$0] },
-                                stageColor: color,
-                                formatCurrency: formatCurrency
-                            )
-                            .draggable(opp.id)
-                            .onTapGesture {
+                            Button {
                                 selectedOpportunity = opp
+                            } label: {
+                                KanbanCard(
+                                    opportunity: opp,
+                                    companyName: opp.companyIds.first.flatMap { companyNameById[$0] },
+                                    stageColor: color,
+                                    formatCurrency: formatCurrency
+                                )
                             }
+                            .buttonStyle(.plain)
+                            .draggable(opp.id)
                         }
                     }
                 }
@@ -349,13 +349,12 @@ private struct KanbanCard: View {
 
             // Deal name
             Text(opportunity.opportunityName ?? "Untitled")
-                .font(.body)
-                .fontWeight(.medium)
+                .font(.system(size: 14, weight: .semibold))
                 .lineLimit(2)
 
             // Dollar value
             Text(formattedValue)
-                .font(.subheadline)
+                .font(.system(size: 13))
                 .fontWeight(.medium)
 
             // Bottom row: stage badge + probability
