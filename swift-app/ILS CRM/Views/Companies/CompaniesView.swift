@@ -14,41 +14,110 @@ struct CompaniesView: View {
     @Query(sort: \Company.companyName) private var companies: [Company]
     @Query private var allContacts: [Contact]
     @State private var searchText = ""
-    @State private var sortOrder: CompanySortOrder = .nameAZ
+    @AppStorage("sort-companies") private var sortBy: String = "name"
     @State private var selectedCompany: Company?
     @State private var showNewCompany = false
 
-    // MARK: - Filtered & Grouped Data
+    // MARK: - Sort Label
 
-    private var filteredCompanies: [Company] {
-        let sorted = sortOrder == .nameAZ
-            ? companies
-            : companies.sorted { ($0.companyName ?? "") > ($1.companyName ?? "") }
-        if searchText.isEmpty { return sorted }
-        let query = searchText
-        return sorted.filter { company in
-            (company.companyName?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (company.industry?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (company.website?.localizedCaseInsensitiveContains(query) ?? false)
+    private var sortLabel: String {
+        switch sortBy {
+        case "type": return "Type"
+        case "industry": return "Industry"
+        case "newest": return "Newest First"
+        default: return "Name A–Z"
         }
     }
 
-    /// Companies grouped by first letter. "#" bucket for non-letter names.
-    private var groupedCompanies: [(letter: String, companies: [Company])] {
-        let grouped = Dictionary(grouping: filteredCompanies) { company -> String in
-            guard let name = company.companyName,
-                  let first = name.first else { return "#" }
-            let upper = String(first).uppercased()
-            return upper.rangeOfCharacter(from: .letters) != nil ? upper : "#"
-        }
-        // Sort alphabetically; keep "#" at the end
-        return grouped
-            .sorted {
-                if $0.key == "#" { return false }
-                if $1.key == "#" { return true }
-                return $0.key < $1.key
+    // MARK: - Filtered & Sorted Data
+
+    private var filteredCompanies: [Company] {
+        let base: [Company]
+        if searchText.isEmpty {
+            base = Array(companies)
+        } else {
+            let query = searchText
+            base = companies.filter { company in
+                (company.companyName?.localizedCaseInsensitiveContains(query) ?? false) ||
+                (company.industry?.localizedCaseInsensitiveContains(query) ?? false) ||
+                (company.website?.localizedCaseInsensitiveContains(query) ?? false)
             }
-            .map { (letter: $0.key, companies: $0.value) }
+        }
+
+        switch sortBy {
+        case "type":
+            return base.sorted {
+                let a = $0.companyType ?? ""
+                let b = $1.companyType ?? ""
+                if a == b { return ($0.companyName ?? "") < ($1.companyName ?? "") }
+                if a.isEmpty { return false }
+                if b.isEmpty { return true }
+                return a < b
+            }
+        case "industry":
+            return base.sorted {
+                let a = $0.industry ?? ""
+                let b = $1.industry ?? ""
+                if a == b { return ($0.companyName ?? "") < ($1.companyName ?? "") }
+                if a.isEmpty { return false }
+                if b.isEmpty { return true }
+                return a < b
+            }
+        case "newest":
+            return base.sorted {
+                let a = $0.airtableModifiedAt ?? $0.localModifiedAt ?? .distantPast
+                let b = $1.airtableModifiedAt ?? $1.localModifiedAt ?? .distantPast
+                return a > b
+            }
+        default: // "name"
+            return base.sorted { ($0.companyName ?? "") < ($1.companyName ?? "") }
+        }
+    }
+
+    /// Companies grouped by context-appropriate key based on current sort.
+    private var groupedCompanies: [(letter: String, companies: [Company])] {
+        let list = filteredCompanies
+
+        switch sortBy {
+        case "type":
+            let grouped = Dictionary(grouping: list) { ($0.companyType ?? "").isEmpty ? "Other" : $0.companyType! }
+            return grouped
+                .sorted {
+                    if $0.key == "Other" { return false }
+                    if $1.key == "Other" { return true }
+                    return $0.key < $1.key
+                }
+                .map { (letter: $0.key, companies: $0.value) }
+
+        case "industry":
+            let grouped = Dictionary(grouping: list) { ($0.industry ?? "").isEmpty ? "Other" : $0.industry! }
+            return grouped
+                .sorted {
+                    if $0.key == "Other" { return false }
+                    if $1.key == "Other" { return true }
+                    return $0.key < $1.key
+                }
+                .map { (letter: $0.key, companies: $0.value) }
+
+        case "newest":
+            // No grouping for date sort — single flat section
+            return list.isEmpty ? [] : [(letter: "All Companies", companies: list)]
+
+        default: // "name" — group by first letter
+            let grouped = Dictionary(grouping: list) { company -> String in
+                guard let name = company.companyName,
+                      let first = name.first else { return "#" }
+                let upper = String(first).uppercased()
+                return upper.rangeOfCharacter(from: .letters) != nil ? upper : "#"
+            }
+            return grouped
+                .sorted {
+                    if $0.key == "#" { return false }
+                    if $1.key == "#" { return true }
+                    return $0.key < $1.key
+                }
+                .map { (letter: $0.key, companies: $0.value) }
+        }
     }
 
     // MARK: - Body
@@ -115,7 +184,23 @@ struct CompaniesView: View {
                 .background(Color(.controlBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 6))
 
-                SortDropdown(options: CompanySortOrder.allCases, selection: $sortOrder)
+                Menu {
+                    Button("Name A–Z") { sortBy = "name" }
+                    Button("Type") { sortBy = "type" }
+                    Button("Industry") { sortBy = "industry" }
+                    Button("Newest First") { sortBy = "newest" }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(sortLabel)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -227,20 +312,6 @@ struct CompaniesView: View {
     private func deleteCompany(_ company: Company) {
         if selectedCompany?.id == company.id {
             selectedCompany = nil
-        }
-    }
-}
-
-// MARK: - Sort Order
-
-enum CompanySortOrder: CaseIterable, Hashable, CustomStringConvertible {
-    case nameAZ
-    case nameZA
-
-    var description: String {
-        switch self {
-        case .nameAZ: return "Name A–Z"
-        case .nameZA: return "Name Z–A"
         }
     }
 }

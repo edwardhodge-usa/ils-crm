@@ -5,9 +5,9 @@ import Combine
 // MARK: - SortMode
 
 enum ContactSortMode: String, CaseIterable, CustomStringConvertible {
-    case company   = "Company"
     case nameAZ    = "Name A–Z"
-    case nameZA    = "Name Z–A"
+    case company   = "Company"
+    case newest    = "Newest First"
 
     var description: String { rawValue }
 }
@@ -17,14 +17,14 @@ enum ContactSortMode: String, CaseIterable, CustomStringConvertible {
 /// Contacts list + inline detail — mirrors src/components/contacts/ContactListPage.tsx
 ///
 /// Layout: fixed 380pt list panel | Divider | flex detail panel
-/// List supports three sort modes: Company grouping (default), A–Z, Z–A.
+/// List supports three sort modes: Name A–Z (default), Company grouping, Newest First.
 struct ContactsView: View {
     @Query(sort: \Contact.contactName) private var contacts: [Contact]
     @Query private var companies: [Company]
 
     @State private var searchText = ""
     @State private var selectedContact: Contact?
-    @State private var sortMode: ContactSortMode = .company
+    @AppStorage("sort-contacts") private var sortMode: ContactSortMode = .nameAZ
     @State private var showingNewContact = false
 
     // MARK: - Derived Data
@@ -76,14 +76,10 @@ struct ContactsView: View {
         return sorted.map { (key: $0.key, contacts: $0.value) }
     }
 
-    /// Returns contacts grouped by first letter of sort name.
+    /// Returns contacts grouped by first letter of sort name (A–Z).
     private var groupedAlpha: [(key: String, contacts: [Contact])] {
-        let ascending = sortMode != .nameZA
-
         let sorted = filteredContacts.sorted { a, b in
-            let nameA = sortKey(for: a)
-            let nameB = sortKey(for: b)
-            return ascending ? nameA < nameB : nameA > nameB
+            sortKey(for: a) < sortKey(for: b)
         }
 
         let grouped = Dictionary(grouping: sorted) { contact -> String in
@@ -93,11 +89,19 @@ struct ContactsView: View {
             return upper.rangeOfCharacter(from: .letters) != nil ? upper : "#"
         }
 
-        // Sort group keys to match ascending/descending
-        let sortedKeys = grouped.keys.sorted { ascending ? $0 < $1 : $0 > $1 }
+        let sortedKeys = grouped.keys.sorted()
         return sortedKeys.compactMap { key in
             guard let contacts = grouped[key] else { return nil }
             return (key: key, contacts: contacts)
+        }
+    }
+
+    /// Returns contacts sorted by modified date, newest first (no grouping).
+    private var sortedByNewest: [Contact] {
+        filteredContacts.sorted { a, b in
+            let dateA = a.localModifiedAt ?? a.airtableModifiedAt ?? .distantPast
+            let dateB = b.localModifiedAt ?? b.airtableModifiedAt ?? .distantPast
+            return dateA > dateB
         }
     }
 
@@ -217,7 +221,8 @@ struct ContactsView: View {
     private var contactList: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
-                if sortMode == .company {
+                switch sortMode {
+                case .company:
                     ForEach(groupedByCompany, id: \.key) { group in
                         Section {
                             ForEach(group.contacts, id: \.id) { contact in
@@ -227,7 +232,7 @@ struct ContactsView: View {
                             groupHeader(title: group.key, count: group.contacts.count)
                         }
                     }
-                } else {
+                case .nameAZ:
                     ForEach(groupedAlpha, id: \.key) { group in
                         Section {
                             ForEach(group.contacts, id: \.id) { contact in
@@ -236,6 +241,10 @@ struct ContactsView: View {
                         } header: {
                             groupHeader(title: group.key, count: group.contacts.count)
                         }
+                    }
+                case .newest:
+                    ForEach(sortedByNewest, id: \.id) { contact in
+                        contactRow(contact)
                     }
                 }
             }

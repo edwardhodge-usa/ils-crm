@@ -7,33 +7,54 @@ import Combine
 /// Features:
 /// - List + detail split (HStack with ~380pt left pane)
 /// - Searchable list with project name and notes filtering
-/// - Sort dropdown: Name A-Z / Name Z-A
+/// - Sort dropdown: Name A–Z, Status, Company, Newest First (persisted via AppStorage)
 /// - Status badge per row
 /// - Inline detail pane (ProjectDetailView) or EmptyStateView when none selected
 ///
 /// Electron hooks: useEntityList('projects')
 
-// MARK: - Sort Order
-
-enum ProjectSortOrder: String, CaseIterable, CustomStringConvertible {
-    case nameAZ = "Name A-Z"
-    case nameZA = "Name Z-A"
-
-    var description: String { rawValue }
-}
-
 // MARK: - ProjectsView
 
 struct ProjectsView: View {
     @Query private var projects: [Project]
+    @Query private var companies: [Company]
     @State private var searchText = ""
-    @State private var sortOrder: ProjectSortOrder = .nameAZ
+    @AppStorage("sort-projects") private var sortBy: String = "name"
     @State private var selectedProject: Project?
     @State private var showNewProject = false
     @State private var showEditProject = false
     @State private var showDeleteConfirm = false
 
     @Environment(\.modelContext) private var modelContext
+
+    // MARK: - Sort Label
+
+    private var sortLabel: String {
+        switch sortBy {
+        case "status": return "Status"
+        case "company": return "Company"
+        case "newest": return "Newest First"
+        default: return "Name A–Z"
+        }
+    }
+
+    // MARK: - Company Lookup
+
+    /// Build a map of company ID → company name for sorting by company.
+    private var companyNameMap: [String: String] {
+        Dictionary(uniqueKeysWithValues: companies.compactMap { co in
+            guard let name = co.companyName else { return nil }
+            return (co.id, name)
+        })
+    }
+
+    /// Returns the first linked company name for a project (used for sort grouping).
+    private func companyName(for project: Project) -> String {
+        for cid in project.clientIds {
+            if let name = companyNameMap[cid] { return name }
+        }
+        return ""
+    }
 
     // MARK: - Filtered & Sorted Data
 
@@ -51,11 +72,23 @@ struct ProjectsView: View {
             }
         }
 
-        switch sortOrder {
-        case .nameAZ:
-            return filtered.sorted { ($0.projectName ?? "").localizedCaseInsensitiveCompare($1.projectName ?? "") == .orderedAscending }
-        case .nameZA:
-            return filtered.sorted { ($0.projectName ?? "").localizedCaseInsensitiveCompare($1.projectName ?? "") == .orderedDescending }
+        switch sortBy {
+        case "status":
+            return filtered.sorted {
+                ($0.status ?? "").localizedCaseInsensitiveCompare($1.status ?? "") == .orderedAscending
+            }
+        case "company":
+            return filtered.sorted {
+                companyName(for: $0).localizedCaseInsensitiveCompare(companyName(for: $1)) == .orderedAscending
+            }
+        case "newest":
+            return filtered.sorted {
+                ($0.airtableModifiedAt ?? .distantPast) > ($1.airtableModifiedAt ?? .distantPast)
+            }
+        default: // "name"
+            return filtered.sorted {
+                ($0.projectName ?? "").localizedCaseInsensitiveCompare($1.projectName ?? "") == .orderedAscending
+            }
         }
     }
 
@@ -119,7 +152,23 @@ struct ProjectsView: View {
                 .background(Color(.textBackgroundColor).opacity(0.5))
                 .clipShape(RoundedRectangle(cornerRadius: 6))
 
-                SortDropdown(options: ProjectSortOrder.allCases, selection: $sortOrder)
+                Menu {
+                    Button("Name A–Z") { sortBy = "name" }
+                    Button("Status") { sortBy = "status" }
+                    Button("Company") { sortBy = "company" }
+                    Button("Newest First") { sortBy = "newest" }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(sortLabel)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)

@@ -2,17 +2,6 @@ import SwiftUI
 import SwiftData
 import Combine
 
-// MARK: - ProposalSortMode
-
-enum ProposalSortMode: String, CaseIterable, CustomStringConvertible {
-    case nameAZ    = "Name A–Z"
-    case nameZA    = "Name Z–A"
-    case newest    = "Newest First"
-    case oldest    = "Oldest First"
-
-    var description: String { rawValue }
-}
-
 // MARK: - ProposalsView
 
 /// Proposals list + inline detail — mirrors src/components/proposals/ProposalListPage.tsx
@@ -20,35 +9,93 @@ enum ProposalSortMode: String, CaseIterable, CustomStringConvertible {
 /// Layout: fixed 380pt list panel | Divider | flex detail panel
 struct ProposalsView: View {
     @Query(sort: \Proposal.proposalName) private var proposals: [Proposal]
+    @Query private var allCompanies: [Company]
 
     @State private var searchText = ""
     @State private var selectedProposal: Proposal?
-    @State private var sortMode: ProposalSortMode = .nameAZ
+    @AppStorage("sort-proposals") private var sortBy: String = "name"
     @State private var showNewProposal = false
 
-    // MARK: - Filtered Data
+    // MARK: - Sort Label
+
+    private var sortLabel: String {
+        switch sortBy {
+        case "status": return "Status"
+        case "company": return "Company"
+        case "value": return "Value High→Low"
+        case "newest": return "Newest First"
+        default: return "Name A–Z"
+        }
+    }
+
+    // MARK: - Company Name Lookup
+
+    /// Build a dictionary of company ID → name for sorting proposals by company.
+    private var companyNameMap: [String: String] {
+        Dictionary(uniqueKeysWithValues: allCompanies.compactMap { company in
+            guard !company.id.isEmpty else { return nil }
+            return (company.id, company.companyName ?? "")
+        })
+    }
+
+    /// Returns the first resolved company name for a proposal, or empty string.
+    private func companyName(for proposal: Proposal) -> String {
+        for companyId in proposal.companyIds {
+            if let name = companyNameMap[companyId], !name.isEmpty {
+                return name
+            }
+        }
+        return ""
+    }
+
+    // MARK: - Filtered & Sorted Data
 
     private var filteredProposals: [Proposal] {
         let base: [Proposal]
         if searchText.isEmpty {
-            base = proposals
+            base = Array(proposals)
         } else {
-            let query = searchText.lowercased()
+            let query = searchText
             base = proposals.filter { proposal in
-                (proposal.proposalName?.lowercased().contains(query) ?? false)
-                    || (proposal.notes?.lowercased().contains(query) ?? false)
+                (proposal.proposalName?.localizedCaseInsensitiveContains(query) ?? false)
+                    || (proposal.notes?.localizedCaseInsensitiveContains(query) ?? false)
             }
         }
 
-        switch sortMode {
-        case .nameAZ:
+        switch sortBy {
+        case "status":
+            return base.sorted {
+                let a = $0.status ?? ""
+                let b = $1.status ?? ""
+                if a == b { return ($0.proposalName ?? "") < ($1.proposalName ?? "") }
+                if a.isEmpty { return false }
+                if b.isEmpty { return true }
+                return a < b
+            }
+        case "company":
+            return base.sorted {
+                let a = companyName(for: $0)
+                let b = companyName(for: $1)
+                if a == b { return ($0.proposalName ?? "") < ($1.proposalName ?? "") }
+                if a.isEmpty { return false }
+                if b.isEmpty { return true }
+                return a < b
+            }
+        case "value":
+            return base.sorted {
+                let a = $0.proposedValue ?? 0
+                let b = $1.proposedValue ?? 0
+                if a == b { return ($0.proposalName ?? "") < ($1.proposalName ?? "") }
+                return a > b  // Descending — high to low
+            }
+        case "newest":
+            return base.sorted {
+                let a = $0.airtableModifiedAt ?? $0.localModifiedAt ?? .distantPast
+                let b = $1.airtableModifiedAt ?? $1.localModifiedAt ?? .distantPast
+                return a > b
+            }
+        default: // "name"
             return base.sorted { ($0.proposalName ?? "") < ($1.proposalName ?? "") }
-        case .nameZA:
-            return base.sorted { ($0.proposalName ?? "") > ($1.proposalName ?? "") }
-        case .newest:
-            return base.sorted { ($0.dateSent ?? .distantPast) > ($1.dateSent ?? .distantPast) }
-        case .oldest:
-            return base.sorted { ($0.dateSent ?? .distantPast) < ($1.dateSent ?? .distantPast) }
         }
     }
 
@@ -98,10 +145,24 @@ struct ProposalsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    SortDropdown(
-                        options: ProposalSortMode.allCases,
-                        selection: $sortMode
-                    )
+                    Menu {
+                        Button("Name A–Z") { sortBy = "name" }
+                        Button("Status") { sortBy = "status" }
+                        Button("Company") { sortBy = "company" }
+                        Button("Value High→Low") { sortBy = "value" }
+                        Button("Newest First") { sortBy = "newest" }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(sortLabel)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
