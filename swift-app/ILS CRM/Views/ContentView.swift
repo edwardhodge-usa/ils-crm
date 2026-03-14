@@ -179,6 +179,7 @@ struct ContentView: View {
             }
         }
         .listStyle(.sidebar)
+        .accessibilityIdentifier("sidebar")
         .searchable(text: $sidebarSearchText, placement: .sidebar, prompt: "Filter")
         .safeAreaInset(edge: .bottom, spacing: 0) {
             settingsFooter
@@ -190,6 +191,7 @@ struct ContentView: View {
             ForEach(items, id: \.self) { item in
                 Label(item.title, systemImage: item.icon)
                     .tag(item)
+                    .accessibilityIdentifier("nav_\(item.rawValue)")
             }
         } header: {
             Text(title)

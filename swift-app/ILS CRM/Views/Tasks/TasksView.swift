@@ -278,6 +278,7 @@ struct TasksView: View {
                     .padding(.bottom, 12)
             }
         }
+        .accessibilityIdentifier("categories_column")
     }
 
     @ViewBuilder
@@ -317,6 +318,7 @@ struct TasksView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(name == nil ? "assignee_all" : "assignee_\(name!)")
     }
 
     // MARK: - Smart Lists & Type Row Helpers
@@ -367,6 +369,7 @@ struct TasksView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("smartlist_\(name.lowercased().replacingOccurrences(of: " ", with: "_"))")
     }
 
     @ViewBuilder
@@ -402,6 +405,7 @@ struct TasksView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("type_\(name.lowercased().replacingOccurrences(of: " ", with: "_"))")
     }
 
     // MARK: - Column 2: Task List
@@ -426,6 +430,7 @@ struct TasksView: View {
                 TextField("Search tasks...", text: $searchText)
                     .font(.system(size: 13))
                     .textFieldStyle(.plain)
+                    .accessibilityIdentifier("task_search")
                 if !searchText.isEmpty {
                     Button {
                         searchText = ""
@@ -495,6 +500,7 @@ struct TasksView: View {
                 }
             }
         }
+        .accessibilityIdentifier("task_list")
     }
 
     @ViewBuilder
