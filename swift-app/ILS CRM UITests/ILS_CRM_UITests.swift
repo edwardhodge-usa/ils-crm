@@ -145,6 +145,37 @@ final class ILS_CRM_UITests: XCTestCase {
         }
     }
 
+    // MARK: - Detail View Screenshots
+
+    /// Navigate to Tasks and Client Portal tabs and screenshot each detail view.
+    func testDetailViewScreenshots() throws {
+        // Navigate to Tasks and screenshot detail
+        guard let tasksNav = element("nav_tasks") else {
+            XCTFail("Tasks nav item not found")
+            return
+        }
+        tasksNav.tap()
+        sleep(1)
+        let taskScreenshot = app.screenshot()
+        let taskAttachment = XCTAttachment(screenshot: taskScreenshot)
+        taskAttachment.name = "tasks-detail-view"
+        taskAttachment.lifetime = .keepAlways
+        add(taskAttachment)
+
+        // Navigate to Client Portal and screenshot
+        guard let portalNav = element("nav_clientPortal") else {
+            XCTFail("Client Portal nav item not found")
+            return
+        }
+        portalNav.tap()
+        sleep(1)
+        let portalScreenshot = app.screenshot()
+        let portalAttachment = XCTAttachment(screenshot: portalScreenshot)
+        portalAttachment.name = "client-portal-view"
+        portalAttachment.lifetime = .keepAlways
+        add(portalAttachment)
+    }
+
     // MARK: - Element Existence
 
     /// Probe element types to find how SwiftUI exposes sidebar items.

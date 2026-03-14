@@ -257,23 +257,22 @@ struct TaskDetailView: View {
         }
     }
 
-    // Linked record ID arrays converted to display labels.
-    // Until names are resolved via join queries, show abbreviated IDs as placeholders.
+    // Linked record ID arrays resolved to display names via SwiftData lookups.
     private var salesOpportunityLabels: [String] {
-        task.salesOpportunitiesIds.map { abbreviate($0) }
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return task.salesOpportunitiesIds.compactMap { resolver.opportunityName(id: $0) }
     }
     private var contactLabels: [String] {
-        task.contactsIds.map { abbreviate($0) }
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return task.contactsIds.compactMap { resolver.contactName(id: $0) }
     }
     private var projectLabels: [String] {
-        task.projectsIds.map { abbreviate($0) }
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return task.projectsIds.compactMap { resolver.projectName(id: $0) }
     }
     private var proposalLabels: [String] {
-        task.proposalIds.map { abbreviate($0) }
-    }
-
-    private func abbreviate(_ id: String) -> String {
-        id.count > 10 ? "rec" + id.suffix(6) : id
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return task.proposalIds.compactMap { resolver.proposalName(id: $0) }
     }
 
     // MARK: - Action Buttons

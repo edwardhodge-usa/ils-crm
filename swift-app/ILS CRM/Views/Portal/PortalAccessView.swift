@@ -21,6 +21,8 @@ struct PortalAccessView: View {
     @State private var viewMode: PortalViewMode = .all
     @State private var selectedPage: String?
     @State private var selectedAccessRecord: PortalAccessRecord?
+    @State private var showGrantAccess = false
+    @State private var healthService = FramerHealthService()
 
     // MARK: - Filtered Data
 
@@ -143,6 +145,43 @@ struct PortalAccessView: View {
 
     private var pageListSidebar: some View {
         VStack(spacing: 0) {
+            // Health summary bar
+            HStack(spacing: 8) {
+                if healthService.isChecking {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Checking...")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                } else if !healthService.healthMap.isEmpty {
+                    Circle().fill(.green).frame(width: 6, height: 6)
+                    Text("\(healthService.liveCount) Live")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                    Circle().fill(.red).frame(width: 6, height: 6)
+                    Text("\(healthService.errorCount) Error")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Button {
+                    Task { await healthService.checkHealth(slugs: allPageAddresses) }
+                } label: {
+                    Label("Check Health", systemImage: "heart.text.square")
+                        .font(.system(size: 11))
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+                .disabled(healthService.isChecking)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Color(nsColor: .controlBackgroundColor))
+
+            Divider()
+
             ScrollView {
                 VStack(spacing: 1) {
                     ForEach(Array(groupedByPage.enumerated()), id: \.element.pageAddress) { index, group in
@@ -163,6 +202,12 @@ struct PortalAccessView: View {
                                     .lineLimit(1)
 
                                 Spacer()
+
+                                // Health status dot
+                                Circle()
+                                    .fill(healthDotColor(for: group.pageAddress))
+                                    .frame(width: 8, height: 8)
+                                    .help(healthService.healthMap[group.pageAddress]?.rawValue.capitalized ?? "Unchecked")
 
                                 Text("\(group.records.count)")
                                     .font(.system(size: 10, weight: .semibold))
@@ -325,15 +370,31 @@ struct PortalAccessView: View {
                         .padding(.bottom, 12)
                     }
 
-                    // Section header
-                    Text("PEOPLE WITH ACCESS (\(pageRecords.count))")
-                        .font(.system(size: 11, weight: .bold))
-                        .tracking(0.5)
-                        .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 12)
-                        .padding(.bottom, 8)
+                    // Section header + Grant Access button
+                    HStack {
+                        Text("PEOPLE WITH ACCESS (\(pageRecords.count))")
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(0.5)
+                            .foregroundStyle(.secondary)
+                            .textCase(.uppercase)
+
+                        Spacer()
+
+                        Button {
+                            showGrantAccess = true
+                        } label: {
+                            Label("Grant Access", systemImage: "person.badge.plus")
+                                .font(.system(size: 11))
+                        }
+                        .buttonStyle(.borderless)
+                        .controlSize(.small)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .padding(.bottom, 8)
+                    .sheet(isPresented: $showGrantAccess) {
+                        GrantAccessSheet(pageAddress: pageAddress)
+                    }
 
                     // Access records list
                     VStack(spacing: 0) {
@@ -575,6 +636,23 @@ struct PortalAccessView: View {
             return .red
         }
         return .secondary
+    }
+
+    // MARK: - Health Helpers
+
+    /// All unique page addresses from records (for health checking).
+    private var allPageAddresses: [String] {
+        let addresses = Set(filteredRecords.compactMap { $0.pageAddress }.filter { !$0.isEmpty })
+        return Array(addresses).sorted()
+    }
+
+    /// Color for a health status dot.
+    private func healthDotColor(for slug: String) -> Color {
+        switch healthService.healthMap[slug] {
+        case .live: return .green
+        case .error: return .red
+        case .unchecked, .none: return .gray
+        }
     }
 }
 

@@ -55,6 +55,20 @@ struct ProposalDetailView: View {
         proposal.isPendingPush = true
     }
 
+    // Linked record ID arrays resolved to display names via SwiftData lookups.
+    private var resolvedCompanyNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return proposal.companyIds.compactMap { resolver.companyName(id: $0) }
+    }
+    private var resolvedClientNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return proposal.clientIds.compactMap { resolver.contactName(id: $0) }
+    }
+    private var resolvedOpportunityNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return proposal.relatedOpportunityIds.compactMap { resolver.opportunityName(id: $0) }
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -159,17 +173,17 @@ struct ProposalDetailView: View {
                 DetailSection(title: "RELATED") {
                     RelatedRecordRow(
                         label: "Companies",
-                        items: [],
+                        items: resolvedCompanyNames,
                         onAdd: nil
                     )
                     RelatedRecordRow(
                         label: "Contacts",
-                        items: [],
+                        items: resolvedClientNames,
                         onAdd: nil
                     )
                     RelatedRecordRow(
                         label: "Opportunities",
-                        items: [],
+                        items: resolvedOpportunityNames,
                         onAdd: nil
                     )
                 }

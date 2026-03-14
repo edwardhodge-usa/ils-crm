@@ -15,6 +15,7 @@ struct ProjectDetailView: View {
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
 
+    @Environment(\.modelContext) private var modelContext
     @State private var showDeleteConfirm = false
 
     // MARK: - Formatters
@@ -36,6 +37,17 @@ struct ProjectDetailView: View {
     private var formattedContractValue: String {
         guard let value = project.contractValue else { return "—" }
         return Self.currencyFormatter.string(from: NSNumber(value: value)) ?? "—"
+    }
+
+    // Linked record ID arrays resolved to display names via SwiftData lookups.
+    private var resolvedContactNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        let allContactIds = project.contactsIds + project.primaryContactIds.filter { !project.contactsIds.contains($0) }
+        return allContactIds.compactMap { resolver.contactName(id: $0) }
+    }
+    private var resolvedOpportunityNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return project.salesOpportunitiesIds.compactMap { resolver.opportunityName(id: $0) }
     }
 
     // MARK: - Save Field
@@ -120,12 +132,12 @@ struct ProjectDetailView: View {
                 DetailSection(title: "RELATED") {
                     RelatedRecordRow(
                         label: "Contacts",
-                        items: [],
+                        items: resolvedContactNames,
                         onAdd: {}
                     )
                     RelatedRecordRow(
                         label: "Opportunities",
-                        items: [],
+                        items: resolvedOpportunityNames,
                         onAdd: {}
                     )
                 }

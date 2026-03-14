@@ -316,6 +316,32 @@ struct OpportunityDetailView: View {
 
     // MARK: - Linked Records
 
+    // Linked record ID arrays resolved to display names via SwiftData lookups.
+    private var resolvedCompanyNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return opportunity.companyIds.compactMap { resolver.companyName(id: $0) }
+    }
+    private var resolvedContactNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return opportunity.associatedContactIds.compactMap { resolver.contactName(id: $0) }
+    }
+    private var resolvedTaskNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return opportunity.tasksIds.compactMap { resolver.taskName(id: $0) }
+    }
+    private var resolvedProjectNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return opportunity.projectIds.compactMap { resolver.projectName(id: $0) }
+    }
+    private var resolvedProposalNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return opportunity.proposalsIds.compactMap { resolver.proposalName(id: $0) }
+    }
+    private var resolvedInteractionNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return opportunity.interactionsIds.compactMap { resolver.interactionSubject(id: $0) }
+    }
+
     @ViewBuilder
     private var linkedRecordsSection: some View {
         let hasCompanies = !opportunity.companyIds.isEmpty
@@ -332,37 +358,37 @@ struct OpportunityDetailView: View {
                     if hasCompanies {
                         RelatedRecordRow(
                             label: "Companies",
-                            items: opportunity.companyIds.map { abbreviate($0) }
+                            items: resolvedCompanyNames
                         )
                     }
                     if hasContacts {
                         RelatedRecordRow(
                             label: "Contacts",
-                            items: opportunity.associatedContactIds.map { abbreviate($0) }
+                            items: resolvedContactNames
                         )
                     }
                     if hasTasks {
                         RelatedRecordRow(
                             label: "Tasks",
-                            items: opportunity.tasksIds.map { abbreviate($0) }
+                            items: resolvedTaskNames
                         )
                     }
                     if hasProjects {
                         RelatedRecordRow(
                             label: "Projects",
-                            items: opportunity.projectIds.map { abbreviate($0) }
+                            items: resolvedProjectNames
                         )
                     }
                     if hasProposals {
                         RelatedRecordRow(
                             label: "Proposals",
-                            items: opportunity.proposalsIds.map { abbreviate($0) }
+                            items: resolvedProposalNames
                         )
                     }
                     if hasInteractions {
                         RelatedRecordRow(
                             label: "Interactions",
-                            items: opportunity.interactionsIds.map { abbreviate($0) }
+                            items: resolvedInteractionNames
                         )
                     }
                 }
@@ -404,10 +430,6 @@ struct OpportunityDetailView: View {
     }
 
     // MARK: - Helpers
-
-    private func abbreviate(_ id: String) -> String {
-        id.count > 10 ? "rec" + id.suffix(6) : id
-    }
 
     /// Whether the current stage is Closed Won or Closed Lost.
     private var isClosedStage: Bool {
