@@ -18,6 +18,8 @@ struct PortalAccessView: View {
     @State private var searchText = ""
     @State private var selectedRecord: PortalAccessRecord?
     @State private var viewMode: PortalViewMode = .all
+    @State private var selectedPage: String?
+    @State private var selectedAccessRecord: PortalAccessRecord?
 
     // MARK: - Filtered Data
 
@@ -97,32 +99,229 @@ struct PortalAccessView: View {
         .listStyle(.inset)
     }
 
-    // MARK: - By Page List
+    // MARK: - By Page (Dual-Pane)
+
+    /// Color palette for page dots — deterministic by index.
+    private static let pageDotColors: [Color] = [
+        .blue, .green, .orange, .purple, .red, .teal, .pink, .indigo
+    ]
 
     private var byPageList: some View {
-        let grouped = Dictionary(grouping: filteredRecords) { $0.pageAddress ?? "No Page" }
-        let sortedKeys = grouped.keys.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        HStack(spacing: 0) {
+            pageListSidebar
+                .frame(width: 260)
+            Divider()
+            pageDetailPane
+        }
+        .sheet(item: $selectedAccessRecord) { record in
+            PortalAccessDetailView(record: record)
+                .frame(minWidth: 480, minHeight: 600)
+        }
+    }
 
-        return List {
-            ForEach(sortedKeys, id: \.self) { pageAddress in
-                let records = grouped[pageAddress] ?? []
-                Section {
-                    ForEach(records, id: \.id) { record in
-                        Button { selectedRecord = record } label: { recordRow(record) }
-                            .buttonStyle(.plain)
+    /// Grouped page data derived from filteredRecords.
+    private var groupedByPage: [(pageAddress: String, records: [PortalAccessRecord])] {
+        let grouped = Dictionary(grouping: filteredRecords) { $0.pageAddress ?? "No Page" }
+        return grouped.keys
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+            .map { (pageAddress: $0, records: grouped[$0] ?? []) }
+    }
+
+    /// Best display name for a page address — first record's name or company, else pageAddress.
+    private func pageDisplayName(for pageAddress: String, records: [PortalAccessRecord]) -> String {
+        if let first = records.first {
+            if let name = first.name, !name.isEmpty { return name }
+            if let company = first.company, !company.isEmpty { return company }
+            if let lookup = first.contactNameLookup, !lookup.isEmpty { return lookup }
+            if let companyLookup = first.contactCompanyLookup, !companyLookup.isEmpty { return companyLookup }
+        }
+        return pageAddress
+    }
+
+    // MARK: - Page List Sidebar
+
+    private var pageListSidebar: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 1) {
+                    ForEach(Array(groupedByPage.enumerated()), id: \.element.pageAddress) { index, group in
+                        let isSelected = selectedPage == group.pageAddress
+                        let dotColor = Self.pageDotColors[index % Self.pageDotColors.count]
+
+                        Button {
+                            selectedPage = group.pageAddress
+                        } label: {
+                            HStack(spacing: 10) {
+                                Circle()
+                                    .fill(dotColor)
+                                    .frame(width: 8, height: 8)
+
+                                Text(pageDisplayName(for: group.pageAddress, records: group.records))
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(isSelected ? .white : .primary)
+                                    .lineLimit(1)
+
+                                Spacer()
+
+                                Text("\(group.records.count)")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundStyle(isSelected ? .white.opacity(0.85) : .secondary)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(
+                                        Capsule()
+                                            .fill(isSelected ? Color.white.opacity(0.2) : Color.secondary.opacity(0.12))
+                                    )
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(isSelected ? Color.accentColor : Color.clear)
+                            )
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("page_\(group.pageAddress)")
                     }
-                } header: {
-                    HStack {
-                        Image(systemName: "doc.text")
-                        Text(pageAddress)
-                        Spacer()
-                        Text("\(records.count)")
-                            .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
+            }
+
+            Divider()
+
+            Text("\(groupedByPage.count) Pages")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+        }
+        .background(Color(nsColor: .controlBackgroundColor))
+    }
+
+    // MARK: - Page Detail Pane
+
+    private var pageDetailPane: some View {
+        Group {
+            if let page = selectedPage {
+                let pageRecords = filteredRecords.filter { ($0.pageAddress ?? "No Page") == page }
+                if pageRecords.isEmpty {
+                    EmptyStateView(
+                        title: "No records",
+                        description: "No access records match the current search for this page.",
+                        systemImage: "doc.text"
+                    )
+                } else {
+                    pageDetailContent(pageAddress: page, pageRecords: pageRecords)
+                }
+            } else {
+                EmptyStateView(
+                    title: "Select a page",
+                    description: "Choose a page to view access details.",
+                    systemImage: "doc.text"
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func pageDetailContent(pageAddress: String, pageRecords: [PortalAccessRecord]) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            VStack(alignment: .leading, spacing: 4) {
+                Text(pageDisplayName(for: pageAddress, records: pageRecords))
+                    .font(.system(size: 15, weight: .bold))
+                Text(pageAddress)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+
+            Divider()
+
+            // Section header
+            Text("PEOPLE WITH ACCESS (\(pageRecords.count))")
+                .font(.system(size: 11, weight: .bold))
+                .tracking(0.5)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+
+            // Access records list
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(pageRecords, id: \.id) { record in
+                        Button {
+                            selectedAccessRecord = record
+                        } label: {
+                            HStack(spacing: 10) {
+                                AvatarView(name: displayName(for: record), avatarSize: .small)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(displayName(for: record))
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(1)
+
+                                    if let subtitle = personSubtitle(for: record) {
+                                        Text(subtitle)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                    }
+                                }
+
+                                Spacer()
+
+                                if let stage = record.stage, !stage.isEmpty {
+                                    StatusBadge(text: stage, color: stageColor(stage))
+                                }
+
+                                if let dateAdded = record.dateAdded {
+                                    Text(dateAdded.formatted(date: .abbreviated, time: .omitted))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+
+                        Divider()
+                            .padding(.leading, 54)
                     }
                 }
             }
         }
-        .listStyle(.inset)
+    }
+
+    /// Subtitle for a person row in page detail: email or company.
+    private func personSubtitle(for record: PortalAccessRecord) -> String? {
+        if let email = record.email ?? record.contactEmailLookup, !email.isEmpty {
+            return email
+        }
+        if let company = record.company ?? record.contactCompanyLookup, !company.isEmpty {
+            return company
+        }
+        return nil
+    }
+
+    /// Stage color for badges in detail pane.
+    private func stageColor(_ stage: String) -> Color {
+        let lower = stage.lowercased()
+        if lower.contains("live") { return .green }
+        if lower.contains("build") || lower.contains("design") { return .blue }
+        if lower.contains("onboard") { return .teal }
+        if lower.contains("prospect") || lower.contains("lead") { return .orange }
+        if lower.contains("closed") || lower.contains("lost") { return .red }
+        return .secondary
     }
 
     // MARK: - By Person List
