@@ -133,6 +133,8 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-12** - Airtable REST API returns field **names** as keys by default, not field **IDs** → Swift converters use field IDs (e.g. `fldMkz6x5i8YaofZj`), so `fetchAllRecords` must include `returnFieldsByFieldId=true` query parameter. Without it, all fields parse as nil (records sync with correct count but every property is empty). The Electron app uses field names in converters so it doesn't hit this — but the Swift app was designed around field IDs for schema consistency
 **2026-03-12** - Pipeline hardcoded 7 stage names that didn't match Airtable's actual 11 options (e.g. "Qualified" vs "Qualification", missing "Meeting Scheduled", "Initial Contact", etc.) → Always check Airtable field schema metadata API for actual select option values before hardcoding. Both Electron `stages.ts` and Swift `stages` array were out of date
 **2026-03-12** - Swift `String(format: "$%,.0f", value)` produces literal "$,.0f" — the `,` flag for digit grouping is not supported in Swift's String(format:) → Use `NumberFormatter` with `.currency` style and `maximumFractionDigits = 0` instead
+**2026-03-13** - Swift ListHeader used `.title2` (22pt) while Electron uses 15px → Shared components must use explicit `.system(size:)` fonts matching Electron, not semantic SwiftUI fonts. Semantic fonts (.title2, .headline, .subheadline) are unpredictable sizes
+**2026-03-13** - Swift `onTapGesture` inside `ScrollView` unreliable for category filters → Use `Button` with `.buttonStyle(.plain)` instead. Also clear `selectedTask = nil` on filter change (matches Electron `setSelectedId(null)`)
 
 ## Deployment Process
 
