@@ -87,6 +87,15 @@ struct ContentView: View {
             detailView
         }
         .frame(minWidth: 900, minHeight: 600)
+        .onAppear {
+            // Auto-configure sync from Keychain on launch (matches Electron behavior)
+            if let storedKey = KeychainService.read() {
+                let baseId = UserDefaults.standard.string(forKey: "airtable_base_id") ?? AirtableConfig.baseId
+                syncEngine.configure(apiKey: storedKey, baseId: baseId)
+                let interval = UserDefaults.standard.double(forKey: "sync_interval_seconds")
+                syncEngine.startPolling(intervalSeconds: interval > 0 ? interval : AirtableConfig.defaultSyncIntervalSeconds)
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .automatic) {
                 syncStatusView
@@ -126,33 +135,31 @@ struct ContentView: View {
 
     @ViewBuilder
     private var syncStatusView: some View {
-        if syncEngine.isSyncing {
-            HStack(spacing: 6) {
+        Button {
+            Task { await syncEngine.forceSync() }
+        } label: {
+            if syncEngine.isSyncing {
                 ProgressView()
                     .controlSize(.small)
-                Text("Syncing…")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        } else if let lastSync = syncEngine.lastSyncDate {
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(syncEngine.syncError != nil ? Color.red : Color.green)
-                    .frame(width: 7, height: 7)
-                Text(lastSync, style: .relative)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        } else {
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(Color.gray)
-                    .frame(width: 7, height: 7)
-                Text("Not synced")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            } else {
+                Image(systemName: syncEngine.syncError != nil
+                      ? "exclamationmark.arrow.triangle.2.circlepath"
+                      : "arrow.triangle.2.circlepath")
             }
         }
+        .disabled(syncEngine.isSyncing)
+        .help(syncHelpText)
+    }
+
+    private var syncHelpText: String {
+        if syncEngine.isSyncing { return "Syncing…" }
+        if let error = syncEngine.syncError { return "Sync error: \(error)" }
+        if let lastSync = syncEngine.lastSyncDate {
+            let formatter = RelativeDateTimeFormatter()
+            formatter.unitsStyle = .abbreviated
+            return "Last synced \(formatter.localizedString(for: lastSync, relativeTo: Date())) — click to sync"
+        }
+        return "Not synced — click to sync"
     }
 
     // MARK: - Sidebar

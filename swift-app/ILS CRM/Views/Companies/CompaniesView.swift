@@ -253,7 +253,7 @@ struct CompaniesView: View {
 
     private func companyRow(_ company: Company) -> some View {
         HStack(spacing: 10) {
-            AvatarView(name: company.companyName ?? "?", avatarSize: .medium)
+            AvatarView(name: company.companyName ?? "?", avatarSize: .medium, photoURL: company.logoUrl.flatMap { URL(string: $0) }, shape: .roundedRect)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(company.companyName ?? "Unknown")

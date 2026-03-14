@@ -281,7 +281,8 @@ struct ContactsView: View {
             HStack(spacing: 10) {
                 AvatarView(
                     name: contact.contactName ?? "?",
-                    avatarSize: .medium
+                    avatarSize: .medium,
+                    photoURL: contact.contactPhotoUrl.flatMap { URL(string: $0) }
                 )
 
                 VStack(alignment: .leading, spacing: 2) {

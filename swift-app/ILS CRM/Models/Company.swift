@@ -29,6 +29,9 @@ final class Company {
     var industry: String?         // fldPz4rknFpmEXZAD
     var leadSource: String?       // fldSPGKJKbHclLzoD
 
+    // Attachment URLs (read-only)
+    var logoUrl: String?              // fldhCu5ooToK84g4G
+
     // Linked Record IDs
     var salesOpportunitiesIds: [String]  // fldbvXQ26UDd3SHAB → Opportunities
     var projectsIds: [String]            // fldtgQEptCxvaaAzk → Projects

@@ -69,6 +69,9 @@ final class Contact {
     // MARK: - Checkbox
     var syncToContacts: Bool          // fldxbLMAKgqeawWkw
 
+    // MARK: - Attachment URLs (read-only, extracted from Airtable attachment arrays)
+    var contactPhotoUrl: String?      // fldl1WOfz7vHNSOUd
+
     // MARK: - Linked Record IDs (stored as [String] — Airtable record IDs)
     var specialtiesIds: [String]             // fldPgiO2nKgcujeXz → Specialties
     var proposalsIds: [String]               // fldPxLDh74yCpYwuF → Proposals

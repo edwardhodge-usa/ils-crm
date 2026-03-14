@@ -16,10 +16,29 @@ struct DetailHeader: View {
     var subtitle: String? = nil
     var actionLabel: String? = nil
     var actionURL: String? = nil
+    var photoURL: URL? = nil
+    var isCompany: Bool = false
+    var isUploading: Bool = false
+    var websiteDomain: String? = nil
+    var onPhotoSelected: ((Data) -> Void)? = nil
+    var onPhotoRemoved: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 8) {
-            AvatarView(name: name, size: AvatarSize.large.dimension)
+            if onPhotoSelected != nil {
+                EditableAvatarView(
+                    name: name,
+                    size: AvatarSize.large.dimension,
+                    photoURL: photoURL,
+                    shape: isCompany ? .roundedRect : .circle,
+                    isUploading: isUploading,
+                    websiteDomain: websiteDomain,
+                    onPhotoSelected: onPhotoSelected,
+                    onPhotoRemoved: onPhotoRemoved
+                )
+            } else {
+                AvatarView(name: name, size: AvatarSize.large.dimension, photoURL: photoURL, shape: isCompany ? .roundedRect : .circle)
+            }
 
             Text(name)
                 .font(.title2)

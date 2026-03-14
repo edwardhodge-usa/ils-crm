@@ -21,7 +21,9 @@ struct CompanyDetailView: View {
 
     @State private var showEdit = false
     @State private var showDeleteConfirm = false
+    @State private var isUploadingLogo = false
     @Environment(\.modelContext) private var modelContext
+    @Environment(SyncEngine.self) private var syncEngine
 
     @Query private var allOpportunities: [Opportunity]
 
@@ -111,10 +113,17 @@ struct CompanyDetailView: View {
                     name: company.companyName ?? "Unknown",
                     subtitle: locationSubtitle.isEmpty ? nil : locationSubtitle,
                     actionLabel: websiteURL != nil ? "Website" : nil,
-                    actionURL: websiteURL
+                    actionURL: websiteURL,
+                    photoURL: company.logoUrl.flatMap { URL(string: $0) },
+                    isCompany: true,
+                    isUploading: isUploadingLogo,
+                    websiteDomain: company.website,
+                    onPhotoSelected: { data in uploadCompanyLogo(data) },
+                    onPhotoRemoved: { removeCompanyLogo() }
                 )
                 .padding(.horizontal, 20)
                 .padding(.bottom, 16)
+                .id(company.logoUrl) // Force re-render when logo URL changes after sync
 
                 // Stats Row
                 StatsRow(items: [
@@ -378,6 +387,44 @@ struct CompanyDetailView: View {
                 .padding(.vertical, 10)
                 .background(Color(.controlBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+        }
+    }
+
+    // MARK: - Logo Upload/Remove
+
+    private func uploadCompanyLogo(_ data: Data) {
+        isUploadingLogo = true
+        Task {
+            defer { isUploadingLogo = false }
+            do {
+                _ = try await syncEngine.uploadAttachment(
+                    tableId: AirtableConfig.Tables.companies,
+                    recordId: company.id,
+                    fieldId: "fldhCu5ooToK84g4G",
+                    imageData: data,
+                    filename: "\(company.companyName ?? "company").jpg"
+                )
+                await syncEngine.forceSync()
+            } catch {
+                print("[CompanyDetail] Logo upload failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func removeCompanyLogo() {
+        isUploadingLogo = true
+        Task {
+            defer { isUploadingLogo = false }
+            do {
+                try await syncEngine.removeAttachment(
+                    tableId: AirtableConfig.Tables.companies,
+                    recordId: company.id,
+                    fieldId: "fldhCu5ooToK84g4G"
+                )
+                await syncEngine.forceSync()
+            } catch {
+                print("[CompanyDetail] Logo remove failed: \(error.localizedDescription)")
             }
         }
     }

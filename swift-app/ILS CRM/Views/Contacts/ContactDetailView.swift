@@ -15,8 +15,10 @@ struct ContactDetailView: View {
     @Query private var opportunities: [Opportunity]
     @State private var showEditContact = false
     @State private var showDeleteConfirm = false
+    @State private var isUploadingPhoto = false
 
     @Environment(\.modelContext) private var context
+    @Environment(SyncEngine.self) private var syncEngine
 
     private static let isoFormatter: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
@@ -56,11 +58,16 @@ struct ContactDetailView: View {
                     name: contact.contactName ?? "Unknown",
                     subtitle: contact.jobTitle,
                     actionLabel: contact.email != nil ? "Email" : nil,
-                    actionURL: contact.email.map { "mailto:\($0)" }
+                    actionURL: contact.email.map { "mailto:\($0)" },
+                    photoURL: contact.contactPhotoUrl.flatMap { URL(string: $0) },
+                    isUploading: isUploadingPhoto,
+                    onPhotoSelected: { data in uploadContactPhoto(data) },
+                    onPhotoRemoved: { removeContactPhoto() }
                 )
                 .padding(.top, 24)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
+                .id(contact.contactPhotoUrl) // Force re-render when photo URL changes after sync
 
                 // ── Stats Row ────────────────────────────────────────
                 StatsRow(items: [
@@ -298,6 +305,46 @@ struct ContactDetailView: View {
         }
         contact.localModifiedAt = Date()
         contact.isPendingPush = true
+    }
+
+    // MARK: - Photo Upload/Remove
+
+    private func uploadContactPhoto(_ data: Data) {
+        isUploadingPhoto = true
+        Task {
+            defer { isUploadingPhoto = false }
+            do {
+                _ = try await syncEngine.uploadAttachment(
+                    tableId: AirtableConfig.Tables.contacts,
+                    recordId: contact.id,
+                    fieldId: "fldl1WOfz7vHNSOUd",
+                    imageData: data,
+                    filename: "\(contact.contactName ?? "contact").jpg"
+                )
+                // Force a sync to pull back the Airtable-hosted URL
+                await syncEngine.forceSync()
+            } catch {
+                print("[ContactDetail] Photo upload failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func removeContactPhoto() {
+        isUploadingPhoto = true
+        Task {
+            defer { isUploadingPhoto = false }
+            do {
+                try await syncEngine.removeAttachment(
+                    tableId: AirtableConfig.Tables.contacts,
+                    recordId: contact.id,
+                    fieldId: "fldl1WOfz7vHNSOUd"
+                )
+                contact.contactPhotoUrl = nil
+                await syncEngine.forceSync()
+            } catch {
+                print("[ContactDetail] Photo remove failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     private func formattedCurrency(_ value: Double) -> String {

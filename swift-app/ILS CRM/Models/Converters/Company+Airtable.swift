@@ -57,6 +57,8 @@ extension Company: AirtableConvertible {
         model.projectsIds = f.stringArray(for: F.projects)
         model.contactsIds = f.stringArray(for: F.contacts)
         model.proposalsIds = f.stringArray(for: F.proposals)
+        // Attachment (read-only — extract first URL from attachment array)
+        model.logoUrl = f.attachmentUrl(for: F.attachments)
         return model
     }
 

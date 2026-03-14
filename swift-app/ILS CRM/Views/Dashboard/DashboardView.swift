@@ -443,7 +443,7 @@ private struct FollowUpRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            AvatarView(name: contact.contactName ?? "?", avatarSize: .medium)
+            AvatarView(name: contact.contactName ?? "?", avatarSize: .medium, photoURL: contact.contactPhotoUrl.flatMap { URL(string: $0) })
                 .padding(.leading, 12)
 
             VStack(alignment: .leading, spacing: 2) {

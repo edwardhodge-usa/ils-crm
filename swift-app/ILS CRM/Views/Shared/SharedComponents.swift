@@ -124,28 +124,42 @@ enum AvatarSize {
     }
 }
 
+// MARK: - AvatarShape
+
+/// Circle for people (Apple Contacts pattern), rounded rect for organizations (app icon / Maps pattern).
+enum AvatarShape {
+    case circle      // People, contacts
+    case roundedRect // Companies, organizations, logos
+}
+
 // MARK: - AvatarView
 
 struct AvatarView: View {
     let name: String
-    /// Raw point size. Prefer using the `init(name:avatarSize:photoURL:)` overload
+    /// Raw point size. Prefer using the `init(name:avatarSize:photoURL:shape:)` overload
     /// with a named `AvatarSize` for consistency across views.
     var size: CGFloat = 36
     var photoURL: URL? = nil
+    var shape: AvatarShape = .circle
 
     /// Convenience initializer accepting a named size preset.
-    init(name: String, avatarSize: AvatarSize, photoURL: URL? = nil) {
+    init(name: String, avatarSize: AvatarSize, photoURL: URL? = nil, shape: AvatarShape = .circle) {
         self.name = name
         self.size = avatarSize.dimension
         self.photoURL = photoURL
+        self.shape = shape
     }
 
     /// Raw CGFloat initializer — kept for backward compatibility.
-    init(name: String, size: CGFloat = 36, photoURL: URL? = nil) {
+    init(name: String, size: CGFloat = 36, photoURL: URL? = nil, shape: AvatarShape = .circle) {
         self.name = name
         self.size = size
         self.photoURL = photoURL
+        self.shape = shape
     }
+
+    /// Corner radius for rounded rect shape (Apple squircle ratio ~22%)
+    private var cornerRadius: CGFloat { size * 0.22 }
 
     // 11-color Apple palette for deterministic color from name
     private static let palette: [Color] = [
@@ -181,23 +195,41 @@ struct AvatarView: View {
                         .resizable()
                         .scaledToFill()
                         .frame(width: size, height: size)
-                        .clipShape(Circle())
+                        .clipShape(clipShape)
                 case .failure:
                     initialsFallback
                 default:
                     initialsFallback
                 }
             }
+            // Force recreate when URL changes (e.g. after upload + sync)
+            .id(photoURL)
         } else {
             initialsFallback
         }
     }
 
+    private var clipShape: AnyShape {
+        switch shape {
+        case .circle:
+            AnyShape(Circle())
+        case .roundedRect:
+            AnyShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        }
+    }
+
     private var initialsFallback: some View {
         ZStack {
-            Circle()
-                .fill(color)
-                .frame(width: size, height: size)
+            switch shape {
+            case .circle:
+                Circle()
+                    .fill(color)
+                    .frame(width: size, height: size)
+            case .roundedRect:
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(color)
+                    .frame(width: size, height: size)
+            }
             Text(initials)
                 .font(.system(size: size / 2.5, weight: .medium))
                 .foregroundStyle(.white)

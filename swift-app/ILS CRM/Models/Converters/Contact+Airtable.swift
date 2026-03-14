@@ -61,6 +61,8 @@ private enum F {
     static let companies = "fldYXDUc9YKKsGTBt"
     static let projectsPartnerVendor = "fldOOrElk4KRkSxcG"
     static let portalAccess = "fld0W66oRTQwvb9Nq"
+    // Attachment (read-only)
+    static let contactPhoto = "fldl1WOfz7vHNSOUd"
     // Read-only
     static let lastInteractionDate = "fldptkl81ex4SvQYN"  // rollup
     static let importedBy = "fldO7a9QFfKQ7tbkg"           // collaborator
@@ -131,6 +133,8 @@ extension Contact: AirtableConvertible {
         model.companiesIds = f.stringArray(for: F.companies)
         model.projectsAsPartnerVendorIds = f.stringArray(for: F.projectsPartnerVendor)
         model.portalAccessIds = f.stringArray(for: F.portalAccess)
+        // Attachment (read-only — extract first URL from attachment array)
+        model.contactPhotoUrl = f.attachmentUrl(for: F.contactPhoto)
         // Read-only (decoded but never pushed)
         model.lastInteractionDate = f.date(for: F.lastInteractionDate)
         return model

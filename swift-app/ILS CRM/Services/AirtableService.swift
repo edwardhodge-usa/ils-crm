@@ -171,6 +171,74 @@ actor AirtableService {
         return table
     }
 
+    // MARK: - Attachment Upload (3-step content API)
+
+    /// Uploads a local image to an Airtable attachment field.
+    ///
+    /// Strategy: upload image to tmpfiles.org (temporary host, auto-expires),
+    /// then PATCH the Airtable record with the public URL.
+    /// Airtable downloads and stores the image on its own CDN.
+    func uploadAttachment(
+        tableId: String,
+        recordId: String,
+        fieldId: String,
+        imageData: Data,
+        filename: String,
+        contentType: String = "image/jpeg"
+    ) async throws -> String {
+        // Step 1: Upload to tmpfiles.org to get a public URL
+        let boundary = "Boundary-\(UUID().uuidString)"
+        let tmpURL = URL(string: "https://tmpfiles.org/api/v1/upload")!
+
+        var uploadReq = URLRequest(url: tmpURL)
+        uploadReq.httpMethod = "POST"
+        uploadReq.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(contentType)\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        uploadReq.httpBody = body
+
+        let (uploadData, uploadResp) = try await URLSession.shared.data(for: uploadReq)
+        guard let uploadHttp = uploadResp as? HTTPURLResponse, (200...299).contains(uploadHttp.statusCode),
+              let uploadJson = try JSONSerialization.jsonObject(with: uploadData) as? [String: Any],
+              let dataObj = uploadJson["data"] as? [String: Any],
+              let rawUrl = dataObj["url"] as? String else {
+            let errBody = String(data: uploadData, encoding: .utf8) ?? "no body"
+            throw AirtableError.attachmentUploadFailed(reason: "Temp upload failed: \(errBody)")
+        }
+
+        // Convert to direct download URL: tmpfiles.org/123/file.jpg → tmpfiles.org/dl/123/file.jpg
+        let directUrl = rawUrl.replacingOccurrences(of: "tmpfiles.org/", with: "tmpfiles.org/dl/")
+
+        // Step 2: PATCH the Airtable record with the public URL
+        _ = try await patchRequest(tableId: tableId, body: [
+            "records": [
+                [
+                    "id": recordId,
+                    "fields": [fieldId: [["url": directUrl]]]
+                ]
+            ]
+        ])
+
+        return "uploaded"
+    }
+
+    /// Clears an attachment field on a record.
+    func removeAttachment(tableId: String, recordId: String, fieldId: String) async throws {
+        _ = try await patchRequest(tableId: tableId, body: [
+            "records": [
+                [
+                    "id": recordId,
+                    "fields": [fieldId: [] as [Any]]
+                ]
+            ]
+        ])
+    }
+
     // MARK: - Private Helpers
 
     private func postRequest(tableId: String, body: [String: Any]) async throws -> [String: Any] {
@@ -221,6 +289,7 @@ enum AirtableError: LocalizedError {
     case invalidResponse(tableId: String)
     case metadataFetchFailed(tableId: String)
     case tableNotFound(tableId: String)
+    case attachmentUploadFailed(reason: String)
 
     var errorDescription: String? {
         switch self {
@@ -232,6 +301,8 @@ enum AirtableError: LocalizedError {
             return "Failed to fetch metadata for table \(table)"
         case .tableNotFound(let table):
             return "Table \(table) not found in base metadata"
+        case .attachmentUploadFailed(let reason):
+            return "Attachment upload failed: \(reason)"
         }
     }
 }

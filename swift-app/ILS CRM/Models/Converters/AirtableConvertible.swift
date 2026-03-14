@@ -96,6 +96,15 @@ struct AirtableFields {
         return []
     }
 
+    /// Attachment fields: extracts the URL of the first attachment.
+    /// Airtable attachments come as `[{url: "...", ...}]`.
+    func attachmentUrl(for fieldId: String) -> String? {
+        guard let array = raw[fieldId] as? [[String: Any]],
+              let first = array.first,
+              let url = first["url"] as? String else { return nil }
+        return url
+    }
+
     /// Collaborator fields: returns the `.name` string from `{id, email, name}` object.
     /// Collaborator fields are read-only — never included in push payloads.
     func collaboratorName(for fieldId: String) -> String? {

@@ -276,6 +276,8 @@ final class SyncEngine {
             try await pullRecords(PortalAccessRecord.self, service: service, context: context)
         case AirtableConfig.Tables.portalLogs:
             try await pullRecords(PortalLog.self, service: service, context: context)
+        case AirtableConfig.Tables.clientPages:
+            try await pullRecords(ClientPage.self, service: service, context: context)
         default:
             Self.logger.warning("Unknown table ID: \(tableId)")
         }
@@ -319,5 +321,40 @@ final class SyncEngine {
     @MainActor
     func forceSync() async {
         await fullSync()
+    }
+
+    // MARK: - Attachment Upload
+
+    /// Uploads an image to an Airtable attachment field.
+    /// Called from detail views when the user selects a new photo/logo.
+    @MainActor
+    func uploadAttachment(
+        tableId: String,
+        recordId: String,
+        fieldId: String,
+        imageData: Data,
+        filename: String
+    ) async throws -> String {
+        guard let service else {
+            throw AirtableError.attachmentUploadFailed(reason: "Not configured")
+        }
+        let contentType = filename.hasSuffix(".png") ? "image/png" : "image/jpeg"
+        return try await service.uploadAttachment(
+            tableId: tableId,
+            recordId: recordId,
+            fieldId: fieldId,
+            imageData: imageData,
+            filename: filename,
+            contentType: contentType
+        )
+    }
+
+    /// Removes an attachment from an Airtable field.
+    @MainActor
+    func removeAttachment(tableId: String, recordId: String, fieldId: String) async throws {
+        guard let service else {
+            throw AirtableError.attachmentUploadFailed(reason: "Not configured")
+        }
+        try await service.removeAttachment(tableId: tableId, recordId: recordId, fieldId: fieldId)
     }
 }
