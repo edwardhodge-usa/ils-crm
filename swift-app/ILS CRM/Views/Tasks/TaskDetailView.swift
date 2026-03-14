@@ -17,6 +17,10 @@ struct TaskDetailView: View {
     @Environment(SyncEngine.self) private var syncEngine
 
     @State private var showDeleteConfirm = false
+    @State private var showingOpportunitiesPicker = false
+    @State private var showingContactsPicker = false
+    @State private var showingProjectsPicker = false
+    @State private var showingProposalsPicker = false
 
     /// Unique assignees for the dropdown, queried from all tasks.
     private var assigneeOptions: [String] {
@@ -123,6 +127,50 @@ struct TaskDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This action cannot be undone.")
+        }
+        .sheet(isPresented: $showingOpportunitiesPicker) {
+            LinkedRecordPicker(
+                title: "Link Opportunities",
+                entityType: .opportunities,
+                currentIds: Set(task.salesOpportunitiesIds),
+                onSave: { ids in
+                    task.salesOpportunitiesIds = Array(ids)
+                    markModified()
+                }
+            )
+        }
+        .sheet(isPresented: $showingContactsPicker) {
+            LinkedRecordPicker(
+                title: "Link Contacts",
+                entityType: .contacts,
+                currentIds: Set(task.contactsIds),
+                onSave: { ids in
+                    task.contactsIds = Array(ids)
+                    markModified()
+                }
+            )
+        }
+        .sheet(isPresented: $showingProjectsPicker) {
+            LinkedRecordPicker(
+                title: "Link Projects",
+                entityType: .projects,
+                currentIds: Set(task.projectsIds),
+                onSave: { ids in
+                    task.projectsIds = Array(ids)
+                    markModified()
+                }
+            )
+        }
+        .sheet(isPresented: $showingProposalsPicker) {
+            LinkedRecordPicker(
+                title: "Link Proposals",
+                entityType: .proposals,
+                currentIds: Set(task.proposalIds),
+                onSave: { ids in
+                    task.proposalIds = Array(ids)
+                    markModified()
+                }
+            )
         }
     }
 
@@ -247,19 +295,23 @@ struct TaskDetailView: View {
         VStack(spacing: 0) {
             RelatedRecordRow(
                 label: "Opportunities",
-                items: salesOpportunityLabels
+                items: salesOpportunityLabels,
+                onAdd: { showingOpportunitiesPicker = true }
             )
             RelatedRecordRow(
                 label: "Contacts",
-                items: contactLabels
+                items: contactLabels,
+                onAdd: { showingContactsPicker = true }
             )
             RelatedRecordRow(
                 label: "Projects",
-                items: projectLabels
+                items: projectLabels,
+                onAdd: { showingProjectsPicker = true }
             )
             RelatedRecordRow(
                 label: "Proposals",
-                items: proposalLabels
+                items: proposalLabels,
+                onAdd: { showingProposalsPicker = true }
             )
         }
     }

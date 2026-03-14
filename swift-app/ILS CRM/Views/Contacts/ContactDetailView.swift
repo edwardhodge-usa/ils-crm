@@ -16,6 +16,7 @@ struct ContactDetailView: View {
     @State private var showEditContact = false
     @State private var showDeleteConfirm = false
     @State private var isUploadingPhoto = false
+    @State private var showingOpportunitiesPicker = false
 
     @Environment(\.modelContext) private var context
     @Environment(SyncEngine.self) private var syncEngine
@@ -131,6 +132,18 @@ struct ContactDetailView: View {
         } message: {
             Text("This action cannot be undone.")
         }
+        .sheet(isPresented: $showingOpportunitiesPicker) {
+            LinkedRecordPicker(
+                title: "Link Opportunities",
+                entityType: .opportunities,
+                currentIds: Set(contact.salesOpportunitiesIds),
+                onSave: { ids in
+                    contact.salesOpportunitiesIds = Array(ids)
+                    contact.localModifiedAt = Date()
+                    contact.isPendingPush = true
+                }
+            )
+        }
     }
 
     // MARK: - CONTACT INFO Section
@@ -224,7 +237,23 @@ struct ContactDetailView: View {
     // MARK: - OPPORTUNITIES Section
 
     private var opportunitiesSection: some View {
-        DetailSection(title: "OPPORTUNITIES") {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("OPPORTUNITIES")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.5)
+                Spacer()
+                Button {
+                    showingOpportunitiesPicker = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+            }
+
             if linkedOpportunities.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
@@ -265,6 +294,7 @@ struct ContactDetailView: View {
                 }
             }
         }
+        .padding(.top, 16)
     }
 
     // MARK: - Helpers

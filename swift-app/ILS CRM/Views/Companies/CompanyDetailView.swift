@@ -22,6 +22,9 @@ struct CompanyDetailView: View {
     @State private var showEdit = false
     @State private var showDeleteConfirm = false
     @State private var isUploadingLogo = false
+    @State private var showingContactsPicker = false
+    @State private var showingOpportunitiesPicker = false
+    @State private var showingProjectsPicker = false
     @Environment(\.modelContext) private var modelContext
     @Environment(SyncEngine.self) private var syncEngine
 
@@ -174,6 +177,42 @@ struct CompanyDetailView: View {
         } message: {
             Text("This action cannot be undone.")
         }
+        .sheet(isPresented: $showingContactsPicker) {
+            LinkedRecordPicker(
+                title: "Link Contacts",
+                entityType: .contacts,
+                currentIds: Set(company.contactsIds),
+                onSave: { ids in
+                    company.contactsIds = Array(ids)
+                    company.localModifiedAt = Date()
+                    company.isPendingPush = true
+                }
+            )
+        }
+        .sheet(isPresented: $showingOpportunitiesPicker) {
+            LinkedRecordPicker(
+                title: "Link Opportunities",
+                entityType: .opportunities,
+                currentIds: Set(company.salesOpportunitiesIds),
+                onSave: { ids in
+                    company.salesOpportunitiesIds = Array(ids)
+                    company.localModifiedAt = Date()
+                    company.isPendingPush = true
+                }
+            )
+        }
+        .sheet(isPresented: $showingProjectsPicker) {
+            LinkedRecordPicker(
+                title: "Link Projects",
+                entityType: .projects,
+                currentIds: Set(company.projectsIds),
+                onSave: { ids in
+                    company.projectsIds = Array(ids)
+                    company.localModifiedAt = Date()
+                    company.isPendingPush = true
+                }
+            )
+        }
     }
 
     // MARK: - Company Info Section
@@ -239,7 +278,23 @@ struct CompanyDetailView: View {
     // MARK: - Contacts Section
 
     private var contactsSection: some View {
-        DetailSection(title: "CONTACTS") {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("CONTACTS")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.5)
+                Spacer()
+                Button {
+                    showingContactsPicker = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+            }
+
             if linkedContacts.isEmpty {
                 Text("No contacts")
                     .font(.subheadline)
@@ -260,6 +315,7 @@ struct CompanyDetailView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
         }
+        .padding(.top, 16)
     }
 
     private func contactRow(_ contact: Contact) -> some View {
@@ -290,7 +346,23 @@ struct CompanyDetailView: View {
     // MARK: - Opportunities Section
 
     private var opportunitiesSection: some View {
-        DetailSection(title: "OPEN OPPORTUNITIES") {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("OPEN OPPORTUNITIES")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.5)
+                Spacer()
+                Button {
+                    showingOpportunitiesPicker = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+            }
+
             if openOpportunities.isEmpty {
                 Text("No open opportunities")
                     .font(.subheadline)
@@ -311,6 +383,7 @@ struct CompanyDetailView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
         }
+        .padding(.top, 16)
     }
 
     private func opportunityRow(_ opp: Opportunity) -> some View {
@@ -347,10 +420,31 @@ struct CompanyDetailView: View {
 
     // MARK: - Projects Section
 
-    @ViewBuilder
     private var projectsSection: some View {
-        if !company.projectsIds.isEmpty {
-            DetailSection(title: "PROJECTS") {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("PROJECTS")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.5)
+                Spacer()
+                Button {
+                    showingProjectsPicker = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if company.projectsIds.isEmpty {
+                Text("No projects")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+            } else {
                 HStack {
                     Image(systemName: "folder")
                         .font(.system(size: 13))
@@ -366,6 +460,7 @@ struct CompanyDetailView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
         }
+        .padding(.top, 16)
     }
 
     // MARK: - Proposals Section
