@@ -314,11 +314,9 @@ struct EditableAvatarView: View {
                     // Skip tiny icons (< 64px) — keep looking for better
                     let px = max(nsImage.size.width, nsImage.size.height)
                     if px >= 64 {
-                        print("[LogoFetch] Found \(Int(px))px icon from \(urlString)")
                         rawImage = nsImage
                         return
                     }
-                    print("[LogoFetch] Skipping \(Int(px))px icon from \(urlString)")
                 } catch {
                     continue
                 }
@@ -329,10 +327,8 @@ struct EditableAvatarView: View {
             if let url = URL(string: fallback),
                let (data, _) = try? await URLSession.shared.data(from: url),
                let nsImage = NSImage(data: data) {
-                print("[LogoFetch] Using low-res fallback — consider 'Search Logo Online' for better quality")
                 rawImage = nsImage
             } else {
-                print("[LogoFetch] No logo found for \(cleanDomain)")
                 showCropSheet = false
             }
         }
@@ -354,7 +350,6 @@ struct EditableAvatarView: View {
                 }
                 rawImage = nsImage
             } catch {
-                print("[EditableAvatar] Failed to load existing photo: \(error.localizedDescription)")
                 showCropSheet = false
             }
         }
@@ -615,9 +610,6 @@ struct PhotoCropView: View {
         let renderPx: Int = 1024
         let outputPx: Int = 512
 
-        print("[PhotoCrop] image.size=\(image.size) scale=\(scale) offset=\(offset)")
-        print("[PhotoCrop] displayW=\(displayW) displayH=\(displayH) cropSize=\(cropSize)")
-
         let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
 
         // Step 1: Render crop at high resolution
@@ -629,10 +621,7 @@ struct PhotoCropView: View {
             bytesPerRow: 0,
             space: colorSpace,
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else {
-            print("[PhotoCrop] Failed to create CGContext")
-            return
-        }
+        ) else { return }
 
         // High-quality interpolation for upscaling low-res images
         ctx.interpolationQuality = .high
@@ -646,10 +635,7 @@ struct PhotoCropView: View {
         ctx.setFillColor(bg)
         ctx.fill(CGRect(x: 0, y: 0, width: renderSize, height: renderSize))
 
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            print("[PhotoCrop] Failed to get CGImage")
-            return
-        }
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
 
         // Map crop-view coordinates to render coordinates
         let outScale = renderSize / cropSize
@@ -665,10 +651,7 @@ struct PhotoCropView: View {
 
         ctx.draw(cgImage, in: destRect)
 
-        guard let hiResCGImage = ctx.makeImage() else {
-            print("[PhotoCrop] Failed to make hi-res CGImage")
-            return
-        }
+        guard let hiResCGImage = ctx.makeImage() else { return }
 
         // Step 2: Downscale from 1024 → 512 with lanczos for sharpness
         guard let downCtx = CGContext(
@@ -679,25 +662,15 @@ struct PhotoCropView: View {
             bytesPerRow: 0,
             space: colorSpace,
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else {
-            print("[PhotoCrop] Failed to create downscale context")
-            return
-        }
+        ) else { return }
         downCtx.interpolationQuality = .high
         downCtx.draw(hiResCGImage, in: CGRect(x: 0, y: 0, width: CGFloat(outputPx), height: CGFloat(outputPx)))
 
-        guard let finalCGImage = downCtx.makeImage() else {
-            print("[PhotoCrop] Failed to make final CGImage")
-            return
-        }
+        guard let finalCGImage = downCtx.makeImage() else { return }
 
         let bitmap = NSBitmapImageRep(cgImage: finalCGImage)
-        guard let jpegData = bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.90]) else {
-            print("[PhotoCrop] Failed to create JPEG")
-            return
-        }
+        guard let jpegData = bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.90]) else { return }
 
-        print("[PhotoCrop] Success — JPEG \(outputPx)px, \(jpegData.count) bytes")
         onConfirm(jpegData)
     }
 }
