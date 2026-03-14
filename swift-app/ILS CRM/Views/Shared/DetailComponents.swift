@@ -278,13 +278,12 @@ struct ListHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             Text(title)
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(.system(size: 15, weight: .bold))
+                .tracking(-0.2)
 
             if let count {
                 Text("\(count)")
-                    .font(.caption)
-                    .fontWeight(.medium)
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 7)
                     .padding(.vertical, 3)
@@ -299,10 +298,9 @@ struct ListHeader: View {
                     onButton()
                 } label: {
                     Text(buttonLabel)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 6)
+                        .font(.system(size: 12, weight: .semibold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
                         .background(Color.accentColor)
                         .foregroundStyle(.white)
                         .clipShape(Capsule())
@@ -310,7 +308,7 @@ struct ListHeader: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 14)
         .padding(.vertical, 10)
     }
 }

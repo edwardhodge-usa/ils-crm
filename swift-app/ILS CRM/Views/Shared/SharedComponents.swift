@@ -31,13 +31,14 @@ struct EmptyStateView: View {
     var systemImage: String = "tray"
 
     var body: some View {
-        ContentUnavailableView {
-            Label(title, systemImage: systemImage)
-        } description: {
-            if let description {
-                Text(description)
-            }
+        VStack(spacing: 4) {
+            Spacer()
+            Text(description ?? title)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -159,7 +160,14 @@ struct AvatarView: View {
         return String(first + last).uppercased()
     }
 
+    // Named overrides matching Electron's ASSIGNEE_COLOR_OVERRIDES
+    private static let colorOverrides: [String: Color] = [
+        "Edward Hodge":   Color(red: 0.0, green: 0.478, blue: 1.0),     // #007AFF Apple Blue
+        "Laura Youngkin":  Color(red: 1.0, green: 0.541, blue: 0.769),   // #FF8AC4 Apple Pink
+    ]
+
     private var color: Color {
+        if let override = Self.colorOverrides[name] { return override }
         let hash = name.utf8.reduce(0) { $0 &+ Int($1) }
         return Self.palette[abs(hash) % Self.palette.count]
     }
