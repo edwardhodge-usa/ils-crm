@@ -139,11 +139,10 @@ struct TaskDetailView: View {
     private var titleField: some View {
         TextField("Task name", text: Binding(
             get: { task.task ?? "" },
-            set: { newVal in
-                task.task = newVal.isEmpty ? nil : newVal
-                markModified()
-            }
-        ))
+            set: { task.task = $0.isEmpty ? nil : $0 }
+        ), onCommit: {
+            markModified()
+        })
         .font(.title3)
         .fontWeight(.semibold)
         .textFieldStyle(.plain)

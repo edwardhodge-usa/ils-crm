@@ -39,12 +39,11 @@ struct ContactsView: View {
 
     private var filteredContacts: [Contact] {
         guard !searchText.isEmpty else { return contacts }
-        let query = searchText.lowercased()
         return contacts.filter { contact in
-            (contact.contactName?.lowercased().contains(query) ?? false) ||
-            (contact.email?.lowercased().contains(query) ?? false) ||
-            (contact.company?.lowercased().contains(query) ?? false) ||
-            (contact.jobTitle?.lowercased().contains(query) ?? false)
+            (contact.contactName?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+            (contact.email?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+            (contact.company?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+            (contact.jobTitle?.localizedCaseInsensitiveContains(searchText) ?? false)
         }
     }
 
