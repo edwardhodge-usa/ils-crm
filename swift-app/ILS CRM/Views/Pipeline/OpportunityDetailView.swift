@@ -1,14 +1,20 @@
 import SwiftUI
 import SwiftData
 
-/// Opportunity detail view — displays all key fields organized in sections.
+/// Opportunity detail view — inline editing with EditableFieldRow components.
 ///
 /// Mirrors the Electron Pipeline detail pane. Takes a non-optional
 /// Opportunity (parent view resolves selection before presenting this view).
-///
-/// Sections shown only when they contain non-nil, non-empty data.
+/// Uses @Bindable for direct SwiftData mutation with pending-push tracking.
 struct OpportunityDetailView: View {
-    let opportunity: Opportunity
+    @Bindable var opportunity: Opportunity
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var showDeleteConfirm = false
+
+    init(opportunity: Opportunity) {
+        self.opportunity = opportunity
+    }
 
     var body: some View {
         ScrollView {
@@ -18,18 +24,213 @@ struct OpportunityDetailView: View {
                     .padding(.top, 24)
                     .padding(.bottom, 16)
 
-                // MARK: - Form Sections
-                Form {
-                    dealInfoSection
-                    stageSection
-                    engagementSection
-                    notesSection
-                    contractMilestonesSection
-                    linkedRecordsSection
-                    detailsSection
+                // MARK: - Deal Info
+                DetailSection(title: "DEAL INFO") {
+                    VStack(spacing: 0) {
+                        EditableFieldRow(
+                            label: "Stage",
+                            key: "salesStage",
+                            type: .singleSelect(options: [
+                                "Initial Contact", "Qualification", "Meeting Scheduled",
+                                "Proposal Sent", "Contract Sent", "Negotiation",
+                                "Development", "Investment", "Future Client",
+                                "Closed Won", "Closed Lost"
+                            ]),
+                            value: opportunity.salesStage,
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Value",
+                            key: "dealValue",
+                            type: .number(prefix: "$"),
+                            value: opportunity.dealValue.map { String(format: "%.0f", $0) },
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Probability",
+                            key: "probability",
+                            type: .singleSelect(options: [
+                                "Cold", "Low", "02 Medium", "01 High", "04 FUTURE ROADMAP"
+                            ]),
+                            value: opportunity.probability,
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Engagement Type",
+                            key: "engagementType",
+                            type: .multiSelect(options: [
+                                "Strategy/Consulting", "Design/Concept Development",
+                                "Production/Fabrication Oversight", "Opening/Operations Support",
+                                "Executive Producing"
+                            ]),
+                            value: opportunity.engagementType.joined(separator: ", "),
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Quals Type",
+                            key: "qualsType",
+                            type: .singleSelect(options: [
+                                "Standard Capabilities Deck", "Customized Quals", "Both"
+                            ]),
+                            value: opportunity.qualsType,
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Lead Source",
+                            key: "leadSource",
+                            type: .singleSelect(options: [
+                                "Referral", "Website", "Inbound", "Outbound", "Event",
+                                "Social Media", "Other", "LinkedIn", "Cold Call"
+                            ]),
+                            value: opportunity.leadSource,
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Referred By",
+                            key: "referredBy",
+                            type: .text,
+                            value: opportunity.referredBy,
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Quals Sent",
+                            key: "qualificationsSent",
+                            type: .checkbox,
+                            value: opportunity.qualificationsSent ? "true" : "false",
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Expected Close",
+                            key: "expectedCloseDate",
+                            type: .date,
+                            value: opportunity.expectedCloseDate.map {
+                                let f = ISO8601DateFormatter()
+                                f.formatOptions = [.withFullDate]
+                                return f.string(from: $0)
+                            },
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Next Meeting",
+                            key: "nextMeetingDate",
+                            type: .date,
+                            value: opportunity.nextMeetingDate.map {
+                                let f = ISO8601DateFormatter()
+                                f.formatOptions = [.withFullDate]
+                                return f.string(from: $0)
+                            },
+                            onSave: saveField
+                        )
+                    }
+                    .background(Color(.controlBackgroundColor))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
-                .formStyle(.grouped)
+                .padding(.horizontal, 16)
+
+                // MARK: - Win/Loss (shown only for closed stages)
+                if isClosedStage {
+                    DetailSection(title: "WIN/LOSS") {
+                        VStack(spacing: 0) {
+                            EditableFieldRow(
+                                label: "Win/Loss Reason",
+                                key: "winLossReason",
+                                type: .singleSelect(options: [
+                                    "Price", "Timing", "Scope Mismatch", "Competitor",
+                                    "Budget Constraints", "Champion Left", "No Decision",
+                                    "Won - Best Fit", "Won - Relationship", "Won - Price"
+                                ]),
+                                value: opportunity.winLossReason,
+                                onSave: saveField
+                            )
+                            EditableFieldRow(
+                                label: "Loss Notes",
+                                key: "lossNotes",
+                                type: .textarea,
+                                value: opportunity.lossNotes,
+                                onSave: saveField
+                            )
+                        }
+                        .background(Color(.controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .padding(.horizontal, 16)
+                }
+
+                // MARK: - Notes
+                DetailSection(title: "NOTES") {
+                    VStack(spacing: 0) {
+                        EditableFieldRow(
+                            label: "",
+                            key: "notesAbout",
+                            type: .textarea,
+                            value: opportunity.notesAbout,
+                            onSave: saveField
+                        )
+                    }
+                    .background(Color(.controlBackgroundColor))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .padding(.horizontal, 16)
+
+                // MARK: - Contract Milestones
+                if let milestones = opportunity.contractMilestones, !milestones.isEmpty {
+                    DetailSection(title: "CONTRACT MILESTONES") {
+                        VStack(spacing: 0) {
+                            EditableFieldRow(
+                                label: "",
+                                key: "contractMilestones",
+                                type: .textarea,
+                                value: opportunity.contractMilestones,
+                                onSave: saveField
+                            )
+                        }
+                        .background(Color(.controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .padding(.horizontal, 16)
+                }
+
+                // MARK: - Linked Records
+                linkedRecordsSection
+                    .padding(.horizontal, 16)
+
+                // MARK: - Details
+                detailsSection
+                    .padding(.horizontal, 16)
+
+                // MARK: - Delete Button
+                Button {
+                    showDeleteConfirm = true
+                } label: {
+                    Text("Delete")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.red)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 7)
+                        .frame(maxWidth: .infinity)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 16)
+                .padding(.top, 20)
+                .padding(.bottom, 24)
             }
+        }
+        .confirmationDialog(
+            "Delete this opportunity?",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                modelContext.delete(opportunity)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This action cannot be undone.")
         }
     }
 
@@ -55,147 +256,62 @@ struct OpportunityDetailView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Deal Info
+    // MARK: - Save Field
 
-    @ViewBuilder
-    private var dealInfoSection: some View {
-        let hasDealValue = opportunity.dealValue != nil && opportunity.dealValue! > 0
-        let hasProbability = opportunity.probability?.isEmpty == false
-        let hasProbabilityValue = opportunity.probabilityValue != nil
-        let hasExpectedClose = opportunity.expectedCloseDate != nil
-        let hasNextMeeting = opportunity.nextMeetingDate != nil
-        let hasLeadSource = opportunity.leadSource?.isEmpty == false
-        let hasQualsType = opportunity.qualsType?.isEmpty == false
-
-        if hasDealValue || hasProbability || hasProbabilityValue
-            || hasExpectedClose || hasNextMeeting || hasLeadSource || hasQualsType {
-            Section("Deal Info") {
-                if let dealValue = opportunity.dealValue, dealValue > 0 {
-                    FieldRow(label: "Deal Value", value: formatCurrency(dealValue))
-                }
-
-                if let probability = opportunity.probability, !probability.isEmpty {
-                    FieldRow(label: "Probability", value: probability)
-                }
-
-                if let probabilityValue = opportunity.probabilityValue {
-                    FieldRow(label: "Probability Value", value: formatPercentage(probabilityValue))
-                }
-
-                if let expectedClose = opportunity.expectedCloseDate {
-                    FieldRow(label: "Expected Close", value: formatDate(expectedClose))
-                }
-
-                if let nextMeeting = opportunity.nextMeetingDate {
-                    FieldRow(label: "Next Meeting", value: formatDate(nextMeeting))
-                }
-
-                if let leadSource = opportunity.leadSource, !leadSource.isEmpty {
-                    FieldRow(label: "Lead Source", value: leadSource)
-                }
-
-                if let qualsType = opportunity.qualsType, !qualsType.isEmpty {
-                    FieldRow(label: "Quals Type", value: qualsType)
-                }
+    private func saveField(_ key: String, _ value: Any?) {
+        let str = value as? String
+        switch key {
+        case "salesStage":
+            opportunity.salesStage = str
+        case "dealValue":
+            if let s = str, let d = Double(s) {
+                opportunity.dealValue = d
+            } else {
+                opportunity.dealValue = nil
             }
-        }
-    }
-
-    // MARK: - Stage
-
-    @ViewBuilder
-    private var stageSection: some View {
-        let hasStage = opportunity.salesStage?.isEmpty == false
-        let hasWinLoss = opportunity.winLossReason?.isEmpty == false
-            && isClosedStage
-        let hasLossNotes = opportunity.lossNotes?.isEmpty == false
-            && isClosedStage
-
-        if hasStage || hasWinLoss || hasLossNotes || opportunity.qualificationsSent {
-            Section("Stage") {
-                if let stage = opportunity.salesStage, !stage.isEmpty {
-                    HStack {
-                        Text("Sales Stage")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        BadgeView(text: stage, color: stageColor(stage))
-                    }
-                    .frame(minHeight: 28)
-                }
-
-                if isClosedStage, let reason = opportunity.winLossReason, !reason.isEmpty {
-                    FieldRow(label: "Win/Loss Reason", value: reason)
-                }
-
-                if isClosedStage, let lossNotes = opportunity.lossNotes, !lossNotes.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Loss Notes")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(lossNotes)
-                            .font(.body)
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-
-                HStack {
-                    Text("Qualifications Sent")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text(opportunity.qualificationsSent ? "Yes" : "No")
-                        .foregroundStyle(.primary)
-                }
-                .frame(minHeight: 28)
+        case "probability":
+            opportunity.probability = str
+        case "engagementType":
+            opportunity.engagementType = str?.components(separatedBy: ",")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty } ?? []
+        case "qualsType":
+            opportunity.qualsType = str
+        case "leadSource":
+            opportunity.leadSource = str
+        case "referredBy":
+            opportunity.referredBy = str
+        case "winLossReason":
+            opportunity.winLossReason = str
+        case "lossNotes":
+            opportunity.lossNotes = str
+        case "qualificationsSent":
+            opportunity.qualificationsSent = (value as? Bool) ?? false
+        case "expectedCloseDate":
+            if let s = str {
+                let f = ISO8601DateFormatter()
+                f.formatOptions = [.withFullDate]
+                opportunity.expectedCloseDate = f.date(from: s)
+            } else {
+                opportunity.expectedCloseDate = nil
             }
-        }
-    }
-
-    // MARK: - Engagement
-
-    @ViewBuilder
-    private var engagementSection: some View {
-        if !opportunity.engagementType.isEmpty {
-            Section("Engagement") {
-                FlowLayout(spacing: 6) {
-                    ForEach(opportunity.engagementType, id: \.self) { type in
-                        BadgeView(text: type, color: .purple)
-                    }
-                }
+        case "nextMeetingDate":
+            if let s = str {
+                let f = ISO8601DateFormatter()
+                f.formatOptions = [.withFullDate]
+                opportunity.nextMeetingDate = f.date(from: s)
+            } else {
+                opportunity.nextMeetingDate = nil
             }
+        case "notesAbout":
+            opportunity.notesAbout = str
+        case "contractMilestones":
+            opportunity.contractMilestones = str
+        default:
+            break
         }
-    }
-
-    // MARK: - Notes
-
-    @ViewBuilder
-    private var notesSection: some View {
-        if let notes = opportunity.notesAbout, !notes.isEmpty {
-            Section("Notes") {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(notes)
-                        .font(.body)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-        }
-    }
-
-    // MARK: - Contract Milestones
-
-    @ViewBuilder
-    private var contractMilestonesSection: some View {
-        if let milestones = opportunity.contractMilestones, !milestones.isEmpty {
-            Section("Contract Milestones") {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(milestones)
-                        .font(.body)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-        }
+        opportunity.localModifiedAt = Date()
+        opportunity.isPendingPush = true
     }
 
     // MARK: - Linked Records
@@ -211,29 +327,44 @@ struct OpportunityDetailView: View {
 
         if hasCompanies || hasContacts || hasTasks || hasProjects
             || hasProposals || hasInteractions {
-            Section("Linked Records") {
-                if hasCompanies {
-                    FieldRow(label: "Companies", value: "\(opportunity.companyIds.count)")
-                }
-
-                if hasContacts {
-                    FieldRow(label: "Contacts", value: "\(opportunity.associatedContactIds.count)")
-                }
-
-                if hasTasks {
-                    FieldRow(label: "Tasks", value: "\(opportunity.tasksIds.count)")
-                }
-
-                if hasProjects {
-                    FieldRow(label: "Projects", value: "\(opportunity.projectIds.count)")
-                }
-
-                if hasProposals {
-                    FieldRow(label: "Proposals", value: "\(opportunity.proposalsIds.count)")
-                }
-
-                if hasInteractions {
-                    FieldRow(label: "Interactions", value: "\(opportunity.interactionsIds.count)")
+            DetailSection(title: "LINKED RECORDS") {
+                VStack(spacing: 0) {
+                    if hasCompanies {
+                        RelatedRecordRow(
+                            label: "Companies",
+                            items: opportunity.companyIds.map { abbreviate($0) }
+                        )
+                    }
+                    if hasContacts {
+                        RelatedRecordRow(
+                            label: "Contacts",
+                            items: opportunity.associatedContactIds.map { abbreviate($0) }
+                        )
+                    }
+                    if hasTasks {
+                        RelatedRecordRow(
+                            label: "Tasks",
+                            items: opportunity.tasksIds.map { abbreviate($0) }
+                        )
+                    }
+                    if hasProjects {
+                        RelatedRecordRow(
+                            label: "Projects",
+                            items: opportunity.projectIds.map { abbreviate($0) }
+                        )
+                    }
+                    if hasProposals {
+                        RelatedRecordRow(
+                            label: "Proposals",
+                            items: opportunity.proposalsIds.map { abbreviate($0) }
+                        )
+                    }
+                    if hasInteractions {
+                        RelatedRecordRow(
+                            label: "Interactions",
+                            items: opportunity.interactionsIds.map { abbreviate($0) }
+                        )
+                    }
                 }
             }
         }
@@ -241,31 +372,42 @@ struct OpportunityDetailView: View {
 
     // MARK: - Details
 
-    @ViewBuilder
     private var detailsSection: some View {
-        Section("Details") {
-            if let referredBy = opportunity.referredBy, !referredBy.isEmpty {
-                FieldRow(label: "Referred By", value: referredBy)
+        DetailSection(title: "DETAILS") {
+            VStack(spacing: 0) {
+                if let modified = opportunity.airtableModifiedAt {
+                    DetailFieldRow(
+                        label: "Last Modified",
+                        value: modified.formatted(date: .abbreviated, time: .shortened)
+                    )
+                }
+                if let localModified = opportunity.localModifiedAt {
+                    DetailFieldRow(
+                        label: "Local Modified",
+                        value: localModified.formatted(date: .abbreviated, time: .shortened)
+                    )
+                }
+                // Airtable record ID — small, for debugging
+                HStack {
+                    Text(opportunity.id)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .textSelection(.enabled)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .frame(minHeight: 28)
             }
-
-            if let modified = opportunity.airtableModifiedAt {
-                FieldRow(label: "Last Modified", value: modified.formatted(date: .abbreviated, time: .shortened))
-            }
-
-            if let localModified = opportunity.localModifiedAt {
-                FieldRow(label: "Local Modified", value: localModified.formatted(date: .abbreviated, time: .shortened))
-            }
-
-            // Airtable record ID — small, for debugging
-            Text(opportunity.id)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.controlBackgroundColor))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }
 
     // MARK: - Helpers
+
+    private func abbreviate(_ id: String) -> String {
+        id.count > 10 ? "rec" + id.suffix(6) : id
+    }
 
     /// Whether the current stage is Closed Won or Closed Lost.
     private var isClosedStage: Bool {
@@ -277,39 +419,27 @@ struct OpportunityDetailView: View {
     /// Maps sales stage to an appropriate badge color.
     private func stageColor(_ stage: String) -> Color {
         let lower = stage.lowercased()
-        if lower.contains("prospecting") { return .yellow }
-        if lower.contains("qualified") { return .orange }
-        if lower.contains("business development") { return .purple }
+        if lower.contains("initial contact") { return .blue }
+        if lower.contains("qualification") { return .cyan }
+        if lower.contains("meeting scheduled") { return .teal }
         if lower.contains("proposal sent") { return .indigo }
-        if lower.contains("negotiation") { return .teal }
+        if lower.contains("contract sent") { return .purple }
+        if lower.contains("negotiation") { return .orange }
+        if lower.contains("development") { return .mint }
+        if lower.contains("investment") { return .yellow }
+        if lower.contains("future client") { return .gray }
         if lower.contains("closed won") { return .green }
         if lower.contains("closed lost") { return .red }
         return .gray
     }
 
-    /// Formats a Double as currency ("$1,234.00").
+    /// Formats a Double as currency ("$1,234").
     private func formatCurrency(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))"
-    }
-
-    /// Formats a Double as a percentage ("75%").
-    private func formatPercentage(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .percent
-        formatter.maximumFractionDigits = 0
-        // probabilityValue is already 0-1 range from Airtable formula
-        return formatter.string(from: NSNumber(value: value)) ?? "\(Int(value * 100))%"
-    }
-
-    /// Formats a Date using medium date style ("Mar 5, 2026").
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
     }
 }
 
@@ -327,8 +457,8 @@ struct OpportunityDetailView: View {
     opportunity.expectedCloseDate = Calendar.current.date(byAdding: .month, value: 1, to: Date())
     opportunity.nextMeetingDate = Calendar.current.date(byAdding: .day, value: 3, to: Date())
     opportunity.leadSource = "Referral"
-    opportunity.qualsType = "RFP"
-    opportunity.engagementType = ["Consulting", "Creative Services", "Strategy"]
+    opportunity.qualsType = "Standard Capabilities Deck"
+    opportunity.engagementType = ["Strategy/Consulting", "Design/Concept Development"]
     opportunity.notesAbout = "Client interested in a full brand overhaul including website, collateral, and digital strategy."
     opportunity.contractMilestones = "Phase 1: Discovery (2 weeks)\nPhase 2: Design (4 weeks)\nPhase 3: Development (6 weeks)"
     opportunity.qualificationsSent = true

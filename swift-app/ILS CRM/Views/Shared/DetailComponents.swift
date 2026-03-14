@@ -177,6 +177,8 @@ enum EditableFieldType {
     case text
     case textarea
     case singleSelect(options: [String])
+    case multiSelect(options: [String])
+    case number(prefix: String?)
     case date
     case checkbox
     case readonly
@@ -189,10 +191,12 @@ struct EditableFieldRow: View {
     let key: String
     let type: EditableFieldType
     let value: String?
+    var isLink: Bool = false
     var onSave: ((String, Any?) -> Void)? = nil
 
     @State private var isEditing = false
     @State private var editText = ""
+    @State private var selectedOptions: Set<String> = []
     @FocusState private var textFieldFocused: Bool
 
     var body: some View {
@@ -213,15 +217,25 @@ struct EditableFieldRow: View {
 
             Divider()
         }
+        .onAppear {
+            editText = value ?? ""
+            if case .multiSelect = type, let val = value, !val.isEmpty {
+                selectedOptions = Set(val.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) })
+            }
+        }
     }
 
     @ViewBuilder
     private var valueView: some View {
         switch type {
         case .readonly:
-            Text(value ?? "—")
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+            if isLink, let val = value, !val.isEmpty {
+                linkText(val)
+            } else {
+                Text(value ?? "—")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+            }
 
         case .text:
             if isEditing {
@@ -234,6 +248,8 @@ struct EditableFieldRow: View {
                     .onChange(of: textFieldFocused) { _, focused in
                         if !focused { commitEdit() }
                     }
+            } else if isLink, let val = value, !val.isEmpty {
+                linkText(val)
             } else {
                 Text(value.isNilOrEmpty ? "—" : value!)
                     .font(.system(size: 13))
@@ -275,6 +291,73 @@ struct EditableFieldRow: View {
                 }
             }
             .menuStyle(.borderlessButton)
+
+        case .multiSelect(let options):
+            Menu {
+                ForEach(options, id: \.self) { option in
+                    Button(action: {
+                        if selectedOptions.contains(option) {
+                            selectedOptions.remove(option)
+                        } else {
+                            selectedOptions.insert(option)
+                        }
+                        let sorted = options.filter { selectedOptions.contains($0) }
+                        let joined = sorted.isEmpty ? nil : sorted.joined(separator: ", ")
+                        onSave?(key, joined)
+                    }) {
+                        HStack {
+                            Text(option)
+                            Spacer()
+                            if selectedOptions.contains(option) {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    if selectedOptions.isEmpty {
+                        Text("—")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.tertiary)
+                    } else {
+                        Text(selectedOptions.sorted().joined(separator: ", "))
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                    Text("⌃")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .menuStyle(.borderlessButton)
+
+        case .number(let prefix):
+            if isEditing {
+                HStack(spacing: 2) {
+                    if let p = prefix {
+                        Text(p)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                    }
+                    TextField("", text: $editText)
+                        .font(.system(size: 13))
+                        .textFieldStyle(.plain)
+                        .focused($textFieldFocused)
+                        .onSubmit { commitEdit() }
+                        .frame(maxWidth: 120)
+                        .multilineTextAlignment(.trailing)
+                }
+            } else {
+                Text(formatNumber(value, prefix: prefix))
+                    .font(.system(size: 13))
+                    .foregroundStyle(value != nil ? .secondary : .tertiary)
+                    .onTapGesture {
+                        editText = value ?? ""
+                        isEditing = true
+                    }
+            }
 
         case .date:
             DatePicker("", selection: dateBinding, displayedComponents: .date)
@@ -318,6 +401,32 @@ struct EditableFieldRow: View {
             set: { newValue in onSave?(key, newValue) }
         )
     }
+
+    private func formatNumber(_ val: String?, prefix: String?) -> String {
+        guard let val = val, let num = Double(val) else { return "—" }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = prefix == "$" ? .currency : .decimal
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: num)) ?? "—"
+    }
+
+    @ViewBuilder
+    private func linkText(_ val: String) -> some View {
+        Text(val)
+            .font(.system(size: 13))
+            .foregroundStyle(.blue)
+            .onTapGesture {
+                let url: URL?
+                if val.contains("@") && !val.hasPrefix("mailto:") {
+                    url = URL(string: "mailto:\(val)")
+                } else if val.hasPrefix("http://") || val.hasPrefix("https://") || val.hasPrefix("mailto:") || val.hasPrefix("tel:") {
+                    url = URL(string: val)
+                } else {
+                    url = URL(string: "https://\(val)")
+                }
+                if let url { NSWorkspace.shared.open(url) }
+            }
+    }
 }
 
 // MARK: - EditableFieldRow Helpers
@@ -335,7 +444,7 @@ private extension View {
     @ViewBuilder
     func applyTapGesture(type: EditableFieldType, isEditing: Bool, action: @escaping () -> Void) -> some View {
         switch type {
-        case .text, .textarea:
+        case .text, .textarea, .number:
             if !isEditing {
                 self.onTapGesture { action() }
             } else {

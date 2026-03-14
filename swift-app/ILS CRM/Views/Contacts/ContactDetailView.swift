@@ -8,9 +8,9 @@ import SwiftData
 /// PARTNER / VENDOR → NOTES → OPPORTUNITIES.
 ///
 /// Uses shared DetailComponents (DetailHeader, StatsRow, DetailSection,
-/// DetailFieldRow) — no inline equivalents.
+/// EditableFieldRow) — inline click-to-edit fields, auto-save on blur.
 struct ContactDetailView: View {
-    let contact: Contact
+    @Bindable var contact: Contact
 
     @Query private var opportunities: [Opportunity]
     @State private var showEditContact = false
@@ -124,83 +124,16 @@ struct ContactDetailView: View {
 
     private var contactInfoSection: some View {
         DetailSection(title: "CONTACT INFO") {
-            // Company (resolved from linked records or free-text)
-            DetailFieldRow(label: "Company", value: contact.company ?? "—")
-
-            DetailFieldRow(label: "Title", value: contact.jobTitle ?? "—")
-
-            if let email = contact.email, !email.isEmpty {
-                DetailFieldRow(
-                    label: "Email",
-                    value: email,
-                    isLink: true,
-                    linkURL: "mailto:\(email)"
-                )
-            } else {
-                DetailFieldRow(label: "Email", value: "—")
-            }
-
-            if let mobile = contact.mobilePhone, !mobile.isEmpty {
-                DetailFieldRow(
-                    label: "Mobile",
-                    value: mobile,
-                    isLink: true,
-                    linkURL: "tel:\(mobile.filter { $0.isNumber || $0 == "+" })"
-                )
-            } else if let phone = contact.phone, !phone.isEmpty {
-                DetailFieldRow(
-                    label: "Mobile",
-                    value: phone,
-                    isLink: true,
-                    linkURL: "tel:\(phone.filter { $0.isNumber || $0 == "+" })"
-                )
-            } else {
-                DetailFieldRow(label: "Mobile", value: "—")
-            }
-
-            if let work = contact.workPhone, !work.isEmpty,
-               work != contact.mobilePhone, work != contact.phone {
-                DetailFieldRow(
-                    label: "Office",
-                    value: work,
-                    isLink: true,
-                    linkURL: "tel:\(work.filter { $0.isNumber || $0 == "+" })"
-                )
-            } else {
-                DetailFieldRow(label: "Office", value: "—")
-            }
-
-            if let linkedin = contact.linkedInUrl, !linkedin.isEmpty {
-                let url = linkedin.hasPrefix("http") ? linkedin : "https://\(linkedin)"
-                DetailFieldRow(
-                    label: "LinkedIn",
-                    value: linkedin,
-                    isLink: true,
-                    linkURL: url
-                )
-            } else {
-                DetailFieldRow(label: "LinkedIn", value: "—")
-            }
-
-            if let website = contact.website, !website.isEmpty {
-                let url = website.hasPrefix("http") ? website : "https://\(website)"
-                DetailFieldRow(
-                    label: "Website",
-                    value: website,
-                    isLink: true,
-                    linkURL: url
-                )
-            } else {
-                DetailFieldRow(label: "Website", value: "—")
-            }
-
-            // Location
-            let city = contact.city ?? ""
-            let state = contact.state ?? ""
-            let country = contact.country ?? ""
-            DetailFieldRow(label: "City",    value: city.isEmpty    ? "—" : city)
-            DetailFieldRow(label: "State",   value: state.isEmpty   ? "—" : state)
-            DetailFieldRow(label: "Country", value: country.isEmpty ? "—" : country)
+            EditableFieldRow(label: "Title", key: "jobTitle", type: .text, value: contact.jobTitle, onSave: saveField)
+            EditableFieldRow(label: "Email", key: "email", type: .text, value: contact.email, isLink: true, onSave: saveField)
+            EditableFieldRow(label: "Mobile", key: "mobilePhone", type: .text, value: contact.mobilePhone, isLink: true, onSave: saveField)
+            EditableFieldRow(label: "Office", key: "workPhone", type: .text, value: contact.workPhone, isLink: true, onSave: saveField)
+            EditableFieldRow(label: "LinkedIn", key: "linkedInUrl", type: .text, value: contact.linkedInUrl, isLink: true, onSave: saveField)
+            EditableFieldRow(label: "Website", key: "website", type: .text, value: contact.website, isLink: true, onSave: saveField)
+            EditableFieldRow(label: "Address", key: "addressLine", type: .text, value: contact.addressLine, onSave: saveField)
+            EditableFieldRow(label: "City", key: "city", type: .text, value: contact.city, onSave: saveField)
+            EditableFieldRow(label: "State", key: "state", type: .text, value: contact.state, onSave: saveField)
+            EditableFieldRow(label: "Country", key: "country", type: .text, value: contact.country, onSave: saveField)
         }
     }
 
@@ -208,106 +141,70 @@ struct ContactDetailView: View {
 
     private var crmInfoSection: some View {
         DetailSection(title: "CRM INFO") {
-            DetailFieldRow(
-                label: "Categorization",
-                value: contact.categorization ?? "—",
-                showChevron: contact.categorization != nil
-            )
-            DetailFieldRow(
-                label: "Industry",
-                value: contact.industry ?? "—",
-                showChevron: contact.industry != nil
-            )
-            DetailFieldRow(
-                label: "Lead Source",
-                value: contact.leadSource ?? "—",
-                showChevron: contact.leadSource != nil
-            )
-            DetailFieldRow(
-                label: "Qualification",
-                value: contact.qualificationStatus ?? "—"
-            )
-            DetailFieldRow(
-                label: "Event Tags",
-                value: contact.eventTags ?? "—"
-            )
-            DetailFieldRow(
-                label: "Lead Score",
-                value: contact.leadScore.map { "\($0)" } ?? "—"
-            )
-            if let lastContact = contact.lastContactDate {
-                DetailFieldRow(
-                    label: "Last Contact",
-                    value: lastContact.formatted(date: .abbreviated, time: .omitted)
-                )
-            } else {
-                DetailFieldRow(label: "Last Contact", value: "—")
-            }
+            EditableFieldRow(label: "Categorization", key: "categorization",
+                type: .singleSelect(options: [
+                    "Lead", "Customer", "Partner", "Vendor", "Talent", "Other", "Unknown",
+                    "VIP", "Investor", "Speaker", "Press", "Influencer", "Board Member", "Advisor"
+                ]), value: contact.categorization, onSave: saveField)
+            EditableFieldRow(label: "Industry", key: "industry",
+                type: .singleSelect(options: [
+                    "Technology", "Healthcare", "Finance", "Education", "Manufacturing",
+                    "Real Estate", "Consulting", "Other", "Hospitality", "Logistics",
+                    "Fitness", "Legal", "Media", "Design", "Venture Capital", "Retail", "Entertainment"
+                ]), value: contact.industry, onSave: saveField)
+            EditableFieldRow(label: "Lead Source", key: "leadSource",
+                type: .singleSelect(options: [
+                    "Referral", "Website", "Inbound", "Outbound", "Event",
+                    "Social Media", "Other", "LinkedIn", "Cold Call"
+                ]), value: contact.leadSource, onSave: saveField)
+            EditableFieldRow(label: "Qualification", key: "qualificationStatus",
+                type: .singleSelect(options: [
+                    "New", "Contacted", "Qualified", "Unqualified", "Nurturing"
+                ]), value: contact.qualificationStatus, onSave: saveField)
+            EditableFieldRow(label: "Event Tags", key: "eventTags", type: .text,
+                value: contact.eventTags, onSave: saveField)
+            EditableFieldRow(label: "Lead Score", key: "leadScore",
+                type: .number(prefix: nil),
+                value: contact.leadScore.map { "\($0)" }, onSave: saveField)
+            EditableFieldRow(label: "Last Contact", key: "lastContactDate",
+                type: .date,
+                value: contact.lastContactDate.map { ISO8601DateFormatter().string(from: $0) },
+                onSave: saveField)
         }
     }
 
     // MARK: - PARTNER / VENDOR Section
 
-    @ViewBuilder
     private var partnerSection: some View {
-        let hasPartner = (contact.partnerType != nil) ||
-                         (contact.partnerStatus != nil) ||
-                         (contact.qualityRating != nil) ||
-                         (contact.reliabilityRating != nil) ||
-                         (contact.rateInfo != nil)
-
-        if hasPartner {
-            DetailSection(title: "PARTNER / VENDOR") {
-                DetailFieldRow(
-                    label: "Partner Type",
-                    value: contact.partnerType ?? "—"
-                )
-                DetailFieldRow(
-                    label: "Partner Status",
-                    value: contact.partnerStatus ?? "—"
-                )
-                DetailFieldRow(
-                    label: "Quality",
-                    value: contact.qualityRating ?? "—"
-                )
-                DetailFieldRow(
-                    label: "Reliability",
-                    value: contact.reliabilityRating ?? "—"
-                )
-                DetailFieldRow(
-                    label: "Rate Info",
-                    value: contact.rateInfo ?? "—"
-                )
-            }
+        DetailSection(title: "PARTNER/VENDOR") {
+            EditableFieldRow(label: "Partner Type", key: "partnerType",
+                type: .singleSelect(options: [
+                    "Fabricator", "AV/Lighting", "Scenic/Set Builder", "Architect",
+                    "Interior Designer", "Graphic Designer", "F&B Consultant",
+                    "Tech/Interactive", "Operations Consultant", "Production Company",
+                    "Freelancer/Individual", "Other"
+                ]), value: contact.partnerType, onSave: saveField)
+            EditableFieldRow(label: "Partner Status", key: "partnerStatus",
+                type: .singleSelect(options: [
+                    "Active - Preferred", "Active", "Inactive", "Do Not Use"
+                ]), value: contact.partnerStatus, onSave: saveField)
+            EditableFieldRow(label: "Quality Rating", key: "qualityRating",
+                type: .singleSelect(options: ["⭐", "⭐⭐", "⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐⭐"]),
+                value: contact.qualityRating, onSave: saveField)
+            EditableFieldRow(label: "Reliability", key: "reliabilityRating",
+                type: .singleSelect(options: ["⭐", "⭐⭐", "⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐⭐"]),
+                value: contact.reliabilityRating, onSave: saveField)
+            EditableFieldRow(label: "Rate Info", key: "rateInfo", type: .text,
+                value: contact.rateInfo, onSave: saveField)
         }
     }
 
     // MARK: - NOTES Section
 
-    @ViewBuilder
     private var notesSection: some View {
         DetailSection(title: "NOTES") {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Spacer()
-                }
-                if let notes = contact.notes, !notes.isEmpty {
-                    Text(notes)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.primary)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                } else {
-                    Text("—")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                }
-                Divider()
-            }
+            EditableFieldRow(label: "", key: "notes", type: .textarea,
+                value: contact.notes, onSave: saveField)
         }
     }
 
@@ -358,6 +255,46 @@ struct ContactDetailView: View {
     }
 
     // MARK: - Helpers
+
+    private func saveField(_ key: String, _ value: Any?) {
+        let str = value as? String
+        switch key {
+        case "jobTitle": contact.jobTitle = str
+        case "email": contact.email = str
+        case "phone": contact.phone = str
+        case "mobilePhone": contact.mobilePhone = str
+        case "workPhone": contact.workPhone = str
+        case "linkedInUrl": contact.linkedInUrl = str
+        case "website": contact.website = str
+        case "addressLine": contact.addressLine = str
+        case "city": contact.city = str
+        case "state": contact.state = str
+        case "country": contact.country = str
+        case "industry": contact.industry = str
+        case "leadSource": contact.leadSource = str
+        case "categorization": contact.categorization = str
+        case "qualificationStatus": contact.qualificationStatus = str
+        case "eventTags": contact.eventTags = str
+        case "notes": contact.notes = str
+        case "partnerType": contact.partnerType = str
+        case "partnerStatus": contact.partnerStatus = str
+        case "rateInfo": contact.rateInfo = str
+        case "qualityRating": contact.qualityRating = str
+        case "reliabilityRating": contact.reliabilityRating = str
+        case "leadScore":
+            if let s = str { contact.leadScore = Int(s) }
+            else { contact.leadScore = nil }
+        case "lastContactDate":
+            if let s = str {
+                let f = ISO8601DateFormatter()
+                f.formatOptions = [.withFullDate]
+                contact.lastContactDate = f.date(from: s)
+            } else { contact.lastContactDate = nil }
+        default: break
+        }
+        contact.localModifiedAt = Date()
+        contact.isPendingPush = true
+    }
 
     private func formattedCurrency(_ value: Double) -> String {
         let formatter = NumberFormatter()

@@ -7,9 +7,11 @@ import SwiftData
 /// - Breadcrumb (small company name)
 /// - DetailHeader: avatar + name + location subtitle + Website button
 /// - StatsRow: Contacts | Open Opps | Total Value
-/// - COMPANY INFO section: Website (link), Address, Founded
+/// - COMPANY INFO section: Website (link), Address, Founded, Industry, Type, Size, Revenue, Lead Source, NAICS
 /// - CONTACTS section: resolved contacts with avatar + name + title + chevron
 /// - OPEN OPPORTUNITIES section: resolved opportunities or empty state
+/// - PROJECTS section: linked project count (if any)
+/// - PROPOSALS section: linked proposal count (if any)
 /// - Edit / Delete actions
 struct CompanyDetailView: View {
     let company: Company
@@ -135,6 +137,14 @@ struct CompanyDetailView: View {
                 opportunitiesSection
                     .padding(.horizontal, 20)
 
+                // Projects
+                projectsSection
+                    .padding(.horizontal, 20)
+
+                // Proposals
+                proposalsSection
+                    .padding(.horizontal, 20)
+
                 Spacer(minLength: 32)
             }
         }
@@ -164,8 +174,14 @@ struct CompanyDetailView: View {
         let hasWebsite = websiteURL != nil
         let hasAddress = !fullAddress.isEmpty
         let hasYear    = company.foundingYear != nil
+        let hasIndustry = !(company.industry ?? "").isEmpty
+        let hasType = !(company.companyType ?? "").isEmpty
+        let hasSize = !(company.companySize ?? "").isEmpty
+        let hasRevenue = !(company.annualRevenue ?? "").isEmpty
+        let hasLeadSource = !(company.leadSource ?? "").isEmpty
+        let hasNaics = !(company.naicsCode ?? "").isEmpty
 
-        if hasWebsite || hasAddress || hasYear {
+        if hasWebsite || hasAddress || hasYear || hasIndustry || hasType || hasSize || hasRevenue || hasLeadSource || hasNaics {
             DetailSection(title: "COMPANY INFO") {
                 if let url = websiteURL, let displayWeb = company.website {
                     DetailFieldRow(
@@ -182,6 +198,30 @@ struct CompanyDetailView: View {
 
                 if let year = company.foundingYear {
                     DetailFieldRow(label: "Founded", value: "\(year)")
+                }
+
+                if let industry = company.industry, !industry.isEmpty {
+                    DetailFieldRow(label: "Industry", value: industry)
+                }
+
+                if let companyType = company.companyType, !companyType.isEmpty {
+                    DetailFieldRow(label: "Type", value: companyType)
+                }
+
+                if let companySize = company.companySize, !companySize.isEmpty {
+                    DetailFieldRow(label: "Size", value: companySize)
+                }
+
+                if let annualRevenue = company.annualRevenue, !annualRevenue.isEmpty {
+                    DetailFieldRow(label: "Annual Revenue", value: annualRevenue)
+                }
+
+                if let leadSource = company.leadSource, !leadSource.isEmpty {
+                    DetailFieldRow(label: "Lead Source", value: leadSource)
+                }
+
+                if let naicsCode = company.naicsCode, !naicsCode.isEmpty {
+                    DetailFieldRow(label: "NAICS Code", value: naicsCode)
                 }
             }
         }
@@ -294,6 +334,52 @@ struct CompanyDetailView: View {
         formatter.numberStyle = .currency
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))"
+    }
+
+    // MARK: - Projects Section
+
+    @ViewBuilder
+    private var projectsSection: some View {
+        if !company.projectsIds.isEmpty {
+            DetailSection(title: "PROJECTS") {
+                HStack {
+                    Image(systemName: "folder")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                    Text("\(company.projectsIds.count) linked project\(company.projectsIds.count == 1 ? "" : "s")")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color(.controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+        }
+    }
+
+    // MARK: - Proposals Section
+
+    @ViewBuilder
+    private var proposalsSection: some View {
+        if !company.proposalsIds.isEmpty {
+            DetailSection(title: "PROPOSALS") {
+                HStack {
+                    Image(systemName: "doc.text")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                    Text("\(company.proposalsIds.count) linked proposal\(company.proposalsIds.count == 1 ? "" : "s")")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color(.controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+        }
     }
 
     // MARK: - Helpers
