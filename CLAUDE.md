@@ -139,6 +139,9 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-13** - SwiftUI accessibility identifiers on `Label` inside `NavigationSplitView` sidebar may not be found by `app.staticTexts[]` — use `app.descendants(matching: .any)[]` or dump hierarchy first to discover element types
 **2026-03-13** - XCUITest setUp: SwiftUI app launches with 0 windows (window restoration) → Open via menu: `app.menuBars.menuBarItems["File"].click()` then `app.menuBars.menuItems["New Window"].click()` before any element queries
 **2026-03-13** - Swift parity comparison was layout-only (fonts, columns, spacing) and missed feature completeness gaps (Client Portal: 34% of Electron features) → Before claiming ANY view matches: compare component count + LOC ratio, compare every interactive feature, compare from Electron side ("what does Electron do that Swift doesn't?"). Screenshots verify, they don't discover
+**2026-03-14** - Swift app sync only starts when SettingsView appears (loadApiKey in onAppear) → Add auto-configure in ContentView.onAppear: read Keychain, configure SyncEngine, start polling. Match Electron behavior
+**2026-03-14** - Airtable content upload API (`content.airtable.com/v0/{baseId}/uploadAttachment`) returns 404 — PAT may lack required scope → Use tmpfiles.org as relay: upload image → get public URL → PATCH record with URL-based attachment. Airtable downloads and stores on its CDN
+**2026-03-14** - `@Environment(\.dismiss)` doesn't work reliably in SwiftUI sheets on macOS → Pass `@Binding var isPresented` directly and set `isPresented = false` from buttons inside the sheet
 
 ## Deployment Process
 
