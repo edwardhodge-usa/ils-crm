@@ -133,15 +133,20 @@ struct PortalAccessView: View {
             .map { (pageAddress: $0, records: grouped[$0] ?? []) }
     }
 
-    /// Best display name for a page address — first record's name or company, else pageAddress.
+    /// Best display name for a page address — uses ClientPage clientName, or titlecases the slug.
+    /// Never returns a person's name (PortalAccessRecord.name is a person, not a page).
     private func pageDisplayName(for pageAddress: String, records: [PortalAccessRecord]) -> String {
-        if let first = records.first {
-            if let name = first.name, !name.isEmpty { return name }
-            if let company = first.company, !company.isEmpty { return company }
-            if let lookup = first.contactNameLookup, !lookup.isEmpty { return lookup }
-            if let companyLookup = first.contactCompanyLookup, !companyLookup.isEmpty { return companyLookup }
+        // 1. Try to find a ClientPage record matching this pageAddress
+        if let page = clientPage(for: pageAddress),
+           let clientName = page.clientName, !clientName.isEmpty {
+            return clientName
         }
-        return pageAddress
+        // 2. Titlecase the slug: "haus-collection" → "Haus Collection"
+        let titleCased = pageAddress
+            .split(separator: "-")
+            .map { $0.prefix(1).uppercased() + $0.dropFirst() }
+            .joined(separator: " ")
+        return titleCased.isEmpty ? pageAddress : titleCased
     }
 
     // MARK: - Page List Sidebar

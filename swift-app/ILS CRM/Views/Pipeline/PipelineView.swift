@@ -46,6 +46,14 @@ struct PipelineView: View {
         })
     }
 
+    /// Dictionary from Airtable record ID → company logo URL for fast lookup
+    private var companyLogoUrlById: [String: URL] {
+        Dictionary(uniqueKeysWithValues: companies.compactMap { company in
+            guard let urlString = company.logoUrl, let url = URL(string: urlString) else { return nil }
+            return (company.id, url)
+        })
+    }
+
     /// Total deal value for non-closed stages (active pipeline)
     private var activeTotalValue: Double {
         let closedStages: Set<String> = ["Closed Won", "Closed Lost"]
@@ -258,6 +266,7 @@ struct PipelineView: View {
                                 KanbanCard(
                                     opportunity: opp,
                                     companyName: opp.companyIds.first.flatMap { companyNameById[$0] },
+                                    companyLogoUrl: opp.companyIds.first.flatMap { companyLogoUrlById[$0] },
                                     stageColor: color,
                                     formatCurrency: formatCurrency
                                 )
@@ -322,6 +331,7 @@ struct PipelineView: View {
 private struct KanbanCard: View {
     let opportunity: Opportunity
     let companyName: String?
+    let companyLogoUrl: URL?
     let stageColor: Color
     let formatCurrency: (Double) -> String
 
@@ -339,12 +349,15 @@ private struct KanbanCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Company name (above deal name)
+            // Company logo + name (above deal name)
             if let company = companyName {
-                Text(company)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    AvatarView(name: company, avatarSize: .small, photoURL: companyLogoUrl, shape: .roundedRect)
+                    Text(company)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
 
             // Deal name

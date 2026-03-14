@@ -457,17 +457,17 @@ struct PhotoCropView: View {
         VStack(spacing: 0) {
             // Title bar
             HStack {
-                Button("Cancel") { isPresented = false }
-                    .keyboardShortcut(.cancelAction)
+                Button("Cancel") {
+                    DispatchQueue.main.async { isPresented = false }
+                }
                 Spacer()
                 Text("Adjust Photo")
                     .font(.headline)
                 Spacer()
                 Button("Done") {
                     cropAndConfirm()
-                    isPresented = false
+                    DispatchQueue.main.async { isPresented = false }
                 }
-                .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
             }
             .padding(.horizontal, 20)

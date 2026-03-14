@@ -104,22 +104,25 @@ enum AvatarSize {
     case medium  // 36pt — default, used in standard list rows
     case large   // 48pt — used in detail view headers
     case xlarge  // 64pt — used in full-screen hero headers
+    case xxlarge // 80pt — used in contact detail headers for recognizable photos
 
     var dimension: CGFloat {
         switch self {
-        case .small:  return 28
-        case .medium: return 36
-        case .large:  return 48
-        case .xlarge: return 64
+        case .small:   return 28
+        case .medium:  return 36
+        case .large:   return 48
+        case .xlarge:  return 64
+        case .xxlarge: return 80
         }
     }
 
     var fontSize: CGFloat {
         switch self {
-        case .small:  return 11
-        case .medium: return 14
-        case .large:  return 19
-        case .xlarge: return 25
+        case .small:   return 11
+        case .medium:  return 14
+        case .large:   return 19
+        case .xlarge:  return 25
+        case .xxlarge: return 30
         }
     }
 }

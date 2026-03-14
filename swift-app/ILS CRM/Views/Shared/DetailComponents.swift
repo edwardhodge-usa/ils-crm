@@ -28,7 +28,7 @@ struct DetailHeader: View {
             if onPhotoSelected != nil {
                 EditableAvatarView(
                     name: name,
-                    size: AvatarSize.large.dimension,
+                    size: AvatarSize.xxlarge.dimension,
                     photoURL: photoURL,
                     shape: isCompany ? .roundedRect : .circle,
                     isUploading: isUploading,
@@ -37,7 +37,7 @@ struct DetailHeader: View {
                     onPhotoRemoved: onPhotoRemoved
                 )
             } else {
-                AvatarView(name: name, size: AvatarSize.large.dimension, photoURL: photoURL, shape: isCompany ? .roundedRect : .circle)
+                AvatarView(name: name, size: AvatarSize.xxlarge.dimension, photoURL: photoURL, shape: isCompany ? .roundedRect : .circle)
             }
 
             Text(name)
@@ -263,6 +263,7 @@ struct EditableFieldRow: View {
                 Text(value ?? "—")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
 
         case .text:
@@ -270,6 +271,7 @@ struct EditableFieldRow: View {
                 TextField("", text: $editText)
                     .font(.system(size: 13))
                     .textFieldStyle(.plain)
+                    .multilineTextAlignment(.trailing)
                     .focused($textFieldFocused)
                     .onSubmit { commitEdit() }
                     .onAppear { textFieldFocused = true }
@@ -282,6 +284,7 @@ struct EditableFieldRow: View {
                 Text(value.isNilOrEmpty ? "—" : value!)
                     .font(.system(size: 13))
                     .foregroundStyle(value.isNilOrEmpty ? .tertiary : .secondary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
 
         case .textarea:
@@ -299,6 +302,7 @@ struct EditableFieldRow: View {
                     .font(.system(size: 13))
                     .foregroundStyle(value.isNilOrEmpty ? .tertiary : .secondary)
                     .lineLimit(3)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
 
         case .singleSelect(let options):
@@ -385,6 +389,7 @@ struct EditableFieldRow: View {
                 Text(formatNumber(value, prefix: prefix))
                     .font(.system(size: 13))
                     .foregroundStyle(value != nil ? .secondary : .tertiary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
 
         case .date:
@@ -449,6 +454,7 @@ struct EditableFieldRow: View {
         Text(val)
             .font(.system(size: 13))
             .foregroundStyle(.blue)
+            .frame(maxWidth: .infinity, alignment: .trailing)
             .onTapGesture {
                 let url: URL?
                 if val.contains("@") && !val.hasPrefix("mailto:") {
