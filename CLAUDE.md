@@ -137,6 +137,7 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-13** - Swift `onTapGesture` inside `ScrollView` unreliable for category filters → Use `Button` with `.buttonStyle(.plain)` instead. Also clear `selectedTask = nil` on filter change (matches Electron `setSelectedId(null)`)
 **2026-03-13** - XCUITest on macOS: `spctl --add` deprecated, `xattr -c -r` doesn't survive rebuild → Build first (`build-for-testing`), clear xattrs, then `test-without-building`. User must also approve via System Settings → Privacy & Security → "Open Anyway" on first run
 **2026-03-13** - SwiftUI accessibility identifiers on `Label` inside `NavigationSplitView` sidebar may not be found by `app.staticTexts[]` — use `app.descendants(matching: .any)[]` or dump hierarchy first to discover element types
+**2026-03-13** - XCUITest setUp: SwiftUI app launches with 0 windows (window restoration) → Open via menu: `app.menuBars.menuBarItems["File"].click()` then `app.menuBars.menuItems["New Window"].click()` before any element queries
 
 ## Deployment Process
 
