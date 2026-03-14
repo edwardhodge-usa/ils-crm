@@ -6,8 +6,18 @@ final class ILS_CRM_UITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = true
         app.launch()
-        // Wait for app to be ready
         sleep(2)
+
+        // SwiftUI window restoration may not open a window on launch.
+        // If no window exists, use the menu bar to open one.
+        if app.windows.count == 0 {
+            app.menuBars.menuBarItems["File"].click()
+            Thread.sleep(forTimeInterval: 0.5)
+            app.menuBars.menuItems["New Window"].click()
+            sleep(2)
+        }
+
+        print("APP windows: \(app.windows.count)")
     }
 
     /// Helper: find any element by accessibility identifier (SwiftUI Labels/Buttons expose as various types).
@@ -137,25 +147,68 @@ final class ILS_CRM_UITests: XCTestCase {
 
     // MARK: - Element Existence
 
-    /// Dump the accessibility hierarchy to understand what XCUITest sees.
-    func testDumpHierarchy() throws {
+    /// Probe element types to find how SwiftUI exposes sidebar items.
+    func testProbeElementTypes() throws {
         sleep(3)
-        // Dump the full hierarchy to a text attachment
-        let hierarchy = app.debugDescription
-        let attachment = XCTAttachment(string: hierarchy)
-        attachment.name = "AccessibilityHierarchy"
-        attachment.lifetime = .keepAlways
-        add(attachment)
 
-        // Also write to a file for easy reading
-        let path = "/tmp/ils-crm-hierarchy.txt"
-        try hierarchy.write(toFile: path, atomically: true, encoding: .utf8)
+        // Try finding "Dashboard" text by various element types
+        let types: [(String, XCUIElementQuery)] = [
+            ("staticTexts", app.staticTexts),
+            ("buttons", app.buttons),
+            ("cells", app.cells),
+            ("otherElements", app.otherElements),
+            ("images", app.images),
+            ("groups", app.groups),
+            ("outlines", app.outlines),
+            ("outlineRows", app.outlineRows),
+        ]
 
-        // Screenshot
-        let screenshot = app.screenshot()
-        let ssAttachment = XCTAttachment(screenshot: screenshot)
-        ssAttachment.name = "AppState"
-        ssAttachment.lifetime = .keepAlways
-        add(ssAttachment)
+        for (typeName, query) in types {
+            // Check by identifier
+            let byId = query["nav_dashboard"]
+            if byId.exists {
+                print("FOUND nav_dashboard as \(typeName) by identifier")
+            }
+            // Check by label text
+            let byLabel = query["Dashboard"]
+            if byLabel.exists {
+                print("FOUND Dashboard as \(typeName) by label")
+            }
+        }
+
+        // Also try descendants
+        let desc = app.descendants(matching: .any).matching(identifier: "nav_dashboard")
+        print("descendants matching nav_dashboard: \(desc.count)")
+
+        // Try matching by label "Dashboard" in all descendants
+        let dashLabel = app.descendants(matching: .any)["Dashboard"]
+        print("descendants matching 'Dashboard' label: \(dashLabel.exists)")
+
+        // Print count of all buttons, staticTexts, cells
+        print("Total buttons: \(app.buttons.count)")
+        print("Total staticTexts: \(app.staticTexts.count)")
+        print("Total cells: \(app.cells.count)")
+        print("Total outlineRows: \(app.outlineRows.count)")
+
+        // List first 10 staticTexts labels
+        let stCount = min(app.staticTexts.count, 15)
+        for i in 0..<stCount {
+            let el = app.staticTexts.element(boundBy: i)
+            print("staticText[\(i)]: label='\(el.label)' id='\(el.identifier)'")
+        }
+
+        // List first 10 buttons
+        let btnCount = min(app.buttons.count, 15)
+        for i in 0..<btnCount {
+            let el = app.buttons.element(boundBy: i)
+            print("button[\(i)]: label='\(el.label)' id='\(el.identifier)'")
+        }
+
+        // List first 10 cells
+        let cellCount = min(app.cells.count, 10)
+        for i in 0..<cellCount {
+            let el = app.cells.element(boundBy: i)
+            print("cell[\(i)]: label='\(el.label)' id='\(el.identifier)'")
+        }
     }
 }
