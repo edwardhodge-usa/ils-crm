@@ -11,20 +11,13 @@ import SwiftData
 /// - RELATED: Contacts, Opportunities
 /// - NOTES: Description, Key Milestones
 struct ProjectDetailView: View {
-    let project: Project
+    @Bindable var project: Project
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
 
     @State private var showDeleteConfirm = false
 
     // MARK: - Formatters
-
-    private static let dateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        f.timeStyle = .none
-        return f
-    }()
 
     private static let currencyFormatter: NumberFormatter = {
         let f = NumberFormatter()
@@ -45,18 +38,36 @@ struct ProjectDetailView: View {
         return Self.currencyFormatter.string(from: NSNumber(value: value)) ?? "—"
     }
 
-    private var formattedStartDate: String {
-        guard let date = project.startDate else { return "—" }
-        return Self.dateFormatter.string(from: date)
-    }
+    // MARK: - Save Field
 
-    private var formattedEndDate: String {
-        guard let date = project.targetCompletion else { return "—" }
-        return Self.dateFormatter.string(from: date)
-    }
-
-    private var engagementTypeDisplay: String {
-        project.engagementType.isEmpty ? "—" : project.engagementType.joined(separator: ", ")
+    private func saveField(_ key: String, _ value: Any?) {
+        let str = value as? String
+        switch key {
+        case "status": project.status = str
+        case "engagementType":
+            project.engagementType = str?.components(separatedBy: ",")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty } ?? []
+        case "contractValue":
+            if let s = str, let d = Double(s) { project.contractValue = d }
+            else { project.contractValue = nil }
+        case "location": project.location = str
+        case "startDate":
+            if let s = str {
+                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
+                project.startDate = f.date(from: s)
+            } else { project.startDate = nil }
+        case "targetCompletion":
+            if let s = str {
+                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
+                project.targetCompletion = f.date(from: s)
+            } else { project.targetCompletion = nil }
+        case "projectDescription": project.projectDescription = str
+        case "keyMilestones": project.keyMilestones = str
+        default: break
+        }
+        project.localModifiedAt = Date()
+        project.isPendingPush = true
     }
 
     // MARK: - Body
@@ -79,21 +90,29 @@ struct ProjectDetailView: View {
 
                 // PROJECT INFO section
                 DetailSection(title: "PROJECT INFO") {
-                    DetailFieldRow(label: "Project Lead", value: "—")
-                    DetailFieldRow(label: "Start Date", value: formattedStartDate)
-                    DetailFieldRow(label: "End Date", value: formattedEndDate)
-                    DetailFieldRow(
-                        label: "Status",
-                        value: project.status ?? "—",
-                        showChevron: true
-                    )
-                    DetailFieldRow(
-                        label: "Engagement Type",
-                        value: engagementTypeDisplay,
-                        showChevron: true
-                    )
-                    DetailFieldRow(label: "Contract Value", value: formattedContractValue)
-                    DetailFieldRow(label: "Location", value: project.location ?? "—")
+                    EditableFieldRow(label: "Start Date", key: "startDate", type: .date,
+                        value: project.startDate.map { ISO8601DateFormatter().string(from: $0) },
+                        onSave: saveField)
+                    EditableFieldRow(label: "End Date", key: "targetCompletion", type: .date,
+                        value: project.targetCompletion.map { ISO8601DateFormatter().string(from: $0) },
+                        onSave: saveField)
+                    EditableFieldRow(label: "Status", key: "status",
+                        type: .singleSelect(options: [
+                            "Kickoff", "Discovery", "Concept Development", "Design Development",
+                            "Production", "Installation", "Opening/Launch", "Closeout",
+                            "Complete", "On Hold", "Cancelled", "Strategy"
+                        ]), value: project.status, onSave: saveField)
+                    EditableFieldRow(label: "Engagement", key: "engagementType",
+                        type: .multiSelect(options: [
+                            "Strategy/Consulting", "Design/Concept Development",
+                            "Production/Fabrication Oversight", "Opening/Operations Support"
+                        ]), value: project.engagementType.joined(separator: ", "), onSave: saveField)
+                    EditableFieldRow(label: "Contract Value", key: "contractValue",
+                        type: .number(prefix: "$"),
+                        value: project.contractValue.map { String(format: "%.0f", $0) },
+                        onSave: saveField)
+                    EditableFieldRow(label: "Location", key: "location", type: .text,
+                        value: project.location, onSave: saveField)
                 }
                 .padding(.horizontal, 16)
 
@@ -112,10 +131,17 @@ struct ProjectDetailView: View {
                 }
                 .padding(.horizontal, 16)
 
-                // NOTES section
-                DetailSection(title: "NOTES") {
-                    notesBlock(label: "Description", text: project.projectDescription)
-                    notesBlock(label: "Key Milestones", text: project.keyMilestones)
+                // DESCRIPTION section
+                DetailSection(title: "DESCRIPTION") {
+                    EditableFieldRow(label: "", key: "projectDescription", type: .textarea,
+                        value: project.projectDescription, onSave: saveField)
+                }
+                .padding(.horizontal, 16)
+
+                // KEY MILESTONES section
+                DetailSection(title: "KEY MILESTONES") {
+                    EditableFieldRow(label: "", key: "keyMilestones", type: .textarea,
+                        value: project.keyMilestones, onSave: saveField)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 32)
@@ -178,30 +204,6 @@ struct ProjectDetailView: View {
                 .buttonStyle(.plain)
                 .help("Delete project")
             }
-        }
-    }
-
-    // MARK: - Notes Block
-
-    private func notesBlock(label: String, text: String?) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(label)
-                    .foregroundStyle(.primary)
-                Spacer()
-            }
-            .padding(.horizontal, 12)
-            .frame(minHeight: 36)
-
-            Text(text?.isEmpty == false ? text! : "—")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 12)
-                .padding(.bottom, 10)
-                .textSelection(.enabled)
-
-            Divider()
         }
     }
 

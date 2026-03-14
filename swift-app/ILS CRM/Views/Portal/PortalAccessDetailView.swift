@@ -1,39 +1,38 @@
 import SwiftUI
 
-/// Portal Access detail view — displays all key fields organized in sections.
+/// Portal Access detail view — inline editing with click-to-edit fields.
 ///
-/// Mirrors the Electron Portal Access detail pane. Takes a non-optional
-/// PortalAccessRecord (parent view resolves selection before presenting).
+/// Mirrors the Electron Portal Access detail pane. Uses @Bindable for direct
+/// SwiftData mutation with auto-save on blur/commit.
 ///
-/// Sections shown only when they contain non-nil, non-empty data.
-/// The model has 37 fields including 12 lookups — this view focuses on the
-/// most useful fields and groups them logically.
+/// Uses shared DetailComponents (DetailSection, EditableFieldRow, DetailFieldRow)
+/// for consistent inline editing across all entity detail views.
 struct PortalAccessDetailView: View {
-    let record: PortalAccessRecord
+    @Bindable var record: PortalAccessRecord
 
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
                 // MARK: - Header
                 headerSection
                     .padding(.top, 24)
                     .padding(.bottom, 16)
 
-                // MARK: - Form Sections
-                Form {
-                    accessInfoSection
-                    portalDetailsSection
-                    contactLookupSection
-                    servicesSection
-                    notesSection
-                    datesSection
-                    detailsSection
-                }
-                .formStyle(.grouped)
+                // MARK: - Editable Sections
+                accessInfoSection
+                portalBusinessSection
+                keyDatesSection
+                notesSection
+                contactLookupSection
+                detailsSection
+
+                Spacer(minLength: 24)
             }
+            .padding(.horizontal, 16)
         }
+        .scrollIndicators(.automatic)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") { dismiss() }
@@ -45,7 +44,7 @@ struct PortalAccessDetailView: View {
 
     private var headerSection: some View {
         VStack(spacing: 8) {
-            AvatarView(name: displayName, size: 64)
+            AvatarView(name: displayName, size: AvatarSize.xlarge.dimension)
 
             Text(displayName)
                 .font(.title2)
@@ -68,243 +67,195 @@ struct PortalAccessDetailView: View {
 
     // MARK: - Access Info
 
-    @ViewBuilder
     private var accessInfoSection: some View {
-        let hasPage = record.pageAddress?.isEmpty == false
-        let hasStatus = record.status?.isEmpty == false
-        let hasStage = record.stage?.isEmpty == false
-        let hasEmail = record.email?.isEmpty == false
-        let hasPosition = record.positionTitle?.isEmpty == false
-        let hasCompany = record.company?.isEmpty == false
-        let hasDecisionMaker = record.decisionMaker?.isEmpty == false
-        let hasPrimaryContact = record.primaryContact?.isEmpty == false
-        let hasLeadSource = record.leadSource?.isEmpty == false
-
-        if hasPage || hasStatus || hasStage || hasEmail || hasPosition
-            || hasCompany || hasDecisionMaker || hasPrimaryContact || hasLeadSource {
-            Section("Access Info") {
-                if let page = record.pageAddress, !page.isEmpty {
-                    FieldRow(label: "Page Address", value: page)
-                }
-
-                if let status = record.status, !status.isEmpty {
-                    HStack {
-                        Text("Status")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        BadgeView(text: status, color: statusColor(status))
-                    }
-                    .frame(minHeight: 28)
-                }
-
-                if let stage = record.stage, !stage.isEmpty {
-                    FieldRow(label: "Stage", value: stage)
-                }
-
-                if let email = record.email, !email.isEmpty {
-                    linkRow(label: "Email", value: email, urlString: "mailto:\(email)")
-                }
-
-                if let position = record.positionTitle, !position.isEmpty {
-                    FieldRow(label: "Position", value: position)
-                }
-
-                if let company = record.company, !company.isEmpty {
-                    FieldRow(label: "Company", value: company)
-                }
-
-                if let dm = record.decisionMaker, !dm.isEmpty {
-                    FieldRow(label: "Decision Maker", value: dm)
-                }
-
-                if let primary = record.primaryContact, !primary.isEmpty {
-                    FieldRow(label: "Primary Contact", value: primary)
-                }
-
-                if let source = record.leadSource, !source.isEmpty {
-                    FieldRow(label: "Lead Source", value: source)
-                }
-            }
+        DetailSection(title: "ACCESS INFO") {
+            EditableFieldRow(label: "Page Address", key: "pageAddress", type: .readonly,
+                value: record.pageAddress)
+            EditableFieldRow(label: "Stage", key: "stage",
+                type: .singleSelect(options: [
+                    "Prospect", "Lead", "Client", "Past Client", "Partner"
+                ]),
+                value: record.stage, onSave: saveField)
+            EditableFieldRow(label: "Status", key: "status",
+                type: .singleSelect(options: [
+                    "ACTIVE", "IN-ACTIVE", "PENDING", "EXPIRED", "REVOKED"
+                ]),
+                value: record.status, onSave: saveField)
+            EditableFieldRow(label: "Email", key: "email", type: .readonly,
+                value: record.email, isLink: true)
+            EditableFieldRow(label: "Position", key: "positionTitle", type: .text,
+                value: record.positionTitle, onSave: saveField)
+            EditableFieldRow(label: "Company", key: "company", type: .readonly,
+                value: record.company)
+            EditableFieldRow(label: "Decision Maker", key: "decisionMaker", type: .text,
+                value: record.decisionMaker, onSave: saveField)
+            EditableFieldRow(label: "Lead Source", key: "leadSource", type: .text,
+                value: record.leadSource, onSave: saveField)
         }
     }
 
-    // MARK: - Portal Details
+    // MARK: - Portal & Business
 
-    @ViewBuilder
-    private var portalDetailsSection: some View {
-        let hasFramerUrl = record.framerPageUrl?.isEmpty == false
-        let hasWebsite = record.website?.isEmpty == false
-        let hasPhone = record.phoneNumber?.isEmpty == false
-        let hasAddress = record.address?.isEmpty == false
-        let hasIndustry = record.industry?.isEmpty == false
-        let hasBudget = record.projectBudget != nil
-
-        if hasFramerUrl || hasWebsite || hasPhone || hasAddress || hasIndustry || hasBudget {
-            Section("Portal & Business") {
-                if let framerUrl = record.framerPageUrl, !framerUrl.isEmpty {
-                    let url = framerUrl.hasPrefix("http") ? framerUrl : "https://\(framerUrl)"
-                    linkRow(label: "Portal URL", value: framerUrl, urlString: url)
-                }
-
-                if let website = record.website, !website.isEmpty {
-                    let url = website.hasPrefix("http") ? website : "https://\(website)"
-                    linkRow(label: "Website", value: website, urlString: url)
-                }
-
-                if let phone = record.phoneNumber, !phone.isEmpty {
-                    linkRow(label: "Phone", value: phone, urlString: "tel:\(phone)")
-                }
-
-                if let address = record.address, !address.isEmpty {
-                    FieldRow(label: "Address", value: address)
-                }
-
-                if let industry = record.industry, !industry.isEmpty {
-                    FieldRow(label: "Industry", value: industry)
-                }
-
-                if let budget = record.projectBudget {
-                    FieldRow(label: "Project Budget", value: budgetFormatted(budget))
-                }
-            }
+    private var portalBusinessSection: some View {
+        DetailSection(title: "PORTAL & BUSINESS") {
+            EditableFieldRow(label: "Website", key: "website", type: .text,
+                value: record.website, isLink: true, onSave: saveField)
+            EditableFieldRow(label: "Phone", key: "phoneNumber", type: .text,
+                value: record.phoneNumber, isLink: true, onSave: saveField)
+            EditableFieldRow(label: "Industry", key: "industry", type: .text,
+                value: record.industry, onSave: saveField)
+            EditableFieldRow(label: "Project Budget", key: "projectBudget",
+                type: .number(prefix: "$"),
+                value: record.projectBudget.map { String(format: "%.0f", $0) },
+                onSave: saveField)
+            EditableFieldRow(label: "Services", key: "servicesInterestedIn",
+                type: .multiSelect(options: [
+                    "Strategy/Consulting", "Design/Concept Development",
+                    "Production/Fabrication Oversight", "Opening/Operations Support",
+                    "Executive Producing"
+                ]),
+                value: record.servicesInterestedIn.joined(separator: ", "),
+                onSave: saveField)
         }
     }
 
-    // MARK: - Contact Lookup
+    // MARK: - Key Dates
 
-    @ViewBuilder
-    private var contactLookupSection: some View {
-        let hasContactName = record.contactNameLookup?.isEmpty == false
-        let hasContactEmail = record.contactEmailLookup?.isEmpty == false
-        let hasContactPhone = record.contactPhoneLookup?.isEmpty == false
-        let hasContactJobTitle = record.contactJobTitleLookup?.isEmpty == false
-        let hasContactCompany = record.contactCompanyLookup?.isEmpty == false
-        let hasContactIndustry = record.contactIndustryLookup?.isEmpty == false
-        let hasContactWebsite = record.contactWebsiteLookup?.isEmpty == false
-        let hasContactTags = record.contactTagsLookup?.isEmpty == false
-        let hasContactAddress = hasContactAddressFields
-
-        let hasAny = hasContactName || hasContactEmail || hasContactPhone
-            || hasContactJobTitle || hasContactCompany || hasContactIndustry
-            || hasContactWebsite || hasContactTags || hasContactAddress
-
-        if hasAny {
-            Section("Linked Contact") {
-                if let name = record.contactNameLookup, !name.isEmpty {
-                    FieldRow(label: "Name", value: name)
-                }
-
-                if let email = record.contactEmailLookup, !email.isEmpty {
-                    linkRow(label: "Email", value: email, urlString: "mailto:\(email)")
-                }
-
-                if let phone = record.contactPhoneLookup, !phone.isEmpty {
-                    linkRow(label: "Phone", value: phone, urlString: "tel:\(phone)")
-                }
-
-                if let jobTitle = record.contactJobTitleLookup, !jobTitle.isEmpty {
-                    FieldRow(label: "Job Title", value: jobTitle)
-                }
-
-                if let company = record.contactCompanyLookup, !company.isEmpty {
-                    FieldRow(label: "Company", value: company)
-                }
-
-                if let industry = record.contactIndustryLookup, !industry.isEmpty {
-                    FieldRow(label: "Industry", value: industry)
-                }
-
-                if let website = record.contactWebsiteLookup, !website.isEmpty {
-                    let url = website.hasPrefix("http") ? website : "https://\(website)"
-                    linkRow(label: "Website", value: website, urlString: url)
-                }
-
-                if let tags = record.contactTagsLookup, !tags.isEmpty {
-                    FieldRow(label: "Tags", value: tags)
-                }
-
-                if hasContactAddressFields {
-                    FieldRow(label: "Location", value: contactLocationFormatted)
-                }
-            }
-        }
-    }
-
-    // MARK: - Services Interested In
-
-    @ViewBuilder
-    private var servicesSection: some View {
-        if !record.servicesInterestedIn.isEmpty {
-            Section("Services Interested In") {
-                FlowLayout(spacing: 6) {
-                    ForEach(record.servicesInterestedIn, id: \.self) { service in
-                        BadgeView(text: service, color: .teal)
-                    }
-                }
-                .padding(.vertical, 4)
-            }
+    private var keyDatesSection: some View {
+        DetailSection(title: "KEY DATES") {
+            EditableFieldRow(label: "Follow Up", key: "followUpDate", type: .date,
+                value: record.followUpDate.map { ISO8601DateFormatter().string(from: $0) },
+                onSave: saveField)
+            EditableFieldRow(label: "Expected Start", key: "expectedProjectStartDate", type: .date,
+                value: record.expectedProjectStartDate.map { ISO8601DateFormatter().string(from: $0) },
+                onSave: saveField)
+            DetailFieldRow(label: "Date Added", value: record.dateAdded.map {
+                DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none)
+            } ?? "—")
         }
     }
 
     // MARK: - Notes
 
-    @ViewBuilder
     private var notesSection: some View {
-        if let notes = record.notes, !notes.isEmpty {
-            Section("Notes") {
-                Text(notes)
-                    .font(.body)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        DetailSection(title: "NOTES") {
+            EditableFieldRow(label: "", key: "notes", type: .textarea,
+                value: record.notes, onSave: saveField)
+        }
+    }
+
+    // MARK: - Linked Contact Lookups (readonly)
+
+    @ViewBuilder
+    private var contactLookupSection: some View {
+        let hasAny = [
+            record.contactNameLookup, record.contactEmailLookup,
+            record.contactPhoneLookup, record.contactJobTitleLookup,
+            record.contactCompanyLookup, record.contactIndustryLookup,
+            record.contactWebsiteLookup, record.contactTagsLookup,
+            record.contactAddressLineLookup, record.contactCityLookup,
+            record.contactStateLookup, record.contactCountryLookup
+        ].contains { $0?.isEmpty == false }
+
+        if hasAny {
+            DetailSection(title: "LINKED CONTACT") {
+                if let name = record.contactNameLookup, !name.isEmpty {
+                    DetailFieldRow(label: "Name", value: name)
+                }
+                if let email = record.contactEmailLookup, !email.isEmpty {
+                    DetailFieldRow(label: "Email", value: email, isLink: true,
+                        linkURL: "mailto:\(email)")
+                }
+                if let phone = record.contactPhoneLookup, !phone.isEmpty {
+                    DetailFieldRow(label: "Phone", value: phone, isLink: true,
+                        linkURL: "tel:\(phone)")
+                }
+                if let jobTitle = record.contactJobTitleLookup, !jobTitle.isEmpty {
+                    DetailFieldRow(label: "Job Title", value: jobTitle)
+                }
+                if let company = record.contactCompanyLookup, !company.isEmpty {
+                    DetailFieldRow(label: "Company", value: company)
+                }
+                if let industry = record.contactIndustryLookup, !industry.isEmpty {
+                    DetailFieldRow(label: "Industry", value: industry)
+                }
+                if let website = record.contactWebsiteLookup, !website.isEmpty {
+                    DetailFieldRow(label: "Website", value: website, isLink: true,
+                        linkURL: website.hasPrefix("http") ? website : "https://\(website)")
+                }
+                if let tags = record.contactTagsLookup, !tags.isEmpty {
+                    DetailFieldRow(label: "Tags", value: tags)
+                }
+                if hasContactAddressFields {
+                    DetailFieldRow(label: "Location", value: contactLocationFormatted)
+                }
             }
         }
     }
 
-    // MARK: - Dates
+    // MARK: - Details (metadata, readonly)
 
-    @ViewBuilder
-    private var datesSection: some View {
-        let hasDateAdded = record.dateAdded != nil
-        let hasExpectedStart = record.expectedProjectStartDate != nil
-        let hasFollowUp = record.followUpDate != nil
-
-        if hasDateAdded || hasExpectedStart || hasFollowUp {
-            Section("Key Dates") {
-                if let dateAdded = record.dateAdded {
-                    FieldRow(label: "Date Added", value: dateAdded.formatted(date: .abbreviated, time: .omitted))
-                }
-
-                if let expectedStart = record.expectedProjectStartDate {
-                    FieldRow(label: "Expected Start", value: expectedStart.formatted(date: .abbreviated, time: .omitted))
-                }
-
-                if let followUp = record.followUpDate {
-                    FieldRow(label: "Follow Up", value: followUp.formatted(date: .abbreviated, time: .omitted))
-                }
-            }
-        }
-    }
-
-    // MARK: - Details (metadata)
-
-    @ViewBuilder
     private var detailsSection: some View {
-        Section("Details") {
+        DetailSection(title: "DETAILS") {
             if let modified = record.airtableModifiedAt {
-                FieldRow(label: "Last Modified", value: modified.formatted(date: .abbreviated, time: .shortened))
+                DetailFieldRow(label: "Last Modified",
+                    value: modified.formatted(date: .abbreviated, time: .shortened))
             }
-
             if let localMod = record.localModifiedAt {
-                FieldRow(label: "Local Modified", value: localMod.formatted(date: .abbreviated, time: .shortened))
+                DetailFieldRow(label: "Local Modified",
+                    value: localMod.formatted(date: .abbreviated, time: .shortened))
             }
-
-            // Airtable record ID — small, for debugging
-            Text(record.id)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(spacing: 0) {
+                HStack {
+                    Text(record.id)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .textSelection(.enabled)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .frame(minHeight: 28)
+                Divider()
+            }
         }
+    }
+
+    // MARK: - Save Handler
+
+    private func saveField(_ key: String, _ value: Any?) {
+        let str = value as? String
+        switch key {
+        case "stage": record.stage = str
+        case "status": record.status = str
+        case "leadSource": record.leadSource = str
+        case "servicesInterestedIn":
+            record.servicesInterestedIn = str?.components(separatedBy: ",")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty } ?? []
+        case "projectBudget":
+            if let s = str, let d = Double(s) { record.projectBudget = d }
+            else { record.projectBudget = nil }
+        case "followUpDate":
+            if let s = str {
+                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
+                record.followUpDate = f.date(from: s)
+            } else { record.followUpDate = nil }
+        case "expectedProjectStartDate":
+            if let s = str {
+                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
+                record.expectedProjectStartDate = f.date(from: s)
+            } else { record.expectedProjectStartDate = nil }
+        case "decisionMaker": record.decisionMaker = str
+        case "positionTitle": record.positionTitle = str
+        case "phoneNumber": record.phoneNumber = str
+        case "website": record.website = str
+        case "industry": record.industry = str
+        case "address": record.address = str
+        case "notes": record.notes = str
+        default: break
+        }
+        record.localModifiedAt = Date()
+        record.isPendingPush = true
     }
 
     // MARK: - Helpers
@@ -328,36 +279,6 @@ struct PortalAccessDetailView: View {
             return .red
         }
         return .secondary
-    }
-
-    /// Builds a tappable link row with URL scheme validation.
-    private func linkRow(label: String, value: String, urlString: String) -> some View {
-        HStack {
-            Text(label)
-                .foregroundStyle(.secondary)
-            Spacer()
-            if let url = URL(string: urlString),
-               let scheme = url.scheme,
-               ["https", "http", "mailto", "tel"].contains(scheme) {
-                Link(value, destination: url)
-                    .foregroundStyle(Color.accentColor)
-                    .lineLimit(1)
-            } else {
-                Text(value)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-            }
-        }
-        .frame(minHeight: 28)
-    }
-
-    /// Formats project budget as currency.
-    private func budgetFormatted(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))"
     }
 
     /// Whether any contact address lookup fields are populated.
@@ -405,7 +326,7 @@ struct PortalAccessDetailView: View {
     record.pageAddress = "haus-collection"
     record.email = "client@example.com"
     record.status = "ACTIVE"
-    record.stage = "Live"
+    record.stage = "Lead"
     record.company = "Haus Group"
     record.positionTitle = "Creative Director"
     record.industry = "Real Estate"
@@ -414,7 +335,7 @@ struct PortalAccessDetailView: View {
     record.notes = "Premium client portal — showcasing brand identity and web design work."
     record.dateAdded = Calendar.current.date(byAdding: .month, value: -3, to: Date())
     record.projectBudget = 25000
-    record.servicesInterestedIn = ["Web Design", "Brand Identity", "Content Strategy"]
+    record.servicesInterestedIn = ["Strategy/Consulting", "Design/Concept Development"]
     record.contactNameLookup = "Jane Doe"
     record.contactEmailLookup = "jane@hauscollection.com"
     record.contactJobTitleLookup = "CEO"

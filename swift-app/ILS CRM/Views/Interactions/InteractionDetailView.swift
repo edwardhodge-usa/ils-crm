@@ -1,15 +1,16 @@
 import SwiftUI
+import SwiftData
 
 /// Interaction detail view — mirrors src/components/interactions/InteractionDetailPage.tsx
 ///
-/// Shows all interaction fields in grouped form:
-/// - Header with type icon + subject
-/// - Interaction Info: type, date, direction
-/// - Summary + Next Steps (if present)
+/// Shows all interaction fields with inline editing:
+/// - Header with type icon + subject + badges
+/// - Interaction Info: subject, type, direction, date (editable)
+/// - Summary + Next Steps (editable textarea)
 /// - Linked Records (contacts, opportunities)
 /// - Details: timestamps, record ID
 struct InteractionDetailView: View {
-    let interaction: Interaction
+    @Bindable var interaction: Interaction
 
     // MARK: - Date Formatting
 
@@ -69,35 +70,92 @@ struct InteractionDetailView: View {
         linkedContacts > 0 || linkedOpportunities > 0
     }
 
+    // MARK: - Save Field
+
+    private func saveField(_ key: String, _ value: Any?) {
+        let str = value as? String
+        switch key {
+        case "subject": interaction.subject = str
+        case "type": interaction.type = str
+        case "direction": interaction.direction = str
+        case "date":
+            if let s = str {
+                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
+                interaction.date = f.date(from: s)
+            } else { interaction.date = nil }
+        case "summary": interaction.summary = str
+        case "nextSteps": interaction.nextSteps = str
+        default: break
+        }
+        interaction.localModifiedAt = Date()
+        interaction.isPendingPush = true
+    }
+
     // MARK: - Body
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Header
+                // Hero Header
                 header
                     .padding(.horizontal)
                     .padding(.top)
 
-                // Form Content
-                Form {
-                    interactionInfoSection
-
-                    if let summary = interaction.summary, !summary.isEmpty {
-                        summarySection(summary)
+                // Editable Fields
+                VStack(alignment: .leading, spacing: 0) {
+                    DetailSection(title: "INTERACTION INFO") {
+                        EditableFieldRow(label: "Subject", key: "subject", type: .text,
+                            value: interaction.subject, onSave: saveField)
+                        EditableFieldRow(label: "Type", key: "type",
+                            type: .singleSelect(options: [
+                                "📧 Email", "📞 Phone Call", "🤝 Meeting (In-Person)",
+                                "💻 Meeting (Virtual)", "🍽️ Lunch/Dinner",
+                                "🎪 Conference/Event", "📝 Note"
+                            ]), value: interaction.type, onSave: saveField)
+                        EditableFieldRow(label: "Direction", key: "direction",
+                            type: .singleSelect(options: [
+                                "Outbound (we initiated)", "Inbound (they initiated)"
+                            ]), value: interaction.direction, onSave: saveField)
+                        EditableFieldRow(label: "Date", key: "date", type: .date,
+                            value: interaction.date.map {
+                                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
+                                return f.string(from: $0)
+                            },
+                            onSave: saveField)
                     }
 
-                    if let nextSteps = interaction.nextSteps, !nextSteps.isEmpty {
-                        nextStepsSection(nextSteps)
+                    DetailSection(title: "SUMMARY") {
+                        EditableFieldRow(label: "", key: "summary", type: .textarea,
+                            value: interaction.summary, onSave: saveField)
+                    }
+
+                    DetailSection(title: "NEXT STEPS") {
+                        EditableFieldRow(label: "", key: "nextSteps", type: .textarea,
+                            value: interaction.nextSteps, onSave: saveField)
                     }
 
                     if hasLinkedRecords {
-                        linkedRecordsSection
+                        DetailSection(title: "LINKED RECORDS") {
+                            if linkedContacts > 0 {
+                                DetailFieldRow(label: "Contacts", value: "\(linkedContacts)")
+                            }
+                            if linkedOpportunities > 0 {
+                                DetailFieldRow(label: "Opportunities", value: "\(linkedOpportunities)")
+                            }
+                        }
                     }
 
-                    detailsSection
+                    DetailSection(title: "DETAILS") {
+                        if let modified = formattedDateTime(interaction.airtableModifiedAt) {
+                            DetailFieldRow(label: "Last Modified", value: modified)
+                        }
+                        if let localMod = formattedDateTime(interaction.localModifiedAt) {
+                            DetailFieldRow(label: "Local Modified", value: localMod)
+                        }
+                        DetailFieldRow(label: "Record ID", value: interaction.id)
+                    }
                 }
-                .formStyle(.grouped)
+                .padding(.horizontal, 16)
             }
         }
     }
@@ -130,96 +188,6 @@ struct InteractionDetailView: View {
                     }
                 }
             }
-        }
-    }
-
-    // MARK: - Interaction Info Section
-
-    private var interactionInfoSection: some View {
-        Section("Interaction Info") {
-            if let type = interaction.type, !type.isEmpty {
-                HStack {
-                    Text("Type")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    HStack(spacing: 6) {
-                        Image(systemName: typeIcon)
-                            .font(.caption)
-                            .foregroundStyle(typeColor)
-                        Text(type)
-                    }
-                }
-                .frame(minHeight: 28)
-            }
-
-            if let date = interaction.date, let formatted = formatted(date) {
-                FieldRow(label: "Date", value: formatted)
-            }
-
-            if let direction = interaction.direction, !direction.isEmpty {
-                HStack {
-                    Text("Direction")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    BadgeView(
-                        text: direction,
-                        color: direction.lowercased().contains("inbound") ? .green : .blue
-                    )
-                }
-                .frame(minHeight: 28)
-            }
-        }
-    }
-
-    // MARK: - Summary Section
-
-    private func summarySection(_ summary: String) -> some View {
-        Section("Summary") {
-            Text(summary)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    // MARK: - Next Steps Section
-
-    private func nextStepsSection(_ nextSteps: String) -> some View {
-        Section("Next Steps") {
-            Text(nextSteps)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    // MARK: - Linked Records Section
-
-    private var linkedRecordsSection: some View {
-        Section("Linked Records") {
-            if linkedContacts > 0 {
-                FieldRow(label: "Contacts", value: "\(linkedContacts)")
-            }
-            if linkedOpportunities > 0 {
-                FieldRow(label: "Opportunities", value: "\(linkedOpportunities)")
-            }
-        }
-    }
-
-    // MARK: - Details Section
-
-    private var detailsSection: some View {
-        Section("Details") {
-            if let modified = formattedDateTime(interaction.airtableModifiedAt) {
-                FieldRow(label: "Last Modified", value: modified)
-            }
-
-            if let localMod = formattedDateTime(interaction.localModifiedAt) {
-                FieldRow(label: "Local Modified", value: localMod)
-            }
-
-            Text(interaction.id)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .textSelection(.enabled)
         }
     }
 }

@@ -4,53 +4,55 @@ import SwiftData
 /// Proposal detail pane — mirrors src/components/proposals/Proposal360Page.tsx
 ///
 /// Renders inline in the split-view right panel (not as a sheet).
-/// Uses shared DetailSection / DetailFieldRow / RelatedRecordRow components.
+/// Uses shared DetailSection / DetailFieldRow / EditableFieldRow / RelatedRecordRow components.
+/// Uses @Bindable for direct SwiftData mutation with pending-push tracking.
 struct ProposalDetailView: View {
     @Environment(\.modelContext) private var modelContext
 
-    let proposal: Proposal
+    @Bindable var proposal: Proposal
 
     @State private var showEditSheet = false
     @State private var showDeleteConfirm = false
 
-    // MARK: - Formatters
-
-    private static let dateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        f.timeStyle = .none
-        return f
-    }()
-
-    private static let currencyFormatter: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "USD"
-        f.maximumFractionDigits = 0
-        return f
-    }()
+    init(proposal: Proposal) {
+        self.proposal = proposal
+    }
 
     // MARK: - Helpers
 
-    private func formatted(_ date: Date?) -> String {
-        guard let date else { return "—" }
-        return Self.dateFormatter.string(from: date)
-    }
-
-    private func formattedCurrency(_ value: Double?) -> String {
-        guard let value, value > 0 else { return "—" }
-        return Self.currencyFormatter.string(from: NSNumber(value: value)) ?? "—"
-    }
-
     private func statusColor(for status: String) -> Color {
         switch status {
-        case "Draft":    return .gray
-        case "Sent":     return .blue
-        case "Accepted": return .green
-        case "Rejected": return .red
-        case "Revised":  return .orange
-        default:         return .secondary
+        case "Draft":           return .gray
+        case "Sent to Client":  return .blue
+        case "Approved",
+             "Closed Won":      return .green
+        case "Rejected",
+             "Closed Lost":     return .red
+        case "Pending Approval",
+             "In Review":       return .orange
+        case "Submitted":       return .purple
+        default:                return .secondary
         }
+    }
+
+    private func saveField(_ key: String, _ value: Any?) {
+        let str = value as? String
+        switch key {
+        case "status": proposal.status = str
+        case "approvalStatus": proposal.approvalStatus = str
+        case "proposedValue":
+            if let s = str, let d = Double(s) { proposal.proposedValue = d }
+            else { proposal.proposedValue = nil }
+        case "version": proposal.version = str
+        case "templateUsed": proposal.templateUsed = str
+        case "notes": proposal.notes = str
+        case "scopeSummary": proposal.scopeSummary = str
+        case "clientFeedback": proposal.clientFeedback = str
+        case "performanceMetrics": proposal.performanceMetrics = str
+        default: break
+        }
+        proposal.localModifiedAt = Date()
+        proposal.isPendingPush = true
     }
 
     // MARK: - Body
@@ -74,12 +76,82 @@ struct ProposalDetailView: View {
 
                 // ── Proposal Info ─────────────────────────────────────
                 DetailSection(title: "PROPOSAL INFO") {
-                    DetailFieldRow(label: "Proposal Date", value: formatted(proposal.dateSent))
-                    DetailFieldRow(label: "Expiration Date", value: formatted(proposal.validUntil))
-                    DetailFieldRow(label: "Amount", value: formattedCurrency(proposal.proposedValue))
-                    DetailFieldRow(label: "Currency", value: "USD")
-                    DetailFieldRow(label: "Sent To", value: proposal.clientIds.isEmpty ? "—" : "\(proposal.clientIds.count) contact(s)")
-                    DetailFieldRow(label: "Status", value: proposal.status ?? "—", showChevron: true)
+                    VStack(spacing: 0) {
+                        DetailFieldRow(label: "Proposal Date", value: proposal.dateSent.map {
+                            DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none)
+                        } ?? "—")
+                        DetailFieldRow(label: "Expiration", value: proposal.validUntil.map {
+                            DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none)
+                        } ?? "—")
+                        EditableFieldRow(
+                            label: "Value",
+                            key: "proposedValue",
+                            type: .number(prefix: "$"),
+                            value: proposal.proposedValue.map { String(format: "%.0f", $0) },
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Status",
+                            key: "status",
+                            type: .singleSelect(options: [
+                                "Draft", "Pending Approval", "Approved", "Sent to Client",
+                                "Closed Won", "Closed Lost", "Submitted", "In Review", "Rejected"
+                            ]),
+                            value: proposal.status,
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Approval",
+                            key: "approvalStatus",
+                            type: .singleSelect(options: [
+                                "Not Submitted", "Submitted", "Approved", "Rejected", "Pending", "Under Review"
+                            ]),
+                            value: proposal.approvalStatus,
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Version",
+                            key: "version",
+                            type: .text,
+                            value: proposal.version,
+                            onSave: saveField
+                        )
+                        EditableFieldRow(
+                            label: "Template",
+                            key: "templateUsed",
+                            type: .singleSelect(options: [
+                                "Basic", "Detailed", "Custom", "Standard Template", "Custom Template",
+                                "Marketing Template", "IT Template", "Service Template", "Design Template",
+                                "Security Template", "Strategy Template", "HR Template", "Event Template"
+                            ]),
+                            value: proposal.templateUsed,
+                            onSave: saveField
+                        )
+                    }
+                }
+                .padding(.horizontal, 20)
+
+                // ── Notes ─────────────────────────────────────────────
+                DetailSection(title: "NOTES") {
+                    VStack(spacing: 0) {
+                        EditableFieldRow(label: "", key: "notes", type: .textarea, value: proposal.notes, onSave: saveField)
+                    }
+                }
+                .padding(.horizontal, 20)
+
+                // ── Scope Summary ─────────────────────────────────────
+                DetailSection(title: "SCOPE SUMMARY") {
+                    VStack(spacing: 0) {
+                        EditableFieldRow(label: "", key: "scopeSummary", type: .textarea, value: proposal.scopeSummary, onSave: saveField)
+                    }
+                }
+                .padding(.horizontal, 20)
+
+                // ── Client Feedback ───────────────────────────────────
+                DetailSection(title: "CLIENT FEEDBACK") {
+                    VStack(spacing: 0) {
+                        EditableFieldRow(label: "", key: "clientFeedback", type: .textarea, value: proposal.clientFeedback, onSave: saveField)
+                    }
                 }
                 .padding(.horizontal, 20)
 
@@ -100,21 +172,6 @@ struct ProposalDetailView: View {
                         items: [],
                         onAdd: nil
                     )
-                }
-                .padding(.horizontal, 20)
-
-                // ── Notes ─────────────────────────────────────────────
-                DetailSection(title: "NOTES") {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(proposal.notes?.isEmpty == false ? proposal.notes! : "—")
-                            .font(.system(size: 13))
-                            .foregroundStyle(proposal.notes?.isEmpty == false ? .primary : .secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
-                            .textSelection(.enabled)
-                        Divider()
-                    }
                 }
                 .padding(.horizontal, 20)
 
