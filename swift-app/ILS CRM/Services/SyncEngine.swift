@@ -297,6 +297,7 @@ final class SyncEngine {
         // that avoids SwiftData @Attribute(.unique) constraint violations)
         for record in records {
             if let old = existingById[record.id] {
+                if old.isPendingPush { continue }
                 context.delete(old)
             }
             let model = T.from(record: record, context: context)

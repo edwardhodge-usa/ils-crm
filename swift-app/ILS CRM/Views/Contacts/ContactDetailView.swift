@@ -18,6 +18,12 @@ struct ContactDetailView: View {
 
     @Environment(\.modelContext) private var context
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withFullDate]
+        return f
+    }()
+
     // MARK: - Computed Stats
 
     /// Opportunities linked to this contact that are not in a closed/won/lost stage.
@@ -168,7 +174,7 @@ struct ContactDetailView: View {
                 value: contact.leadScore.map { "\($0)" }, onSave: saveField)
             EditableFieldRow(label: "Last Contact", key: "lastContactDate",
                 type: .date,
-                value: contact.lastContactDate.map { ISO8601DateFormatter().string(from: $0) },
+                value: contact.lastContactDate.map { Self.isoFormatter.string(from: $0) },
                 onSave: saveField)
         }
     }
@@ -286,9 +292,7 @@ struct ContactDetailView: View {
             else { contact.leadScore = nil }
         case "lastContactDate":
             if let s = str {
-                let f = ISO8601DateFormatter()
-                f.formatOptions = [.withFullDate]
-                contact.lastContactDate = f.date(from: s)
+                contact.lastContactDate = Self.isoFormatter.date(from: s)
             } else { contact.lastContactDate = nil }
         default: break
         }

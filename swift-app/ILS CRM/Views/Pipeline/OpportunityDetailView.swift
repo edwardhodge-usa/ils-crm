@@ -12,6 +12,12 @@ struct OpportunityDetailView: View {
 
     @State private var showDeleteConfirm = false
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withFullDate]
+        return f
+    }()
+
     init(opportunity: Opportunity) {
         self.opportunity = opportunity
     }
@@ -104,9 +110,7 @@ struct OpportunityDetailView: View {
                             key: "expectedCloseDate",
                             type: .date,
                             value: opportunity.expectedCloseDate.map {
-                                let f = ISO8601DateFormatter()
-                                f.formatOptions = [.withFullDate]
-                                return f.string(from: $0)
+                                Self.isoFormatter.string(from: $0)
                             },
                             onSave: saveField
                         )
@@ -115,9 +119,7 @@ struct OpportunityDetailView: View {
                             key: "nextMeetingDate",
                             type: .date,
                             value: opportunity.nextMeetingDate.map {
-                                let f = ISO8601DateFormatter()
-                                f.formatOptions = [.withFullDate]
-                                return f.string(from: $0)
+                                Self.isoFormatter.string(from: $0)
                             },
                             onSave: saveField
                         )
@@ -286,20 +288,16 @@ struct OpportunityDetailView: View {
         case "lossNotes":
             opportunity.lossNotes = str
         case "qualificationsSent":
-            opportunity.qualificationsSent = (value as? Bool) ?? false
+            opportunity.qualificationsSent = (str == "true")
         case "expectedCloseDate":
             if let s = str {
-                let f = ISO8601DateFormatter()
-                f.formatOptions = [.withFullDate]
-                opportunity.expectedCloseDate = f.date(from: s)
+                opportunity.expectedCloseDate = Self.isoFormatter.date(from: s)
             } else {
                 opportunity.expectedCloseDate = nil
             }
         case "nextMeetingDate":
             if let s = str {
-                let f = ISO8601DateFormatter()
-                f.formatOptions = [.withFullDate]
-                opportunity.nextMeetingDate = f.date(from: s)
+                opportunity.nextMeetingDate = Self.isoFormatter.date(from: s)
             } else {
                 opportunity.nextMeetingDate = nil
             }
@@ -319,27 +317,27 @@ struct OpportunityDetailView: View {
     // Linked record ID arrays resolved to display names via SwiftData lookups.
     private var resolvedCompanyNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return opportunity.companyIds.compactMap { resolver.companyName(id: $0) }
+        return resolver.resolveCompanies(ids: opportunity.companyIds)
     }
     private var resolvedContactNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return opportunity.associatedContactIds.compactMap { resolver.contactName(id: $0) }
+        return resolver.resolveContacts(ids: opportunity.associatedContactIds)
     }
     private var resolvedTaskNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return opportunity.tasksIds.compactMap { resolver.taskName(id: $0) }
+        return resolver.resolveTasks(ids: opportunity.tasksIds)
     }
     private var resolvedProjectNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return opportunity.projectIds.compactMap { resolver.projectName(id: $0) }
+        return resolver.resolveProjects(ids: opportunity.projectIds)
     }
     private var resolvedProposalNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return opportunity.proposalsIds.compactMap { resolver.proposalName(id: $0) }
+        return resolver.resolveProposals(ids: opportunity.proposalsIds)
     }
     private var resolvedInteractionNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return opportunity.interactionsIds.compactMap { resolver.interactionSubject(id: $0) }
+        return resolver.resolveInteractions(ids: opportunity.interactionsIds)
     }
 
     @ViewBuilder

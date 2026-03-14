@@ -84,6 +84,9 @@ struct PortalAccessView: View {
             PortalAccessDetailView(record: record)
                 .frame(minWidth: 480, minHeight: 600)
         }
+        .onDisappear {
+            healthService.cancelCheck()
+        }
     }
 
     // MARK: - Record List
@@ -167,7 +170,7 @@ struct PortalAccessView: View {
                 Spacer()
 
                 Button {
-                    Task { await healthService.checkHealth(slugs: allPageAddresses) }
+                    healthService.startHealthCheck(slugs: allPageAddresses)
                 } label: {
                     Label("Check Health", systemImage: "heart.text.square")
                         .font(.system(size: 11))

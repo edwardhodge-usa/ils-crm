@@ -12,6 +12,12 @@ struct PortalAccessDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withFullDate]
+        return f
+    }()
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -124,10 +130,10 @@ struct PortalAccessDetailView: View {
     private var keyDatesSection: some View {
         DetailSection(title: "KEY DATES") {
             EditableFieldRow(label: "Follow Up", key: "followUpDate", type: .date,
-                value: record.followUpDate.map { ISO8601DateFormatter().string(from: $0) },
+                value: record.followUpDate.map { Self.isoFormatter.string(from: $0) },
                 onSave: saveField)
             EditableFieldRow(label: "Expected Start", key: "expectedProjectStartDate", type: .date,
-                value: record.expectedProjectStartDate.map { ISO8601DateFormatter().string(from: $0) },
+                value: record.expectedProjectStartDate.map { Self.isoFormatter.string(from: $0) },
                 onSave: saveField)
             DetailFieldRow(label: "Date Added", value: record.dateAdded.map {
                 DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none)
@@ -237,13 +243,11 @@ struct PortalAccessDetailView: View {
             else { record.projectBudget = nil }
         case "followUpDate":
             if let s = str {
-                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
-                record.followUpDate = f.date(from: s)
+                record.followUpDate = Self.isoFormatter.date(from: s)
             } else { record.followUpDate = nil }
         case "expectedProjectStartDate":
             if let s = str {
-                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
-                record.expectedProjectStartDate = f.date(from: s)
+                record.expectedProjectStartDate = Self.isoFormatter.date(from: s)
             } else { record.expectedProjectStartDate = nil }
         case "decisionMaker": record.decisionMaker = str
         case "positionTitle": record.positionTitle = str

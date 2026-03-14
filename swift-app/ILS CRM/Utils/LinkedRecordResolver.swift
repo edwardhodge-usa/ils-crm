@@ -1,49 +1,55 @@
 import SwiftData
 import Foundation
 
-/// Resolves Airtable record IDs to display names using local SwiftData cache.
 struct LinkedRecordResolver {
     let context: ModelContext
 
-    func contactName(id: String) -> String? {
-        let predicate = #Predicate<Contact> { $0.id == id }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        return (try? context.fetch(descriptor))?.first?.contactName
+    func resolveContacts(ids: [String]) -> [String] {
+        guard !ids.isEmpty else { return [] }
+        let all = (try? context.fetch(FetchDescriptor<Contact>())) ?? []
+        let lookup = Dictionary(uniqueKeysWithValues: all.compactMap { c in c.contactName.map { (c.id, $0) } })
+        return ids.compactMap { lookup[$0] }
     }
 
-    func companyName(id: String) -> String? {
-        let predicate = #Predicate<Company> { $0.id == id }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        return (try? context.fetch(descriptor))?.first?.companyName
+    func resolveCompanies(ids: [String]) -> [String] {
+        guard !ids.isEmpty else { return [] }
+        let all = (try? context.fetch(FetchDescriptor<Company>())) ?? []
+        let lookup = Dictionary(uniqueKeysWithValues: all.compactMap { c in c.companyName.map { (c.id, $0) } })
+        return ids.compactMap { lookup[$0] }
     }
 
-    func opportunityName(id: String) -> String? {
-        let predicate = #Predicate<Opportunity> { $0.id == id }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        return (try? context.fetch(descriptor))?.first?.opportunityName
+    func resolveOpportunities(ids: [String]) -> [String] {
+        guard !ids.isEmpty else { return [] }
+        let all = (try? context.fetch(FetchDescriptor<Opportunity>())) ?? []
+        let lookup = Dictionary(uniqueKeysWithValues: all.compactMap { o in o.opportunityName.map { (o.id, $0) } })
+        return ids.compactMap { lookup[$0] }
     }
 
-    func projectName(id: String) -> String? {
-        let predicate = #Predicate<Project> { $0.id == id }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        return (try? context.fetch(descriptor))?.first?.projectName
+    func resolveProjects(ids: [String]) -> [String] {
+        guard !ids.isEmpty else { return [] }
+        let all = (try? context.fetch(FetchDescriptor<Project>())) ?? []
+        let lookup = Dictionary(uniqueKeysWithValues: all.compactMap { p in p.projectName.map { (p.id, $0) } })
+        return ids.compactMap { lookup[$0] }
     }
 
-    func proposalName(id: String) -> String? {
-        let predicate = #Predicate<Proposal> { $0.id == id }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        return (try? context.fetch(descriptor))?.first?.proposalName
+    func resolveProposals(ids: [String]) -> [String] {
+        guard !ids.isEmpty else { return [] }
+        let all = (try? context.fetch(FetchDescriptor<Proposal>())) ?? []
+        let lookup = Dictionary(uniqueKeysWithValues: all.compactMap { p in p.proposalName.map { (p.id, $0) } })
+        return ids.compactMap { lookup[$0] }
     }
 
-    func taskName(id: String) -> String? {
-        let predicate = #Predicate<CRMTask> { $0.id == id }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        return (try? context.fetch(descriptor))?.first?.task
+    func resolveTasks(ids: [String]) -> [String] {
+        guard !ids.isEmpty else { return [] }
+        let all = (try? context.fetch(FetchDescriptor<CRMTask>())) ?? []
+        let lookup = Dictionary(uniqueKeysWithValues: all.compactMap { t in t.task.map { (t.id, $0) } })
+        return ids.compactMap { lookup[$0] }
     }
 
-    func interactionSubject(id: String) -> String? {
-        let predicate = #Predicate<Interaction> { $0.id == id }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        return (try? context.fetch(descriptor))?.first?.subject
+    func resolveInteractions(ids: [String]) -> [String] {
+        guard !ids.isEmpty else { return [] }
+        let all = (try? context.fetch(FetchDescriptor<Interaction>())) ?? []
+        let lookup = Dictionary(uniqueKeysWithValues: all.compactMap { i in i.subject.map { (i.id, $0) } })
+        return ids.compactMap { lookup[$0] }
     }
 }

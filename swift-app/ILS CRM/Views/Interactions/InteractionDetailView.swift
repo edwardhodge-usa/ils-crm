@@ -12,6 +12,12 @@ import SwiftData
 struct InteractionDetailView: View {
     @Bindable var interaction: Interaction
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withFullDate]
+        return f
+    }()
+
     // MARK: - Date Formatting
 
     private static let dateFormatter: DateFormatter = {
@@ -80,8 +86,7 @@ struct InteractionDetailView: View {
         case "direction": interaction.direction = str
         case "date":
             if let s = str {
-                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
-                interaction.date = f.date(from: s)
+                interaction.date = Self.isoFormatter.date(from: s)
             } else { interaction.date = nil }
         case "summary": interaction.summary = str
         case "nextSteps": interaction.nextSteps = str
@@ -118,8 +123,7 @@ struct InteractionDetailView: View {
                             ]), value: interaction.direction, onSave: saveField)
                         EditableFieldRow(label: "Date", key: "date", type: .date,
                             value: interaction.date.map {
-                                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
-                                return f.string(from: $0)
+                                Self.isoFormatter.string(from: $0)
                             },
                             onSave: saveField)
                     }

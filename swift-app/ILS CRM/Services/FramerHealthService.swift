@@ -21,12 +21,29 @@ final class FramerHealthService {
 
     private(set) var healthMap: [String: PageHealth] = [:]
     private(set) var isChecking = false
+    private var checkTask: Task<Void, Never>?
+
+    /// Cancel any in-flight health check and reset state.
+    func cancelCheck() {
+        checkTask?.cancel()
+        checkTask = nil
+        isChecking = false
+    }
+
+    /// Start a health check, cancelling any previous one first (re-entrancy guard).
+    func startHealthCheck(slugs: [String]) {
+        checkTask?.cancel()
+        checkTask = Task {
+            await checkHealth(slugs: slugs)
+        }
+    }
 
     func checkHealth(slugs: [String]) async {
         isChecking = true
         defer { isChecking = false }
 
         for slug in slugs where !slug.isEmpty {
+            if Task.isCancelled { break }
             guard let url = URL(string: "https://www.imaginelabstudios.com/ils-clients/\(slug)") else {
                 healthMap[slug] = .error
                 continue

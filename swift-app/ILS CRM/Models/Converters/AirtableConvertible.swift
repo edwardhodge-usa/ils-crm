@@ -151,31 +151,37 @@ protocol AirtableConvertible: PersistentModel {
 
 /// Builds a [String: Any] dictionary for Airtable API create/update payloads.
 ///
-/// Only includes non-nil values to avoid overwriting existing Airtable data with null.
+/// Always includes every field — sends NSNull() for cleared values so Airtable
+/// removes the old data instead of silently preserving it.
 /// Handles all writable field types: text, number, date, boolean, multi-select, linked records.
 struct AirtableFieldsBuilder {
     var fields: [String: Any] = [:]
 
     /// Sets a string field (text, singleSelect, email, url, phone).
-    /// Skips nil values.
+    /// Sends NSNull() when nil so cleared fields propagate to Airtable.
     mutating func set(_ fieldId: String, _ value: String?) {
-        if let value { fields[fieldId] = value }
+        fields[fieldId] = value as Any? ?? NSNull()
     }
 
     /// Sets an integer field.
+    /// Sends NSNull() when nil so cleared fields propagate to Airtable.
     mutating func set(_ fieldId: String, _ value: Int?) {
-        if let value { fields[fieldId] = value }
+        fields[fieldId] = value as Any? ?? NSNull()
     }
 
     /// Sets a double/currency field.
+    /// Sends NSNull() when nil so cleared fields propagate to Airtable.
     mutating func set(_ fieldId: String, _ value: Double?) {
-        if let value { fields[fieldId] = value }
+        fields[fieldId] = value as Any? ?? NSNull()
     }
 
     /// Sets a date field as ISO 8601 string.
+    /// Sends NSNull() when nil so cleared fields propagate to Airtable.
     mutating func setDate(_ fieldId: String, _ value: Date?) {
         if let value {
             fields[fieldId] = Self.iso8601Formatter.string(from: value)
+        } else {
+            fields[fieldId] = NSNull()
         }
     }
 
@@ -185,15 +191,15 @@ struct AirtableFieldsBuilder {
     }
 
     /// Sets a multi-select field (array of option name strings).
-    /// Only includes if non-empty.
+    /// Sends NSNull() when empty so cleared selections propagate to Airtable.
     mutating func setMultiSelect(_ fieldId: String, _ value: [String]) {
-        if !value.isEmpty { fields[fieldId] = value }
+        fields[fieldId] = value.isEmpty ? NSNull() : value as Any
     }
 
     /// Sets a linked record field (array of record ID strings).
-    /// Only includes if non-empty.
+    /// Sends NSNull() when empty so cleared links propagate to Airtable.
     mutating func setLinkedIds(_ fieldId: String, _ value: [String]) {
-        if !value.isEmpty { fields[fieldId] = value }
+        fields[fieldId] = value.isEmpty ? NSNull() : value as Any
     }
 
     // MARK: - Date Formatter

@@ -10,6 +10,7 @@ struct GrantAccessSheet: View {
     let pageAddress: String
 
     @Query(sort: \Contact.contactName) private var contacts: [Contact]
+    @Query private var existingAccess: [PortalAccessRecord]
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
@@ -130,6 +131,13 @@ struct GrantAccessSheet: View {
     // MARK: - Grant Access
 
     private func grantAccess(to contact: Contact) {
+        // Prevent duplicate access — check if this contact already has access to this page
+        let hasAccess = existingAccess.contains { record in
+            record.pageAddress == pageAddress &&
+            record.contactIds.contains(contact.id)
+        }
+        if hasAccess { dismiss(); return }
+
         let record = PortalAccessRecord(
             id: "local_\(UUID().uuidString)",
             name: contact.contactName,

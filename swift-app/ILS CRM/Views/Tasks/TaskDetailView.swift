@@ -17,6 +17,12 @@ struct TaskDetailView: View {
 
     @State private var showDeleteConfirm = false
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withFullDate]
+        return f
+    }()
+
     // MARK: - Init
 
     init(task: CRMTask) {
@@ -160,7 +166,7 @@ struct TaskDetailView: View {
                 label: "Due Date",
                 key: "dueDate",
                 type: .date,
-                value: task.dueDate.map { ISO8601DateFormatter().string(from: $0) },
+                value: task.dueDate.map { Self.isoFormatter.string(from: $0) },
                 onSave: { key, val in saveField(key, val) }
             )
 
@@ -217,10 +223,7 @@ struct TaskDetailView: View {
         case "notes": task.notes = stringVal
         case "dueDate":
             if let dateStr = stringVal {
-                let formatter = ISO8601DateFormatter()
-                formatter.formatOptions = [.withFullDate]
-                task.dueDate = formatter.date(from: dateStr)
-                    ?? ISO8601DateFormatter().date(from: dateStr)
+                task.dueDate = Self.isoFormatter.date(from: dateStr)
             } else {
                 task.dueDate = nil
             }
@@ -260,19 +263,19 @@ struct TaskDetailView: View {
     // Linked record ID arrays resolved to display names via SwiftData lookups.
     private var salesOpportunityLabels: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return task.salesOpportunitiesIds.compactMap { resolver.opportunityName(id: $0) }
+        return resolver.resolveOpportunities(ids: task.salesOpportunitiesIds)
     }
     private var contactLabels: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return task.contactsIds.compactMap { resolver.contactName(id: $0) }
+        return resolver.resolveContacts(ids: task.contactsIds)
     }
     private var projectLabels: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return task.projectsIds.compactMap { resolver.projectName(id: $0) }
+        return resolver.resolveProjects(ids: task.projectsIds)
     }
     private var proposalLabels: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return task.proposalIds.compactMap { resolver.proposalName(id: $0) }
+        return resolver.resolveProposals(ids: task.proposalIds)
     }
 
     // MARK: - Action Buttons

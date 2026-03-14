@@ -194,6 +194,12 @@ struct EditableFieldRow: View {
     var isLink: Bool = false
     var onSave: ((String, Any?) -> Void)? = nil
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withFullDate]
+        return f
+    }()
+
     @State private var isEditing = false
     @State private var editText = ""
     @State private var selectedOptions: Set<String> = []
@@ -218,10 +224,13 @@ struct EditableFieldRow: View {
             Divider()
         }
         .onAppear {
-            editText = value ?? ""
-            if case .multiSelect = type, let val = value, !val.isEmpty {
-                selectedOptions = Set(val.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) })
-            }
+            resetState()
+        }
+        .onChange(of: value) { _, _ in
+            resetState()
+        }
+        .onChange(of: key) { _, _ in
+            resetState()
         }
     }
 
@@ -348,15 +357,15 @@ struct EditableFieldRow: View {
                         .onSubmit { commitEdit() }
                         .frame(maxWidth: 120)
                         .multilineTextAlignment(.trailing)
+                        .onChange(of: editText) { _, newValue in
+                            let filtered = newValue.filter { $0.isNumber || $0 == "." || $0 == "-" }
+                            if filtered != newValue { editText = filtered }
+                        }
                 }
             } else {
                 Text(formatNumber(value, prefix: prefix))
                     .font(.system(size: 13))
                     .foregroundStyle(value != nil ? .secondary : .tertiary)
-                    .onTapGesture {
-                        editText = value ?? ""
-                        isEditing = true
-                    }
             }
 
         case .date:
@@ -371,6 +380,16 @@ struct EditableFieldRow: View {
         }
     }
 
+    private func resetState() {
+        editText = value ?? ""
+        isEditing = false
+        if case .multiSelect = type, let val = value, !val.isEmpty {
+            selectedOptions = Set(val.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) })
+        } else if case .multiSelect = type {
+            selectedOptions = []
+        }
+    }
+
     private func commitEdit() {
         isEditing = false
         let trimmed = editText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -381,16 +400,12 @@ struct EditableFieldRow: View {
         Binding<Date>(
             get: {
                 guard let value else { return Date() }
-                let formatter = ISO8601DateFormatter()
-                formatter.formatOptions = [.withFullDate]
-                return formatter.date(from: value)
-                    ?? ISO8601DateFormatter().date(from: value)
+                return Self.isoFormatter.date(from: value)
+                    ?? Self.isoFormatter.date(from: value)
                     ?? Date()
             },
             set: { newDate in
-                let formatter = ISO8601DateFormatter()
-                formatter.formatOptions = [.withFullDate]
-                onSave?(key, formatter.string(from: newDate))
+                onSave?(key, Self.isoFormatter.string(from: newDate))
             }
         )
     }
@@ -398,7 +413,7 @@ struct EditableFieldRow: View {
     private var checkBinding: Binding<Bool> {
         Binding<Bool>(
             get: { value == "true" || value == "1" },
-            set: { newValue in onSave?(key, newValue) }
+            set: { newValue in onSave?(key, newValue ? "true" : "false") }
         )
     }
 

@@ -58,15 +58,15 @@ struct ProposalDetailView: View {
     // Linked record ID arrays resolved to display names via SwiftData lookups.
     private var resolvedCompanyNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return proposal.companyIds.compactMap { resolver.companyName(id: $0) }
+        return resolver.resolveCompanies(ids: proposal.companyIds)
     }
     private var resolvedClientNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return proposal.clientIds.compactMap { resolver.contactName(id: $0) }
+        return resolver.resolveContacts(ids: proposal.clientIds)
     }
     private var resolvedOpportunityNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return proposal.relatedOpportunityIds.compactMap { resolver.opportunityName(id: $0) }
+        return resolver.resolveOpportunities(ids: proposal.relatedOpportunityIds)
     }
 
     // MARK: - Body

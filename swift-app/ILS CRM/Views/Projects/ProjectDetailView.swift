@@ -18,6 +18,12 @@ struct ProjectDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showDeleteConfirm = false
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withFullDate]
+        return f
+    }()
+
     // MARK: - Formatters
 
     private static let currencyFormatter: NumberFormatter = {
@@ -43,11 +49,11 @@ struct ProjectDetailView: View {
     private var resolvedContactNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
         let allContactIds = project.contactsIds + project.primaryContactIds.filter { !project.contactsIds.contains($0) }
-        return allContactIds.compactMap { resolver.contactName(id: $0) }
+        return resolver.resolveContacts(ids: allContactIds)
     }
     private var resolvedOpportunityNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
-        return project.salesOpportunitiesIds.compactMap { resolver.opportunityName(id: $0) }
+        return resolver.resolveOpportunities(ids: project.salesOpportunitiesIds)
     }
 
     // MARK: - Save Field
@@ -66,13 +72,11 @@ struct ProjectDetailView: View {
         case "location": project.location = str
         case "startDate":
             if let s = str {
-                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
-                project.startDate = f.date(from: s)
+                project.startDate = Self.isoFormatter.date(from: s)
             } else { project.startDate = nil }
         case "targetCompletion":
             if let s = str {
-                let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate]
-                project.targetCompletion = f.date(from: s)
+                project.targetCompletion = Self.isoFormatter.date(from: s)
             } else { project.targetCompletion = nil }
         case "projectDescription": project.projectDescription = str
         case "keyMilestones": project.keyMilestones = str
@@ -103,10 +107,10 @@ struct ProjectDetailView: View {
                 // PROJECT INFO section
                 DetailSection(title: "PROJECT INFO") {
                     EditableFieldRow(label: "Start Date", key: "startDate", type: .date,
-                        value: project.startDate.map { ISO8601DateFormatter().string(from: $0) },
+                        value: project.startDate.map { Self.isoFormatter.string(from: $0) },
                         onSave: saveField)
                     EditableFieldRow(label: "End Date", key: "targetCompletion", type: .date,
-                        value: project.targetCompletion.map { ISO8601DateFormatter().string(from: $0) },
+                        value: project.targetCompletion.map { Self.isoFormatter.string(from: $0) },
                         onSave: saveField)
                     EditableFieldRow(label: "Status", key: "status",
                         type: .singleSelect(options: [
