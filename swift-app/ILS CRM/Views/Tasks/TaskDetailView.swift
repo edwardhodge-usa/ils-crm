@@ -16,23 +16,11 @@ struct TaskDetailView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var showDeleteConfirm = false
-    @State private var hasDueDate: Bool
-
-    // MARK: - Options
-
-    private let priorityOptions = ["", "🔴 High", "🟡 Medium", "🟢 Low"]
-    private let statusOptions   = ["To Do", "In Progress", "Waiting", "Completed"]
-    private let typeOptions     = [
-        "Schedule Meeting", "Send Qualifications", "Follow-up Email",
-        "Follow-up Call", "Other", "Presentation Deck", "Research",
-        "Administrative", "Send Proposal", "Internal Review", "Project", "Travel"
-    ]
 
     // MARK: - Init
 
     init(task: CRMTask) {
         self.task = task
-        _hasDueDate = State(initialValue: task.dueDate != nil)
     }
 
     // MARK: - Helpers
@@ -74,15 +62,25 @@ struct TaskDetailView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, isOverdue ? 10 : 18)
 
-                // NOTES section
-                DetailSection(title: "Notes") {
-                    notesEditor
-                }
-                .padding(.horizontal, 16)
-
                 // DETAILS section
                 DetailSection(title: "Details") {
                     detailsSection
+                }
+                .padding(.horizontal, 16)
+
+                // NOTES section
+                DetailSection(title: "Notes") {
+                    VStack(spacing: 0) {
+                        EditableFieldRow(
+                            label: "Notes",
+                            key: "notes",
+                            type: .textarea,
+                            value: task.notes,
+                            onSave: { key, val in saveField(key, val) }
+                        )
+                    }
+                    .background(Color(.controlBackgroundColor))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .padding(.horizontal, 16)
 
@@ -146,177 +144,90 @@ struct TaskDetailView: View {
         .padding(.bottom, 4)
     }
 
-    // MARK: - Notes Editor
-
-    private var notesEditor: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Divider()
-            TextEditor(text: Binding(
-                get: { task.notes ?? "" },
-                set: { newVal in
-                    task.notes = newVal.isEmpty ? nil : newVal
-                    markModified()
-                }
-            ))
-            .font(.body)
-            .frame(minHeight: 80)
-            .scrollContentBackground(.hidden)
-            .padding(.horizontal, 4)
-            .padding(.vertical, 4)
-            Divider()
-        }
-    }
-
     // MARK: - Details Section
 
     private var detailsSection: some View {
         VStack(spacing: 0) {
-            // Due Date row
-            VStack(spacing: 0) {
-                HStack {
-                    Text("Due Date")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    if hasDueDate {
-                        DatePicker(
-                            "",
-                            selection: Binding(
-                                get: { task.dueDate ?? Date() },
-                                set: { newVal in
-                                    task.dueDate = newVal
-                                    markModified()
-                                }
-                            ),
-                            displayedComponents: .date
-                        )
-                        .labelsHidden()
-                        .font(.subheadline)
+            EditableFieldRow(
+                label: "Task",
+                key: "task",
+                type: .text,
+                value: task.task,
+                onSave: { key, val in saveField(key, val) }
+            )
 
-                        Button {
-                            task.dueDate = nil
-                            hasDueDate = false
-                            markModified()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.secondary)
-                                .font(.system(size: 14))
-                        }
-                        .buttonStyle(.plain)
-                    } else {
-                        Button("Add Date") {
-                            task.dueDate = Date()
-                            hasDueDate = true
-                            markModified()
-                        }
-                        .font(.subheadline)
-                        .foregroundStyle(Color.accentColor)
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 12)
-                .frame(minHeight: 36)
-                Divider()
-            }
+            EditableFieldRow(
+                label: "Due Date",
+                key: "dueDate",
+                type: .date,
+                value: task.dueDate.map { ISO8601DateFormatter().string(from: $0) },
+                onSave: { key, val in saveField(key, val) }
+            )
 
-            // Priority row
-            pickerRow(
+            EditableFieldRow(
                 label: "Priority",
-                value: task.priority ?? "None",
-                options: priorityOptions,
-                selection: Binding(
-                    get: { task.priority ?? "" },
-                    set: { newVal in
-                        task.priority = newVal.isEmpty ? nil : newVal
-                        markModified()
-                    }
-                ),
-                noneTag: ""
+                key: "priority",
+                type: .singleSelect(options: ["🔴 High", "🟡 Medium", "🟢 Low"]),
+                value: task.priority,
+                onSave: { key, val in saveField(key, val) }
             )
 
-            // Status row
-            pickerRow(
+            EditableFieldRow(
                 label: "Status",
-                value: task.status ?? "—",
-                options: statusOptions,
-                selection: Binding(
-                    get: { task.status ?? "To Do" },
-                    set: { newVal in
-                        task.status = newVal
-                        markModified()
-                    }
-                ),
-                noneTag: nil
+                key: "status",
+                type: .singleSelect(options: ["To Do", "In Progress", "Waiting", "Completed", "Cancelled"]),
+                value: task.status,
+                onSave: { key, val in saveField(key, val) }
             )
 
-            // Type row
-            pickerRow(
+            EditableFieldRow(
                 label: "Type",
-                value: task.type ?? "—",
-                options: typeOptions,
-                selection: Binding(
-                    get: { task.type ?? "" },
-                    set: { newVal in
-                        task.type = newVal.isEmpty ? nil : newVal
-                        markModified()
-                    }
-                ),
-                noneTag: ""
+                key: "type",
+                type: .singleSelect(options: [
+                    "Schedule Meeting", "Send Qualifications", "Follow-up Email",
+                    "Follow-up Call", "Other", "Presentation Deck", "Research",
+                    "Administrative", "Send Proposal", "Internal Review", "Project", "Travel"
+                ]),
+                value: task.type,
+                onSave: { key, val in saveField(key, val) }
             )
 
-            // Assigned To row (read-only — collaborator field)
-            VStack(spacing: 0) {
-                HStack {
-                    Text("Assigned To")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Text(task.assignedTo ?? "—")
-                        .foregroundStyle(.secondary)
-                        .font(.subheadline)
-                }
-                .padding(.horizontal, 12)
-                .frame(minHeight: 36)
-                Divider()
-            }
+            EditableFieldRow(
+                label: "Assigned To",
+                key: "assignedTo",
+                type: .text,
+                value: task.assignedTo,
+                onSave: { key, val in saveField(key, val) }
+            )
         }
+        .background(Color(.controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
-    @ViewBuilder
-    private func pickerRow(
-        label: String,
-        value: String,
-        options: [String],
-        selection: Binding<String>,
-        noneTag: String?
-    ) -> some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text(label)
-                    .foregroundStyle(.primary)
-                Spacer()
-                Menu {
-                    if let noneTag {
-                        Button("None") { selection.wrappedValue = noneTag }
-                        Divider()
-                    }
-                    ForEach(options.filter { $0 != (noneTag ?? "__sentinel__") }, id: \.self) { option in
-                        Button(option) { selection.wrappedValue = option }
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(value.isEmpty ? "None" : value)
-                            .foregroundStyle(.secondary)
-                            .font(.subheadline)
-                        Text("⌃")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .menuStyle(.borderlessButton)
+    // MARK: - Save Field
+
+    private func saveField(_ key: String, _ value: Any?) {
+        let stringVal = value as? String
+        switch key {
+        case "task": task.task = stringVal
+        case "priority": task.priority = stringVal
+        case "status": task.status = stringVal
+        case "type": task.type = stringVal
+        case "assignedTo": task.assignedTo = stringVal
+        case "notes": task.notes = stringVal
+        case "dueDate":
+            if let dateStr = stringVal {
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withFullDate]
+                task.dueDate = formatter.date(from: dateStr)
+                    ?? ISO8601DateFormatter().date(from: dateStr)
+            } else {
+                task.dueDate = nil
             }
-            .padding(.horizontal, 12)
-            .frame(minHeight: 36)
-            Divider()
+        default: break
         }
+        task.localModifiedAt = Date()
+        task.isPendingPush = true
     }
 
     // MARK: - Related Section
