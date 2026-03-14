@@ -26,6 +26,7 @@ struct ILSCRMApp: App {
             Specialty.self,
             PortalAccessRecord.self,
             PortalLog.self,
+            ClientPage.self,
         ])
 
         let config = ModelConfiguration(

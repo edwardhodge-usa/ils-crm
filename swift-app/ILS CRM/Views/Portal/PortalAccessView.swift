@@ -15,6 +15,7 @@ enum PortalViewMode: String, CaseIterable {
 /// "By Person" tab views.
 struct PortalAccessView: View {
     @Query(sort: \PortalAccessRecord.name) private var records: [PortalAccessRecord]
+    @Query private var clientPages: [ClientPage]
     @State private var searchText = ""
     @State private var selectedRecord: PortalAccessRecord?
     @State private var viewMode: PortalViewMode = .all
@@ -242,60 +243,142 @@ struct PortalAccessView: View {
 
             Divider()
 
-            // Section header
-            Text("PEOPLE WITH ACCESS (\(pageRecords.count))")
-                .font(.system(size: 11, weight: .bold))
-                .tracking(0.5)
-                .foregroundStyle(.secondary)
-                .textCase(.uppercase)
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
-
-            // Access records list
+            // URL bar + Page fields + Section toggles + Access records
             ScrollView {
-                VStack(spacing: 0) {
-                    ForEach(pageRecords, id: \.id) { record in
-                        Button {
-                            selectedAccessRecord = record
-                        } label: {
-                            HStack(spacing: 10) {
-                                AvatarView(name: displayName(for: record), avatarSize: .small)
-
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(displayName(for: record))
-                                        .font(.system(size: 13, weight: .medium))
-                                        .foregroundStyle(.primary)
-                                        .lineLimit(1)
-
-                                    if let subtitle = personSubtitle(for: record) {
-                                        Text(subtitle)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                            .lineLimit(1)
-                                    }
-                                }
-
-                                Spacer()
-
-                                if let stage = record.stage, !stage.isEmpty {
-                                    StatusBadge(text: stage, color: stageColor(stage))
-                                }
-
-                                if let dateAdded = record.dateAdded {
-                                    Text(dateAdded.formatted(date: .abbreviated, time: .omitted))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 0) {
+                    // URL Bar
+                    if pageAddress != "No Page" && !pageAddress.isEmpty {
+                        HStack {
+                            Text("imaginelabstudios.com/ils-clients/\(pageAddress)")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            Spacer()
+                            Button("Open") {
+                                if let url = URL(string: "https://imaginelabstudios.com/ils-clients/\(pageAddress)") {
+                                    NSWorkspace.shared.open(url)
                                 }
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .contentShape(Rectangle())
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
                         }
-                        .buttonStyle(.plain)
+                        .padding(10)
+                        .background(Color(nsColor: .controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
+                        .padding(.bottom, 12)
+                    }
 
-                        Divider()
-                            .padding(.leading, 54)
+                    // Page fields + Section toggles (only if ClientPage record exists)
+                    if let page = clientPage(for: pageAddress) {
+                        VStack(alignment: .leading, spacing: 0) {
+                            // Client Name + Subtitle
+                            if let name = page.clientName, !name.isEmpty {
+                                fieldRow("Client Name", value: name)
+                                    .padding(.horizontal, 16)
+                            }
+                            if let subtitle = page.pageSubtitle, !subtitle.isEmpty {
+                                fieldRow("Subtitle", value: subtitle)
+                                    .padding(.horizontal, 16)
+                            }
+                        }
+                        .padding(.bottom, 8)
+
+                        // Form box with page fields
+                        VStack(spacing: 0) {
+                            if let addr = page.pageAddress {
+                                formRow("Page Address", value: addr)
+                            }
+                            if let deck = page.deckUrl, !deck.isEmpty {
+                                formRow("Deck URL", value: deck, isLink: true)
+                            }
+                            if let prep = page.preparedFor, !prep.isEmpty {
+                                formRow("Prepared For", value: prep)
+                            }
+                            if let ty = page.thankYou, !ty.isEmpty {
+                                formRow("Thank You", value: ty)
+                            }
+                        }
+                        .background(Color(nsColor: .controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 12)
+
+                        // Section toggles
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("PAGE SECTIONS")
+                                .font(.system(size: 11, weight: .bold))
+                                .tracking(0.5)
+                                .foregroundStyle(.secondary)
+
+                            HStack(spacing: 8) {
+                                sectionDot("Header", isOn: page.head)
+                                sectionDot("Practical Magic", isOn: page.vPrMagic)
+                                sectionDot("Highlights", isOn: page.vHighLight)
+                                sectionDot("360 Video", isOn: page.v360)
+                                sectionDot("Full Length", isOn: page.vFullL)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 4)
+                        .padding(.bottom, 12)
+                    }
+
+                    // Section header
+                    Text("PEOPLE WITH ACCESS (\(pageRecords.count))")
+                        .font(.system(size: 11, weight: .bold))
+                        .tracking(0.5)
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
+                        .padding(.bottom, 8)
+
+                    // Access records list
+                    VStack(spacing: 0) {
+                        ForEach(pageRecords, id: \.id) { record in
+                            Button {
+                                selectedAccessRecord = record
+                            } label: {
+                                HStack(spacing: 10) {
+                                    AvatarView(name: displayName(for: record), avatarSize: .small)
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(displayName(for: record))
+                                            .font(.system(size: 13, weight: .medium))
+                                            .foregroundStyle(.primary)
+                                            .lineLimit(1)
+
+                                        if let subtitle = personSubtitle(for: record) {
+                                            Text(subtitle)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                    }
+
+                                    Spacer()
+
+                                    if let stage = record.stage, !stage.isEmpty {
+                                        StatusBadge(text: stage, color: stageColor(stage))
+                                    }
+
+                                    if let dateAdded = record.dateAdded {
+                                        Text(dateAdded.formatted(date: .abbreviated, time: .omitted))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+
+                            Divider()
+                                .padding(.leading, 54)
+                        }
                     }
                 }
             }
@@ -322,6 +405,69 @@ struct PortalAccessView: View {
         if lower.contains("prospect") || lower.contains("lead") { return .orange }
         if lower.contains("closed") || lower.contains("lost") { return .red }
         return .secondary
+    }
+
+    // MARK: - Client Page Lookup
+
+    private func clientPage(for address: String?) -> ClientPage? {
+        guard let addr = address else { return nil }
+        return clientPages.first { $0.pageAddress == addr }
+    }
+
+    // MARK: - Page Field Helpers
+
+    @ViewBuilder
+    private func fieldRow(_ label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .font(.system(size: 13))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.trailing)
+        }
+        .padding(.vertical, 6)
+    }
+
+    @ViewBuilder
+    private func formRow(_ label: String, value: String, isLink: Bool = false) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+            Spacer()
+            if isLink, let url = URL(string: value.hasPrefix("http") ? value : "https://\(value)") {
+                Link(value, destination: url)
+                    .font(.system(size: 13))
+            } else {
+                Text(value)
+                    .font(.system(size: 13))
+                    .foregroundStyle(.primary)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .overlay(alignment: .bottom) {
+            Divider().padding(.leading, 12)
+        }
+    }
+
+    @ViewBuilder
+    private func sectionDot(_ label: String, isOn: Bool) -> some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(isOn ? Color.green : Color(nsColor: .tertiaryLabelColor))
+                .frame(width: 8, height: 8)
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(isOn ? .primary : .secondary)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .clipShape(Capsule())
     }
 
     // MARK: - By Person List
@@ -445,5 +591,5 @@ struct PortalAccessView: View {
     return NavigationStack {
         PortalAccessView()
     }
-    .modelContainer(for: PortalAccessRecord.self, inMemory: true)
+    .modelContainer(for: [PortalAccessRecord.self, ClientPage.self], inMemory: true)
 }

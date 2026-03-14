@@ -17,7 +17,7 @@ import Foundation
 enum AirtableConfig {
     static let baseId = "appYXbUdcmSwBoPFU"
 
-    /// All 11 table IDs
+    /// All 12 table IDs
     enum Tables {
         static let contacts = "tbl9Q8m06ivkTYyvR"
         static let companies = "tblEauAm0ZYuMbHUa"
@@ -29,6 +29,7 @@ enum AirtableConfig {
         static let importedContacts = "tblribgEf5RENNDQW"
         static let specialties = "tblysTixdxGQQntHO"
         static let portalAccess = "tblN1jruT8VeucPKa"
+        static let clientPages = "tblo5TQos1VUGfuaQ"
         static let portalLogs = "tblj70XPHI7wnUmxO"
     }
 
@@ -45,6 +46,7 @@ enum AirtableConfig {
         Tables.interactions,
         Tables.importedContacts,
         Tables.portalAccess,
+        Tables.clientPages,
         Tables.portalLogs,
     ]
 
@@ -62,4 +64,20 @@ enum AirtableConfig {
 
     /// Airtable REST API base URL
     static let apiBaseURL = URL(string: "https://api.airtable.com/v0")!
+
+    /// Client Pages field IDs
+    struct ClientPageFields {
+        static let pageAddress = "fldEEarorxnI0ixpI"
+        static let clientName = "fldqvhzAh1w7gwSEb"
+        static let pageTitle = "fldkeQe0ThceEA6OG"
+        static let pageSubtitle = "fldhJNUqqtBQsyYgI"
+        static let deckUrl = "fldYedTCbI633i0fe"
+        static let preparedFor = "fldmWFQ498rXhcb1X"
+        static let head = "fldkHW1Ki7IuK2UaK"
+        static let thankYou = "fld7YcLBFE9f8zDmT"
+        static let vPrMagic = "fldmvy3Ta6q4okTee"
+        static let vHighLight = "fldtPccbFBs9N4KZ5"
+        static let v360 = "fldNE04teEKWxFlZC"
+        static let vFullL = "fldcOCTCLvx36MV5L"
+    }
 }

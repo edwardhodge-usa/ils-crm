@@ -47,6 +47,7 @@
 		A80F73C436A8B1584A4AFD15 /* ContactDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99535FE1159A16F2D4297A81 /* ContactDetailView.swift */; };
 		ABB8E1147F5AF5C7CCE4BFA4 /* CompanyDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D7C2ED321ED09895486FDF /* CompanyDetailView.swift */; };
 		B129FFFF82792485422F535E /* ImportedContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49F9AFC3A3BFE5B1C86EAC7 /* ImportedContactsView.swift */; };
+		B34F2130F324C26103ED67D2 /* ClientPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA67E7B40071D4AE31F92F9 /* ClientPage.swift */; };
 		BC02322F46633F5E380D68DC /* ILS_CRM_UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C64BA68513C875444438907A /* ILS_CRM_UITests.swift */; };
 		BCC0A608A777C24598E3D7DA /* AirtableConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B1B436042A8E098AF0ABA6 /* AirtableConfig.swift */; };
 		C459EDE201B5326CB856C837 /* InteractionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D68C7F1FA49E86B89C127B6 /* InteractionDetailView.swift */; };
@@ -121,6 +122,7 @@
 		C59EBB89A28F4676116D8A6D /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
 		C64BA68513C875444438907A /* ILS_CRM_UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ILS_CRM_UITests.swift; sourceTree = "<group>"; };
 		C6F940D1601214B19B51F716 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
+		CDA67E7B40071D4AE31F92F9 /* ClientPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientPage.swift; sourceTree = "<group>"; };
 		D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Company+Airtable.swift"; sourceTree = "<group>"; };
 		D16508BB0F462650F6DA3D4D /* PipelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineView.swift; sourceTree = "<group>"; };
 		D766042D9087DFD6757ACB42 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 		0739AB8E2C362C728CA6CF61 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				CDA67E7B40071D4AE31F92F9 /* ClientPage.swift */,
 				649C44D1AA43D3C6B31DC0B2 /* Company.swift */,
 				4CFC604A95E0A130C6EAFC7C /* Contact.swift */,
 				89C658F412AEC8BC5883E5EA /* CRMTask.swift */,
@@ -445,6 +448,7 @@
 				449038EC80DE762E7082426D /* AirtableService.swift in Sources */,
 				D456DB1C39A4368CBFC3FD11 /* CRMTask+Airtable.swift in Sources */,
 				9249063E8DC1713631C37A1E /* CRMTask.swift in Sources */,
+				B34F2130F324C26103ED67D2 /* ClientPage.swift in Sources */,
 				D34B6650FD638F961DC425B6 /* CompaniesView.swift in Sources */,
 				3B9FF2F195EB914F5F66299A /* Company+Airtable.swift in Sources */,
 				E37235068B78D011C6790273 /* Company.swift in Sources */,
