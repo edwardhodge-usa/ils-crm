@@ -20,3 +20,4 @@ build/
 xcuserdata/
 electron/updater-token.ts
 electron/license-config.ts
+.memsearch/
