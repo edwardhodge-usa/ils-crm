@@ -1,180 +1,93 @@
 # ILS CRM — Project Instructions
 
 ## Quick Context
-- **What**: Master CRM project — Airtable schema management, API integrations, and eventually a full Electron desktop CRM app
-- **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Airtable API (backend/data), Anthropic Claude API (AI features)
-- **Status**: v3.4.3 — Framer health monitor, centralized pipeline stages, cross-app sync lock, OFF AIR badges. On main.
-- **Repo**: edwardhodge-usa/ils-crm
-- **Airtable Base**: ILS CRM (appYXbUdcmSwBoPFU)
+- **What**: Master CRM — Airtable schema management, API integrations, Electron desktop app + Swift app
+- **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Swift/SwiftUI (swift-app/), Airtable API (backend)
+- **Status**: v3.4.3 — On main
+- **Repo**: edwardhodge-usa/ils-crm | **Base ID**: appYXbUdcmSwBoPFU
 
 ## Project Scope
+Single source of truth for all ILS CRM Airtable work: schema management (11 tables, 280+ fields), ContactEnricher coordination, CRM desktop app (Electron + Swift), automations/scripts.
 
-This project is the **single source of truth** for all ILS CRM Airtable work:
+## Airtable Tables
 
-1. **Airtable Schema** — Design, improve, and maintain the ILS CRM base (11 tables, 280+ fields)
-2. **ContactEnricher Coordination** — The ContactEnricher app syncs contacts to this CRM; schema changes here must stay compatible
-3. **CRM Desktop App** — Eventually build a full Electron app for managing the CRM (contacts, companies, opportunities, projects, proposals)
-4. **Automations & Scripts** — Airtable automations, data migration scripts, API utilities
+| Table | ID | Purpose |
+|-------|-----|---------|
+| Contacts | tbl9Q8m06ivkTYyvR | People — linked to Companies + Specialties |
+| Companies | tblEauAm0ZYuMbHUa | Organizations |
+| Opportunities | tblsalt5lmHlh4s7z | Sales pipeline (Active Pipeline, Future Roadmap, Kanban views) |
+| Projects | tbll416ZwFACYQSm4 | Active project tracking |
+| Proposals | tblODEy2pLlfrz0lz | Client proposals — uses linked Tasks |
+| Tasks | tblwEt5YsYDP22qrr | Action items — has Overdue formula |
+| Interactions | tblTUNClZpfFjhFVm | Communication log |
+| Imported Contacts | tblribgEf5RENNDQW | Staging area |
+| Specialties | tblysTixdxGQQntHO | Lookup table — linked from Contacts |
+| Portal Access | tblN1jruT8VeucPKa | Client portal access records |
+| Portal Logs | tblj70XPHI7wnUmxO | Portal activity logging |
 
-## Airtable Base Structure
-
-Base ID: `appYXbUdcmSwBoPFU`
-
-| Table | ID | Fields | Purpose |
-|-------|-----|--------|---------|
-| Contacts | tbl9Q8m06ivkTYyvR | 55 | People — 59 records, all linked to Companies |
-| Companies | tblEauAm0ZYuMbHUa | 24 | Organizations — 70 records (deduped from 60) |
-| Opportunities | tblsalt5lmHlh4s7z | 23 | Sales pipeline — 53 records, views: Active Pipeline, Future Roadmap, Kanban |
-| Projects | tbll416ZwFACYQSm4 | 18 | Active project tracking |
-| Proposals | tblODEy2pLlfrz0lz | 13 | Client proposals — inline task fields removed, uses linked Tasks |
-| Tasks | tblwEt5YsYDP22qrr | 13 | Action items — has Overdue formula field |
-| Interactions | tblTUNClZpfFjhFVm | 9 | Communication log — ready to use, 0 records |
-| Imported Contacts | tblribgEf5RENNDQW | 48 | Staging area — all 46 records processed/approved |
-| Specialties | tblysTixdxGQQntHO | 3 | Lookup table — 70 canonical entries, linked from Contacts |
-| Portal Access | tblN1jruT8VeucPKa | 36 | Client portal access records |
-| Portal Logs | tblj70XPHI7wnUmxO | 12 | Portal activity logging |
-
-## Schema Changes Log
-*Schema changes are tracked in Airtable directly. See base appYXbUdcmSwBoPFU for current field definitions. Below captures major structural changes only.*
-
-### 2026-02-27
-
-**Fields removed:** AI Categorization Suggestion (Contacts + Imported Contacts), Speciality multi-select (Contacts + Imported Contacts), 25 inline Task fields from Proposals
-**Fields added:** Days Since Last Contact (Contacts), Weighted Value + Days in Stage (Opportunities), Overdue (Tasks)
-**Formula fixed:** Probability Value — uses FIND() to match '01 High', '02 Medium' prefixed values (confirmed working)
-**Table renamed:** Opportunites → Opportunities (typo fix)
-**Fields removed (Portal Access):** Contact Speciality lookup (invalid, source field deleted)
-**Views added:** Active Pipeline, Future Roadmap, Kanban (Opportunities)
-**Schema decision:** Categorization is primary classification field; Client Type to be deprecated
-**Key relationship:** Contacts → Companies (linked via "Companies" field fldYXDUc9YKKsGTBt), Contacts → Specialties (linked via "Specialties" field fldPgiO2nKgcujeXz)
+Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Specialties (fldPgiO2nKgcujeXz)
 
 ## Related Projects
-
-- **ContactEnricher** (`03_Custom Apps/ContactEnricher/`) — Syncs Apple Contacts to ILS CRM Contacts table. `ils-crm-sync.ts` fully uses linked records for Specialties (commit `2a8ce6a`). Dead `F.speciality` field ref removed, fallback list updated with Broadway Producer + Feasibility.
-- **imaginelab-portal** — Reads Portal Access and Portal Logs tables. Changes to those tables must be validated against portal code
-- **Personal Contact Cleanup** (appQUqpRbUR6e7cUd) — Separate Airtable base, all contacts staging area
+- **ContactEnricher** — syncs Apple Contacts to CRM Contacts table via linked records
+- **imaginelab-portal** — reads Portal Access + Portal Logs tables; validate schema changes against portal code
 
 ## Lessons Learned
 
-<!-- Format: **[Date]** - Issue description -> Solution -->
+### Airtable API Rules
+- API cannot create formula fields, views, or delete fields — document for manual creation in UI
+- Airtable is single source of truth. Every app field MUST map to an Airtable field — no local-only data. New field checklist: (1) check Airtable, (2) create if needed, (3) add to field-maps.ts + converters.ts
+- Adding a new table requires updating VALID_TABLES whitelist in `electron/database/queries/entities.ts` (SQL injection prevention). Full checklist: field-maps → converters → schema → preload → register.ts → sync-engine → entities.ts
+- Always fetch field schema from Airtable metadata API for exact select option names (including emoji prefixes) — never hardcode options from memory
+- Airtable REST API returns field **names** by default; Swift app uses field **IDs** so `fetchAllRecords` must include `returnFieldsByFieldId=true`
+- Collaborator fields return `{id, email, name}` objects — use `'collaborator'` converter type. Shared utility: `src/utils/collaborator.ts`
+- Airtable content upload API returns 404 → use tmpfiles.org as relay: upload image → get public URL → PATCH record with URL attachment
+- AirtableFieldsBuilder: send NSNull for empty strings (singleSelect rejects ""), send YYYY-MM-DD for date-only fields (rejects ISO 8601 with time)
+- When promoting a table from read-only to full CRUD, remove it from `READ_ONLY_TABLES` in sync-engine.ts
 
-**2026-02-27** - Airtable API cannot create formula fields → Provide exact formulas for manual creation in Airtable UI
-**2026-02-27** - Airtable API cannot create views or interfaces → Document specs for manual creation
-**2026-02-27** - Airtable API cannot delete fields → Update field description to flag for deletion, user deletes manually
-**2026-02-27** - Airtable MCP list_records can return huge JSON that exceeds token limits → Use a subagent to read/analyze the saved file in chunks
-**2026-02-27** - AI text fields (aiText type) show `emptyDependency` when ANY referenced field is empty on a record → Don't use AI fields that depend on optional fields; use manual select fields instead
-**2026-02-27** - Probability Value formula was broken: checked for 'High' but actual value was '01 High' → Use FIND() instead of exact match when Airtable select options have prefixes
-**2026-02-27** - When merging duplicate company records, check for linked records on BOTH duplicates before deleting → Only 1 of 12 duplicates needed re-pointing, but missing it would break an opportunity link
-**2026-02-27** - Speciality multi-select had 82 options with duplicates/casing issues → Migrated to Specialties lookup table (linked records). Multi-select fields allow duplicates; lookup tables don't
-**2026-02-27** - ContactEnricher was already 95% migrated to linked records — only needed dead field ref cleanup, not a rewrite → Always read the code before assuming a migration is needed
-**2026-02-27** - SQL injection via dynamic column names in sql.js queries (`${key} = ?`) → Always whitelist table names (Set) and validate column names (regex `/^[a-z_][a-z0-9_]*$/`) before interpolating into SQL
-**2026-02-27** - Polling sync with no mutex causes race conditions when sync takes longer than poll interval → Add `isSyncing` guard flag with `finally` cleanup; also guard "Force Sync" button
-**2026-02-27** - IPC handlers registered before `initDatabase()` causes crash if renderer sends early messages → Register IPC handlers AFTER `await initDatabase()` inside `app.whenReady()`
-**2026-02-27** - `JSON.parse()` without try-catch on linked/multiSelect fields kills entire push operation on corrupted data → Use `safeParseArray()` helper that returns `[]` on parse failure
-**2026-02-27** - `saveDatabase()` after every sql.js write = 380+ disk writes during fullSync → Remove per-write saves; rely on 30s auto-save + explicit save at end of sync. Keep saves only for rare user actions (settings)
-**2026-02-27** - Pull sync deletes locally-created records that haven't been pushed yet → Check `_pending_push` flag before deleting records not found in Airtable
-**2026-02-27** - Hardcoded Airtable base ID fallback (`|| 'appYXbUdcmSwBoPFU'`) means forks silently hit wrong base → Never hardcode base IDs; require explicit configuration and return error if missing
-**2026-02-27** - `unknown` type in `Record<string, unknown>` isn't assignable to `ReactNode` for conditional rendering → Use `{Boolean(obj.prop) && <jsx>}` instead of `{obj.prop && <jsx>}`
-**2026-02-27** - Tech debt: utility functions copy-pasted across query files (`resultToObjects` 3x, `linkedIds`/`multiSelect` identical) → Extract shared utils into dedicated module (`database/utils.ts`); merge identical functions
-**2026-02-27** - Tech debt: 9 list pages and 6 form pages had identical load/save boilerplate → Extract `useEntityList` and `useEntityForm` hooks to eliminate repeated useState/useEffect/error patterns
-**2026-02-27** - Tech debt: preload.ts had 6 identical CRUD bridge blocks differing only by channel prefix → Use `makeCrudBridge(entity)` factory function; spread for special cases (importedContacts)
-**2026-02-27** - Tech debt: route config duplicated in Sidebar, TopBar, and Layout → Consolidate into `src/config/routes.ts` with `NAV_ITEMS`, `ROUTE_TITLES`, `NEW_ROUTES`
-**2026-02-27** - Tech debt: dead code accumulated during rapid MVP build (7 unused functions, unused EmptyState component, unused SELECT_OPTIONS, pending_changes table) → Run /techdebt scan after MVP completion to identify and remove
-**2026-02-28** - QA: Multi-select fields stored as JSON in sql.js render as raw `["value1","value2"]` in list views → Parse JSON and join with commas before display; fix globally not per-entity
-**2026-02-28** - QA: Linked record lookup fields (Portal Access name/email/company, Imported Contacts names) show "—" → Sync engine doesn't resolve linked record lookups; need to either store resolved values or do client-side joins
-**2026-02-28** - QA: Airtable 422 INVALID_MULTIPLE_CHOICE_OPTIONS on save → Root cause was form dropdown options didn't match exact Airtable option names (e.g. `High` vs `🔴 High`). Always fetch field schema from Airtable metadata API to get exact option names including emoji prefixes. Applied to Tasks priority, Contacts ratings, and fixed Engagement Type field type (singleSelect→multiSelect) in Opportunities and Projects
-**2026-02-28** - Tech debt: 5 unused type exports (SyncReport, PendingChange, ColumnDef) and 2 unused utility functions (parseLinkedIds, parseMultiSelect) in types/index.ts → Remove dead exports; keep FieldType (used indirectly by FieldDef) and Specialty (consistent with entity pattern)
-**2026-02-28** - Tech debt: 30+ console.log calls in electron/ run in production, spamming user console → Gate all console.log behind `isDev` check; keep console.error ungated for real errors
-**2026-02-28** - QA: `dragEvent is not defined` fires repeatedly in console from @dnd-kit Kanban → Investigate source; doesn't break drag functionality but spams console
-**2026-02-28** - `npm run build` includes electron-builder packaging which fails with macOS code-signing issues → Use `npx tsc --noEmit` for pre-commit type validation instead
-**2026-02-28** - Specialties in list pages: fetch specialties separately with useEffect, build `id→name` map, assign colors via deterministic hash (`hash % palette.length`) so same specialty always = same color
-**2026-02-28** - QA: Clicking Pipeline cards only drags, can't navigate to detail → Need to differentiate click vs drag gesture in @dnd-kit event handlers
-**2026-02-28** - GLOBAL RULE: Airtable is the single source of truth. Every app field MUST map to an Airtable field — no local-only data fields. When adding new fields: (1) check if it exists in Airtable, (2) create it if not, (3) add to field-maps.ts + converters.ts, (4) determine if it's a primary field or lookup from a linked record
-**2026-03-01** - Tailwind JIT limitation: CSS var() doesn't work reliably in arbitrary values (`shadow-[...]`, `z-[...]`, `rounded-[...]`) — use inline `style={}` for any CSS property that needs a design token. Never use Tailwind arbitrary values with CSS vars.
-**2026-03-01** - GLOBAL RULE: UI rebuild workflow — before writing ANY UI code: (1) read the approved mockup HTML, (2) read the database schema for field names, (3) verify framework config (tailwind.config, dark mode), (4) use inline styles not Tailwind arbitrary values for design tokens, (5) visually verify after each change
-**2026-03-01** - Apple HIG: `cursor-pointer` is a critical violation on macOS. Reset.css covers `button` but not `<label>` or custom interactive elements — add explicit `cursor-default` anywhere you'd normally write `cursor-pointer`
-**2026-03-01** - Always use `text-[var(--text-on-accent)]` for text on colored backgrounds (accent, red, green) — never raw `text-white`. In light mode `--text-primary` is dark grey and will fail contrast on colored buttons
-**2026-03-01** - With react-jsx transform, `React.ReactNode` as a type is a namespace error (`React` not in scope). Use `import type { ReactNode } from 'react'` and reference `ReactNode` directly
-**2026-03-01** - Page components inside flex parents (`<main class="flex-1 flex overflow-hidden">`) need explicit `width: '100%'` to fill available space — without it, content only sizes to intrinsic width
-**2026-03-01** - `--text-label` token is 42% opacity in dark mode — too faint for any readable content. Use `--text-secondary` (55%) as minimum for anything users need to read. Reserve `--text-label` only for purely decorative/optional hints
-**2026-03-01** - macOS scrollbars should be overlay-style (native). Don't force visible scrollbar thumbs with background color — use `background: transparent` on `::-webkit-scrollbar-thumb` and let macOS handle it
-**2026-03-01** - HIG sidebar active state: MUST use solid `--color-accent` bg + `--text-on-accent` (white) text. Never use translucent accent bg + accent-colored text for the selected item
-**2026-03-01** - ILS CRM readability standard: body text 14-15px (not strict HIG 13px), supporting text 12-13px, uppercase headers 11-12px. Edward finds strict HIG minimums too small on 1400×900 window
-**2026-02-28** - When promoting a table from read-only to full CRUD, always remove it from `READ_ONLY_TABLES` in sync-engine.ts — interactions was left in the set after CRUD was shipped, silently orphaning all locally-created interactions
-**2026-02-28** - Filtering linked records with `jsonString.includes(recordId)` causes false positives when one ID is a prefix of another → Always `JSON.parse()` the array first, then use `.includes()` on the array
-**2026-02-28** - `shell:openExternal` must validate URL scheme before calling — bad data from Airtable (e.g. `file://` in a LinkedIn URL field) would otherwise open local files → Allowlist `https://`, `http://`, `mailto:`, `tel:` only
-**2026-02-28** - SQLite `due_date = date('now')` fails silently when dates are stored as full ISO strings (`2026-02-28T00:00:00.000Z`) → Use `date(due_date) = date('now')` to strip the time component first
-**2026-03-02** - Tasks page mockup UX decisions: (1) Categories use colored dots for smart lists, colored swatches (small rectangles) for type filters, avatar circles for assignees — shape differentiates content type. (2) Detail pane uses inline click-to-edit (no Edit button) — hover highlights field values, click opens editor, auto-save on blur. (3) Type badges softened to rgba 0.10 alpha + font-weight 500 for system-integrated feel. (4) All 12 task types from Airtable schema shown (not just in-use ones), with dimmed "0" count for empty types
-**2026-03-02** - Mockup file: `/Users/EdwardHodge_1/Desktop/CLAUDE MOCKUPS/ils-crm-tasks-v2.html` — approved 4-column layout (App Sidebar 220px | Categories 210px | Task List 380px | Detail flex-1). Real Airtable data. HIG-audited (12 violations found and fixed). These patterns must be followed when implementing in Electron
-**2026-03-02** - Agent-based tech debt scans can report false positives (e.g. `checkbox()` "unused" when it's actually called via mapping type) → Always verify findings with Grep before deleting code
-**2026-03-02** - Airtable collaborator fields return `{id, email, name}` objects → Add `'collaborator'` converter type that extracts `.name`. Skip in `localToAirtable` (read-only like formula/rollup). 6 collaborator fields across 5 tables.
-**2026-03-03** - Badge text unreadable in dark mode (darker accessible text on dark tinted backgrounds) → Add `fgDark` property to all color maps with Apple bright dark-mode system colors. Use `useDarkMode()` hook + `isDark ? fgDark : fg`. Dark mode mapping: Blue→#409CFF, Green→#30D158, Orange→#FF9F0A, Red→#FF453A, Purple→#BF5AF2, Indigo→#5E5CE6, Teal→#40CBE0, Pink→#FF375F. Cross-component encoding: "bg|fg|fgDark" string format for specialty colors passed through props
-**2026-03-03** - LinkedIn scraping: (1) Server-side fetch always returns 999/auth wall — use Electron BrowserWindow instead. (2) `og:image` meta tag contains the BANNER image, not profile photo — skip it entirely. (3) Profile photos have `profile-displayphoto-shrink` in URL; banners have `profile-displaybackgroundimage`. (4) Non-authenticated BrowserWindows can't see profile photos — use `persist:linkedin` session partition for persistent cookies. (5) After LinkedIn login, it redirects to `/feed/` not back to target — detect post-login redirect and navigate to target URL automatically
-**2026-03-03** - `window.prompt()` silently returns null in Electron (no error, no dialog) → Never use `window.prompt/confirm/alert` in Electron renderer. Use inline inputs in popovers or IPC-based dialogs instead
-**2026-03-05** - macOS Gatekeeper "damaged" error on unsigned app → Run `xattr -c -r /Applications/AppName.app` (flags must be separate: `-c -r`, NOT `-cr`)
-**2026-03-05** - Electron app shows stale UI despite correct source files → Clear Vite cache: `rm -rf node_modules/.vite dist-electron` then restart dev. Always verify with fresh build when UI doesn't match code
-**2026-03-11** - Stage color maps were duplicated in 6 files → Centralized to `src/config/stages.ts` (single source of truth). Use convenience helpers: `stageDotColor()`, `stageBadgeTokens()`, `stageBarColor()`, `stageFullColors()`, `stageStatusBadgeColors()`. Never add local stage color maps in components
-**2026-03-03** - Grouped list section headers blend with list items when using --text-secondary → Use --text-primary color, 0.5px bottom border, 18px top padding for clear group separation. Count: same font size as label (11px), --text-secondary, fontWeight 500
-**2026-03-09** - Auto-updater for private GitHub repos: (1) `publish.private: true` in package.json is REQUIRED — without it, electron-updater hits `releases.atom` (404 for private repos) instead of `api.github.com`. (2) Set BOTH `process.env.GH_TOKEN` and `autoUpdater.requestHeaders = { Authorization: \`token ${TOKEN}\` }` before `checkForUpdatesAndNotify()`. (3) Token lives in gitignored `electron/updater-token.ts`, compiled into the binary
-**2026-03-09** - GitHub release asset naming: GitHub replaces spaces with dots in uploaded filenames. `productName: "ILS CRM"` generates `ILS CRM-*.dmg` but GitHub serves as `ILS.CRM-*.dmg`. Fix: rename all files from `ILS CRM` → `ILS-CRM` (dashes) AND run `sed 's/ILS CRM/ILS-CRM/g'` on `latest-mac.yml` before uploading
-**2026-03-09** - Gatekeeper bypass for unsigned apps: users must right-click → Open on first launch (shows "Open" button in dialog). Double-clicking shows hard block with no option. Only needed once per app install
-**2026-03-09** - Deployment folder: `01_IMAGINE LAB STUDIOS/08_RESOURCES/CRM App Deployment/`. Contains arm64 + x64 DMGs, install guide, API token instructions. Old versions go in `Archive/`
-**2026-03-10** - HTML `<input type="url">` triggers native browser validation requiring protocol prefix → Use `type="text"` for URL fields and let normalizeUrl() handle protocol on save
-**2026-03-10** - normalizeUrl() was prepending https:// to email addresses → Skip values containing `@` before adding protocol prefix
-**2026-03-10** - Collaborator converter changed from storing plain name to full JSON (`{id, email, name}`) for write-back support, but UI pages weren't updated → Always update display code when changing storage format. Shared utility: `src/utils/collaborator.ts` (parseCollaboratorName, buildCollaboratorMap, resolveCollaboratorSave)
-**2026-03-10** - Electron `console.log` throws EPIPE when app launched without terminal (e.g. from Dock) → Add `process.stdout?.on('error', () => {})` and same for stderr early in main.ts, before any console.log calls
-**2026-03-11** - Adding a new Airtable table requires updating VALID_TABLES whitelist in `electron/database/queries/entities.ts` (SQL injection prevention). Without it, all CRUD queries for the new table throw "Invalid table name". Checklist: field-maps → converters → schema → preload → register.ts → sync-engine → **entities.ts VALID_TABLES**
-**2026-03-11** - v3.3.2 released with stale Vite frontend (dist/ compiled at 23:07 for v3.3.1, Portal CMS committed at 00:09 for v3.3.2) — `npm run package` was skipped during high-context session (5 releases in 6h, context rot) → ALWAYS: (1) `rm -rf dist dist-electron node_modules/.vite` before release builds, (2) `grep` the built bundle for recently added features before uploading, (3) max 2 releases per session — context rot causes skipped steps. v3.3.3 is the corrected release
-**2026-03-11** - "dragEvent is not defined" console spam in Pipeline → React 18 dev-mode artifact in react-dom.development.js, absent in production builds. Not a code bug
-**2026-03-11** - multiSelect values stored with extra wrapping quotes (`"\"Business Development\""`) → `jsonArray()` didn't clean elements like `cleanSelectValue()` does for singleSelect. Fixed: both `airtableToLocal` and `localToAirtable` now map multiSelect elements through `cleanSelectValue()`
-**2026-03-12** - Portal Access dropdowns had hardcoded stage/status options that didn't match Airtable schema (same pattern as #7 from 2026-02-28 QA) → When adding select fields to new components, always check Airtable field schema for exact option values. Don't copy options from old/different components
-**2026-03-12** - Framer has no public CMS REST API → Use HTTP HEAD requests to published page URLs (`imaginelabstudios.com/ils-clients/{slug}`) for health checking. 200 = live, 404 = not published. Stagger 200ms between requests (rate limit). Framer project URL: `https://framer.com/projects/ImagineLab-Front-Page--qq2NfIkO8OdMKvVMZXJR-8RBFW?node=uzKrlTPBU`
-**2026-03-12** - Portal Page Address with spaces/capitals ("Haus Collection") causes 404 on Framer → page_address must be a URL slug (lowercase, hyphens). Three-layer fix: slugify on edit, cascade Client Pages → Portal Access on rename, validation sweep on load auto-fixes bad slugs from Airtable UI edits
-**2026-03-12** - Airtable REST API returns field **names** as keys by default, not field **IDs** → Swift converters use field IDs (e.g. `fldMkz6x5i8YaofZj`), so `fetchAllRecords` must include `returnFieldsByFieldId=true` query parameter. Without it, all fields parse as nil (records sync with correct count but every property is empty). The Electron app uses field names in converters so it doesn't hit this — but the Swift app was designed around field IDs for schema consistency
-**2026-03-12** - Pipeline hardcoded 7 stage names that didn't match Airtable's actual 11 options (e.g. "Qualified" vs "Qualification", missing "Meeting Scheduled", "Initial Contact", etc.) → Always check Airtable field schema metadata API for actual select option values before hardcoding. Both Electron `stages.ts` and Swift `stages` array were out of date
-**2026-03-12** - Swift `String(format: "$%,.0f", value)` produces literal "$,.0f" — the `,` flag for digit grouping is not supported in Swift's String(format:) → Use `NumberFormatter` with `.currency` style and `maximumFractionDigits = 0` instead
-**2026-03-13** - Swift ListHeader used `.title2` (22pt) while Electron uses 15px → Shared components must use explicit `.system(size:)` fonts matching Electron, not semantic SwiftUI fonts. Semantic fonts (.title2, .headline, .subheadline) are unpredictable sizes
-**2026-03-13** - Swift `onTapGesture` inside `ScrollView` unreliable for category filters → Use `Button` with `.buttonStyle(.plain)` instead. Also clear `selectedTask = nil` on filter change (matches Electron `setSelectedId(null)`)
-**2026-03-13** - XCUITest on macOS: `spctl --add` deprecated, `xattr -c -r` doesn't survive rebuild → Build first (`build-for-testing`), clear xattrs, then `test-without-building`. User must also approve via System Settings → Privacy & Security → "Open Anyway" on first run
-**2026-03-13** - SwiftUI accessibility identifiers on `Label` inside `NavigationSplitView` sidebar may not be found by `app.staticTexts[]` — use `app.descendants(matching: .any)[]` or dump hierarchy first to discover element types
-**2026-03-13** - XCUITest setUp: SwiftUI app launches with 0 windows (window restoration) → Open via menu: `app.menuBars.menuBarItems["File"].click()` then `app.menuBars.menuItems["New Window"].click()` before any element queries
-**2026-03-13** - Swift parity comparison was layout-only (fonts, columns, spacing) and missed feature completeness gaps (Client Portal: 34% of Electron features) → Before claiming ANY view matches: compare component count + LOC ratio, compare every interactive feature, compare from Electron side ("what does Electron do that Swift doesn't?"). Screenshots verify, they don't discover
-**2026-03-14** - Swift app sync only starts when SettingsView appears (loadApiKey in onAppear) → Add auto-configure in ContentView.onAppear: read Keychain, configure SyncEngine, start polling. Match Electron behavior
-**2026-03-14** - Airtable content upload API (`content.airtable.com/v0/{baseId}/uploadAttachment`) returns 404 — PAT may lack required scope → Use tmpfiles.org as relay: upload image → get public URL → PATCH record with URL-based attachment. Airtable downloads and stores on its CDN
-**2026-03-14** - `@Environment(\.dismiss)` doesn't work reliably in SwiftUI sheets on macOS → Pass `@Binding var isPresented` directly and set `isPresented = false` from buttons inside the sheet
-**2026-03-14** - Airtable schema changes (deleted fields, type changes) cause Swift sync 422 errors silently — the Electron app may already be updated but the Swift converter lags behind. Before debugging sync failures: (1) fetch live schema via `mcp__airtable__describe_table`, (2) compare field IDs + types against Swift converter's `F` enum, (3) check for deleted fields, singleSelect→multipleSelects changes, and text→formula conversions
-**2026-03-14** - AirtableFieldsBuilder `set()` for String must send NSNull for empty strings — Airtable singleSelect/multipleSelects fields reject "" with "Cannot parse value". Also `setDate()` must send YYYY-MM-DD (not full ISO 8601 with time) for date-only fields — Airtable rejects the time component on POST creates
+### Electron / Sync Engine
+- SQL injection prevention: whitelist table names (Set), validate column names (regex) before interpolating into SQL
+- `shell:openExternal` must validate URL scheme — allowlist `https://`, `http://`, `mailto:`, `tel:` only
+- SQLite date comparison: use `date(due_date) = date('now')` to strip time from ISO strings
+- `JSON.parse()` linked record arrays before `.includes()` — string `.includes(recordId)` causes false positives
+- `window.prompt/confirm/alert` silently returns null in Electron — use inline inputs or IPC dialogs
+- Electron `console.log` throws EPIPE when launched from Dock → `process.stdout?.on('error', () => {})` early in main.ts
+- Stage colors centralized in `src/config/stages.ts` — never add local stage color maps in components
+- LinkedIn scraping: use `persist:linkedin` session partition for persistent cookies, detect post-login redirect to `/feed/`
+
+### Swift-Specific
+- Swift converters use field IDs; Electron uses field names — keep in sync when schema changes
+- Before debugging Swift sync 422 errors: fetch live schema via `mcp__airtable__describe_table`, compare against Swift converter's `F` enum
+- `@Environment(\.dismiss)` unreliable in macOS sheets → pass `@Binding var isPresented` directly
+- Use `Button` with `.buttonStyle(.plain)` instead of `onTapGesture` in ScrollView (unreliable)
+- Use `.system(size:)` fonts, not semantic SwiftUI fonts (.title2, .headline) — unpredictable sizes
+- Swift `String(format:)` doesn't support `,` flag for digit grouping → use `NumberFormatter`
+- XCUITest: build-for-testing first, clear xattrs, then test-without-building. SwiftUI launches with 0 windows — open via File menu
+
+### UI / HIG
+- `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements
+- Use `text-[var(--text-on-accent)]` for text on colored backgrounds — never raw `text-white`
+- `--text-label` (42% opacity dark mode) too faint for readable content — minimum is `--text-secondary` (55%)
+- ILS CRM readability: body 14-15px, supporting 12-13px, uppercase headers 11-12px (not strict HIG 13px minimums)
+- macOS scrollbars: overlay-style (native), transparent scrollbar thumb background
+- HIG sidebar active state: solid `--color-accent` bg + `--text-on-accent` text
+
+### Release / Deploy
+- Auto-updater: `publish.private: true` required in package.json. Set GH_TOKEN + requestHeaders. Token in gitignored `electron/updater-token.ts`
+- GitHub renames spaces to dots in filenames → rename `ILS CRM` → `ILS-CRM` in assets + `latest-mac.yml`
+- Gatekeeper: `xattr -c -r` (flags separate), users right-click → Open on first launch
+- Framer health check: HTTP HEAD to `imaginelabstudios.com/ils-clients/{slug}`, 200ms stagger. No CMS REST API
+- Portal page_address must be URL slug (lowercase, hyphens) — slugify on edit, cascade on rename, validate on load
+- HTML `<input type="url">` forces protocol prefix validation → use `type="text"`, normalizeUrl() on save (skip `@` values)
 
 ## Deployment Process
 
 1. Bump version in `package.json`
-2. `npm run package` (builds to `/tmp/ils-crm-release/`)
-3. Rename files: `for f in ILS\ CRM-*; do mv "$f" "${f//ILS CRM/ILS-CRM}"; done`
+2. `rm -rf dist dist-electron node_modules/.vite && npm run package` (builds to `/tmp/ils-crm-release/`)
+3. Rename: `for f in ILS\ CRM-*; do mv "$f" "${f//ILS CRM/ILS-CRM}"; done`
 4. Fix yml: `sed -i '' 's/ILS CRM/ILS-CRM/g' latest-mac.yml`
-5. `gh release create v<version>` with all renamed assets + latest-mac.yml
-6. Copy DMGs to deployment folder (arm64 + x64), move old ones to Archive
-
-## Key Commands
-
-```bash
-# Development
-npm run dev          # Start Electron app in dev mode
-npm run build        # Build for production
-npm run package      # Package with electron-builder
-
-# Airtable
-# All Airtable operations go through the MCP tools or API scripts in /scripts
-```
-
-## References
-
-- Shared patterns: `@../_master/` (Electron, Tailwind, Vercel)
-- Global preferences: `~/CLAUDE.md`
+5. `gh release create v<version>` with renamed assets + latest-mac.yml
+6. Copy DMGs to deployment folder, archive old versions
 
 ## Parallel Build Architecture
 
-See `docs/PARALLEL-BUILD.md` for the complete Electron↔Swift translation guide, sync rules, decision protocol, and known issues.
-
-## Update Protocol
-
-When Claude makes a mistake: **"Update CLAUDE.md so you don't make that mistake again."**
+See `docs/PARALLEL-BUILD.md` for the Electron <> Swift translation guide, sync rules, and decision protocol.
