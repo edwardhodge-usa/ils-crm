@@ -167,9 +167,14 @@ struct AirtableFieldsBuilder {
     var fields: [String: Any] = [:]
 
     /// Sets a string field (text, singleSelect, email, url, phone).
-    /// Sends NSNull() when nil so cleared fields propagate to Airtable.
+    /// Sends NSNull() when nil or empty so cleared fields propagate to Airtable.
+    /// Empty strings must be sent as null — Airtable singleSelect rejects "".
     mutating func set(_ fieldId: String, _ value: String?) {
-        fields[fieldId] = value as Any? ?? NSNull()
+        if let value, !value.isEmpty {
+            fields[fieldId] = value
+        } else {
+            fields[fieldId] = NSNull()
+        }
     }
 
     /// Sets an integer field.
@@ -184,11 +189,11 @@ struct AirtableFieldsBuilder {
         fields[fieldId] = value as Any? ?? NSNull()
     }
 
-    /// Sets a date field as ISO 8601 string.
+    /// Sets a date field as YYYY-MM-DD string (all CRM date fields are date-only, no time).
     /// Sends NSNull() when nil so cleared fields propagate to Airtable.
     mutating func setDate(_ fieldId: String, _ value: Date?) {
         if let value {
-            fields[fieldId] = Self.iso8601Formatter.string(from: value)
+            fields[fieldId] = Self.dateOnlyFormatter.string(from: value)
         } else {
             fields[fieldId] = NSNull()
         }
@@ -211,11 +216,12 @@ struct AirtableFieldsBuilder {
         fields[fieldId] = value.isEmpty ? NSNull() : value as Any
     }
 
-    // MARK: - Date Formatter
+    // MARK: - Date Formatters
 
-    private static let iso8601Formatter: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    private static let dateOnlyFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = TimeZone(identifier: "UTC")
         return f
     }()
 }

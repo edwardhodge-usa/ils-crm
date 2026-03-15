@@ -24,7 +24,6 @@ private enum F {
     static let eventTags = "fld1D4u2KbIk0aUPR"
     // Contact
     static let email = "fldBjSvbdd5WXmoIG"
-    static let phone = "fldwF5NBjGVndCXNV"
     static let mobilePhone = "fldwULn4qSjwzSOTj"
     static let workPhone = "fldueNgIMN0Ui5MWw"
     static let linkedInUrl = "fldWrrBfD7aLxsXT4"
@@ -37,7 +36,6 @@ private enum F {
     // Single Selects (may have emoji prefixes)
     static let qualificationStatus = "fld5Ed1Gg51xRBIrm"
     static let leadSource = "fldxxbhPmFaJ7xZeK"
-    static let clientType = "fldF8X4HZbybc1Yy6"
     static let industry = "fldHoIj9zCNB15avX"
     static let importSource = "fldZG5LYBnFcEwhyw"
     static let onboardingStatus = "fldbCsU8sEBNRm1kX"
@@ -46,8 +44,6 @@ private enum F {
     static let reliabilityRating = "fldgIuvazBCfLa7Wu"
     static let partnerStatus = "fldIEgv4HtZTr57AX"
     static let partnerType = "fldvehyP9Y3Ra2wUM"
-    // Multi-select
-    static let tags = "fldO7kfLDA9jZswPB"
     // Checkbox
     static let syncToContacts = "fldxbLMAKgqeawWkw"
     // Linked Records
@@ -94,10 +90,9 @@ extension Contact: AirtableConvertible {
         model.reasonForRejection = f.string(for: F.reasonForRejection)
         model.rateInfo = f.string(for: F.rateInfo)
         model.leadNote = f.string(for: F.leadNote)
-        model.eventTags = f.string(for: F.eventTags)
+        model.eventTags = f.stringArray(for: F.eventTags).joined(separator: ", ")
         // Contact info
         model.email = f.string(for: F.email)
-        model.phone = f.string(for: F.phone)
         model.mobilePhone = f.string(for: F.mobilePhone)
         model.workPhone = f.string(for: F.workPhone)
         model.linkedInUrl = f.string(for: F.linkedInUrl)
@@ -110,17 +105,15 @@ extension Contact: AirtableConvertible {
         // Single Selects (stored with emoji prefixes — never strip them)
         model.qualificationStatus = f.string(for: F.qualificationStatus)
         model.leadSource = f.string(for: F.leadSource)
-        model.clientType = f.string(for: F.clientType)
         model.industry = f.string(for: F.industry)
         model.importSource = f.string(for: F.importSource)
         model.onboardingStatus = f.string(for: F.onboardingStatus)
-        model.categorization = f.string(for: F.categorization)
+        model.categorization = f.stringArray(for: F.categorization).first
         model.qualityRating = f.string(for: F.qualityRating)
         model.reliabilityRating = f.string(for: F.reliabilityRating)
         model.partnerStatus = f.string(for: F.partnerStatus)
         model.partnerType = f.string(for: F.partnerType)
-        // Multi-select & Checkbox
-        model.tags = f.stringArray(for: F.tags)
+        // Checkbox
         model.syncToContacts = f.bool(for: F.syncToContacts)
         // Linked Records
         model.specialtiesIds = f.stringArray(for: F.specialties)
@@ -142,8 +135,7 @@ extension Contact: AirtableConvertible {
 
     func toAirtableFields() -> [String: Any] {
         var b = AirtableFieldsBuilder()
-        // Text
-        b.set(F.contactName, contactName)
+        // Text (contactName excluded — now a computed field in Airtable)
         b.set(F.firstName, firstName)
         b.set(F.lastName, lastName)
         b.set(F.jobTitle, jobTitle)
@@ -160,10 +152,14 @@ extension Contact: AirtableConvertible {
         b.set(F.reasonForRejection, reasonForRejection)
         b.set(F.rateInfo, rateInfo)
         b.set(F.leadNote, leadNote)
-        b.set(F.eventTags, eventTags)
+        // Event Tags is multipleSelects in Airtable — split comma-joined string back to array
+        if let tags = eventTags, !tags.isEmpty {
+            b.setMultiSelect(F.eventTags, tags.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) })
+        } else {
+            b.setMultiSelect(F.eventTags, [])
+        }
         // Contact info
         b.set(F.email, email)
-        b.set(F.phone, phone)
         b.set(F.mobilePhone, mobilePhone)
         b.set(F.workPhone, workPhone)
         b.set(F.linkedInUrl, linkedInUrl)
@@ -176,17 +172,20 @@ extension Contact: AirtableConvertible {
         // Single Selects
         b.set(F.qualificationStatus, qualificationStatus)
         b.set(F.leadSource, leadSource)
-        b.set(F.clientType, clientType)
         b.set(F.industry, industry)
         b.set(F.importSource, importSource)
         b.set(F.onboardingStatus, onboardingStatus)
-        b.set(F.categorization, categorization)
+        // Categorization is multipleSelects in Airtable — wrap single value in array
+        if let cat = categorization, !cat.isEmpty {
+            b.setMultiSelect(F.categorization, [cat])
+        } else {
+            b.setMultiSelect(F.categorization, [])
+        }
         b.set(F.qualityRating, qualityRating)
         b.set(F.reliabilityRating, reliabilityRating)
         b.set(F.partnerStatus, partnerStatus)
         b.set(F.partnerType, partnerType)
-        // Multi-select & Checkbox
-        b.setMultiSelect(F.tags, tags)
+        // Checkbox
         b.setBool(F.syncToContacts, syncToContacts)
         // Linked Records
         b.setLinkedIds(F.specialties, specialtiesIds)
