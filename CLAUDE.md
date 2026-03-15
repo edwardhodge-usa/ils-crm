@@ -142,6 +142,8 @@ Base ID: `appYXbUdcmSwBoPFU`
 **2026-03-14** - Swift app sync only starts when SettingsView appears (loadApiKey in onAppear) → Add auto-configure in ContentView.onAppear: read Keychain, configure SyncEngine, start polling. Match Electron behavior
 **2026-03-14** - Airtable content upload API (`content.airtable.com/v0/{baseId}/uploadAttachment`) returns 404 — PAT may lack required scope → Use tmpfiles.org as relay: upload image → get public URL → PATCH record with URL-based attachment. Airtable downloads and stores on its CDN
 **2026-03-14** - `@Environment(\.dismiss)` doesn't work reliably in SwiftUI sheets on macOS → Pass `@Binding var isPresented` directly and set `isPresented = false` from buttons inside the sheet
+**2026-03-14** - Airtable schema changes (deleted fields, type changes) cause Swift sync 422 errors silently — the Electron app may already be updated but the Swift converter lags behind. Before debugging sync failures: (1) fetch live schema via `mcp__airtable__describe_table`, (2) compare field IDs + types against Swift converter's `F` enum, (3) check for deleted fields, singleSelect→multipleSelects changes, and text→formula conversions
+**2026-03-14** - AirtableFieldsBuilder `set()` for String must send NSNull for empty strings — Airtable singleSelect/multipleSelects fields reject "" with "Cannot parse value". Also `setDate()` must send YYYY-MM-DD (not full ISO 8601 with time) for date-only fields — Airtable rejects the time component on POST creates
 
 ## Deployment Process
 
