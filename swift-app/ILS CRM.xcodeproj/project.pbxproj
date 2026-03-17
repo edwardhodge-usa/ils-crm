@@ -437,7 +437,6 @@
 				};
 			};
 			buildConfigurationList = CCD07FC50E3B6BA1F6BC9F4D /* Build configuration list for PBXProject "ILS CRM" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -447,6 +446,7 @@
 			mainGroup = 4A56914B3E3FFF4331958871;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+			productRefGroup = AE72CAFF765D498C5278F9CE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -552,7 +552,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM";
+				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM+";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -739,7 +739,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM";
+				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM+";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
