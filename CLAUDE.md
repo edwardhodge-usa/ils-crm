@@ -54,6 +54,12 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - Stage colors centralized in `src/config/stages.ts` — never add local stage color maps in components
 - LinkedIn scraping: use `persist:linkedin` session partition for persistent cookies, detect post-login redirect to `/feed/`
 
+### XcodeBuildMCP
+- Use XcodeBuildMCP to build and verify the Swift app after completing a task or modifying models/services.
+- On build failure, read XcodeBuildMCP error logs and iterate fixes before asking the user.
+- macOS app — verify with /app-logs and /app-describe first; screenshots via /app-check when needed. Not iOS Simulator.
+- For verbose multi-target builds, prefer the apple-platform-build-tools subagent to preserve context.
+
 ### Swift-Specific
 - Swift converters use field IDs; Electron uses field names — keep in sync when schema changes
 - Before debugging Swift sync 422 errors: fetch live schema via `mcp__airtable__describe_table`, compare against Swift converter's `F` enum
@@ -87,6 +93,12 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 4. Fix yml: `sed -i '' 's/ILS CRM/ILS-CRM/g' latest-mac.yml`
 5. `gh release create v<version>` with renamed assets + latest-mac.yml
 6. Copy DMGs to deployment folder, archive old versions
+
+## Memory
+
+Vault memory for this project: `~/Library/Mobile Documents/com~apple~CloudDocs/80_Obsidian Vault/ImagineLab Studios/Claude Memory/projects/ils-crm.md`
+
+When writing to vault memory: APPEND with date prefix, never rewrite. Cross-project patterns go to `_shared/`.
 
 ## Parallel Build Architecture
 
