@@ -170,6 +170,7 @@ struct CompanyDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete", role: .destructive) {
+                syncEngine.trackDeletion(tableId: Company.airtableTableId, recordId: company.id)
                 modelContext.delete(company)
                 onDelete?()
             }

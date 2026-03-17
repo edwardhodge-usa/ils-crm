@@ -429,8 +429,13 @@ export async function deleteRemoteRecord(
   if (!tableId) return { success: false, error: `Unknown table: ${tableName}` }
 
   try {
-    await batchDelete(tableId, [id], { apiKey: config.apiKey, baseId: config.baseId })
-    deleteRecord(tableName, id)
+    if (id.startsWith('local_')) {
+      // Local-only record — no remote counterpart to delete
+      deleteRecord(tableName, id)
+    } else {
+      await batchDelete(tableId, [id], { apiKey: config.apiKey, baseId: config.baseId })
+      deleteRecord(tableName, id)
+    }
     return { success: true }
   } catch (error) {
     return { success: false, error: String(error) }

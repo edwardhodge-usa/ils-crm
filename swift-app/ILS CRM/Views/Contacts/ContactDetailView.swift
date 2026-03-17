@@ -126,6 +126,7 @@ struct ContactDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete", role: .destructive) {
+                syncEngine.trackDeletion(tableId: Contact.airtableTableId, recordId: contact.id)
                 context.delete(contact)
             }
             Button("Cancel", role: .cancel) {}

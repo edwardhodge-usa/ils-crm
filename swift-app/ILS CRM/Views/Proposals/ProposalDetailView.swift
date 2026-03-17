@@ -8,6 +8,7 @@ import SwiftData
 /// Uses @Bindable for direct SwiftData mutation with pending-push tracking.
 struct ProposalDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(SyncEngine.self) private var syncEngine
 
     @Bindable var proposal: Proposal
 
@@ -236,6 +237,7 @@ struct ProposalDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete", role: .destructive) {
+                syncEngine.trackDeletion(tableId: Proposal.airtableTableId, recordId: proposal.id)
                 modelContext.delete(proposal)
             }
             Button("Cancel", role: .cancel) {}

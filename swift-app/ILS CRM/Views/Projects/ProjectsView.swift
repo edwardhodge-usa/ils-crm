@@ -26,6 +26,7 @@ struct ProjectsView: View {
     @State private var showDeleteConfirm = false
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(SyncEngine.self) private var syncEngine
 
     // MARK: - Sort Label
 
@@ -236,6 +237,7 @@ struct ProjectsView: View {
                 project: project,
                 onEdit: { showEditProject = true },
                 onDelete: {
+                    syncEngine.trackDeletion(tableId: Project.airtableTableId, recordId: project.id)
                     modelContext.delete(project)
                     selectedProject = nil
                 }

@@ -359,6 +359,7 @@ struct ContactFormView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \Company.companyName) private var allCompanies: [Company]
 
     // MARK: - Form State
 
@@ -374,6 +375,8 @@ struct ContactFormView: View {
 
     @State private var company: String = ""
     @State private var jobTitle: String = ""
+    @State private var selectedCompanyIds: Set<String> = []
+    @State private var showingCompanyPicker = false
 
     @State private var categorization: String = ""
     @State private var leadSource: String = ""
@@ -455,9 +458,33 @@ struct ContactFormView: View {
         }
     }
 
+    /// Resolved name of the first selected company, or nil.
+    private var selectedCompanyName: String? {
+        allCompanies.first(where: { selectedCompanyIds.contains($0.id) })?.companyName
+    }
+
     private var professionalSection: some View {
         Section("Professional") {
-            TextField("Company", text: $company)
+            Button {
+                showingCompanyPicker = true
+            } label: {
+                HStack {
+                    Text("Company")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text(selectedCompanyName ?? "Select Company…")
+                        .foregroundStyle(selectedCompanyName != nil ? .primary : .secondary)
+                }
+            }
+            .buttonStyle(.plain)
+            .sheet(isPresented: $showingCompanyPicker) {
+                LinkedRecordPicker(
+                    title: "Select Company",
+                    entityType: .companies,
+                    currentIds: selectedCompanyIds,
+                    onSave: { ids in selectedCompanyIds = ids }
+                )
+            }
             TextField("Job Title", text: $jobTitle)
         }
     }
@@ -494,6 +521,7 @@ struct ContactFormView: View {
         workPhone = contact.workPhone ?? ""
         company = contact.company ?? ""
         jobTitle = contact.jobTitle ?? ""
+        selectedCompanyIds = Set(contact.companiesIds)
         categorization = contact.categorization ?? ""
         leadSource = contact.leadSource ?? ""
         industry = contact.industry ?? ""
@@ -503,6 +531,9 @@ struct ContactFormView: View {
     }
 
     private func save() {
+        // Resolve company name from linked record for backwards-compatible free-text field
+        let resolvedCompanyName = selectedCompanyName
+
         if let contact {
             contact.firstName = firstName.nilIfEmpty
             contact.lastName = lastName.nilIfEmpty
@@ -511,7 +542,8 @@ struct ContactFormView: View {
             contact.phone = phone.nilIfEmpty
             contact.mobilePhone = mobilePhone.nilIfEmpty
             contact.workPhone = workPhone.nilIfEmpty
-            contact.company = company.nilIfEmpty
+            contact.companiesIds = Array(selectedCompanyIds)
+            contact.company = resolvedCompanyName ?? company.nilIfEmpty
             contact.jobTitle = jobTitle.nilIfEmpty
             contact.categorization = categorization.nilIfEmpty
             contact.leadSource = leadSource.nilIfEmpty
@@ -531,7 +563,8 @@ struct ContactFormView: View {
             newContact.phone = phone.nilIfEmpty
             newContact.mobilePhone = mobilePhone.nilIfEmpty
             newContact.workPhone = workPhone.nilIfEmpty
-            newContact.company = company.nilIfEmpty
+            newContact.companiesIds = Array(selectedCompanyIds)
+            newContact.company = resolvedCompanyName ?? company.nilIfEmpty
             newContact.jobTitle = jobTitle.nilIfEmpty
             newContact.categorization = categorization.nilIfEmpty
             newContact.leadSource = leadSource.nilIfEmpty

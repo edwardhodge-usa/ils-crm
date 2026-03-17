@@ -9,6 +9,7 @@ import SwiftData
 struct OpportunityDetailView: View {
     @Bindable var opportunity: Opportunity
     @Environment(\.modelContext) private var modelContext
+    @Environment(SyncEngine.self) private var syncEngine
 
     @State private var showDeleteConfirm = false
 
@@ -228,6 +229,7 @@ struct OpportunityDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete", role: .destructive) {
+                syncEngine.trackDeletion(tableId: Opportunity.airtableTableId, recordId: opportunity.id)
                 modelContext.delete(opportunity)
             }
             Button("Cancel", role: .cancel) {}

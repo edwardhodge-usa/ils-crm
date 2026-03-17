@@ -18,7 +18,14 @@ import { checkLicense, getLastVerifiedTime, isWithinGracePeriod, handleRevocatio
 
 // ─── Helper: register CRUD for an entity ─────────────────────
 
-function registerEntityCrud(entityName: string, tableName: string) {
+function registerEntityCrud(entityName: string, tableName: string, getMainWindow: () => BrowserWindow | null) {
+  const notifySyncComplete = () => {
+    const win = getMainWindow()
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('sync:progress', { phase: 'complete', tablesCompleted: 0, tablesTotal: 0, recordsPulled: 0 })
+    }
+  }
+
   ipcMain.handle(`${entityName}:getAll`, async () => {
     try {
       const data = getAll(tableName)
@@ -52,6 +59,7 @@ function registerEntityCrud(entityName: string, tableName: string) {
   ipcMain.handle(`${entityName}:create`, async (_e, fields: Record<string, unknown>) => {
     try {
       const result = await createRecord(tableName, fields)
+      if (result.success) notifySyncComplete()
       return result
     } catch (error) {
       console.error(`[IPC] ${entityName}:create failed:`, String(error))
@@ -62,6 +70,7 @@ function registerEntityCrud(entityName: string, tableName: string) {
   ipcMain.handle(`${entityName}:update`, async (_e, id: string, fields: Record<string, unknown>) => {
     try {
       const result = await updateRecord(tableName, id, fields)
+      if (result.success) notifySyncComplete()
       return result
     } catch (error) {
       console.error(`[IPC] ${entityName}:update(${id}) failed:`, String(error))
@@ -72,6 +81,7 @@ function registerEntityCrud(entityName: string, tableName: string) {
   ipcMain.handle(`${entityName}:delete`, async (_e, id: string) => {
     try {
       const result = await deleteRemoteRecord(tableName, id)
+      if (result.success) notifySyncComplete()
       return result
     } catch (error) {
       console.error(`[IPC] ${entityName}:delete(${id}) failed:`, String(error))
@@ -108,17 +118,17 @@ function registerReadOnly(entityName: string, tableName: string) {
 
 export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
   // Full CRUD entities
-  registerEntityCrud('contacts', 'contacts')
-  registerEntityCrud('companies', 'companies')
-  registerEntityCrud('opportunities', 'opportunities')
-  registerEntityCrud('tasks', 'tasks')
-  registerEntityCrud('proposals', 'proposals')
-  registerEntityCrud('projects', 'projects')
-  registerEntityCrud('portalAccess', 'portal_access')
-  registerEntityCrud('clientPages', 'client_pages')
+  registerEntityCrud('contacts', 'contacts', getMainWindow)
+  registerEntityCrud('companies', 'companies', getMainWindow)
+  registerEntityCrud('opportunities', 'opportunities', getMainWindow)
+  registerEntityCrud('tasks', 'tasks', getMainWindow)
+  registerEntityCrud('proposals', 'proposals', getMainWindow)
+  registerEntityCrud('projects', 'projects', getMainWindow)
+  registerEntityCrud('portalAccess', 'portal_access', getMainWindow)
+  registerEntityCrud('clientPages', 'client_pages', getMainWindow)
 
   // Interactions (full CRUD)
-  registerEntityCrud('interactions', 'interactions')
+  registerEntityCrud('interactions', 'interactions', getMainWindow)
   registerReadOnly('specialties', 'specialties')
   registerReadOnly('portalLogs', 'portal_logs')
 
