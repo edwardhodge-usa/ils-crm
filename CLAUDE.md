@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM — Airtable schema management, API integrations, Electron desktop app + Swift app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Swift/SwiftUI (swift-app/), Airtable API (backend)
-- **Status**: v3.4.3 — On main
+- **Status**: v3.4.5 / Swift v1.0.3 — On main
 - **Repo**: edwardhodge-usa/ils-crm | **Base ID**: appYXbUdcmSwBoPFU
 
 ## Project Scope
@@ -69,6 +69,7 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - Swift `String(format:)` doesn't support `,` flag for digit grouping → use `NumberFormatter`
 - XCUITest: build-for-testing first, clear xattrs, then test-without-building. SwiftUI launches with 0 windows — open via File menu
 - SwiftData `#Predicate` crashes on macOS 26.4 beta (25E5233c) — use fetch-all + in-memory `.filter {}` as workaround. TODO: revert when fixed
+- `useEntityList` only refreshes on `sync-complete` events — dispatch `sync:progress` with `phase: 'complete'` from IPC handlers after any CRUD mutation. `deleteRemoteRecord` must handle `local_` prefix IDs (skip Airtable, SQLite only)
 
 ### UI / HIG
 - `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements
