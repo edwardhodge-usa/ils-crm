@@ -15,6 +15,14 @@ const DOT_COLORS = [
 
 const SECTION_KEYS = ['head', 'v_prmagic', 'v_highlight', 'v_360', 'v_full_l'] as const
 
+const SECTION_NAMES: Record<typeof SECTION_KEYS[number], string> = {
+  head: 'Header',
+  v_prmagic: 'PR Magic',
+  v_highlight: 'Highlights',
+  v_360: '360° View',
+  v_full_l: 'Full Layout',
+}
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface PageListProps {
@@ -311,9 +319,10 @@ export default function PageList({
                       return (
                         <div
                           key={key}
+                          title={SECTION_NAMES[key]}
                           style={{
-                            width: 6,
-                            height: 6,
+                            width: 9,
+                            height: 9,
                             borderRadius: '50%',
                             background: isEnabled
                               ? isSelected
@@ -322,6 +331,9 @@ export default function PageList({
                               : isSelected
                                 ? 'rgba(255,255,255,0.25)'
                                 : 'var(--text-placeholder)',
+                            border: isEnabled
+                              ? 'none'
+                              : '1px solid var(--separator-opaque)',
                           }}
                         />
                       )

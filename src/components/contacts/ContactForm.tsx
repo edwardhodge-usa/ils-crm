@@ -34,7 +34,7 @@ const FIELDS: FormFieldDef[] = [
     options: ['Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing', 'Real Estate', 'Consulting', 'Other', 'Hospitality', 'Logistics', 'Fitness', 'Legal', 'Media', 'Design', 'Venture Capital', 'Retail', 'Entertainment'] },
   { key: 'lead_score', label: 'Lead Score', type: 'number', section: 'CRM' },
   { key: 'last_contact_date', label: 'Last Contact Date', type: 'date', section: 'CRM' },
-  { key: 'event_tags', label: 'Event Tags', type: 'multiSelect', section: 'CRM',
+  { key: 'event_tags', label: 'Event Tags', type: 'multiSelect', section: 'CRM', variant: 'dropdown',
     options: ['IAAPA 2025', 'SATE 2025', 'LDI 2025', 'Soho Holloway', 'LA LGBT', 'EEE 2026'], allowCreate: true },
   { key: 'qualification_status', label: 'Qualification Status', type: 'singleSelect', section: 'CRM',
     options: ['New', 'Contacted', 'Qualified', 'Unqualified', 'Nurturing'] },

@@ -31,6 +31,8 @@ export interface FormFieldDef {
   labelField?: string
   secondaryField?: string
   allowCreate?: boolean
+  /** For multiSelect: 'dropdown' renders a dropdown panel instead of the flat pill-toggle grid */
+  variant?: 'dropdown'
 }
 
 interface EntityFormProps {
@@ -259,6 +261,209 @@ function MultiSelectField({
   )
 }
 
+function MultiSelectDropdownField({
+  label,
+  labelStyle,
+  options,
+  selected,
+  onChange,
+  allowCreate,
+}: {
+  label: string
+  labelStyle: React.CSSProperties
+  options: string[]
+  selected: string[]
+  onChange: (v: unknown) => void
+  allowCreate?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [newValue, setNewValue] = useState('')
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  function toggleOption(opt: string) {
+    const next = selected.includes(opt)
+      ? selected.filter(s => s !== opt)
+      : [...selected, opt]
+    onChange(JSON.stringify(next))
+  }
+
+  function handleAddNew() {
+    const trimmed = newValue.trim()
+    if (!trimmed) return
+    if (!selected.includes(trimmed)) {
+      onChange(JSON.stringify([...selected, trimmed]))
+    }
+    setNewValue('')
+  }
+
+  return (
+    <div className="py-2" ref={containerRef} style={{ position: 'relative' }}>
+      <label style={{ ...labelStyle, display: 'block', width: 'auto', marginBottom: 4 }}>{label}</label>
+
+      {/* Trigger row */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setOpen(o => !o)}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(o => !o) } }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 4,
+          minHeight: 30,
+          padding: '4px 8px',
+          borderRadius: 6,
+          background: 'var(--bg-input)',
+          border: open ? '1px solid var(--color-accent)' : '1px solid var(--separator-opaque)',
+          cursor: 'default',
+          transition: 'border-color 150ms',
+          boxSizing: 'border-box',
+          boxShadow: open ? '0 0 0 2.5px var(--color-accent-translucent)' : 'none',
+        }}
+      >
+        {selected.length === 0 ? (
+          <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Select...</span>
+        ) : (
+          selected.map(s => (
+            <span
+              key={s}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 3,
+                padding: '2px 7px', borderRadius: 5,
+                background: 'var(--color-accent-translucent)',
+                color: 'var(--color-accent)',
+                fontSize: 11, fontWeight: 500, lineHeight: 1.4,
+              }}
+            >
+              {s}
+              <button
+                type="button"
+                onClick={e => { e.stopPropagation(); toggleOption(s) }}
+                style={{
+                  background: 'none', border: 'none', padding: 0,
+                  fontSize: 9, lineHeight: 1, color: 'var(--color-accent)',
+                  cursor: 'default', opacity: 0.7,
+                }}
+              >
+                ✕
+              </button>
+            </span>
+          ))
+        )}
+        <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-tertiary)', lineHeight: 1, flexShrink: 0 }}>
+          {open ? '▲' : '▼'}
+        </span>
+      </div>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          marginTop: 4,
+          borderRadius: 8,
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--separator-opaque)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+          overflow: 'hidden',
+        }}>
+          {/* Options list */}
+          <div style={{ maxHeight: 200, overflowY: 'auto', padding: '4px 0' }}>
+            {options.map(opt => {
+              const isChecked = selected.includes(opt)
+              return (
+                <label
+                  key={opt}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '6px 12px',
+                    cursor: 'default',
+                    fontSize: 13,
+                    color: 'var(--text-primary)',
+                    transition: 'background 100ms',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleOption(opt)}
+                    style={{ accentColor: 'var(--color-accent)', cursor: 'default', flexShrink: 0 }}
+                  />
+                  <span>{opt}</span>
+                </label>
+              )
+            })}
+            {options.length === 0 && (
+              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-tertiary)' }}>
+                No options
+              </div>
+            )}
+          </div>
+
+          {/* allowCreate input */}
+          {allowCreate && (
+            <div style={{
+              borderTop: '1px solid var(--separator-opaque)',
+              padding: '6px 8px',
+              display: 'flex', gap: 6,
+            }}>
+              <input
+                type="text"
+                value={newValue}
+                onChange={e => setNewValue(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') { e.preventDefault(); handleAddNew() }
+                  e.stopPropagation()
+                }}
+                placeholder="Add custom tag..."
+                style={{
+                  flex: 1, minWidth: 0,
+                  fontSize: 12, padding: '5px 8px',
+                  borderRadius: 5, border: '1px solid var(--separator-opaque)',
+                  background: 'var(--bg-input)', color: 'var(--text-primary)',
+                  outline: 'none', cursor: 'default', fontFamily: 'inherit',
+                }}
+                onFocus={e => e.currentTarget.style.borderColor = 'var(--color-accent)'}
+                onBlur={e => e.currentTarget.style.borderColor = 'var(--separator-opaque)'}
+              />
+              <button
+                type="button"
+                onClick={handleAddNew}
+                style={{
+                  padding: '0 10px', height: 28, borderRadius: 5,
+                  background: 'var(--color-accent)', border: 'none',
+                  fontSize: 12, fontWeight: 500, color: 'var(--text-on-accent)',
+                  cursor: 'default', flexShrink: 0,
+                }}
+              >
+                Add
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function FieldRenderer({
   field,
   value,
@@ -380,6 +585,19 @@ export function FieldRenderer({
     const allOptions = [...(field.options || [])]
     for (const s of selected) {
       if (!allOptions.includes(s)) allOptions.push(s)
+    }
+
+    if (field.variant === 'dropdown') {
+      return (
+        <MultiSelectDropdownField
+          label={field.label}
+          labelStyle={labelStyle}
+          options={allOptions}
+          selected={selected}
+          onChange={onChange}
+          allowCreate={field.allowCreate}
+        />
+      )
     }
 
     return (

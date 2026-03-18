@@ -73,7 +73,7 @@ function dueLabel(dateStr?: string): { text: string; overdue: boolean } {
   return { text: `In ${diff}d`, overdue: false }
 }
 
-const MAX_WIDGET_ROWS = 5
+const MAX_WIDGET_ROWS = 4
 
 // ── Hoverable row component ──
 
@@ -95,7 +95,7 @@ function HoverRow({
         display: 'flex',
         alignItems: 'center',
         gap: 10,
-        padding: '10px 14px',
+        padding: '8px 12px',
         borderBottom: isLast ? 'none' : '1px solid var(--separator)',
         cursor: 'default',
         background: hovered ? 'var(--bg-hover)' : 'transparent',
@@ -227,9 +227,9 @@ export default function DashboardPage() {
   const visibleFollowUps = followUps.slice(0, MAX_WIDGET_ROWS)
 
   return (
-    <div style={{ padding: 24, overflowY: 'auto', height: '100%', width: '100%' }}>
+    <div style={{ padding: 20, overflowY: 'auto', height: '100%', width: '100%' }}>
       {/* Greeting */}
-      <div style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 12 }}>
         <div
           style={{
             fontSize: 17,
@@ -250,7 +250,7 @@ export default function DashboardPage() {
           borderRadius: 12,
           overflow: 'hidden',
           display: 'flex',
-          marginBottom: 16,
+          marginBottom: 12,
           boxShadow: 'var(--shadow-sm)',
         }}
       >
@@ -286,7 +286,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Two widgets side by side */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
         {/* Tasks Due Today */}
         <div style={{ background: 'var(--bg-grouped)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
           <div
