@@ -451,21 +451,23 @@ struct EditableFieldRow: View {
 
     @ViewBuilder
     private func linkText(_ val: String) -> some View {
-        Text(val)
-            .font(.system(size: 13))
-            .foregroundStyle(.blue)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .onTapGesture {
-                let url: URL?
-                if val.contains("@") && !val.hasPrefix("mailto:") {
-                    url = URL(string: "mailto:\(val)")
-                } else if val.hasPrefix("http://") || val.hasPrefix("https://") || val.hasPrefix("mailto:") || val.hasPrefix("tel:") {
-                    url = URL(string: val)
-                } else {
-                    url = URL(string: "https://\(val)")
-                }
-                if let url { NSWorkspace.shared.open(url) }
+        Button {
+            let url: URL?
+            if val.contains("@") && !val.hasPrefix("mailto:") {
+                url = URL(string: "mailto:\(val)")
+            } else if val.hasPrefix("http://") || val.hasPrefix("https://") || val.hasPrefix("mailto:") || val.hasPrefix("tel:") {
+                url = URL(string: val)
+            } else {
+                url = URL(string: "https://\(val)")
             }
+            if let url { NSWorkspace.shared.open(url) }
+        } label: {
+            Text(val)
+                .font(.system(size: 13))
+                .foregroundStyle(.blue)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -486,7 +488,10 @@ private extension View {
         switch type {
         case .text, .textarea, .number:
             if !isEditing {
-                self.onTapGesture { action() }
+                Button(action: action) {
+                    self
+                }
+                .buttonStyle(.plain)
             } else {
                 self
             }

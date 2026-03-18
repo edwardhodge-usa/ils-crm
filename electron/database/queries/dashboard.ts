@@ -46,12 +46,12 @@ export function getFollowUpAlerts(): Record<string, unknown>[] {
   const db = getDatabase()
   // Contacts not contacted in 14+ days (any categorization that isn't archived)
   const result = db.exec(
-    `SELECT id, contact_name, company, email, phone, last_contact_date, categorization, contact_photo_url
+    `SELECT id, contact_name, company, email, mobile_phone, last_contact_date, categorization, contact_photo_url
      FROM contacts
      WHERE last_contact_date IS NOT NULL
        AND last_contact_date != ''
        AND julianday('now') - julianday(last_contact_date) > 14
-       AND (categorization IS NULL OR categorization NOT IN ('Archived', 'Rejected'))
+       AND (categorization IS NULL OR (categorization NOT LIKE '%Archived%' AND categorization NOT LIKE '%Rejected%'))
      ORDER BY last_contact_date ASC
      LIMIT 20`
   )

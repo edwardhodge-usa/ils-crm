@@ -98,7 +98,7 @@ export default function PipelinePage() {
     return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
   }
 
-  const activeDeals = deals.filter(d => d.stage !== 'Closed Won')
+  const activeDeals = deals.filter(d => d.stage !== 'Closed Won' && d.stage !== 'Closed Lost')
   const totalValue = activeDeals.reduce((sum, d) => sum + (d.value ?? 0), 0)
   const wonValue = deals.filter(d => d.stage === 'Closed Won').reduce((sum, d) => sum + (d.value ?? 0), 0)
 

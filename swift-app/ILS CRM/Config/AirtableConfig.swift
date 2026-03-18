@@ -60,7 +60,7 @@ enum AirtableConfig {
     static let defaultSyncIntervalSeconds: TimeInterval = 60
 
     /// Stagger delay between table syncs to respect Airtable rate limits
-    static let tableSyncStaggerMs: UInt64 = 200_000_000 // 200ms in nanoseconds
+    static let tableSyncStaggerMs: UInt64 = 300_000_000 // 300ms in nanoseconds
 
     /// Airtable REST API base URL
     static let apiBaseURL = URL(string: "https://api.airtable.com/v0")!

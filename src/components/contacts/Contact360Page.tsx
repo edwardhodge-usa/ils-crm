@@ -482,7 +482,10 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
             )}
             {Boolean(contact.linkedin_url) && (
               <button
-                onClick={() => window.electronAPI.shell.openExternal(contact.linkedin_url as string)}
+                onClick={() => {
+                  const url = contact.linkedin_url as string
+                  window.electronAPI.shell.openExternal(url.startsWith('http') ? url : `https://${url}`)
+                }}
                 style={{
                   fontSize: 12, fontWeight: 500, color: '#0A66C2',
                   background: 'rgba(10,102,194,0.10)', border: 'none', cursor: 'default',

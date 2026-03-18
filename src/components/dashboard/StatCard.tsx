@@ -1,6 +1,8 @@
 // StatCard — flat metric tile inside grouped container
 // Gold standard: no individual bg/shadow/radius — parent container provides grouping
 
+import useDarkMode from '../../hooks/useDarkMode'
+
 interface StatCardProps {
   icon: string
   value: string | number
@@ -23,7 +25,7 @@ export default function StatCard({ icon, value, label, subtitle, variant = 'defa
   const showAccent = hasAccent && !isNaN(numericValue) && numericValue > 0
 
   // Detect dark mode for accent color selection
-  const isDark = document.documentElement.classList.contains('dark')
+  const isDark = useDarkMode()
   const accentColor = showAccent && ACCENT_COLORS[variant]
     ? (isDark ? ACCENT_COLORS[variant].dark : ACCENT_COLORS[variant].light)
     : undefined

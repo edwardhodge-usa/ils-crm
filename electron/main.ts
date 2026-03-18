@@ -161,7 +161,7 @@ app.whenReady().then(async () => {
         } else {
           console.error('[App] Initial sync failed:', result.error)
         }
-        startPolling(mainWindow)
+        startPolling(() => mainWindow)
       })
     } else if (license.status === 'error') {
       // Network error — check grace period
@@ -173,7 +173,7 @@ app.whenReady().then(async () => {
           } else {
             console.error('[App] Initial sync failed:', result.error)
           }
-          startPolling(mainWindow)
+          startPolling(() => mainWindow)
         })
       } else {
         // Grace period expired — lock the app (no data deletion)
@@ -195,7 +195,7 @@ app.whenReady().then(async () => {
       } else {
         console.error('[App] Initial sync failed:', result.error)
       }
-      startPolling(mainWindow)
+      startPolling(() => mainWindow)
     })
   } else {
     if (isDev) console.log('[App] No API key configured, skipping sync')

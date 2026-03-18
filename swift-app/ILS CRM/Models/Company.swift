@@ -18,6 +18,7 @@ final class Company {
     var notes: String?            // flddUZDFk4l9f377V
     var companyDescription: String? // fldIDywGKU18pEndd
     var website: String?          // fldVBnFiEeyDf9oCg
+    var linkedInUrl: String?      // fldVt6tIj1DrT85cd
     var foundingYear: Int?        // fldZaxAXqeImQcuzW
     var createdDate: Date?        // fldxQpzFGadejLLVp
 

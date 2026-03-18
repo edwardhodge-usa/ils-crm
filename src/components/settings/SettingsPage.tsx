@@ -167,7 +167,7 @@ function SegmentedControl<T extends string>({
 // ────────────────────────────────────────────────────────────
 function GeneralSection() {
   const [currentUser, setCurrentUser] = useState<{ id: string | null; name: string | null; email: string | null } | null>(null)
-  const [apiKey, setApiKey] = useState('')
+  const [apiKeySet, setApiKeySet] = useState(false)
   const [baseId, setBaseId] = useState('')
   const [originalBaseId, setOriginalBaseId] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
@@ -183,9 +183,8 @@ function GeneralSection() {
   useEffect(() => {
     async function load() {
       const keyResult = await window.electronAPI.settings.get('airtable_api_key')
-      if (keyResult.success && keyResult.data) {
-        setApiKey(keyResult.data)
-      }
+      // Only check presence — never store the key value in the renderer's JS heap
+      setApiKeySet(keyResult.success && !!keyResult.data)
       const baseResult = await window.electronAPI.settings.get('airtable_base_id')
       if (baseResult.success && baseResult.data) {
         setBaseId(baseResult.data)
@@ -302,7 +301,7 @@ function GeneralSection() {
               color: 'var(--text-secondary)',
               letterSpacing: '0.1em',
             }}>
-              {apiKey ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : '\u2014'}
+              {apiKeySet ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : '\u2014'}
             </span>
             <button
               onClick={handleChangeToken}

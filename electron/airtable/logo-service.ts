@@ -259,7 +259,7 @@ export async function fetchLinkedInCompanyLogo(linkedInUrl: string): Promise<str
   // Validate this is actually a LinkedIn URL
   try {
     const parsed = new URL(linkedInUrl)
-    if (!parsed.hostname.endsWith('linkedin.com')) {
+    if (parsed.hostname !== 'linkedin.com' && !parsed.hostname.endsWith('.linkedin.com')) {
       throw new Error('URL must be a LinkedIn URL (linkedin.com)')
     }
   } catch (e) {
@@ -462,7 +462,7 @@ export async function fetchLinkedInPhoto(linkedInUrl: string): Promise<string> {
   // Validate this is actually a LinkedIn URL
   try {
     const parsed = new URL(linkedInUrl)
-    if (!parsed.hostname.endsWith('linkedin.com')) {
+    if (parsed.hostname !== 'linkedin.com' && !parsed.hostname.endsWith('.linkedin.com')) {
       throw new Error('URL must be a LinkedIn URL (linkedin.com)')
     }
   } catch (e) {

@@ -14,6 +14,7 @@ export default function useEntityList(
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const apiFnRef = useRef(apiFn)
+  apiFnRef.current = apiFn
 
   async function load() {
     setLoading(true)

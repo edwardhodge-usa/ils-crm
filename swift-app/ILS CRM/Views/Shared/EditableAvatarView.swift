@@ -33,21 +33,25 @@ struct EditableAvatarView: View {
     @State private var isLoadingExisting = false
 
     var body: some View {
-        ZStack {
-            AvatarView(name: name, size: size, photoURL: photoURL, shape: shape)
+        Button {
+            showPopover = true
+        } label: {
+            ZStack {
+                AvatarView(name: name, size: size, photoURL: photoURL, shape: shape)
 
-            // Edit overlay on hover or drop target
-            if isHovering || showPopover || isDropTargeted {
-                editOverlay
-            }
+                // Edit overlay on hover or drop target
+                if isHovering || showPopover || isDropTargeted {
+                    editOverlay
+                }
 
-            // Upload spinner
-            if isUploading {
-                uploadOverlay
+                // Upload spinner
+                if isUploading {
+                    uploadOverlay
+                }
             }
         }
+        .buttonStyle(.plain)
         .onHover { isHovering = $0 }
-        .onTapGesture { showPopover = true }
         .popover(isPresented: $showPopover, arrowEdge: .bottom) {
             photoEditPopover
         }

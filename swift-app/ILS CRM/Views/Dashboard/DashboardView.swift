@@ -433,7 +433,7 @@ private struct FollowUpRow: View {
     }
 
     private var categorizationColor: Color {
-        let cat = contact.categorization?.lowercased() ?? ""
+        let cat = contact.categorization.first?.lowercased() ?? ""
         if cat.contains("client") { return .green }
         if cat.contains("lead") { return .blue }
         if cat.contains("partner") { return .purple }
@@ -463,8 +463,8 @@ private struct FollowUpRow: View {
             Spacer()
 
             HStack(spacing: 6) {
-                if let cat = contact.categorization, !cat.isEmpty {
-                    StatusBadge(text: cat, color: categorizationColor)
+                if !contact.categorization.isEmpty {
+                    StatusBadge(text: contact.categorization.joined(separator: ", "), color: categorizationColor)
                 }
 
                 // Days since contact badge

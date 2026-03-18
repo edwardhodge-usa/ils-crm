@@ -200,6 +200,8 @@ final class SyncEngine {
                 try await pushRecords(ImportedContact.self, service: service, context: context)
             case AirtableConfig.Tables.portalAccess:
                 try await pushRecords(PortalAccessRecord.self, service: service, context: context)
+            case AirtableConfig.Tables.clientPages:
+                try await pushRecords(ClientPage.self, service: service, context: context)
             default:
                 break
             }
@@ -313,7 +315,7 @@ final class SyncEngine {
 
         // Fetch all existing records of this type
         let existing = try context.fetch(FetchDescriptor<T>())
-        let existingById = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
+        let existingById = Dictionary(existing.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
 
         // Upsert: delete-then-insert for each record (simplest correct approach
         // that avoids SwiftData @Attribute(.unique) constraint violations)

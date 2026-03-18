@@ -445,14 +445,16 @@ export async function deleteRemoteRecord(
 // ─── Polling (setTimeout chaining — waits for sync to finish) ─
 
 let pollTimeout: ReturnType<typeof setTimeout> | null = null
-let pollWindow: BrowserWindow | null = null
+let getMainWindow: (() => BrowserWindow | null) | null = null
 const DEFAULT_POLL_MS = 120000   // 2 minutes (conservative for multi-user)
 const MAX_POLL_MS = 600000       // 10 minute ceiling
 let currentPollMs = DEFAULT_POLL_MS
 
-export function startPolling(win: BrowserWindow | null): void {
+export function startPolling(getWindow: () => BrowserWindow | null): void {
+  // Always update the getter — handles the case where the main window was recreated
+  getMainWindow = getWindow
+
   if (pollTimeout) return
-  pollWindow = win
 
   const configuredMs = parseInt(getSetting('sync_interval_ms') || String(DEFAULT_POLL_MS), 10)
   currentPollMs = Math.max(configuredMs, DEFAULT_POLL_MS)
@@ -465,8 +467,9 @@ function scheduleNextSync(): void {
   if (pollTimeout) clearTimeout(pollTimeout)
 
   pollTimeout = setTimeout(async () => {
+    const win = getMainWindow?.() ?? null
     try {
-      const result = await fullSync(pollWindow)
+      const result = await fullSync(win)
 
       if (result.success) {
         // Success — reset to base interval
@@ -481,13 +484,16 @@ function scheduleNextSync(): void {
       console.error('[Sync] Poll error:', error)
       // Exception — back off 2x
       currentPollMs = Math.min(currentPollMs * 2, MAX_POLL_MS)
-      pollWindow?.webContents?.send('sync:progress', {
-        phase: 'error',
-        tablesCompleted: 0,
-        tablesTotal: SYNC_ORDER.length,
-        recordsPulled: 0,
-        error: String(error),
-      })
+      const errWin = getMainWindow?.()
+      if (errWin && !errWin.isDestroyed()) {
+        errWin.webContents.send('sync:progress', {
+          phase: 'error',
+          tablesCompleted: 0,
+          tablesTotal: SYNC_ORDER.length,
+          recordsPulled: 0,
+          error: String(error),
+        })
+      }
     }
 
     // Schedule next — only after current finishes + rest period
@@ -501,7 +507,7 @@ export function stopPolling(): void {
   if (pollTimeout) {
     clearTimeout(pollTimeout)
     pollTimeout = null
-    pollWindow = null
+    getMainWindow = null
     if (isDev) console.log('[Sync] Polling stopped')
   }
 }

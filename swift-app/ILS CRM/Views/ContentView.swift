@@ -213,7 +213,7 @@ struct ContentView: View {
     private var settingsFooter: some View {
         VStack(spacing: 0) {
             Divider()
-            Text("v3.4.3")
+            Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.3")")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)

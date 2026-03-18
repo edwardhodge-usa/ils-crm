@@ -16,6 +16,19 @@ import {
 import { getDatabase, saveDatabase } from '../database/init'
 import { checkLicense, getLastVerifiedTime, isWithinGracePeriod, handleRevocation } from '../airtable/license-check'
 
+// ─── Allowlist: keys the renderer is permitted to write via settings:set ─────
+// Omitted intentionally: license_last_verified, license_status, user_id — main-process only
+
+const WRITABLE_SETTINGS = new Set([
+  'airtable_api_key',
+  'airtable_base_id',
+  'user_name',
+  'user_email',
+  'sync_interval_ms',
+  'theme',
+  'logo_dev_token',
+])
+
 // ─── Helper: register CRUD for an entity ─────────────────────
 
 function registerEntityCrud(entityName: string, tableName: string, getMainWindow: () => BrowserWindow | null) {
@@ -183,6 +196,10 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
   })
 
   ipcMain.handle('settings:set', async (_e, key: string, value: string) => {
+    if (!WRITABLE_SETTINGS.has(key)) {
+      console.warn(`[IPC] settings:set blocked write to restricted key: ${key}`)
+      return { success: false, error: 'Setting not writable from renderer' }
+    }
     try {
       setSetting(key, value)
       return { success: true }
@@ -196,8 +213,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
 
   ipcMain.handle('sync:start', async () => {
     try {
-      const win = getMainWindow()
-      startPolling(win)
+      startPolling(getMainWindow)
       return { success: true }
     } catch (error) {
       console.error('[IPC] sync:start failed:', String(error))

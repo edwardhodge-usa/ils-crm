@@ -70,11 +70,13 @@ struct AirtableFields {
     }
 
     /// Date fields: date, dateTime, createdTime, lastModifiedTime.
-    /// Airtable sends ISO 8601 strings: "2026-02-28T00:00:00.000Z"
+    /// Airtable sends ISO 8601 strings: "2026-02-28T00:00:00.000Z" (datetime)
+    /// or bare date strings: "2026-02-28" (date-only fields).
     func date(for fieldId: String) -> Date? {
         guard let string = raw[fieldId] as? String else { return nil }
         return Self.iso8601Formatter.date(from: string)
             ?? Self.iso8601DateOnlyFormatter.date(from: string)
+            ?? Self.dateOnlyFallbackFormatter.date(from: string)
     }
 
     /// Boolean fields: checkbox.
@@ -122,7 +124,16 @@ struct AirtableFields {
 
     private static let iso8601DateOnlyFormatter: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime]
+        f.formatOptions = [.withFullDate, .withDashSeparatorInDate]
+        return f
+    }()
+
+    /// DateFormatter fallback for bare "yyyy-MM-dd" strings, in case ISO8601DateFormatter
+    /// with .withFullDate does not match Airtable's exact date-only format.
+    private static let dateOnlyFallbackFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = TimeZone(identifier: "UTC")
         return f
     }()
 }

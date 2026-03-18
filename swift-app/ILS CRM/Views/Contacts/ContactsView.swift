@@ -300,9 +300,9 @@ struct ContactsView: View {
 
                 Spacer()
 
-                if let cat = contact.categorization, !cat.isEmpty, !isSelected {
+                if let cat = contact.categorization.first, !cat.isEmpty, !isSelected {
                     StatusBadge(
-                        text: cat,
+                        text: contact.categorization.joined(separator: ", "),
                         color: categorizationColor(cat)
                     )
                 }
@@ -369,7 +369,6 @@ struct ContactFormView: View {
     @State private var autoComputeName: Bool = true
 
     @State private var email: String = ""
-    @State private var phone: String = ""
     @State private var mobilePhone: String = ""
     @State private var workPhone: String = ""
 
@@ -449,8 +448,6 @@ struct ContactFormView: View {
         Section("Contact Info") {
             TextField("Email", text: $email)
                 .textContentType(.emailAddress)
-            TextField("Phone", text: $phone)
-                .textContentType(.telephoneNumber)
             TextField("Mobile Phone", text: $mobilePhone)
                 .textContentType(.telephoneNumber)
             TextField("Work Phone", text: $workPhone)
@@ -516,13 +513,12 @@ struct ContactFormView: View {
         lastName = contact.lastName ?? ""
         contactName = contact.contactName ?? ""
         email = contact.email ?? ""
-        phone = contact.phone ?? ""
         mobilePhone = contact.mobilePhone ?? ""
         workPhone = contact.workPhone ?? ""
         company = contact.company ?? ""
         jobTitle = contact.jobTitle ?? ""
         selectedCompanyIds = Set(contact.companiesIds)
-        categorization = contact.categorization ?? ""
+        categorization = contact.categorization.first ?? ""
         leadSource = contact.leadSource ?? ""
         industry = contact.industry ?? ""
         notes = contact.notes ?? ""
@@ -539,13 +535,12 @@ struct ContactFormView: View {
             contact.lastName = lastName.nilIfEmpty
             contact.contactName = contactName.nilIfEmpty
             contact.email = email.nilIfEmpty
-            contact.phone = phone.nilIfEmpty
             contact.mobilePhone = mobilePhone.nilIfEmpty
             contact.workPhone = workPhone.nilIfEmpty
             contact.companiesIds = Array(selectedCompanyIds)
             contact.company = resolvedCompanyName ?? company.nilIfEmpty
             contact.jobTitle = jobTitle.nilIfEmpty
-            contact.categorization = categorization.nilIfEmpty
+            contact.categorization = categorization.isEmpty ? [] : [categorization]
             contact.leadSource = leadSource.nilIfEmpty
             contact.industry = industry.nilIfEmpty
             contact.notes = notes.nilIfEmpty
@@ -560,13 +555,12 @@ struct ContactFormView: View {
             newContact.lastName = lastName.nilIfEmpty
             newContact.contactName = contactName.nilIfEmpty
             newContact.email = email.nilIfEmpty
-            newContact.phone = phone.nilIfEmpty
             newContact.mobilePhone = mobilePhone.nilIfEmpty
             newContact.workPhone = workPhone.nilIfEmpty
             newContact.companiesIds = Array(selectedCompanyIds)
             newContact.company = resolvedCompanyName ?? company.nilIfEmpty
             newContact.jobTitle = jobTitle.nilIfEmpty
-            newContact.categorization = categorization.nilIfEmpty
+            newContact.categorization = categorization.isEmpty ? [] : [categorization]
             newContact.leadSource = leadSource.nilIfEmpty
             newContact.industry = industry.nilIfEmpty
             newContact.notes = notes.nilIfEmpty

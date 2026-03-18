@@ -108,7 +108,7 @@ extension Contact: AirtableConvertible {
         model.industry = f.string(for: F.industry)
         model.importSource = f.string(for: F.importSource)
         model.onboardingStatus = f.string(for: F.onboardingStatus)
-        model.categorization = f.stringArray(for: F.categorization).first
+        model.categorization = f.stringArray(for: F.categorization)
         model.qualityRating = f.string(for: F.qualityRating)
         model.reliabilityRating = f.string(for: F.reliabilityRating)
         model.partnerStatus = f.string(for: F.partnerStatus)
@@ -175,9 +175,9 @@ extension Contact: AirtableConvertible {
         b.set(F.industry, industry)
         b.set(F.importSource, importSource)
         b.set(F.onboardingStatus, onboardingStatus)
-        // Categorization is multipleSelects in Airtable — wrap single value in array
-        if let cat = categorization, !cat.isEmpty {
-            b.setMultiSelect(F.categorization, [cat])
+        // Categorization is multipleSelects in Airtable — send full array
+        if !categorization.isEmpty {
+            b.setMultiSelect(F.categorization, categorization)
         } else {
             b.setMultiSelect(F.categorization, [])
         }

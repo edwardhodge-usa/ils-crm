@@ -26,8 +26,11 @@ export async function checkLicense(
   airtableUserId?: string,
 ): Promise<LicenseStatus> {
   try {
-    // Sanitize email to prevent formula injection
-    const sanitizedEmail = email.replace(/'/g, "\\'")
+    // Validate email format before using in formula
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return { valid: false, status: 'error', message: 'Invalid email format' }
+    }
+    const sanitizedEmail = email.replace(/'/g, "''")  // Airtable uses '' for escaping, not \'
 
     const filterFormula = `AND({${LICENSE_CONFIG.fields.email}} = '${sanitizedEmail}', {${LICENSE_CONFIG.fields.app}} = '${LICENSE_CONFIG.appName}')`
     const url = `https://api.airtable.com/v0/${LICENSE_CONFIG.baseId}/${LICENSE_CONFIG.tableId}?filterByFormula=${encodeURIComponent(filterFormula)}&returnFieldsByFieldId=true`

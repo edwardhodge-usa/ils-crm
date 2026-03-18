@@ -16,6 +16,7 @@ private enum F {
     static let notes = "flddUZDFk4l9f377V"
     static let companyDescription = "fldIDywGKU18pEndd"
     static let website = "fldVBnFiEeyDf9oCg"
+    static let linkedInUrl = "fldVt6tIj1DrT85cd"
     static let foundingYear = "fldZaxAXqeImQcuzW"
     static let createdDate = "fldxQpzFGadejLLVp"
     static let type = "fldtLJxxK5oT6Nzjn"
@@ -48,6 +49,7 @@ extension Company: AirtableConvertible {
         model.notes = f.string(for: F.notes)
         model.companyDescription = f.string(for: F.companyDescription)
         model.website = f.string(for: F.website)
+        model.linkedInUrl = f.string(for: F.linkedInUrl)
         model.foundingYear = f.int(for: F.foundingYear)
         model.createdDate = f.date(for: F.createdDate)
         model.type = f.string(for: F.type)
@@ -78,6 +80,7 @@ extension Company: AirtableConvertible {
         b.set(F.notes, notes)
         b.set(F.companyDescription, companyDescription)
         b.set(F.website, website)
+        b.set(F.linkedInUrl, linkedInUrl)
         b.set(F.foundingYear, foundingYear)
         b.setDate(F.createdDate, createdDate)
         b.set(F.type, type)

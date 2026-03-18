@@ -172,7 +172,7 @@ struct ContactDetailView: View {
                 type: .singleSelect(options: [
                     "Lead", "Customer", "Partner", "Vendor", "Talent", "Other", "Unknown",
                     "VIP", "Investor", "Speaker", "Press", "Influencer", "Board Member", "Advisor"
-                ]), value: contact.categorization, onSave: saveField)
+                ]), value: contact.categorization.first, onSave: saveField)
             EditableFieldRow(label: "Industry", key: "industry",
                 type: .singleSelect(options: [
                     "Technology", "Healthcare", "Finance", "Education", "Manufacturing",
@@ -305,7 +305,6 @@ struct ContactDetailView: View {
         switch key {
         case "jobTitle": contact.jobTitle = str
         case "email": contact.email = str
-        case "phone": contact.phone = str
         case "mobilePhone": contact.mobilePhone = str
         case "workPhone": contact.workPhone = str
         case "linkedInUrl": contact.linkedInUrl = str
@@ -316,7 +315,7 @@ struct ContactDetailView: View {
         case "country": contact.country = str
         case "industry": contact.industry = str
         case "leadSource": contact.leadSource = str
-        case "categorization": contact.categorization = str
+        case "categorization": contact.categorization = str.map { [$0] } ?? []
         case "qualificationStatus": contact.qualificationStatus = str
         case "eventTags": contact.eventTags = str
         case "notes": contact.notes = str
@@ -448,18 +447,16 @@ struct FlowLayout: Layout {
 #Preview {
     let contact = Contact(
         id: "recABC123",
-        contactName: "Jane Smith",
-        tags: ["VIP", "Creative", "NYC"]
+        contactName: "Jane Smith"
     )
     contact.firstName = "Jane"
     contact.lastName = "Smith"
     contact.jobTitle = "Creative Director"
     contact.email = "jane@example.com"
-    contact.phone = "+1 555-0100"
     contact.mobilePhone = "+1 555-0101"
     contact.company = "Acme Studios"
     contact.industry = "Media & Entertainment"
-    contact.categorization = "Client"
+    contact.categorization = ["Client"]
     contact.linkedInUrl = "https://linkedin.com/in/janesmith"
     contact.notes = "Met at SXSW 2025. Very interested in our platform capabilities."
     contact.lastContactDate = Calendar.current.date(byAdding: .day, value: -12, to: Date())

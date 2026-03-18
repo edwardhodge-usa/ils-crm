@@ -542,75 +542,76 @@ struct TasksView: View {
         let overdue = isOverdue(task)
         let completed = isCompleted(task)
 
-        HStack(spacing: 10) {
-            // Circular checkbox (17px, priority-colored border)
-            ZStack {
-                Circle()
-                    .stroke(checkboxBorderColor(task), lineWidth: 1.5)
-                    .frame(width: 17, height: 17)
-                if completed {
-                    Circle()
-                        .fill(Color.green)
-                        .frame(width: 17, height: 17)
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(.white)
-                }
-            }
-
-            // Name + meta
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 4) {
-                    Text(task.task ?? "Untitled")
-                        .font(.system(size: 14, weight: .medium))
-                        .strikethrough(completed)
-                        .foregroundStyle(completed ? .tertiary : .primary)
-                        .lineLimit(1)
-                    // Priority dot after name
-                    if let p = task.priority, !completed {
-                        Circle()
-                            .fill(priorityColor(for: p))
-                            .frame(width: 6, height: 6)
-                    }
-                }
-
-                HStack(spacing: 5) {
-                    if let due = task.dueDate {
-                        Text(Self.dueDateFormatter.string(from: due))
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(overdue ? .red : .secondary)
-                    }
-                    if let type = task.type, !type.isEmpty {
-                        let colors = Self.typeBadgeColors[type]
-                        Text(type)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(colorScheme == .dark ? (colors?.fgDark ?? .secondary) : (colors?.fg ?? .secondary))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(colors?.bg ?? Color.secondary.opacity(0.22))
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                    }
-                }
-            }
-
-            Spacer()
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // Selection: translucent accent background + left border (NOT full solid accent)
-        .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
-        .overlay(alignment: .leading) {
-            if isSelected {
-                Rectangle()
-                    .fill(Color.accentColor)
-                    .frame(width: 2.5)
-            }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture {
+        Button {
             selectedTask = task
+        } label: {
+            HStack(spacing: 10) {
+                // Circular checkbox (17px, priority-colored border)
+                ZStack {
+                    Circle()
+                        .stroke(checkboxBorderColor(task), lineWidth: 1.5)
+                        .frame(width: 17, height: 17)
+                    if completed {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 17, height: 17)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+                }
+
+                // Name + meta
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text(task.task ?? "Untitled")
+                            .font(.system(size: 14, weight: .medium))
+                            .strikethrough(completed)
+                            .foregroundStyle(completed ? .tertiary : .primary)
+                            .lineLimit(1)
+                        // Priority dot after name
+                        if let p = task.priority, !completed {
+                            Circle()
+                                .fill(priorityColor(for: p))
+                                .frame(width: 6, height: 6)
+                        }
+                    }
+
+                    HStack(spacing: 5) {
+                        if let due = task.dueDate {
+                            Text(Self.dueDateFormatter.string(from: due))
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(overdue ? .red : .secondary)
+                        }
+                        if let type = task.type, !type.isEmpty {
+                            let colors = Self.typeBadgeColors[type]
+                            Text(type)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(colorScheme == .dark ? (colors?.fgDark ?? .secondary) : (colors?.fg ?? .secondary))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(colors?.bg ?? Color.secondary.opacity(0.22))
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                        }
+                    }
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // Selection: translucent accent background + left border (NOT full solid accent)
+            .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+            .overlay(alignment: .leading) {
+                if isSelected {
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(width: 2.5)
+                }
+            }
         }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Column 3: Detail

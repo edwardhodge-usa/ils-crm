@@ -36,7 +36,6 @@ final class Contact {
 
     // MARK: - Contact Info
     var email: String?                // fldBjSvbdd5WXmoIG
-    var phone: String?                // fldwF5NBjGVndCXNV
     var mobilePhone: String?          // fldwULn4qSjwzSOTj
     var workPhone: String?            // fldueNgIMN0Ui5MWw
     var linkedInUrl: String?          // fldWrrBfD7aLxsXT4
@@ -53,18 +52,14 @@ final class Contact {
     // Always fetch exact names from Airtable metadata API.
     var qualificationStatus: String?  // fld5Ed1Gg51xRBIrm
     var leadSource: String?           // fldxxbhPmFaJ7xZeK
-    var clientType: String?           // fldF8X4HZbybc1Yy6 (deprecated → use categorization)
     var industry: String?             // fldHoIj9zCNB15avX
     var importSource: String?         // fldZG5LYBnFcEwhyw
     var onboardingStatus: String?     // fldbCsU8sEBNRm1kX
-    var categorization: String?       // fldofD9DQHfugTxsC (primary classification)
+    var categorization: [String]       // fldofD9DQHfugTxsC (primary classification — multi-select)
     var qualityRating: String?        // fldz86orj3p0ynZGB
     var reliabilityRating: String?    // fldgIuvazBCfLa7Wu
     var partnerStatus: String?        // fldIEgv4HtZTr57AX
     var partnerType: String?          // fldvehyP9Y3Ra2wUM
-
-    // MARK: - Multi-select (stored as JSON-encoded [String] in Electron SQLite)
-    var tags: [String]                // fldO7kfLDA9jZswPB
 
     // MARK: - Checkbox
     var syncToContacts: Bool          // fldxbLMAKgqeawWkw
@@ -95,13 +90,13 @@ final class Contact {
     init(
         id: String,
         contactName: String? = nil,
-        tags: [String] = [],
+        categorization: [String] = [],
         syncToContacts: Bool = false,
         isPendingPush: Bool = false
     ) {
         self.id = id
         self.contactName = contactName
-        self.tags = tags
+        self.categorization = categorization
         self.syncToContacts = syncToContacts
         self.specialtiesIds = []
         self.proposalsIds = []
