@@ -3,38 +3,49 @@ import { useParams, useNavigate } from 'react-router-dom'
 import ConfirmDialog from '../shared/ConfirmDialog'
 import { Avatar } from '../shared/Avatar'
 import { EmptyState } from '../shared/EmptyState'
-import { ContactStats } from './ContactStats'
 import { EditableFormRow, type EditableField } from '../shared/EditableFormRow'
 import LinkedRecordPicker from '../shared/LinkedRecordPicker'
 import { interactionTypeIcon } from '../shared/icons/InteractionIcons'
 import { containsId } from '../../utils/linked-records'
+import { stageBadgeTokens } from '../../config/stages'
 
-const CONTACT_INFO_FIELDS: EditableField[] = [
+/* ── Field definitions (unchanged) ── */
+
+const ZONE3_DETAIL_FIELDS: EditableField[] = [
   { key: 'job_title', label: 'Title', type: 'text' },
-  { key: 'email', label: 'Email', type: 'text', isLink: true },
-  { key: 'mobile_phone', label: 'Mobile', type: 'text' },
   { key: 'office_phone', label: 'Office', type: 'text' },
-  { key: 'linkedin_url', label: 'LinkedIn', type: 'text', isLink: true },
   { key: 'website', label: 'Website', type: 'text', isLink: true },
   { key: 'city', label: 'City', type: 'text' },
   { key: 'state', label: 'State', type: 'text' },
   { key: 'country', label: 'Country', type: 'text' },
 ]
 
-const CONTACT_CRM_FIELDS: EditableField[] = [
-  { key: 'categorization', label: 'Categorization', type: 'multiSelect',
+const ZONE2_CRM_FIELDS: EditableField[] = [
+  { key: 'categorization', label: 'Category', type: 'multiSelect',
     options: ['Lead', 'Customer', 'Partner', 'Vendor', 'Talent', 'Other', 'Unknown', 'VIP', 'Investor', 'Speaker', 'Press', 'Influencer', 'Board Member', 'Advisor'] },
   { key: 'industry', label: 'Industry', type: 'singleSelect',
     options: ['Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing', 'Real Estate', 'Consulting', 'Other', 'Hospitality', 'Logistics', 'Fitness', 'Legal', 'Media', 'Design', 'Venture Capital', 'Retail', 'Entertainment'] },
   { key: 'lead_source', label: 'Lead Source', type: 'singleSelect',
     options: ['Referral', 'Website', 'Inbound', 'Outbound', 'Event', 'Social Media', 'Other', 'LinkedIn', 'Cold Call'] },
-  { key: 'qualification_status', label: 'Qualification', type: 'singleSelect',
-    options: ['New', 'Contacted', 'Qualified', 'Unqualified', 'Nurturing'] },
-  { key: 'event_tags', label: 'Event Tags', type: 'multiSelect',
-    options: ['IAAPA 2025', 'SATE 2025', 'LDI 2025', 'Soho Holloway', 'LA LGBT', 'EEE 2026'], allowCreate: true },
-  { key: 'lead_score', label: 'Lead Score', type: 'number' },
-  { key: 'last_contact_date', label: 'Last Contact', type: 'date' },
 ]
+
+const ZONE2_QUAL_FIELD: EditableField = {
+  key: 'qualification_status', label: 'Qualification', type: 'singleSelect',
+  options: ['New', 'Contacted', 'Qualified', 'Unqualified', 'Nurturing'],
+}
+
+const ZONE2_SCORE_FIELD: EditableField = {
+  key: 'lead_score', label: 'Lead Score', type: 'number',
+}
+
+const ZONE2_EVENTS_FIELD: EditableField = {
+  key: 'event_tags', label: 'Events', type: 'multiSelect',
+  options: ['IAAPA 2025', 'SATE 2025', 'LDI 2025', 'Soho Holloway', 'LA LGBT', 'EEE 2026'], allowCreate: true,
+}
+
+const ZONE2_LAST_CONTACT_FIELD: EditableField = {
+  key: 'last_contact_date', label: 'Last Contact', type: 'date',
+}
 
 const CONTACT_PARTNER_FIELDS: EditableField[] = [
   { key: 'partner_type', label: 'Partner Type', type: 'singleSelect',
@@ -42,10 +53,17 @@ const CONTACT_PARTNER_FIELDS: EditableField[] = [
   { key: 'partner_status', label: 'Partner Status', type: 'singleSelect',
     options: ['Active - Preferred', 'Active', 'Inactive', 'Do Not Use'] },
   { key: 'quality_rating', label: 'Quality', type: 'singleSelect',
-    options: ['⭐⭐⭐⭐⭐ Excellent', '⭐⭐⭐⭐ Good', '⭐⭐⭐ Average', '⭐⭐ Below Average', '⭐ Poor'] },
+    options: ['\u2B50\u2B50\u2B50\u2B50\u2B50 Excellent', '\u2B50\u2B50\u2B50\u2B50 Good', '\u2B50\u2B50\u2B50 Average', '\u2B50\u2B50 Below Average', '\u2B50 Poor'] },
   { key: 'reliability_rating', label: 'Reliability', type: 'singleSelect',
-    options: ['⭐⭐⭐⭐⭐ Excellent', '⭐⭐⭐⭐ Good', '⭐⭐⭐ Average', '⭐⭐ Below Average', '⭐ Poor'] },
+    options: ['\u2B50\u2B50\u2B50\u2B50\u2B50 Excellent', '\u2B50\u2B50\u2B50\u2B50 Good', '\u2B50\u2B50\u2B50 Average', '\u2B50\u2B50 Below Average', '\u2B50 Poor'] },
   { key: 'rate_info', label: 'Rate Info', type: 'text' },
+]
+
+/* ── Hidden fields that still need to exist for hero action pills + contact info ── */
+const HERO_ACTION_FIELDS: EditableField[] = [
+  { key: 'email', label: 'Email', type: 'text', isLink: true },
+  { key: 'mobile_phone', label: 'Mobile', type: 'text' },
+  { key: 'linkedin_url', label: 'LinkedIn', type: 'text', isLink: true },
 ]
 
 interface Contact360Props {
@@ -68,57 +86,16 @@ function SectionLabel({ children }: { children: string }) {
   )
 }
 
-/* ── Linked record row (opportunities, interactions) ── */
-function LinkedRow({
-  icon,
-  iconBg,
-  iconColor,
-  title,
-  meta,
-  isLast = false,
-  onClick,
-}: {
-  icon: React.ReactNode
-  iconBg: string
-  iconColor: string
-  title: string
-  meta: string
-  isLast?: boolean
-  onClick?: () => void
-}) {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '10px 14px', cursor: 'default',
-        borderBottom: isLast ? 'none' : '1px solid var(--separator)',
-        transition: 'background 150ms',
-      }}
-      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-      onMouseLeave={e => e.currentTarget.style.background = ''}
-    >
-      <div style={{
-        width: 28, height: 28, borderRadius: 7, flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 13, background: iconBg, color: iconColor,
-      }}>
-        {icon}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
-          lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        }}>
-          {title}
-        </div>
-        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
-          {meta}
-        </div>
-      </div>
-      <span style={{ fontSize: 14, color: 'var(--text-tertiary)', flexShrink: 0 }}>›</span>
-    </div>
-  )
+/* ── Timeline entry types ── */
+interface TimelineEntry {
+  id: string
+  type: 'opportunity' | 'interaction'
+  date: Date
+  data: Record<string, unknown>
+}
+
+function formatTimelineDate(d: Date): string {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export default function Contact360Page({ contactId, onDeleted }: Contact360Props = {}) {
@@ -293,7 +270,7 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
   const interactions = linkedData.interactions || []
   const meetingCount = interactions.filter(i => i.type === 'Meeting').length
 
-  let daysSince: number | string = '—'
+  let daysSince: number | string = '\u2014'
   if (contact.last_contact_date) {
     const lastDate = new Date(contact.last_contact_date as string)
     if (!isNaN(lastDate.getTime())) {
@@ -302,103 +279,142 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
     }
   }
 
-  const stats = [
+  const fullName = (contact.contact_name as string) ||
+    [contact.first_name, contact.last_name].filter(Boolean).join(' ') ||
+    'Unnamed Contact'
+
+  /* ── Build interleaved timeline ── */
+  const timelineEntries = useMemo<TimelineEntry[]>(() => {
+    const entries: TimelineEntry[] = []
+
+    for (const opp of openOpps) {
+      const dateStr = (opp.airtable_modified_at || opp.created_at) as string | undefined
+      const d = dateStr ? new Date(dateStr) : new Date(0)
+      entries.push({ id: opp.id as string, type: 'opportunity', date: d, data: opp })
+    }
+
+    for (const inter of interactions) {
+      const dateStr = (inter.date || inter.airtable_modified_at || inter.created_at) as string | undefined
+      const d = dateStr ? new Date(dateStr) : new Date(0)
+      entries.push({ id: inter.id as string, type: 'interaction', date: d, data: inter })
+    }
+
+    entries.sort((a, b) => b.date.getTime() - a.date.getTime())
+    return entries
+  }, [openOpps, interactions])
+
+  const totalTimelineCount = timelineEntries.length
+  const visibleTimeline = timelineEntries.slice(0, 10)
+
+  /* ── Parse event tags for pill strip ── */
+  const eventTags = useMemo<string[]>(() => {
+    const raw = contact.event_tags
+    if (!raw) return []
+    if (Array.isArray(raw)) return raw as string[]
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw)
+        return Array.isArray(parsed) ? parsed : []
+      } catch { return [] }
+    }
+    return []
+  }, [contact.event_tags])
+
+  /* ── Stat color helpers ── */
+  const statColors = {
+    'Open Opps': { value: 'var(--color-accent)', bg: 'rgba(0,122,255,0.08)' },
+    'Meetings': { value: 'var(--color-green)', bg: 'rgba(52,199,89,0.08)' },
+    'Days Since': { value: 'var(--color-orange)', bg: 'rgba(255,149,0,0.08)' },
+  } as Record<string, { value: string; bg: string }>
+
+  const statsData = [
     { label: 'Open Opps', value: openOpps.length },
     { label: 'Meetings', value: meetingCount },
     { label: 'Days Since', value: daysSince },
   ]
 
-  const fullName = (contact.contact_name as string) ||
-    [contact.first_name, contact.last_name].filter(Boolean).join(' ') ||
-    'Unnamed Contact'
-
   return (
-    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: 'var(--bg-window)', borderLeft: '1px solid var(--separator)' }}>
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      background: 'var(--bg-window)', borderLeft: '1px solid var(--separator)',
+      position: 'relative',
+    }}>
 
-      {/* Scrollable content */}
-      <div className="flex-1" style={{ overflowY: 'auto', padding: '24px 28px' }}>
-
-        {/* ── 1. Hero section ── */}
-        <div style={{ padding: '0 0 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <Avatar
-                name={fullName}
-                size={50}
-                photoUrl={contact.contact_photo_url as string | null}
-                onClick={() => setShowPhotoMenu(!showPhotoMenu)}
-              />
-              {photoLoading && (
-                <div style={{
-                  position: 'absolute', inset: 0, borderRadius: '50%',
-                  background: 'rgba(0,0,0,0.4)', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
-                </div>
-              )}
-              {showPhotoMenu && (
-                <div
-                  style={{
-                    position: 'absolute', top: 'calc(100% + 4px)', left: 0,
-                    background: 'var(--bg-secondary)', borderRadius: 8,
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 0 0 0.5px var(--separator)',
-                    padding: '4px 0', minWidth: 200, zIndex: 100,
-                  }}
-                  onMouseLeave={() => { setShowPhotoMenu(false); setShowLinkedInInput(false); setLinkedInInput('') }}
-                >
-                  {/* Fetch from LinkedIn */}
-                  {showLinkedInInput ? (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        const url = linkedInInput.trim()
-                        if (url && url.includes('linkedin.com')) {
-                          handleFetchLinkedInPhoto(url)
-                        }
-                      }}
-                      onClick={e => e.stopPropagation()}
-                      style={{ padding: '4px 6px' }}
-                    >
-                      <input
-                        autoFocus
-                        type="url"
-                        placeholder="Paste LinkedIn URL..."
-                        value={linkedInInput}
-                        onChange={e => setLinkedInInput(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Escape') { setShowLinkedInInput(false); setLinkedInInput('') } }}
-                        style={{
-                          width: '100%', fontSize: 12, padding: '5px 8px',
-                          borderRadius: 5, border: '1px solid var(--separator)',
-                          background: 'var(--bg-primary)', color: 'var(--text-primary)',
-                          outline: 'none', fontFamily: 'inherit',
-                        }}
-                      />
-                    </form>
-                  ) : (
-                    <div
-                      onClick={() => {
-                        if (contact.linkedin_url) {
-                          handleFetchLinkedInPhoto()
-                        } else {
-                          setShowLinkedInInput(true)
-                        }
-                      }}
+      {/* ══════════════════════════════════════════
+          ZONE 1 — Hero Bar (fixed, never scrolls)
+          ══════════════════════════════════════════ */}
+      <div style={{
+        flexShrink: 0, padding: '14px 18px',
+      }}>
+        <div style={{
+          background: 'var(--bg-secondary)', borderRadius: 12,
+          boxShadow: 'var(--shadow-sm)', padding: '14px 18px',
+          display: 'flex', alignItems: 'center', gap: 14,
+        }}>
+          {/* Avatar */}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <Avatar
+              name={fullName}
+              size={56}
+              photoUrl={contact.contact_photo_url as string | null}
+              onClick={() => setShowPhotoMenu(!showPhotoMenu)}
+            />
+            {photoLoading && (
+              <div style={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                background: 'rgba(0,0,0,0.4)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'var(--text-on-accent)', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+              </div>
+            )}
+            {showPhotoMenu && (
+              <div
+                style={{
+                  position: 'absolute', top: 'calc(100% + 4px)', left: 0,
+                  background: 'var(--bg-secondary)', borderRadius: 8,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 0 0 0.5px var(--separator)',
+                  padding: '4px 0', minWidth: 200, zIndex: 100,
+                }}
+                onMouseLeave={() => { setShowPhotoMenu(false); setShowLinkedInInput(false); setLinkedInInput('') }}
+              >
+                {showLinkedInInput ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      const url = linkedInInput.trim()
+                      if (url && url.includes('linkedin.com')) {
+                        handleFetchLinkedInPhoto(url)
+                      }
+                    }}
+                    onClick={e => e.stopPropagation()}
+                    style={{ padding: '4px 6px' }}
+                  >
+                    <input
+                      autoFocus
+                      type="url"
+                      placeholder="Paste LinkedIn URL..."
+                      value={linkedInInput}
+                      onChange={e => setLinkedInInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Escape') { setShowLinkedInInput(false); setLinkedInInput('') } }}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        padding: '6px 14px', fontSize: 13, color: 'var(--text-primary)',
-                        cursor: 'default', transition: 'background 150ms',
+                        width: '100%', fontSize: 12, padding: '5px 8px',
+                        borderRadius: 5, border: '1px solid var(--separator)',
+                        background: 'var(--bg-primary)', color: 'var(--text-primary)',
+                        outline: 'none', fontFamily: 'inherit',
                       }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                      onMouseLeave={e => e.currentTarget.style.background = ''}
-                    >
-                      <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>in</span>
-                      Auto-fetch from LinkedIn
-                    </div>
-                  )}
+                    />
+                  </form>
+                ) : (
                   <div
-                    onClick={handleUploadPhoto}
+                    onClick={() => {
+                      if (contact.linkedin_url) {
+                        handleFetchLinkedInPhoto()
+                      } else {
+                        setShowLinkedInInput(true)
+                      }
+                    }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       padding: '6px 14px', fontSize: 13, color: 'var(--text-primary)',
@@ -407,249 +423,567 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
                     onMouseLeave={e => e.currentTarget.style.background = ''}
                   >
-                    <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>&uarr;</span>
-                    Upload image&#8230;
+                    <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>in</span>
+                    Auto-fetch from LinkedIn
                   </div>
-                  {Boolean(contact.contact_photo_url) && (
-                    <>
-                      <div style={{ height: 1, background: 'var(--separator)', margin: '4px 8px' }} />
-                      <div
-                        onClick={handleRemovePhoto}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 8,
-                          padding: '6px 14px', fontSize: 13, color: 'var(--color-red)',
-                          cursor: 'default', transition: 'background 150ms',
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                        onMouseLeave={e => e.currentTarget.style.background = ''}
-                      >
-                        <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>&times;</span>
-                        Remove photo
-                      </div>
-                    </>
-                  )}
+                )}
+                <div
+                  onClick={handleUploadPhoto}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '6px 14px', fontSize: 13, color: 'var(--text-primary)',
+                    cursor: 'default', transition: 'background 150ms',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}
+                >
+                  <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>&uarr;</span>
+                  Upload image&#8230;
                 </div>
-              )}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2, letterSpacing: '-0.3px' }}>
-                {fullName}
+                {Boolean(contact.contact_photo_url) && (
+                  <>
+                    <div style={{ height: 1, background: 'var(--separator)', margin: '4px 8px' }} />
+                    <div
+                      onClick={handleRemovePhoto}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '6px 14px', fontSize: 13, color: 'var(--color-red)',
+                        cursor: 'default', transition: 'background 150ms',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = ''}
+                    >
+                      <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>&times;</span>
+                      Remove photo
+                    </div>
+                  </>
+                )}
               </div>
-              {(Boolean(contact.job_title) || Boolean(resolvedCompanyName)) && (
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
-                  {contact.job_title as string}
-                  {Boolean(contact.job_title) && Boolean(resolvedCompanyName) ? ' · ' : ''}
-                  {resolvedCompanyName}
-                </div>
+            )}
+          </div>
+
+          {/* Identity + action pills */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2, letterSpacing: '-0.2px' }}>
+              {fullName}
+            </div>
+            {(Boolean(contact.job_title) || Boolean(resolvedCompanyName)) && (
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                {contact.job_title as string}
+                {Boolean(contact.job_title) && Boolean(resolvedCompanyName) ? ' \u00B7 ' : ''}
+                {resolvedCompanyName && (
+                  <span style={{ color: 'var(--color-accent)' }}>{resolvedCompanyName}</span>
+                )}
+              </div>
+            )}
+            {/* Action pills */}
+            <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+              {Boolean(contact.email) && (
+                <button
+                  onClick={() => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`)}
+                  style={{
+                    fontSize: 11, fontWeight: 500, color: 'var(--color-accent)',
+                    background: 'rgba(0,122,255,0.10)', border: 'none', cursor: 'default',
+                    borderRadius: 6, padding: '4px 10px', fontFamily: 'inherit',
+                    transition: 'background 150ms', maxWidth: 120,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.18)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,122,255,0.10)'}
+                >
+                  Email
+                </button>
+              )}
+              {Boolean(contact.mobile_phone || contact.office_phone) && (
+                <button
+                  onClick={() => {
+                    const num = (contact.mobile_phone || contact.office_phone) as string
+                    window.electronAPI.shell.openExternal(`tel:${num}`)
+                  }}
+                  style={{
+                    fontSize: 11, fontWeight: 500, color: 'var(--color-green)',
+                    background: 'rgba(52,199,89,0.10)', border: 'none', cursor: 'default',
+                    borderRadius: 6, padding: '4px 10px', fontFamily: 'inherit',
+                    transition: 'background 150ms', maxWidth: 120,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(52,199,89,0.18)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(52,199,89,0.10)'}
+                >
+                  Call
+                </button>
+              )}
+              {Boolean(contact.linkedin_url) && (
+                <button
+                  onClick={() => {
+                    const url = contact.linkedin_url as string
+                    window.electronAPI.shell.openExternal(url.startsWith('http') ? url : `https://${url}`)
+                  }}
+                  style={{
+                    fontSize: 11, fontWeight: 500, color: '#5ac8fa',
+                    background: 'rgba(90,200,250,0.12)', border: 'none', cursor: 'default',
+                    borderRadius: 6, padding: '4px 10px', fontFamily: 'inherit',
+                    transition: 'background 150ms', maxWidth: 120,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(90,200,250,0.20)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(90,200,250,0.12)'}
+                >
+                  LinkedIn
+                </button>
               )}
             </div>
           </div>
 
-          {/* Action buttons: Email, Call, LinkedIn — Apple Contacts tinted button style */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-            {Boolean(contact.email) && (
-              <button
-                onClick={() => window.electronAPI.shell.openExternal(`mailto:${contact.email as string}`)}
-                style={{
-                  fontSize: 12, fontWeight: 500, color: 'var(--color-accent)',
-                  background: 'rgba(0,122,255,0.10)', border: 'none', cursor: 'default',
-                  borderRadius: 8, padding: '6px 14px', fontFamily: 'inherit',
-                  transition: 'background 150ms',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.18)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,122,255,0.10)'}
-              >
-                Email
-              </button>
-            )}
-            {Boolean(contact.mobile_phone || contact.office_phone) && (
-              <button
-                onClick={() => {
-                  const num = (contact.mobile_phone || contact.office_phone) as string
-                  window.electronAPI.shell.openExternal(`tel:${num}`)
-                }}
-                style={{
-                  fontSize: 12, fontWeight: 500, color: 'var(--color-green)',
-                  background: 'rgba(52,199,89,0.10)', border: 'none', cursor: 'default',
-                  borderRadius: 8, padding: '6px 14px', fontFamily: 'inherit',
-                  transition: 'background 150ms',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(52,199,89,0.18)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(52,199,89,0.10)'}
-              >
-                Call
-              </button>
-            )}
-            {Boolean(contact.linkedin_url) && (
-              <button
-                onClick={() => {
-                  const url = contact.linkedin_url as string
-                  window.electronAPI.shell.openExternal(url.startsWith('http') ? url : `https://${url}`)
-                }}
-                style={{
-                  fontSize: 12, fontWeight: 500, color: '#0A66C2',
-                  background: 'rgba(10,102,194,0.10)', border: 'none', cursor: 'default',
-                  borderRadius: 8, padding: '6px 14px', fontFamily: 'inherit',
-                  transition: 'background 150ms',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(10,102,194,0.18)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(10,102,194,0.10)'}
-              >
-                LinkedIn
-              </button>
-            )}
+          {/* Stats — separated by vertical line */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 0, flexShrink: 0,
+            borderLeft: '1px solid var(--separator-opaque)',
+            paddingLeft: 14, marginLeft: 4,
+          }}>
+            {statsData.map((stat, i) => {
+              const colors = statColors[stat.label] || { value: 'var(--text-primary)', bg: 'transparent' }
+              return (
+                <div key={stat.label} style={{
+                  textAlign: 'center', padding: '0 12px',
+                  borderRight: i < statsData.length - 1 ? '1px solid var(--separator)' : 'none',
+                }}>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: colors.value, lineHeight: 1.2 }}>
+                    {stat.value}
+                  </div>
+                  <div style={{ fontSize: 9, color: 'var(--text-secondary)', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    {stat.label}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
-
-        {/* ── 2. Stats strip ── */}
-        <ContactStats stats={stats} />
-
-        {/* ── 3. Contact Info — editable form rows ── */}
-        <SectionLabel>Contact Info</SectionLabel>
-        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 8, boxShadow: 'var(--shadow-sm)' }}>
-          <LinkedRecordPicker
-            label="Company"
-            entityApi={window.electronAPI.companies}
-            labelField="company_name"
-            value={contact.companies_ids}
-            onChange={val => handleFieldSave('companies_ids', val)}
-            placeholder="Search companies..."
-            multiple={false}
-          />
-        </div>
-        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
-          {CONTACT_INFO_FIELDS.map((field, idx) => (
-            <EditableFormRow
-              key={field.key}
-              field={field}
-              value={(contact as Record<string, unknown>)[field.key]}
-              isLast={idx === CONTACT_INFO_FIELDS.length - 1}
-              onSave={handleFieldSave}
-            />
-          ))}
-        </div>
-
-        {/* ── 4. CRM Info — editable form rows ── */}
-        <SectionLabel>CRM Info</SectionLabel>
-        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
-          {CONTACT_CRM_FIELDS.map((field, idx) => (
-            <EditableFormRow
-              key={field.key}
-              field={field}
-              value={(contact as Record<string, unknown>)[field.key]}
-              isLast={idx === CONTACT_CRM_FIELDS.length - 1}
-              onSave={handleFieldSave}
-            />
-          ))}
-        </div>
-
-        {/* ── 4b. Partner / Vendor — editable form rows ── */}
-        <SectionLabel>Partner / Vendor</SectionLabel>
-        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
-          {CONTACT_PARTNER_FIELDS.map((field, idx) => (
-            <EditableFormRow
-              key={field.key}
-              field={field}
-              value={(contact as Record<string, unknown>)[field.key]}
-              isLast={idx === CONTACT_PARTNER_FIELDS.length - 1}
-              onSave={handleFieldSave}
-            />
-          ))}
-        </div>
-
-        {/* ── 4c. Notes — editable ── */}
-        <SectionLabel>Notes</SectionLabel>
-        <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
-          <EditableFormRow
-            field={{ key: 'notes', label: 'Notes', type: 'textarea' }}
-            value={contact.notes}
-            isLast
-            onSave={handleFieldSave}
-          />
-        </div>
-
-        {/* ── 5. Opportunities — linked records ── */}
-        <SectionLabel>Opportunities</SectionLabel>
-        {openOpps.length === 0 ? (
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0', marginBottom: 16 }}>
-            No open opportunities
-          </div>
-        ) : (
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
-            {openOpps.slice(0, 5).map((opp, idx) => (
-              <LinkedRow
-                key={opp.id as string}
-                icon={
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-                  </svg>
-                }
-                iconBg="rgba(175,82,222,0.22)"
-                iconColor="#AF52DE"
-                title={(opp.opportunity_name as string) || '—'}
-                meta={`${opp.deal_value ? `$${Number(opp.deal_value).toLocaleString()}` : '—'}${Boolean(opp.sales_stage) ? ` · ${opp.sales_stage as string}` : ''}`}
-                isLast={idx === Math.min(openOpps.length, 5) - 1}
-                onClick={() => navigate(`/pipeline/${opp.id as string}/edit`)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* ── 6. Interactions — linked records ── */}
-        <SectionLabel>Interactions</SectionLabel>
-        {interactions.length === 0 ? (
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0', marginBottom: 16 }}>
-            No interactions yet
-          </div>
-        ) : (
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
-            {interactions.slice(0, 5).map((interaction, idx) => (
-              <LinkedRow
-                key={interaction.id as string}
-                icon={interactionTypeIcon(interaction.type as string)}
-                iconBg="rgba(118,118,128,0.22)"
-                iconColor="var(--text-secondary)"
-                title={(interaction.type as string) || (interaction.subject as string) || 'Interaction'}
-                meta={`${interaction.date as string || '—'}${Boolean(interaction.summary) ? ` · ${(interaction.summary as string).slice(0, 50)}` : ''}`}
-                isLast={idx === Math.min(interactions.length, 5) - 1}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* ── 7. Delete button — destructive, at bottom ── */}
-        <div style={{ marginTop: 8, marginBottom: 24 }}>
-          <button
-            onClick={() => setShowDelete(true)}
-            style={{
-              fontSize: 13, fontWeight: 400, padding: '8px 0',
-              color: 'var(--color-red)', background: 'none',
-              border: 'none', cursor: 'default', fontFamily: 'inherit',
-              transition: 'opacity 150ms',
-            }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >
-            Delete Contact
-          </button>
-        </div>
-
       </div>
 
-      {/* Error banner */}
+      {/* ══════════════════════════════════════════
+          ZONE 2 — CRM Grouped Bento (fixed, never scrolls)
+          ══════════════════════════════════════════ */}
+      <div style={{
+        flexShrink: 0, padding: '0 18px 10px',
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10,
+      }}>
+        {/* Left card — grouped list: Category, Industry, Lead Source */}
+        <div style={{
+          background: 'var(--bg-secondary)', borderRadius: 10,
+          overflow: 'hidden',
+        }}>
+          {ZONE2_CRM_FIELDS.map((field, idx) => (
+            <EditableFormRow
+              key={field.key}
+              field={field}
+              value={(contact as Record<string, unknown>)[field.key]}
+              isLast={idx === ZONE2_CRM_FIELDS.length - 1}
+              onSave={handleFieldSave}
+            />
+          ))}
+        </div>
+
+        {/* Right side — two stat cells + events strip */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Top: Qualification + Lead Score side by side */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div style={{
+              background: 'var(--bg-secondary)', borderRadius: 10,
+              padding: '8px 12px',
+            }}>
+              <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 4 }}>
+                Qualification
+              </div>
+              <EditableFormRow
+                field={{ ...ZONE2_QUAL_FIELD, label: '' }}
+                value={contact.qualification_status}
+                isLast
+                onSave={handleFieldSave}
+              />
+            </div>
+            <div style={{
+              background: 'var(--bg-secondary)', borderRadius: 10,
+              padding: '8px 12px',
+            }}>
+              <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 4 }}>
+                Lead Score
+              </div>
+              <EditableFormRow
+                field={{ ...ZONE2_SCORE_FIELD, label: '' }}
+                value={contact.lead_score}
+                isLast
+                onSave={handleFieldSave}
+              />
+            </div>
+          </div>
+
+          {/* Bottom: Events tag strip + Last Contact */}
+          <div style={{
+            background: 'var(--bg-secondary)', borderRadius: 10,
+            padding: '6px 10px',
+            display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center',
+            minHeight: 32,
+          }}>
+            <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginRight: 4 }}>
+              Events
+            </span>
+            {eventTags.length > 0 ? eventTags.map(tag => (
+              <span key={tag} style={{
+                fontSize: 10, fontWeight: 500, color: 'var(--color-accent)',
+                background: 'rgba(0,122,255,0.10)', borderRadius: 4,
+                padding: '2px 6px', whiteSpace: 'nowrap',
+              }}>
+                {tag}
+              </span>
+            )) : (
+              <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{'\u2014'}</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════
+          ZONE 3 — Bottom Split (fills remaining, both sides scroll)
+          ══════════════════════════════════════════ */}
+      <div style={{
+        flex: 1, display: 'grid', gridTemplateColumns: '280px 1fr',
+        overflow: 'hidden', minHeight: 0,
+      }}>
+        {/* ── Left column — detail cards, scrolls independently ── */}
+        <div style={{
+          overflowY: 'auto', padding: '6px 18px 24px',
+          borderRight: '1px solid var(--separator)',
+        }}>
+          {/* Company picker */}
+          <SectionLabel>Company</SectionLabel>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, overflow: 'hidden', marginBottom: 4, boxShadow: 'var(--shadow-sm)' }}>
+            <LinkedRecordPicker
+              label="Company"
+              entityApi={window.electronAPI.companies}
+              labelField="company_name"
+              value={contact.companies_ids}
+              onChange={val => handleFieldSave('companies_ids', val)}
+              placeholder="Search companies..."
+              multiple={false}
+            />
+          </div>
+
+          {/* Details grouped list */}
+          <SectionLabel>Details</SectionLabel>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, overflow: 'hidden', marginBottom: 4, boxShadow: 'var(--shadow-sm)' }}>
+            {ZONE3_DETAIL_FIELDS.map((field, idx) => (
+              <EditableFormRow
+                key={field.key}
+                field={field}
+                value={(contact as Record<string, unknown>)[field.key]}
+                isLast={idx === ZONE3_DETAIL_FIELDS.length - 1}
+                onSave={handleFieldSave}
+              />
+            ))}
+          </div>
+
+          {/* Hidden editable rows for Email, Mobile, LinkedIn (hero pills display them, but they need to be editable somewhere) */}
+          <SectionLabel>Contact</SectionLabel>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, overflow: 'hidden', marginBottom: 4, boxShadow: 'var(--shadow-sm)' }}>
+            {HERO_ACTION_FIELDS.map((field, idx) => (
+              <EditableFormRow
+                key={field.key}
+                field={field}
+                value={(contact as Record<string, unknown>)[field.key]}
+                isLast={idx === HERO_ACTION_FIELDS.length - 1}
+                onSave={handleFieldSave}
+              />
+            ))}
+          </div>
+
+          {/* Last Contact Date + Events (editable) */}
+          <SectionLabel>CRM</SectionLabel>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, overflow: 'hidden', marginBottom: 4, boxShadow: 'var(--shadow-sm)' }}>
+            <EditableFormRow
+              field={ZONE2_LAST_CONTACT_FIELD}
+              value={contact.last_contact_date}
+              isLast={false}
+              onSave={handleFieldSave}
+            />
+            <EditableFormRow
+              field={ZONE2_EVENTS_FIELD}
+              value={contact.event_tags}
+              isLast
+              onSave={handleFieldSave}
+            />
+          </div>
+
+          {/* Partner / Vendor */}
+          <SectionLabel>Partner / Vendor</SectionLabel>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, overflow: 'hidden', marginBottom: 4, boxShadow: 'var(--shadow-sm)' }}>
+            {CONTACT_PARTNER_FIELDS.map((field, idx) => (
+              <EditableFormRow
+                key={field.key}
+                field={field}
+                value={(contact as Record<string, unknown>)[field.key]}
+                isLast={idx === CONTACT_PARTNER_FIELDS.length - 1}
+                onSave={handleFieldSave}
+              />
+            ))}
+          </div>
+
+          {/* Notes */}
+          <SectionLabel>Notes</SectionLabel>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, overflow: 'hidden', marginBottom: 4, boxShadow: 'var(--shadow-sm)' }}>
+            <EditableFormRow
+              field={{ key: 'notes', label: 'Notes', type: 'textarea' }}
+              value={contact.notes}
+              isLast
+              onSave={handleFieldSave}
+            />
+          </div>
+        </div>
+
+        {/* ── Right column — Timeline, scrolls independently ── */}
+        <div style={{
+          overflowY: 'auto', padding: '6px 18px 24px',
+        }}>
+          {/* Timeline header */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            margin: '16px 0 10px',
+          }}>
+            <div style={{
+              fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+              letterSpacing: '0.06em', color: 'var(--text-secondary)',
+            }}>
+              Timeline
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <span style={{
+                fontSize: 10, fontWeight: 500, color: '#bf5af2',
+                background: 'rgba(191,90,242,0.12)', borderRadius: 4,
+                padding: '2px 8px',
+              }}>
+                Deals
+              </span>
+              <span style={{
+                fontSize: 10, fontWeight: 500, color: '#5ac8fa',
+                background: 'rgba(90,200,250,0.12)', borderRadius: 4,
+                padding: '2px 8px',
+              }}>
+                Activity
+              </span>
+            </div>
+          </div>
+
+          {/* Timeline entries */}
+          {visibleTimeline.length === 0 ? (
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', padding: '40px 20px',
+              color: 'var(--text-secondary)',
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>No activity yet</div>
+              <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                Opportunities and interactions will appear here
+              </div>
+            </div>
+          ) : (
+            <div style={{ position: 'relative' }}>
+              {/* Vertical connector line */}
+              <div style={{
+                position: 'absolute', left: 9, top: 18, bottom: 18,
+                width: 1, background: 'var(--separator)',
+              }} />
+
+              {visibleTimeline.map((entry) => {
+                const isOpp = entry.type === 'opportunity'
+                const dotColor = isOpp ? '#bf5af2' : '#5ac8fa'
+
+                if (isOpp) {
+                  const opp = entry.data
+                  const stage = (opp.sales_stage as string) || ''
+                  const badgeTokens = stageBadgeTokens(stage)
+                  const dealValue = opp.deal_value ? `$${Number(opp.deal_value).toLocaleString()}` : null
+
+                  return (
+                    <div
+                      key={entry.id}
+                      style={{
+                        display: 'flex', gap: 10, marginBottom: 8,
+                        position: 'relative', cursor: 'default',
+                      }}
+                      onClick={() => navigate(`/pipeline/${opp.id as string}/edit`)}
+                      onMouseEnter={e => {
+                        const card = e.currentTarget.querySelector('[data-card]') as HTMLElement
+                        if (card) card.style.background = 'var(--bg-hover)'
+                      }}
+                      onMouseLeave={e => {
+                        const card = e.currentTarget.querySelector('[data-card]') as HTMLElement
+                        if (card) card.style.background = 'var(--bg-secondary)'
+                      }}
+                    >
+                      {/* Dot indicator */}
+                      <div style={{
+                        width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        marginTop: 8,
+                      }}>
+                        <div style={{
+                          width: 6, height: 6, borderRadius: '50%',
+                          background: dotColor,
+                        }} />
+                      </div>
+
+                      {/* Card */}
+                      <div data-card style={{
+                        flex: 1, background: 'var(--bg-secondary)', borderRadius: 8,
+                        padding: '8px 12px', minWidth: 0,
+                        transition: 'background 150ms',
+                      }}>
+                        {/* Row 1: Name + Value */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                          <div style={{
+                            fontSize: 13, fontWeight: 500, color: 'var(--text-primary)',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            minWidth: 0,
+                          }}>
+                            {(opp.opportunity_name as string) || '\u2014'}
+                          </div>
+                          {dealValue && (
+                            <div style={{
+                              fontSize: 12, fontWeight: 600,
+                              color: badgeTokens.text, flexShrink: 0,
+                            }}>
+                              {dealValue}
+                            </div>
+                          )}
+                        </div>
+                        {/* Row 2: Stage badge + date */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                          {stage && (
+                            <span style={{
+                              fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4,
+                              background: badgeTokens.bg, color: badgeTokens.text,
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {stage}
+                            </span>
+                          )}
+                          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                            {formatTimelineDate(entry.date)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                } else {
+                  // Interaction card
+                  const inter = entry.data
+                  const interType = (inter.type as string) || ''
+                  const subject = (inter.subject as string) || ''
+                  const summary = (inter.summary as string) || ''
+
+                  return (
+                    <div
+                      key={entry.id}
+                      style={{
+                        display: 'flex', gap: 10, marginBottom: 8,
+                        position: 'relative', cursor: 'default',
+                      }}
+                    >
+                      {/* Dot indicator */}
+                      <div style={{
+                        width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        marginTop: 8,
+                      }}>
+                        <div style={{
+                          width: 6, height: 6, borderRadius: '50%',
+                          background: dotColor,
+                        }} />
+                      </div>
+
+                      {/* Card */}
+                      <div style={{
+                        flex: 1, background: 'var(--bg-secondary)', borderRadius: 8,
+                        padding: '8px 12px', minWidth: 0,
+                      }}>
+                        {/* Row 1: Type + Subject */}
+                        <div style={{
+                          fontSize: 13, fontWeight: 500, color: 'var(--text-primary)',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          display: 'flex', alignItems: 'center', gap: 6,
+                        }}>
+                          <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                            {interactionTypeIcon(interType)}
+                          </span>
+                          {interType}{subject ? ` \u2014 ${subject}` : ''}
+                        </div>
+                        {/* Row 2: Summary snippet */}
+                        {summary && (
+                          <div style={{
+                            fontSize: 12, color: 'var(--text-secondary)', marginTop: 2,
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          }}>
+                            {summary.slice(0, 80)}{summary.length > 80 ? '\u2026' : ''}
+                          </div>
+                        )}
+                        {/* Row 3: Date */}
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>
+                          {formatTimelineDate(entry.date)}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+              })}
+
+              {/* "View all" link if more than 10 */}
+              {totalTimelineCount > 10 && (
+                <div style={{
+                  textAlign: 'center', padding: '8px 0', marginTop: 4,
+                }}>
+                  <span style={{
+                    fontSize: 12, color: 'var(--color-accent)', cursor: 'default',
+                  }}>
+                    View all ({totalTimelineCount})
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Delete Contact — bottom of right column */}
+          <div style={{ marginTop: 24, textAlign: 'center', paddingBottom: 16 }}>
+            <button
+              onClick={() => setShowDelete(true)}
+              style={{
+                fontSize: 13, fontWeight: 400, padding: '8px 0',
+                color: 'var(--color-red)', background: 'none',
+                border: 'none', cursor: 'default', fontFamily: 'inherit',
+                transition: 'opacity 150ms',
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              Delete Contact
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Error banner — outside scroll areas */}
       {deleteError && (
         <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           background: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.3)',
-          padding: '10px 16px', color: 'var(--color-red)',
+          padding: '10px 16px', color: 'var(--color-red)', zIndex: 50,
         }}>
           <span style={{ fontSize: 13 }}>{deleteError}</span>
           <button
             onClick={() => setDeleteError(null)}
             style={{ marginLeft: 16, color: 'inherit', background: 'none', border: 'none', cursor: 'default', fontFamily: 'inherit' }}
           >
-            ✕
+            {'\u2715'}
           </button>
         </div>
       )}
@@ -668,7 +1002,7 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
             }
           } else {
             setShowDelete(false)
-            setDeleteError(result.error || 'Delete failed — please try again')
+            setDeleteError(result.error || 'Delete failed \u2014 please try again')
           }
         }}
         onCancel={() => setShowDelete(false)}
