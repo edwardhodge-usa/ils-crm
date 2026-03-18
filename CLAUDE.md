@@ -70,6 +70,13 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - XCUITest: build-for-testing first, clear xattrs, then test-without-building. SwiftUI launches with 0 windows — open via File menu
 - SwiftData `#Predicate` crashes on macOS 26.4 beta (25E5233c) — use fetch-all + in-memory `.filter {}` as workaround. TODO: revert when fixed
 - `useEntityList` only refreshes on `sync-complete` events — dispatch `sync:progress` with `phase: 'complete'` from IPC handlers after any CRUD mutation. `deleteRemoteRecord` must handle `local_` prefix IDs (skip Airtable, SQLite only)
+- `ISO8601DateFormatter` with `.withInternetDateTime` requires full datetime — Airtable date-only fields send bare `YYYY-MM-DD`. Use `DateFormatter(dateFormat: "yyyy-MM-dd")` as fallback
+- `Dictionary(uniqueKeysWithValues:)` crashes on duplicate keys — always use `Dictionary(..., uniquingKeysWith: { _, last in last })` for SwiftData fetch results
+- `settings:set` IPC must be restricted to a `WRITABLE_SETTINGS` allowlist — renderer can bypass license grace period by writing `license_last_verified`
+- Dashboard SQL: `categorization` is stored as JSON array — use `NOT LIKE '%Archived%'` instead of `NOT IN ('Archived')` for filtering
+- Airtable formula escaping: use `''` (two single quotes), not `\'` — Airtable uses SQL-style string escaping
+- `useRef(fn)` only sets the initial value — add `ref.current = fn` on every render to prevent stale closures
+- `pollWindow` must be resolved dynamically via getter function — Electron windows are destroyed on close and recreated, stale refs silently drop IPC
 
 ### UI / HIG
 - `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements
