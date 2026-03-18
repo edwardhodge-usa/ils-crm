@@ -856,6 +856,7 @@ export default function TasksPage() {
     const map: Record<string, number> = {}
     let unassigned = 0
     for (const t of allTasks) {
+      if (isCompleted(t)) continue
       if (t.assigned_to) map[t.assigned_to] = (map[t.assigned_to] || 0) + 1
       else unassigned++
     }

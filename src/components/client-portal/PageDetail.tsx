@@ -65,6 +65,7 @@ export default function PageDetail({
   const rawAddr = page.page_address as string | null
   const pageAddress = (rawAddr && rawAddr !== 'null') ? rawAddr : null
   const clientName = (page.client_name as string) || ''
+  const pageTitle = (page.page_title as string) || ''
   const subtitle = (page.page_subtitle as string) || ''
 
   // ── Local state ────────────────────────────────────────────────
@@ -215,7 +216,16 @@ export default function PageDetail({
             />
           </div>
 
-          {/* 4. Page subtitle */}
+          {/* 4. Page title */}
+          <EditableFormRow
+            field={{ key: 'page_title', label: 'Page Title', type: 'textarea' }}
+            value={pageTitle || ''}
+            isLast={false}
+            onSave={handlePageFieldSave}
+            placeholder="We've prepared this overview of our capabilities, approach and video examples — please don't hesitate to reach out with any questions."
+          />
+
+          {/* 5. Page subtitle */}
           <EditableFormRow
             field={{ key: 'page_subtitle', label: 'Subtitle', type: 'text' }}
             value={subtitle}

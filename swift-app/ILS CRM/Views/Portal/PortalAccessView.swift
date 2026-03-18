@@ -326,11 +326,13 @@ struct PortalAccessView: View {
                     // Page fields + Section toggles (only if ClientPage record exists)
                     if let page = clientPage(for: pageAddress) {
                         VStack(alignment: .leading, spacing: 0) {
-                            // Client Name + Subtitle
+                            // Client Name + Page Title + Subtitle
                             if let name = page.clientName, !name.isEmpty {
                                 fieldRow("Client Name", value: name)
                                     .padding(.horizontal, 16)
                             }
+                            pageTitleRow(page.pageTitle)
+                                .padding(.horizontal, 16)
                             if let subtitle = page.pageSubtitle, !subtitle.isEmpty {
                                 fieldRow("Subtitle", value: subtitle)
                                     .padding(.horizontal, 16)
@@ -484,6 +486,27 @@ struct PortalAccessView: View {
     }
 
     // MARK: - Page Field Helpers
+
+    private static let defaultPageTitle = "We've prepared this overview of our capabilities, approach and video examples — please don't hesitate to reach out with any questions."
+
+    @ViewBuilder
+    private func pageTitleRow(_ title: String?) -> some View {
+        let isEmpty = title == nil || title!.isEmpty
+        let displayText = isEmpty ? Self.defaultPageTitle : title!
+        HStack(alignment: .top) {
+            Text("Page Title")
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(displayText)
+                .font(.system(size: 13))
+                .foregroundStyle(isEmpty ? .tertiary : .primary)
+                .italic(isEmpty)
+                .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 6)
+    }
 
     @ViewBuilder
     private func fieldRow(_ label: String, value: String) -> some View {

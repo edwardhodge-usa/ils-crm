@@ -29,6 +29,7 @@ interface EditableFormRowProps {
   value: unknown
   isLast?: boolean
   onSave: (key: string, value: unknown) => Promise<void>
+  placeholder?: string
 }
 
 function formatDisplayValue(value: unknown, type: EditableFieldType): string {
@@ -101,7 +102,7 @@ function valuesEqual(a: unknown, b: unknown, type: EditableFieldType): boolean {
   return String(a) === String(b)
 }
 
-export function EditableFormRow({ field, value, isLast = false, onSave }: EditableFormRowProps) {
+export function EditableFormRow({ field, value, isLast = false, onSave, placeholder }: EditableFormRowProps) {
   const isDark = useDarkMode()
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
@@ -266,6 +267,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
         <textarea
           ref={inputRef as React.RefObject<HTMLTextAreaElement>}
           value={editValue}
+          placeholder={placeholder}
           onChange={e => {
             setEditValue(e.target.value)
             // Auto-resize
@@ -394,6 +396,8 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
 
   if (field.type === 'textarea') {
     const displayText = formatDisplayValue(value, field.type)
+    const isEmpty = displayText === '—'
+    const shownText = isEmpty && placeholder ? placeholder : displayText
     return (
       <div
         style={{
@@ -419,7 +423,8 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             style={{
               fontSize: 13, fontWeight: 400,
-              color: displayText === '—' ? 'var(--text-tertiary)' : 'var(--text-primary)',
+              color: (isEmpty) ? 'var(--text-tertiary)' : 'var(--text-primary)',
+              fontStyle: (isEmpty && placeholder) ? 'italic' : 'normal',
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
               lineHeight: 1.5,
@@ -431,7 +436,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave }: Editab
               transition: 'background 150ms',
             }}
           >
-            {displayText}
+            {shownText}
           </div>
         )}
         {saving && <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4, display: 'block' }}>Saving...</span>}
