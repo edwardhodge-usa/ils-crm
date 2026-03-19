@@ -62,6 +62,7 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 
 ### Swift-Specific
 - XcodeGen conditional SPM deps use `platformFilter: macos` (not `platforms: [macOS]` — silently ignored, dep won't link)
+- `INFOPLIST_KEY_` build settings only generate Apple-defined keys — custom keys (Sparkle `SUFeedURL`, etc.) must go in XcodeGen `info.path` + `info.properties` to create a real Info.plist
 - App struct `@State` + background `Task` captures stale struct copy — use `@Observable` class for lifecycle state management
 - `.accent` is not a valid `ShapeStyle` on macOS 14 — use `Color.accentColor`
 - Swift converters use field IDs; Electron uses field names — keep in sync when schema changes
