@@ -42,7 +42,7 @@ struct ContactsView: View {
         return contacts.filter { contact in
             (contact.contactName?.localizedCaseInsensitiveContains(searchText) ?? false) ||
             (contact.email?.localizedCaseInsensitiveContains(searchText) ?? false) ||
-            (contact.company?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+            (contact.companiesIds.compactMap { companyNameById[$0] }.contains { $0.localizedCaseInsensitiveContains(searchText) }) ||
             (contact.jobTitle?.localizedCaseInsensitiveContains(searchText) ?? false)
         }
     }
@@ -57,10 +57,6 @@ struct ContactsView: View {
             if let firstId = contact.companiesIds.first,
                let name = companyNameById[firstId],
                !name.isEmpty {
-                return name.uppercased()
-            }
-            // Fall back to the free-text company field
-            if let name = contact.company, !name.isEmpty {
                 return name.uppercased()
             }
             return "NO COMPANY"
@@ -323,14 +319,14 @@ struct ContactsView: View {
         if let title = contact.jobTitle, !title.isEmpty {
             parts.append(title)
         }
-        // Try linked company first, then free-text field
+        // Resolve company name from linked record
         let companyName: String? = {
             if let firstId = contact.companiesIds.first,
                let name = companyNameById[firstId],
                !name.isEmpty {
                 return name
             }
-            return contact.company
+            return nil
         }()
         if let company = companyName, !company.isEmpty {
             parts.append(company)
@@ -372,7 +368,6 @@ struct ContactFormView: View {
     @State private var mobilePhone: String = ""
     @State private var workPhone: String = ""
 
-    @State private var company: String = ""
     @State private var jobTitle: String = ""
     @State private var selectedCompanyIds: Set<String> = []
     @State private var showingCompanyPicker = false
@@ -515,7 +510,6 @@ struct ContactFormView: View {
         email = contact.email ?? ""
         mobilePhone = contact.mobilePhone ?? ""
         workPhone = contact.workPhone ?? ""
-        company = contact.company ?? ""
         jobTitle = contact.jobTitle ?? ""
         selectedCompanyIds = Set(contact.companiesIds)
         categorization = contact.categorization.first ?? ""
@@ -527,9 +521,6 @@ struct ContactFormView: View {
     }
 
     private func save() {
-        // Resolve company name from linked record for backwards-compatible free-text field
-        let resolvedCompanyName = selectedCompanyName
-
         if let contact {
             contact.firstName = firstName.nilIfEmpty
             contact.lastName = lastName.nilIfEmpty
@@ -538,7 +529,6 @@ struct ContactFormView: View {
             contact.mobilePhone = mobilePhone.nilIfEmpty
             contact.workPhone = workPhone.nilIfEmpty
             contact.companiesIds = Array(selectedCompanyIds)
-            contact.company = resolvedCompanyName ?? company.nilIfEmpty
             contact.jobTitle = jobTitle.nilIfEmpty
             contact.categorization = categorization.isEmpty ? [] : [categorization]
             contact.leadSource = leadSource.nilIfEmpty
@@ -558,7 +548,6 @@ struct ContactFormView: View {
             newContact.mobilePhone = mobilePhone.nilIfEmpty
             newContact.workPhone = workPhone.nilIfEmpty
             newContact.companiesIds = Array(selectedCompanyIds)
-            newContact.company = resolvedCompanyName ?? company.nilIfEmpty
             newContact.jobTitle = jobTitle.nilIfEmpty
             newContact.categorization = categorization.isEmpty ? [] : [categorization]
             newContact.leadSource = leadSource.nilIfEmpty

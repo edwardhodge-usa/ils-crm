@@ -10,11 +10,26 @@ struct GrantAccessSheet: View {
     let pageAddress: String
 
     @Query(sort: \Contact.contactName) private var contacts: [Contact]
+    @Query private var companies: [Company]
     @Query private var existingAccess: [PortalAccessRecord]
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
     @State private var searchText = ""
+
+    // MARK: - Derived Data
+
+    private var companyNameById: [String: String] {
+        Dictionary(companies.compactMap { c in
+            guard let name = c.companyName else { return nil }
+            return (c.id, name)
+        }, uniquingKeysWith: { _, last in last })
+    }
+
+    private func resolvedCompanyName(for contact: Contact) -> String? {
+        guard let firstId = contact.companiesIds.first else { return nil }
+        return companyNameById[firstId]
+    }
 
     // MARK: - Filtered Contacts
 
@@ -27,7 +42,7 @@ struct GrantAccessSheet: View {
             list = contacts.filter {
                 ($0.contactName ?? "").localizedCaseInsensitiveContains(query) ||
                 ($0.email ?? "").localizedCaseInsensitiveContains(query) ||
-                ($0.company ?? "").localizedCaseInsensitiveContains(query)
+                ($0.companiesIds.compactMap { companyNameById[$0] }.contains { $0.localizedCaseInsensitiveContains(query) })
             }
         }
         return Array(list.prefix(50))
@@ -115,7 +130,7 @@ struct GrantAccessSheet: View {
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
-                } else if let company = contact.company, !company.isEmpty {
+                } else if let company = resolvedCompanyName(for: contact), !company.isEmpty {
                     Text(company)
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
@@ -145,7 +160,7 @@ struct GrantAccessSheet: View {
         )
         record.pageAddress = pageAddress
         record.email = contact.email
-        record.company = contact.company
+        record.company = resolvedCompanyName(for: contact)
         record.status = "ACTIVE"
         record.stage = "Prospect"
         record.dateAdded = Date()
@@ -160,5 +175,5 @@ struct GrantAccessSheet: View {
 
 #Preview {
     GrantAccessSheet(pageAddress: "haus-collection")
-        .modelContainer(for: [Contact.self, PortalAccessRecord.self], inMemory: true)
+        .modelContainer(for: [Contact.self, Company.self, PortalAccessRecord.self], inMemory: true)
 }

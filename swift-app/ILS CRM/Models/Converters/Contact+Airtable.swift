@@ -8,7 +8,6 @@ private enum F {
     static let firstName = "fldBzVPUdMy99vfvp"
     static let lastName = "fldq4VxEf0jJgi6O5"
     static let jobTitle = "fldvecarEW7fx90Ci"
-    static let company = "fldTwuGnEhbQfZhP3"
     static let importedContactName = "fldnukky57mRgMpxv"
     static let addressLine = "fldxn8YVJ1pWGkaF8"
     static let city = "fldAoanFJ1Fmrzkx5"
@@ -77,7 +76,6 @@ extension Contact: AirtableConvertible {
         model.firstName = f.string(for: F.firstName)
         model.lastName = f.string(for: F.lastName)
         model.jobTitle = f.string(for: F.jobTitle)
-        model.company = f.string(for: F.company)
         model.importedContactName = f.string(for: F.importedContactName)
         model.addressLine = f.string(for: F.addressLine)
         model.city = f.string(for: F.city)
@@ -139,7 +137,6 @@ extension Contact: AirtableConvertible {
         b.set(F.firstName, firstName)
         b.set(F.lastName, lastName)
         b.set(F.jobTitle, jobTitle)
-        b.set(F.company, company)
         b.set(F.importedContactName, importedContactName)
         b.set(F.addressLine, addressLine)
         b.set(F.city, city)

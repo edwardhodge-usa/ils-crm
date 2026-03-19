@@ -18,7 +18,6 @@ final class Contact {
     var firstName: String?            // fldBzVPUdMy99vfvp
     var lastName: String?             // fldq4VxEf0jJgi6O5
     var jobTitle: String?             // fldvecarEW7fx90Ci
-    var company: String?              // fldTwuGnEhbQfZhP3 (free text, separate from linked)
     var importedContactName: String?  // fldnukky57mRgMpxv
     var addressLine: String?          // fldxn8YVJ1pWGkaF8
     var city: String?                 // fldAoanFJ1Fmrzkx5
