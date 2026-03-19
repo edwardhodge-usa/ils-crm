@@ -7,13 +7,31 @@ import SwiftUI
 struct SettingsView: View {
     @AppStorage("airtable_base_id") private var baseId = AirtableConfig.baseId
     @AppStorage("sync_interval_seconds") private var syncInterval: Double = AirtableConfig.defaultSyncIntervalSeconds
+    @AppStorage("user_email") private var userEmail = ""
     @State private var apiKey = ""
+    @State private var licensePAT = ""
     @State private var showSaveConfirmation = false
 
     @Environment(SyncEngine.self) private var syncEngine
 
     var body: some View {
         Form {
+            Section("User") {
+                TextField("Email Address", text: $userEmail)
+                    .textFieldStyle(.roundedBorder)
+                    .help("Used for license verification")
+            }
+
+            Section("License") {
+                SecureField("License Key", text: $licensePAT)
+                    .textFieldStyle(.roundedBorder)
+
+                Button("Save License Key") {
+                    saveLicensePAT()
+                }
+                .disabled(licensePAT.isEmpty)
+            }
+
             Section("Airtable Connection") {
                 SecureField("API Key (Personal Access Token)", text: $apiKey)
                     .textFieldStyle(.roundedBorder)
@@ -95,6 +113,23 @@ struct SettingsView: View {
             apiKey = stored
             // Auto-configure sync engine if key exists
             syncEngine.configure(apiKey: stored, baseId: baseId)
+        }
+        if let storedPAT = KeychainService.read(key: "license-pat") {
+            licensePAT = storedPAT
+        }
+    }
+
+    private func saveLicensePAT() {
+        Task {
+            do {
+                try await LicenseService.shared.savePAT(licensePAT)
+                withAnimation { showSaveConfirmation = true }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation { showSaveConfirmation = false }
+                }
+            } catch {
+                print("[SettingsView] Failed to save license PAT: \(error.localizedDescription)")
+            }
         }
     }
 
