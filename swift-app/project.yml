@@ -11,12 +11,20 @@ settings:
     SWIFT_VERSION: "5"
     SWIFT_STRICT_CONCURRENCY: minimal
 
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.0"
+
 targets:
   ILS CRM:
     type: application
     supportedDestinations: [macOS, iOS]
     sources:
       - path: ILS CRM
+    dependencies:
+      - package: Sparkle
+        platforms: [macOS]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.imaginelabstudios.ils-crm
@@ -25,9 +33,20 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: "ILS CRM+"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.business"
-        CODE_SIGN_IDENTITY: "-"
-        CODE_SIGNING_REQUIRED: NO
-        CODE_SIGNING_ALLOWED: YES
+        DEVELOPMENT_TEAM: "3CHSW4M2B7"
+      configs:
+        Debug:
+          CODE_SIGN_IDENTITY: "Apple Development"
+          CODE_SIGN_STYLE: Automatic
+          CODE_SIGNING_REQUIRED: YES
+          CODE_SIGNING_ALLOWED: YES
+        Release:
+          CODE_SIGN_IDENTITY: "Developer ID Application"
+          CODE_SIGN_STYLE: Automatic
+          CODE_SIGNING_REQUIRED: YES
+          CODE_SIGNING_ALLOWED: YES
+          ENABLE_HARDENED_RUNTIME: YES
+          CODE_SIGN_ENTITLEMENTS: "ILS CRM/ILS CRM.entitlements"
   ILS CRM UITests:
     type: bundle.ui-testing
     platform: macOS
