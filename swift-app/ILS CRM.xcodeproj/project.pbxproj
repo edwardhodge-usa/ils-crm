@@ -19,7 +19,7 @@
 		32A37AC7A71BCA3C59781505 /* PortalLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */; };
 		35C3F4BEF1740DA2C7220139 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668D676CC891E3198DACD13B /* TaskDetailView.swift */; };
 		36EBBB07DE34F8F950564A28 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AEF7B9304DFAE44834536F /* ProjectDetailView.swift */; };
-		38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; platformFilter = maccatalyst; productRef = 4FAD464BE3689BD2B1578A74 /* Sparkle */; };
+		38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4FAD464BE3689BD2B1578A74 /* Sparkle */; };
 		38AC88CA3F769FD350136A46 /* Proposal+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */; };
 		3B9FF2F195EB914F5F66299A /* Company+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */; };
 		3BA9C65768304F0629CA653C /* PortalLog+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */; };

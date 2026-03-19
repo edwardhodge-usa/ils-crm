@@ -24,7 +24,7 @@ targets:
       - path: ILS CRM
     dependencies:
       - package: Sparkle
-        platforms: [macOS]
+        platformFilter: macos
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.imaginelabstudios.ils-crm
