@@ -55,6 +55,7 @@
 		ABB8E1147F5AF5C7CCE4BFA4 /* CompanyDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D7C2ED321ED09895486FDF /* CompanyDetailView.swift */; };
 		B129FFFF82792485422F535E /* ImportedContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49F9AFC3A3BFE5B1C86EAC7 /* ImportedContactsView.swift */; };
 		B34F2130F324C26103ED67D2 /* ClientPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA67E7B40071D4AE31F92F9 /* ClientPage.swift */; };
+		B4B487342A3ADC5D920D605A /* AppStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D01AC9627DB2EC046865779 /* AppStateManager.swift */; };
 		BC02322F46633F5E380D68DC /* ILS_CRM_UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C64BA68513C875444438907A /* ILS_CRM_UITests.swift */; };
 		BCC0A608A777C24598E3D7DA /* AirtableConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B1B436042A8E098AF0ABA6 /* AirtableConfig.swift */; };
 		C459EDE201B5326CB856C837 /* InteractionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D68C7F1FA49E86B89C127B6 /* InteractionDetailView.swift */; };
@@ -94,6 +95,7 @@
 		20E951223991FB76B8FAB891 /* ProposalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProposalsView.swift; sourceTree = "<group>"; };
 		2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PortalLog+Airtable.swift"; sourceTree = "<group>"; };
 		2B819D1D3D6D5D6224EA6059 /* OpportunityDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpportunityDetailView.swift; sourceTree = "<group>"; };
+		2D01AC9627DB2EC046865779 /* AppStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateManager.swift; sourceTree = "<group>"; };
 		2DD07A3581FA6F5DB4CCD50E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		316C309AD146E8B39E732EC0 /* ClientPage+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ClientPage+Airtable.swift"; sourceTree = "<group>"; };
 		41AEF7B9304DFAE44834536F /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
@@ -286,6 +288,7 @@
 			isa = PBXGroup;
 			children = (
 				0626CFBCA68B78CCAE3A5BD7 /* AirtableService.swift */,
+				2D01AC9627DB2EC046865779 /* AppStateManager.swift */,
 				E33304DE2A8B008C7C3F330F /* FramerHealthService.swift */,
 				0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */,
 				4441B2730DB9DFA459D4FBA2 /* LicenseService.swift */,
@@ -512,6 +515,7 @@
 				BCC0A608A777C24598E3D7DA /* AirtableConfig.swift in Sources */,
 				55DFA7A044C0B594B5A5354E /* AirtableConvertible.swift in Sources */,
 				449038EC80DE762E7082426D /* AirtableService.swift in Sources */,
+				B4B487342A3ADC5D920D605A /* AppStateManager.swift in Sources */,
 				D456DB1C39A4368CBFC3FD11 /* CRMTask+Airtable.swift in Sources */,
 				9249063E8DC1713631C37A1E /* CRMTask.swift in Sources */,
 				106ADEB53369675C780A9283 /* ClientPage+Airtable.swift in Sources */,
