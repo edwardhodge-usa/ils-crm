@@ -44,7 +44,7 @@ struct RevokedView: View {
             }
             .buttonStyle(.plain)
             .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(.accent)
+            .foregroundStyle(Color.accentColor)
             .padding(.bottom, 24)
 
             // Quit button
