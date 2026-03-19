@@ -468,7 +468,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					4CDF06EFDDA8A408714299C4 = {
-						DevelopmentTeam = 3CHSW4M2B7;
+						DevelopmentTeam = 8RHA62T6FQ;
 						ProvisioningStyle = Automatic;
 					};
 					5D233A71CBAC41879B6B78EC = {
@@ -599,7 +599,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
-				DEVELOPMENT_TEAM = 3CHSW4M2B7;
+				DEVELOPMENT_TEAM = 8RHA62T6FQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM+";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
@@ -789,7 +789,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
-				DEVELOPMENT_TEAM = 3CHSW4M2B7;
+				DEVELOPMENT_TEAM = 8RHA62T6FQ;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM+";

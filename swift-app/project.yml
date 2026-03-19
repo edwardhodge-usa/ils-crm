@@ -33,7 +33,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: "ILS CRM+"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.business"
-        DEVELOPMENT_TEAM: "3CHSW4M2B7"
+        DEVELOPMENT_TEAM: "8RHA62T6FQ"
       configs:
         Debug:
           CODE_SIGN_IDENTITY: "Apple Development"
