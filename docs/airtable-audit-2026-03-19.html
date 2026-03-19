@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ILS CRM Airtable Audit — March 19, 2026</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --card: #1c2a4a;
+    --border: #2a3a5c;
+    --text: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --accent: #4fc3f7;
+    --green: #66bb6a;
+    --orange: #ffa726;
+    --red: #ef5350;
+    --purple: #ab47bc;
+    --yellow: #ffee58;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 40px 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 32px; }
+  h2 { font-size: 20px; font-weight: 600; color: #fff; margin: 32px 0 16px; }
+  h3 { font-size: 16px; font-weight: 600; color: var(--accent); margin: 16px 0 8px; }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-card .number { font-size: 32px; font-weight: 700; color: #fff; }
+  .stat-card .label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    background: var(--card);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .badge-synced { background: rgba(102,187,106,0.15); color: var(--green); }
+  .badge-new { background: rgba(171,71,188,0.15); color: var(--purple); }
+  .badge-cleanup { background: rgba(255,167,38,0.15); color: var(--orange); }
+  .badge-ok { background: rgba(79,195,247,0.15); color: var(--accent); }
+  .badge-action { background: rgba(239,83,80,0.15); color: var(--red); }
+
+  .finding {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 8px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .finding-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+  }
+  .finding-content { flex: 1; }
+  .finding-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .finding-detail { font-size: 13px; color: var(--text-secondary); }
+  .finding-table { font-size: 11px; color: var(--accent); margin-top: 4px; }
+
+  .priority-high { border-left: 3px solid var(--red); }
+  .priority-med { border-left: 3px solid var(--orange); }
+  .priority-low { border-left: 3px solid var(--accent); }
+  .priority-info { border-left: 3px solid var(--green); }
+
+  .code { font-family: 'SF Mono', Menlo, monospace; background: rgba(79,195,247,0.1); padding: 1px 5px; border-radius: 3px; font-size: 12px; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>ILS CRM Airtable Audit</h1>
+<p class="subtitle">Base: appYXbUdcmSwBoPFU &mdash; Scanned March 19, 2026</p>
+
+<div class="summary-grid">
+  <div class="stat-card">
+    <div class="number">17</div>
+    <div class="label">Total Tables</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">13</div>
+    <div class="label">In CRM App</div>
+  </div>
+  <div class="stat-card">
+    <div class="number" style="color: var(--purple)">4</div>
+    <div class="label">New / Not in App</div>
+  </div>
+  <div class="stat-card">
+    <div class="number" style="color: var(--orange)">8</div>
+    <div class="label">Cleanup Items</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Table Inventory</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<table>
+  <thead>
+    <tr>
+      <th>Table</th>
+      <th>Status</th>
+      <th>In Electron</th>
+      <th>In Swift</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Contacts</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Full CRUD</td>
+      <td>Full CRUD</td>
+      <td>57 fields, primary table</td>
+    </tr>
+    <tr>
+      <td>Companies</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Full CRUD</td>
+      <td>Full CRUD</td>
+      <td>26 fields</td>
+    </tr>
+    <tr>
+      <td>Opportunities</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Full CRUD</td>
+      <td>Full CRUD</td>
+      <td>23 fields, pipeline driver</td>
+    </tr>
+    <tr>
+      <td>Tasks</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Full CRUD</td>
+      <td>Full CRUD</td>
+      <td>12 fields</td>
+    </tr>
+    <tr>
+      <td>Projects</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Full CRUD</td>
+      <td>Full CRUD</td>
+      <td>24 fields, Drive integration</td>
+    </tr>
+    <tr>
+      <td>Proposals</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Full CRUD</td>
+      <td>Full CRUD</td>
+      <td>13 fields</td>
+    </tr>
+    <tr>
+      <td>Interactions</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Full CRUD</td>
+      <td>Full CRUD</td>
+      <td>9 fields</td>
+    </tr>
+    <tr>
+      <td>Imported Contacts</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Full CRUD</td>
+      <td>Full CRUD</td>
+      <td>48 fields</td>
+    </tr>
+    <tr>
+      <td>Specialties</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Read-only</td>
+      <td>Read-only</td>
+      <td>3 fields, lookup table</td>
+    </tr>
+    <tr>
+      <td>Portal Access</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Full CRUD</td>
+      <td>Full CRUD</td>
+      <td>44 fields</td>
+    </tr>
+    <tr>
+      <td>Client Pages</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Read-only</td>
+      <td>Read-only</td>
+      <td>13 fields, portal config</td>
+    </tr>
+    <tr>
+      <td>Portal Logs</td>
+      <td><span class="badge badge-synced">Synced</span></td>
+      <td>Read-only</td>
+      <td>Read-only</td>
+      <td>12 fields</td>
+    </tr>
+    <tr style="background: rgba(171,71,188,0.05);">
+      <td>App Licenses</td>
+      <td><span class="badge badge-new">New</span></td>
+      <td>Separate base</td>
+      <td>Separate base</td>
+      <td>In THIS base but licensing uses a different base. Duplicate?</td>
+    </tr>
+    <tr style="background: rgba(171,71,188,0.05);">
+      <td>Project Codes</td>
+      <td><span class="badge badge-new">New</span></td>
+      <td>Not synced</td>
+      <td>Not synced</td>
+      <td>Expense categorization lookup. Used by ILS Expense Lab.</td>
+    </tr>
+    <tr style="background: rgba(171,71,188,0.05);">
+      <td>Receipt Categories</td>
+      <td><span class="badge badge-new">New</span></td>
+      <td>Not synced</td>
+      <td>Not synced</td>
+      <td>Maps categories to folder names. Used by ILS Expense Lab.</td>
+    </tr>
+    <tr style="background: rgba(171,71,188,0.05);">
+      <td>Rate Card</td>
+      <td><span class="badge badge-new">New</span></td>
+      <td>Not synced</td>
+      <td>Not synced</td>
+      <td>Contractor/role pricing. Linked from Contacts.</td>
+    </tr>
+    <tr style="background: rgba(171,71,188,0.05);">
+      <td>Business Rules</td>
+      <td><span class="badge badge-new">New</span></td>
+      <td>Not synced</td>
+      <td>Not synced</td>
+      <td>Financial rules (markup, burden, caps). Reference table.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2>New Tables (Not in CRM App)</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+  <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">These 5 tables were added to the Airtable base but the CRM app doesn't know about them yet. Decide: should the CRM sync them, or are they owned by other apps?</p>
+
+  <div class="finding priority-med">
+    <div class="finding-icon">&#x1F4CA;</div>
+    <div class="finding-content">
+      <div class="finding-title">Rate Card &mdash; Strong candidate for CRM integration</div>
+      <div class="finding-detail">Already linked FROM Contacts table. Contains role pricing, markup %, day rates. Displaying this in Contact 360 detail view would be immediately useful. Read-only sync recommended.</div>
+      <div class="finding-table">Table: tblayIzbtJobsKvNe &bull; Fields: 16 &bull; Linked from: Contacts</div>
+    </div>
+  </div>
+
+  <div class="finding priority-med">
+    <div class="finding-icon">&#x1F4D0;</div>
+    <div class="finding-content">
+      <div class="finding-title">Business Rules &mdash; Reference table for financial logic</div>
+      <div class="finding-detail">Markup rates, burden percentages, liability caps. Could drive proposal pricing in the CRM. Read-only sync if CRM needs to calculate pricing.</div>
+      <div class="finding-table">Table: tblWHcey9WD9Tkuil &bull; Fields: 7 &bull; Standalone</div>
+    </div>
+  </div>
+
+  <div class="finding priority-low">
+    <div class="finding-icon">&#x1F9FE;</div>
+    <div class="finding-content">
+      <div class="finding-title">Project Codes &mdash; Expense Lab table, not CRM</div>
+      <div class="finding-detail">Used for expense categorization. Already linked from Projects table via Project Code field. Could display in CRM as read-only reference, but low priority.</div>
+      <div class="finding-table">Table: tblRqCkXkHYXDBz1Y &bull; Fields: 4 &bull; Linked from: Projects</div>
+    </div>
+  </div>
+
+  <div class="finding priority-low">
+    <div class="finding-icon">&#x1F4C2;</div>
+    <div class="finding-content">
+      <div class="finding-title">Receipt Categories &mdash; Expense Lab table, not CRM</div>
+      <div class="finding-detail">Maps expense types to folder names. No links to CRM tables. Leave outside CRM sync.</div>
+      <div class="finding-table">Table: tbll2Rsu1kxrxLpmm &bull; Fields: 3 &bull; Standalone</div>
+    </div>
+  </div>
+
+  <div class="finding priority-info">
+    <div class="finding-icon">&#x1F510;</div>
+    <div class="finding-content">
+      <div class="finding-title">App Licenses &mdash; Possible duplicate</div>
+      <div class="finding-detail">This table exists in the CRM base, but the license check system uses a SEPARATE licensing base (<span class="code">appMIBpSZpJ0vsiz1</span>). This table may be leftover from an earlier approach. Only 1 record with a placeholder UUID. Consider deleting if the separate base is authoritative.</div>
+      <div class="finding-table">Table: tblXtocglCevTO3T2 &bull; Records: 1 &bull; Possibly orphaned</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Data Cleanup Findings</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+
+  <div class="finding priority-high">
+    <div class="finding-icon">&#x26A0;&#xFE0F;</div>
+    <div class="finding-content">
+      <div class="finding-title">Contacts: Duplicate company fields</div>
+      <div class="finding-detail"><span class="code">Company</span> (plain text, fldTwuGnEhbQfZhP3) exists alongside <span class="code">Companies</span> (linked record, fldYXDUc9YKKsGTBt). Plain text field violates the "never duplicate as text if a linked record exists" rule from vendor-quirks. The text field should be deprecated &mdash; migrate any data to the linked record, then hide or delete the text field.</div>
+      <div class="finding-table">Table: Contacts &bull; Priority: HIGH &mdash; data integrity risk</div>
+    </div>
+  </div>
+
+  <div class="finding priority-high">
+    <div class="finding-icon">&#x26A0;&#xFE0F;</div>
+    <div class="finding-content">
+      <div class="finding-title">Opportunities + Companies: "Referred By" is plain text</div>
+      <div class="finding-detail">Both tables have a <span class="code">Referred By</span> field as plain text. If the referrer is a person in the Contacts table, this should be a linked record. Currently stores names as strings &mdash; can't be queried, filtered, or updated from one place.</div>
+      <div class="finding-table">Tables: Opportunities (fldZ3V2AL5IFj6W1G), Companies (fldLLGU72wwf7LxEf) &bull; Priority: HIGH</div>
+    </div>
+  </div>
+
+  <div class="finding priority-med">
+    <div class="finding-icon">&#x1F9F9;</div>
+    <div class="finding-content">
+      <div class="finding-title">Test records in production data</div>
+      <div class="finding-detail">Found test/placeholder records that should be reviewed for deletion:</div>
+      <div class="finding-detail" style="margin-top: 6px;">
+        &bull; <strong>Projects:</strong> "Sample Project - Test" ($50K, Discovery status)<br>
+        &bull; <strong>Projects:</strong> "Raiders Phase 1 Report" (near-empty)<br>
+        &bull; <strong>Client Pages:</strong> "testy-test" (google.com as deck URL)<br>
+        &bull; <strong>App Licenses:</strong> Placeholder UUID license key
+      </div>
+      <div class="finding-table">Tables: Projects, Client Pages, App Licenses &bull; Priority: MEDIUM</div>
+    </div>
+  </div>
+
+  <div class="finding priority-med">
+    <div class="finding-icon">&#x1F4DD;</div>
+    <div class="finding-content">
+      <div class="finding-title">Tasks: Emoji-prefixed Priority values</div>
+      <div class="finding-detail">Priority field stores values like "&#x1F7E2; Low" instead of "Low". The emoji prefix makes sorting, filtering, and display in the CRM app inconsistent. Consider stripping emojis and using the CRM app's own color system for priority indicators.</div>
+      <div class="finding-table">Table: Tasks (fldREFoOWpRN4Ejfg) &bull; Priority: MEDIUM</div>
+    </div>
+  </div>
+
+  <div class="finding priority-med">
+    <div class="finding-icon">&#x270D;&#xFE0F;</div>
+    <div class="finding-content">
+      <div class="finding-title">Typo in Project Codes data</div>
+      <div class="finding-detail">"ILS Buisness Development" should be "ILS Business Development" (typo in "Buisness").</div>
+      <div class="finding-table">Table: Project Codes &bull; Priority: LOW</div>
+    </div>
+  </div>
+
+  <div class="finding priority-low">
+    <div class="finding-icon">&#x2753;</div>
+    <div class="finding-content">
+      <div class="finding-title">Sparse company records</div>
+      <div class="finding-detail">Some Companies (e.g., Sesame Workshop) have only a name and one linked opportunity &mdash; no industry, website, or contact info. May indicate incomplete imports. Consider a data enrichment pass or flagging incomplete records in the CRM.</div>
+      <div class="finding-table">Table: Companies &bull; Priority: LOW</div>
+    </div>
+  </div>
+
+  <div class="finding priority-low">
+    <div class="finding-icon">&#x2753;</div>
+    <div class="finding-content">
+      <div class="finding-title">Rate Card: Developer Expert missing rates</div>
+      <div class="finding-detail">No Internal Base Rate or Weekly Rate for "Developer Expert" role. Notes say "TBD based on engagement" &mdash; may be intentional, but worth confirming.</div>
+      <div class="finding-table">Table: Rate Card &bull; Priority: LOW</div>
+    </div>
+  </div>
+
+  <div class="finding priority-info">
+    <div class="finding-icon">&#x2139;&#xFE0F;</div>
+    <div class="finding-content">
+      <div class="finding-title">New Contacts fields since last schema sync</div>
+      <div class="finding-detail">Fields added to Contacts that may not be in the CRM converters yet: <span class="code">Contractor Type</span> (fldGXRYNAlO4XZKG6), <span class="code">Xero Contact ID</span> (fld9QsMKKd9ux6UbM), <span class="code">Rate Card</span> (fld7TgLmzw8NsyL9s). Similarly, Companies has <span class="code">Xero Contact ID</span> (fldDTAA0v7kH2Ntfb). These need to be added to field-maps.ts and converters.</div>
+      <div class="finding-table">Tables: Contacts, Companies &bull; Priority: INFO &mdash; sync gap</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2>Recommended Actions</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Action</th>
+      <th>Priority</th>
+      <th>Effort</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Migrate Contacts <span class="code">Company</span> text field to <span class="code">Companies</span> linked record</td>
+      <td><span class="badge badge-action">High</span></td>
+      <td>Medium &mdash; need to match text values to existing Company records</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Convert <span class="code">Referred By</span> to linked record (Opportunities + Companies)</td>
+      <td><span class="badge badge-action">High</span></td>
+      <td>Medium &mdash; requires creating linked record fields + data migration</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Delete test records (Sample Project, testy-test, placeholder license)</td>
+      <td><span class="badge badge-cleanup">Medium</span></td>
+      <td>Low &mdash; manual delete in Airtable UI</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Strip emoji prefixes from Task Priority values</td>
+      <td><span class="badge badge-cleanup">Medium</span></td>
+      <td>Low &mdash; bulk update in Airtable</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Add Rate Card table to CRM sync (read-only)</td>
+      <td><span class="badge badge-cleanup">Medium</span></td>
+      <td>Medium &mdash; new model + converter + field map + UI</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Add new fields to converters (Contractor Type, Xero Contact ID, Rate Card link)</td>
+      <td><span class="badge badge-ok">Low</span></td>
+      <td>Low &mdash; field-maps.ts + converters.ts + Swift converters</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>Fix "Buisness" typo in Project Codes</td>
+      <td><span class="badge badge-ok">Low</span></td>
+      <td>Trivial &mdash; one cell edit</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Delete or confirm orphaned App Licenses table in CRM base</td>
+      <td><span class="badge badge-ok">Low</span></td>
+      <td>Trivial &mdash; verify licensing base is authoritative, then delete</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</body>
+</html>
