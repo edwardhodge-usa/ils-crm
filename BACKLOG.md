@@ -16,12 +16,15 @@
 
 ## Bugs — Swift
 
-- [ ] **S1** SwiftData store crash on schema change — must delete store manually when upgrading between versions with model changes (macOS 26.4 beta `#Predicate` issue may also apply)
+- [ ] **S1** SwiftData store crash on schema change — must delete store manually when upgrading between versions with model changes
+- [ ] **S2** SwiftData @Query runtime crash (macOS 26.4 beta) — app crashes after extended use when SwiftData asserts inside Form/ScrollView @Query evaluation. Apple OS bug, no code fix possible. Waiting for macOS 26.4 final release
 
 ## Feature Requests
 
 - [ ] **#6** Task grouping and sorting (group by project, assignee, type)
 - [ ] **#8** Task detail view with linked contact/company display
+- [ ] **#16** Task create form — add "Assigned To" field, defaults to currently selected assignee in task list sidebar
+- [ ] **#17** Task detail view — redesign as bento box layout (matching Contact 360 pattern)
 
 ## Todo — Infrastructure
 
