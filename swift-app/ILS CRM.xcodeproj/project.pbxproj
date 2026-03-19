@@ -135,6 +135,7 @@
 		A49F9AFC3A3BFE5B1C86EAC7 /* ImportedContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedContactsView.swift; sourceTree = "<group>"; };
 		A5F055B58CBACC91E93393F4 /* ILS CRM UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ILS CRM UITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A85AC6A57D105A7C7B62A7BD /* Specialty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Specialty.swift; sourceTree = "<group>"; };
+		AC5CD50B3294A213BF296FBD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		AD5AC5FD0C4B654A1AC21455 /* Opportunity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Opportunity.swift; sourceTree = "<group>"; };
 		B46488C4FC77689E54BDF129 /* InteractionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractionsView.swift; sourceTree = "<group>"; };
 		B6A17675D518A087D5687C46 /* Proposal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Proposal.swift; sourceTree = "<group>"; };
@@ -230,6 +231,7 @@
 			children = (
 				094525C470C3BD376958467D /* ILS CRM.entitlements */,
 				93139863B859A2E429AC26CE /* ILSCRMApp.swift */,
+				AC5CD50B3294A213BF296FBD /* Info.plist */,
 				EACADD712D74D61B157B995A /* Config */,
 				0739AB8E2C362C728CA6CF61 /* Models */,
 				536F00622C89ADBFEC53579C /* Services */,
@@ -600,13 +602,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 8RHA62T6FQ;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM+";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
-				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
-				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/edwardhodge-usa/ils-crm/main/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "TEYI9o0zD1tc95dmkSIyvCN17FtqT0kXPo3F+pSHatw=";
-				INFOPLIST_KEY_SUScheduledCheckInterval = 14400;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ILS CRM/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MARKETING_VERSION = 1.0.7;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.imaginelabstudios.ils-crm";
@@ -792,13 +789,8 @@
 				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 8RHA62T6FQ;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM+";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
-				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
-				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/edwardhodge-usa/ils-crm/main/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "TEYI9o0zD1tc95dmkSIyvCN17FtqT0kXPo3F+pSHatw=";
-				INFOPLIST_KEY_SUScheduledCheckInterval = 14400;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ILS CRM/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MARKETING_VERSION = 1.0.7;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.imaginelabstudios.ils-crm";
