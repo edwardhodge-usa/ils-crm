@@ -90,9 +90,12 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - HIG sidebar active state: solid `--color-accent` bg + `--text-on-accent` text
 
 ### Release / Deploy
-- Auto-updater: `publish.private: true` required in package.json. Set GH_TOKEN + requestHeaders. Token in gitignored `electron/updater-token.ts`
+- **Swift notarization:** archive → re-sign Sparkle binaries with `--options runtime --timestamp` → DMG → `notarytool submit` → `stapler staple` → `sign_update` for Sparkle Ed25519
+- **Sparkle binaries need manual re-signing:** xcodebuild archive doesn't sign nested Sparkle XPC services with Developer ID + hardened runtime. Must codesign each: Downloader.xpc, Installer.xpc, Autoupdate, Updater.app, then framework, then app
+- **Team ID:** 8RHA62T6FQ (ImagineLab Studios). Notarization profile: "ILS-Notarize" in Keychain
+- Auto-updater (Electron): `publish.private: true` required in package.json. Set GH_TOKEN + requestHeaders. Token in gitignored `electron/updater-token.ts`
 - GitHub renames spaces to dots in filenames → rename `ILS CRM` → `ILS-CRM` in assets + `latest-mac.yml`
-- Gatekeeper: `xattr -c -r` (flags separate), users right-click → Open on first launch
+- Gatekeeper: notarized builds don't need `xattr` workaround. Legacy unsigned builds: `xattr -c -r` + right-click → Open
 - Framer health check: HTTP HEAD to `imaginelabstudios.com/ils-clients/{slug}`, 200ms stagger. No CMS REST API
 - Portal page_address must be URL slug (lowercase, hyphens) — slugify on edit, cascade on rename, validate on load
 - HTML `<input type="url">` forces protocol prefix validation → use `type="text"`, normalizeUrl() on save (skip `@` values)
