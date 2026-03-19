@@ -190,7 +190,6 @@ const CONTACT_MAPPINGS: FieldMapping[] = [
   { local: 'first_name', airtable: CONTACTS.firstName, type: 'text' },
   { local: 'last_name', airtable: CONTACTS.lastName, type: 'text' },
   { local: 'job_title', airtable: CONTACTS.jobTitle, type: 'text' },
-  { local: 'company', airtable: CONTACTS.company, type: 'text' },
   { local: 'imported_contact_name', airtable: CONTACTS.importedContactName, type: 'text' },
   { local: 'address_line', airtable: CONTACTS.addressLine, type: 'text' },
   { local: 'city', airtable: CONTACTS.city, type: 'text' },

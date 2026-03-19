@@ -896,7 +896,6 @@ struct FlowLayout: Layout {
     contact.jobTitle = "Creative Director"
     contact.email = "jane@example.com"
     contact.mobilePhone = "+1 555-0101"
-    contact.company = "Acme Studios"
     contact.industry = "Media & Entertainment"
     contact.categorization = ["Client"]
     contact.linkedInUrl = "https://linkedin.com/in/janesmith"

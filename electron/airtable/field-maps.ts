@@ -26,7 +26,6 @@ export const CONTACTS = {
   firstName: 'fldBzVPUdMy99vfvp',
   lastName: 'fldq4VxEf0jJgi6O5',
   jobTitle: 'fldvecarEW7fx90Ci',
-  company: 'fldTwuGnEhbQfZhP3',
   importedContactName: 'fldnukky57mRgMpxv',
   addressLine: 'fldxn8YVJ1pWGkaF8',
   city: 'fldAoanFJ1Fmrzkx5',
