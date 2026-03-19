@@ -19,6 +19,7 @@
 		32A37AC7A71BCA3C59781505 /* PortalLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */; };
 		35C3F4BEF1740DA2C7220139 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668D676CC891E3198DACD13B /* TaskDetailView.swift */; };
 		36EBBB07DE34F8F950564A28 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AEF7B9304DFAE44834536F /* ProjectDetailView.swift */; };
+		38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; platformFilter = maccatalyst; productRef = 4FAD464BE3689BD2B1578A74 /* Sparkle */; };
 		38AC88CA3F769FD350136A46 /* Proposal+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */; };
 		3B9FF2F195EB914F5F66299A /* Company+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */; };
 		3BA9C65768304F0629CA653C /* PortalLog+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */; };
@@ -152,6 +153,17 @@
 		F42F3829BAEFC9576877253A /* LinkedRecordResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedRecordResolver.swift; sourceTree = "<group>"; };
 		F502ADB5929B8F24523FF64E /* TaskFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskFormView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		66448CAF0B986AC24BCA9C94 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		019076240016EF80C491DA72 /* Settings */ = {
@@ -411,6 +423,7 @@
 			buildConfigurationList = 302AAD24925A787749ABD34C /* Build configuration list for PBXNativeTarget "ILS CRM" */;
 			buildPhases = (
 				AA2416BA9F42A3A943184DCB /* Sources */,
+				66448CAF0B986AC24BCA9C94 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -418,6 +431,7 @@
 			);
 			name = "ILS CRM";
 			packageProductDependencies = (
+				4FAD464BE3689BD2B1578A74 /* Sparkle */,
 			);
 			productName = "ILS CRM";
 			productReference = F314F3062428983FA086B791 /* ILS CRM.app */;
@@ -585,10 +599,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM+";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
-				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
-				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/edwardhodge-usa/ils-crm/main/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = PLACEHOLDER_REPLACE_AFTER_KEY_GENERATION;
-				INFOPLIST_KEY_SUScheduledCheckInterval = 14400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -780,10 +790,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM+";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
-				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
-				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/edwardhodge-usa/ils-crm/main/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = PLACEHOLDER_REPLACE_AFTER_KEY_GENERATION;
-				INFOPLIST_KEY_SUScheduledCheckInterval = 14400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -841,6 +847,14 @@
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4FAD464BE3689BD2B1578A74 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 309EFC05ECD2925FCB1802DF /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C559CE298287DA202E635C77 /* Project object */;
 }
