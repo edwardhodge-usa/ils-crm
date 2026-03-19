@@ -603,6 +603,10 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM+";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/edwardhodge-usa/ils-crm/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "TEYI9o0zD1tc95dmkSIyvCN17FtqT0kXPo3F+pSHatw=";
+				INFOPLIST_KEY_SUScheduledCheckInterval = 14400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -794,6 +798,10 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM+";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/edwardhodge-usa/ils-crm/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "TEYI9o0zD1tc95dmkSIyvCN17FtqT0kXPo3F+pSHatw=";
+				INFOPLIST_KEY_SUScheduledCheckInterval = 14400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
