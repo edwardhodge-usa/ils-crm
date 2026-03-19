@@ -61,6 +61,9 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - For verbose multi-target builds, prefer the apple-platform-build-tools subagent to preserve context.
 
 ### Swift-Specific
+- XcodeGen conditional SPM deps use `platformFilter: macos` (not `platforms: [macOS]` — silently ignored, dep won't link)
+- App struct `@State` + background `Task` captures stale struct copy — use `@Observable` class for lifecycle state management
+- `.accent` is not a valid `ShapeStyle` on macOS 14 — use `Color.accentColor`
 - Swift converters use field IDs; Electron uses field names — keep in sync when schema changes
 - Before debugging Swift sync 422 errors: fetch live schema via `mcp__airtable__describe_table`, compare against Swift converter's `F` enum
 - `@Environment(\.dismiss)` unreliable in macOS sheets → pass `@Binding var isPresented` directly
