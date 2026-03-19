@@ -29,8 +29,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.imaginelabstudios.ils-crm
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
-        MARKETING_VERSION: "1.0.6"
-        CURRENT_PROJECT_VERSION: 7
+        MARKETING_VERSION: "1.0.7"
+        CURRENT_PROJECT_VERSION: 8
         INFOPLIST_KEY_CFBundleDisplayName: "ILS CRM+"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.business"
