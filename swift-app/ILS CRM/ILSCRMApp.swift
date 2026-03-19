@@ -15,6 +15,7 @@ import Sparkle
 struct ILSCRMApp: App {
     let container: ModelContainer
     @State private var syncEngine: SyncEngine
+    @State private var appStateManager = AppStateManager()
 
     #if os(macOS)
     private let updaterController: SPUStandardUpdaterController
@@ -61,8 +62,21 @@ struct ILSCRMApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(syncEngine)
+            Group {
+                switch appStateManager.appState {
+                case .loading:
+                    ProgressView("Verifying license…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                case .revoked:
+                    RevokedView()
+                case .offlineLocked:
+                    OfflineLockView()
+                case .onboarding, .ready:
+                    ContentView()
+                        .environment(syncEngine)
+                }
+            }
+            .task { await appStateManager.performLicenseCheck() }
         }
         .modelContainer(container)
         .defaultSize(width: 1200, height: 800)
