@@ -393,9 +393,29 @@ struct EditableFieldRow: View {
             }
 
         case .date:
-            DatePicker("", selection: dateBinding, displayedComponents: .date)
-                .labelsHidden()
-                .datePickerStyle(.compact)
+            HStack(spacing: 4) {
+                if value != nil {
+                    DatePicker("", selection: dateBinding, displayedComponents: .date)
+                        .labelsHidden()
+                        .datePickerStyle(.compact)
+                    Button {
+                        onSave?(key, nil)
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Spacer()
+                    Button("Set Date") {
+                        onSave?(key, Self.isoFormatter.string(from: Date()))
+                    }
+                    .font(.system(size: 12))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                }
+            }
 
         case .checkbox:
             Toggle("", isOn: checkBinding)
