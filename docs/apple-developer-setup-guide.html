@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apple Developer Setup Guide — ILS CRM</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --card: #1c2a4a;
+    --border: #2a3a5c;
+    --text: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --accent: #4fc3f7;
+    --green: #66bb6a;
+    --orange: #ffa726;
+    --red: #ef5350;
+    --check-bg: #1b5e20;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 40px 20px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin-bottom: 32px;
+  }
+  .progress-bar {
+    background: var(--surface);
+    border-radius: 8px;
+    height: 8px;
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease;
+    border-radius: 8px;
+  }
+  .progress-label {
+    text-align: right;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .section-number {
+    background: var(--accent);
+    color: var(--bg);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .section-number.done {
+    background: var(--green);
+  }
+  .section-number.blocked {
+    background: var(--orange);
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-done { background: rgba(102,187,106,0.15); color: var(--green); }
+  .badge-manual { background: rgba(255,167,38,0.15); color: var(--orange); }
+  .badge-auto { background: rgba(79,195,247,0.15); color: var(--accent); }
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 16px 0 8px;
+  }
+  p, li {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  ol, ul {
+    padding-left: 20px;
+  }
+  li {
+    margin-bottom: 8px;
+  }
+  .step {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--green);
+  }
+  .step-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .step-detail {
+    margin-left: 30px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .step-detail p {
+    margin-bottom: 6px;
+  }
+  .screenshot {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 8px 0;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .warning {
+    background: rgba(255,167,38,0.08);
+    border: 1px solid rgba(255,167,38,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: var(--orange);
+  }
+  .info {
+    background: rgba(79,195,247,0.08);
+    border: 1px solid rgba(79,195,247,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: var(--accent);
+  }
+  .success {
+    background: rgba(102,187,106,0.08);
+    border: 1px solid rgba(102,187,106,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: var(--green);
+  }
+  .code {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    background: rgba(79,195,247,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--accent);
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+  .status-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .status-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .status-card .number {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .status-card .label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  .nav-path {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .nav-path span {
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+</style>
+</head>
+<body>
+
+<h1>Apple Developer Setup Guide</h1>
+<p class="subtitle">ILS CRM Swift App — Manual steps for code signing, notarization, and auto-update</p>
+
+<div class="status-summary">
+  <div class="status-card">
+    <div class="number" id="completed-count">0</div>
+    <div class="label">Steps Completed</div>
+  </div>
+  <div class="status-card">
+    <div class="number" id="remaining-count">13</div>
+    <div class="label">Steps Remaining</div>
+  </div>
+</div>
+
+<div class="progress-label"><span id="progress-pct">0</span>% complete</div>
+<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+<!-- ============================================================ -->
+<!-- SECTION A: Developer ID Certificate -->
+<!-- ============================================================ -->
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">A</div>
+    <div class="section-title">Create Developer ID Application Certificate</div>
+    <span class="badge badge-manual">Manual</span>
+  </div>
+  <p>This certificate lets you sign apps for distribution outside the App Store. It's required for notarization and for your employees to open the app without Gatekeeper warnings.</p>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Open Xcode Settings</div>
+    </div>
+    <div class="step-detail">
+      <p>Open <strong>Xcode</strong> (make sure it's the latest version).</p>
+      <p>Go to the menu: <span class="nav-path">Xcode <span>&rarr;</span> Settings</span> (or press <span class="code">Cmd + ,</span>)</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Navigate to Accounts tab</div>
+    </div>
+    <div class="step-detail">
+      <p>Click the <strong>Accounts</strong> tab at the top of the Settings window.</p>
+      <p>You should see your <strong>ImagineLab Studios</strong> team listed. If not, click the <strong>+</strong> button at the bottom left and sign in with your Apple ID.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Open Manage Certificates</div>
+    </div>
+    <div class="step-detail">
+      <p>Select your <strong>ImagineLab Studios</strong> team from the list.</p>
+      <p>Click the <strong>Manage Certificates...</strong> button (bottom right of the window).</p>
+      <p>You should see a list of existing certificates. You likely already have an <strong>Apple Development</strong> certificate.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Create Developer ID Application certificate</div>
+    </div>
+    <div class="step-detail">
+      <p>Click the <strong>+</strong> button at the bottom left of the certificates list.</p>
+      <p>Select <strong>Developer ID Application</strong> from the dropdown menu.</p>
+      <p>Click <strong>Create</strong>.</p>
+      <div class="info">This creates a certificate that Apple trusts for apps distributed outside the App Store. It's stored in your macOS Keychain automatically.</div>
+      <div class="warning">If you don't see "Developer ID Application" as an option, your Apple Developer account may not have the right permissions. Make sure you're the Account Holder or Admin for the ImagineLab Studios team.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Verify the certificate was created</div>
+    </div>
+    <div class="step-detail">
+      <p>Open <strong>Terminal</strong> and run:</p>
+      <div class="screenshot">security find-identity -v -p codesigning | grep "Developer ID"</div>
+      <p>You should see something like:</p>
+      <div class="screenshot">1) ABCDEF123456... "Developer ID Application: ImagineLab Studios (3CHSW4M2B7)"</div>
+      <div class="success">If you see the line above, you're good! The certificate is installed and ready to use.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION B: App-Specific Password -->
+<!-- ============================================================ -->
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">B</div>
+    <div class="section-title">Generate App-Specific Password for Notarization</div>
+    <span class="badge badge-manual">Manual</span>
+  </div>
+  <p>Apple's notarization service needs to verify your identity. Instead of using your main Apple ID password, you create a special "app-specific password" just for this purpose.</p>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Go to Apple ID website</div>
+    </div>
+    <div class="step-detail">
+      <p>Open your browser and go to: <a href="https://appleid.apple.com" style="color: var(--accent);">https://appleid.apple.com</a></p>
+      <p>Sign in with the Apple ID you use for your developer account.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Navigate to App-Specific Passwords</div>
+    </div>
+    <div class="step-detail">
+      <p>Once signed in, go to: <span class="nav-path">Sign-In and Security <span>&rarr;</span> App-Specific Passwords</span></p>
+      <p>Click <strong>Generate an app-specific password</strong> (or the <strong>+</strong> button).</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Create and save the password</div>
+    </div>
+    <div class="step-detail">
+      <p>When prompted, enter a label like: <span class="code">ILS Notarization</span></p>
+      <p>Apple will show you a password that looks like: <span class="code">abcd-efgh-ijkl-mnop</span></p>
+      <div class="warning">Copy this password NOW and save it somewhere safe (like Notes or 1Password). You will NOT be able to see it again after closing this dialog.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION C: Store Notarization Credentials -->
+<!-- ============================================================ -->
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">C</div>
+    <div class="section-title">Store Notarization Credentials in Keychain</div>
+    <span class="badge badge-manual">Manual</span>
+  </div>
+  <p>This saves your Apple ID + app-specific password in the macOS Keychain so the notarization tool can use them without asking every time.</p>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Run the store-credentials command</div>
+    </div>
+    <div class="step-detail">
+      <p>Open <strong>Terminal</strong> and run this command (replace the email with your Apple ID email):</p>
+      <div class="screenshot">xcrun notarytool store-credentials "ILS-Notarize" \
+  --apple-id "your-apple-id@email.com" \
+  --team-id "3CHSW4M2B7"</div>
+      <p>It will prompt you:</p>
+      <ol>
+        <li><strong>App-specific password:</strong> Paste the password from Section B (the <span class="code">abcd-efgh-ijkl-mnop</span> one)</li>
+      </ol>
+      <div class="success">When it says "Credentials saved", you're done! The profile name "ILS-Notarize" is what the build scripts will use to find these credentials.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION D: Sparkle Keypair -->
+<!-- ============================================================ -->
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">D</div>
+    <div class="section-title">Generate Sparkle Ed25519 Keypair for Auto-Updates</div>
+    <span class="badge badge-manual">Manual</span>
+  </div>
+  <p>Sparkle (the auto-update framework) uses its own signing system to verify that updates haven't been tampered with. You need to generate a keypair once — the private key stays in your Keychain, the public key goes in the app.</p>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Find the generate_keys tool</div>
+    </div>
+    <div class="step-detail">
+      <p>First, make sure the project has been built at least once in Xcode (to download Sparkle). Then run in Terminal:</p>
+      <div class="screenshot">find ~/Library/Developer/Xcode/DerivedData -name "generate_keys" -path "*/Sparkle*" 2>/dev/null | head -3</div>
+      <p>You should see a path like:</p>
+      <div class="screenshot">/Users/EdwardHodge_1/Library/Developer/Xcode/DerivedData/ILS_CRM-abc123/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys</div>
+      <p>Copy that full path — you'll need it in the next step.</p>
+      <div class="warning">If nothing shows up, open the ILS CRM project in Xcode, wait for "Resolving Package Dependencies" to finish, build once (Cmd+B), then try the find command again.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Generate the keypair</div>
+    </div>
+    <div class="step-detail">
+      <p>Run the tool you found above:</p>
+      <div class="screenshot">/path/to/generate_keys</div>
+      <p>It will output something like:</p>
+      <div class="screenshot">A]public key for SUPublicEDKey (Info.plist):
+dF4b8K9mN2pQ7xY1wR5tH3jL6vC0sA8eG4nB9uI2oP=</div>
+      <p>The private key is automatically stored in your macOS Keychain (under the service <span class="code">https://sparkle-project.org</span>). You never need to touch it directly.</p>
+      <div class="warning">Copy the public key string (the base64 text). You'll need it in the next step.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Update project.yml with the public key</div>
+    </div>
+    <div class="step-detail">
+      <p>Tell Claude Code:</p>
+      <div class="screenshot">"Replace SUPublicEDKey placeholder in project.yml with: [paste your key here]"</div>
+      <p>Or manually edit <span class="code">swift-app/project.yml</span> and find:</p>
+      <div class="screenshot">INFOPLIST_KEY_SUPublicEDKey: "PLACEHOLDER_REPLACE_AFTER_KEY_GENERATION"</div>
+      <p>Replace <span class="code">PLACEHOLDER_REPLACE_AFTER_KEY_GENERATION</span> with your actual public key.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION E: First Test -->
+<!-- ============================================================ -->
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">E</div>
+    <div class="section-title">Test the App</div>
+    <span class="badge badge-manual">Manual</span>
+  </div>
+  <p>Now let's verify everything works together.</p>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Open and run in Xcode</div>
+    </div>
+    <div class="step-detail">
+      <p>Open <span class="code">swift-app/ILS CRM.xcodeproj</span> in Xcode.</p>
+      <p>Press <span class="code">Cmd + R</span> to build and run.</p>
+      <p>The app should:</p>
+      <ol>
+        <li>Show "Verifying license..." briefly</li>
+        <li>Then go straight to the main UI (because no license PAT is configured yet)</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Configure license in Settings</div>
+    </div>
+    <div class="step-detail">
+      <p>In the running app, go to <span class="nav-path">ILS CRM+ <span>&rarr;</span> Settings</span> (or press <span class="code">Cmd + ,</span>).</p>
+      <p>You should see two new sections at the top:</p>
+      <ol>
+        <li><strong>User</strong> — Enter your email address (the one in the Airtable licensing table)</li>
+        <li><strong>License</strong> — Enter the license PAT (ask Claude Code for it, or check the Electron app's <span class="code">license-config.ts</span>)</li>
+      </ol>
+      <p>Click <strong>Save License Key</strong>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <input type="checkbox" class="checkbox" onchange="updateProgress()">
+      <div class="step-title">Restart and verify license check</div>
+    </div>
+    <div class="step-detail">
+      <p>Quit the app and run it again from Xcode (<span class="code">Cmd + R</span>).</p>
+      <p>Watch the Xcode console output. You should see:</p>
+      <div class="screenshot">[app-state] License valid, starting app</div>
+      <p>The app should load normally after the brief license check.</p>
+      <div class="success">If you see "License valid" in the console, everything is working! The app now checks your Airtable licensing base on startup and every 2 hours.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- What's Next -->
+<!-- ============================================================ -->
+
+<div class="section" style="border-color: var(--accent);">
+  <div class="section-header">
+    <div class="section-number" style="background: var(--green);">!</div>
+    <div class="section-title">What Happens Next</div>
+  </div>
+  <p style="margin-bottom: 12px;">Once all the steps above are done, tell Claude Code and it will:</p>
+  <ol>
+    <li>Build a <strong>Release archive</strong> signed with your Developer ID Application certificate</li>
+    <li>Package it into a <strong>DMG</strong></li>
+    <li>Submit it to Apple for <strong>notarization</strong> (takes 1-5 minutes)</li>
+    <li><strong>Staple</strong> the notarization ticket to the DMG</li>
+    <li>Sign the DMG with your <strong>Sparkle Ed25519 key</strong></li>
+    <li>Create a <strong>GitHub Release</strong> with the DMG attached</li>
+  </ol>
+  <p style="margin-top: 12px;">After that, your employees can install the DMG without any Gatekeeper warnings, and the app will auto-update via Sparkle whenever you publish a new release.</p>
+</div>
+
+<script>
+function updateProgress() {
+  const checkboxes = document.querySelectorAll('.checkbox');
+  const total = checkboxes.length;
+  let checked = 0;
+  checkboxes.forEach(cb => { if (cb.checked) checked++; });
+
+  const pct = Math.round((checked / total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct;
+  document.getElementById('completed-count').textContent = checked;
+  document.getElementById('remaining-count').textContent = total - checked;
+
+  // Save state
+  const state = Array.from(checkboxes).map(cb => cb.checked);
+  localStorage.setItem('ils-apple-dev-progress', JSON.stringify(state));
+}
+
+// Restore state on load
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('ils-apple-dev-progress');
+  if (saved) {
+    const state = JSON.parse(saved);
+    const checkboxes = document.querySelectorAll('.checkbox');
+    state.forEach((checked, i) => {
+      if (checkboxes[i]) checkboxes[i].checked = checked;
+    });
+    updateProgress();
+  }
+});
+</script>
+
+</body>
+</html>
