@@ -42,11 +42,34 @@ settings:
       CODE_SIGN_STYLE: Automatic
     Release:
       CODE_SIGN_IDENTITY: "Developer ID Application"
-      CODE_SIGN_STYLE: Manual
+      CODE_SIGN_STYLE: Automatic
       CODE_SIGNING_REQUIRED: YES
+      ENABLE_HARDENED_RUNTIME: YES
+      CODE_SIGN_ENTITLEMENTS: "ILS CRM/ILS CRM.entitlements"
 ```
 
 UITests target retains ad-hoc signing (no distribution needed).
+
+### Hardened Runtime & Entitlements
+
+Hardened Runtime is **required for notarization** (mandatory since macOS 10.14.5). The app needs an entitlements file for network access (Airtable API, Sparkle update checks).
+
+**`ILS CRM/ILS CRM.entitlements`:**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.network.client</key>
+    <true/>
+</dict>
+</plist>
+```
+
+This single entitlement covers all outbound HTTPS calls (Airtable license check, Airtable sync, Sparkle appcast fetch, Sparkle update download). No sandbox entitlements needed for Developer ID distribution.
+
+Note: `CODE_SIGN_STYLE: Automatic` is used for Release (not Manual) because Developer ID distribution does not use provisioning profiles, and Xcode handles certificate selection automatically when the team is set.
 
 ### Notarization Workflow
 
@@ -71,31 +94,49 @@ Stored in macOS Keychain. Not in code or config files.
 
 - Debug builds use Apple Development certificate (no Keychain prompts during dev)
 - XcodeGen workflow unchanged
-- No entitlements or sandbox required (Developer ID outside App Store)
+- No sandbox required (Developer ID outside App Store)
+- Hardened Runtime + network.client entitlement handles notarization requirements
+- iOS target in `supportedDestinations` is unaffected — iOS signing is out of scope for this spec
 
 ## Layer 2: Sparkle Auto-Update
 
 ### Integration
 
-- Add Sparkle as SPM dependency (https://github.com/sparkle-project/Sparkle)
+Add Sparkle as SPM dependency via `project.yml`:
+
+```yaml
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.0"
+```
+
+And add to the ILS CRM target:
+
+```yaml
+dependencies:
+  - package: Sparkle
+```
+
 - Initialize `SPUStandardUpdaterController` in `ILSCRMApp.swift`
-- Check interval: every 4 hours (matching Electron)
+- Check interval: every 4 hours (matching Electron auto-update; separate from 2-hour license re-check)
 
 ### Info.plist Keys
 
-- `SUFeedURL`: URL to appcast.xml (GitHub Pages, raw GitHub URL, or gist)
+- `SUFeedURL`: URL to `appcast.xml` hosted in the repo, served via GitHub raw URL (e.g., `https://raw.githubusercontent.com/edwardhodge-usa/ils-crm/main/appcast.xml`)
 - `SUPublicEDKey`: Ed25519 public key for update verification
+- `SUEnableAutomaticChecks`: `YES` (auto-check without user opt-in — appropriate for private employee app)
 
 ### Ed25519 Signing
 
-- Generate keypair once: `generate_keys` (Sparkle CLI tool bundled with the framework)
-- Private key stored on Edward's machine only
-- Public key embedded in `Info.plist`
-- Each DMG signed before upload: `sign_update <dmg>`
+- Generate keypair once: `generate_keys` (Sparkle CLI tool, accessed via `.build/artifacts/sparkle/Sparkle/bin/generate_keys` after SPM build)
+- Private key stored in Edward's macOS Keychain (service: `https://sparkle-project.org`) — never exported to a file
+- Public key embedded in `Info.plist` (`SUPublicEDKey`)
+- Each DMG signed before upload: `.build/artifacts/sparkle/Sparkle/bin/sign_update <dmg>`
 
 ### Appcast
 
-- `appcast.xml` hosted in the GitHub repo or as a GitHub Pages file
+- `appcast.xml` hosted at repo root (`ils-crm/appcast.xml`), served via GitHub raw URL
 - Each release entry contains: version, download URL (GitHub Release asset URL), release notes, Ed25519 signature, minimum system version
 - Updated as part of the `/release` workflow
 
@@ -163,7 +204,7 @@ Calls the same Airtable licensing base as Electron:
 
 - License PAT in Keychain (not in source)
 - `lastVerified` in `@AppStorage` — only `LicenseService` actor writes it (no view-level tampering)
-- SwiftData store deletion on revocation: `FileManager.default.removeItem(at:)` on the `.store` file
+- SwiftData store deletion on revocation: remove all store files (`.store`, `.store-shm`, `.store-wal`) by enumerating the container URL
 - Email validation before Airtable formula injection (same regex as Electron)
 
 ### UI
