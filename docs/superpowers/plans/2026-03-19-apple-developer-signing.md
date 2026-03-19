@@ -17,17 +17,22 @@
 ### New Files
 | File | Responsibility |
 |------|---------------|
-| `ILS CRM/ILS CRM.entitlements` | Hardened Runtime entitlements (network.client) |
-| `ILS CRM/Services/LicenseService.swift` | Airtable license check actor — check, grace period, revocation |
-| `ILS CRM/Views/Auth/RevokedView.swift` | Lock screen for revoked/suspended licenses |
-| `ILS CRM/Views/Auth/OfflineLockView.swift` | Lock screen for expired grace period |
+| `swift-app/ILS CRM/ILS CRM.entitlements` | Hardened Runtime entitlements (network.client) |
+| `swift-app/ILS CRM/Services/LicenseService.swift` | Airtable license check actor — check, grace period, revocation |
+| `swift-app/ILS CRM/Services/AppStateManager.swift` | @Observable class managing app state + license lifecycle |
+| `swift-app/ILS CRM/Views/Auth/RevokedView.swift` | Lock screen for revoked/suspended licenses |
+| `swift-app/ILS CRM/Views/Auth/OfflineLockView.swift` | Lock screen for expired grace period |
 | `appcast.xml` | Sparkle update feed (repo root) |
 
 ### Modified Files
 | File | Changes |
 |------|---------|
-| `project.yml` | Signing config, Hardened Runtime, Sparkle SPM dependency, entitlements path |
-| `ILS CRM/ILSCRMApp.swift` | App state machine, license check on launch, Sparkle updater init |
+| `swift-app/project.yml` | Signing config, Hardened Runtime, Sparkle SPM dependency (macOS-only), entitlements path |
+| `swift-app/ILS CRM/ILSCRMApp.swift` | AppStateManager integration, Sparkle updater init (macOS-only) |
+| `swift-app/ILS CRM/Views/Settings/SettingsView.swift` | Add user email + license PAT fields |
+
+### Platform Notes
+The app has `supportedDestinations: [macOS, iOS]`. All macOS-only APIs (NSWorkspace, NSApplication, Sparkle) must use `#if os(macOS)` guards. Sparkle dependency must be macOS-conditional in XcodeGen.
 
 ---
 
@@ -106,14 +111,17 @@ Replace the existing `settings.base` block under `ILS CRM` target with per-confi
           CODE_SIGN_ENTITLEMENTS: "ILS CRM/ILS CRM.entitlements"
 ```
 
-- [ ] **Step 3: Add Sparkle dependency to ILS CRM target**
+- [ ] **Step 3: Add Sparkle dependency to ILS CRM target (macOS-only)**
 
 Add under the ILS CRM target (after `sources:`):
 
 ```yaml
     dependencies:
       - package: Sparkle
+        platforms: [macOS]
 ```
+
+The `platforms: [macOS]` ensures Sparkle is not linked when building for iOS.
 
 - [ ] **Step 4: Regenerate Xcode project**
 
@@ -170,11 +178,10 @@ Expected: `ARCHIVE SUCCEEDED`
 
 - [ ] **Step 3: Export signed .app from archive**
 
+First write the export options plist to a temp file (avoids shell process substitution issues):
+
 ```bash
-xcodebuild -exportArchive \
-  -archivePath /tmp/ils-crm-build/ILS-CRM.xcarchive \
-  -exportPath /tmp/ils-crm-build/export \
-  -exportOptionsPlist <(cat <<PLIST
+cat > /tmp/ils-crm-build/export-options.plist << 'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -186,7 +193,16 @@ xcodebuild -exportArchive \
 </dict>
 </plist>
 PLIST
-) 2>&1 | tail -10
+```
+
+Then export:
+
+```bash
+xcodebuild -exportArchive \
+  -archivePath /tmp/ils-crm-build/ILS-CRM.xcarchive \
+  -exportPath /tmp/ils-crm-build/export \
+  -exportOptionsPlist /tmp/ils-crm-build/export-options.plist \
+  2>&1 | tail -10
 ```
 
 Expected: Signed `.app` bundle in `/tmp/ils-crm-build/export/`.
@@ -236,7 +252,17 @@ xcrun stapler staple "/tmp/ils-crm-build/ILS-CRM-1.0.6.dmg"
 
 Expected: `The staple and validate action worked!`
 
-- [ ] **Step 9: Verify Gatekeeper approval**
+- [ ] **Step 9: Sign DMG with Sparkle Ed25519 key**
+
+After notarization + stapling, sign the DMG for Sparkle update verification:
+
+```bash
+/path/to/sign_update "/tmp/ils-crm-build/ILS-CRM-1.0.6.dmg"
+```
+
+This outputs `sparkle:edSignature` and `length` values — save these for the appcast entry.
+
+- [ ] **Step 10: Verify Gatekeeper approval**
 
 ```bash
 spctl --assess --type open --context context:primary-signature -vvv "/tmp/ils-crm-build/export/ILS CRM+.app"
@@ -253,56 +279,58 @@ Expected: `accepted` (not `rejected`)
 **Files:**
 - Modify: `swift-app/ILS CRM/ILSCRMApp.swift`
 
-- [ ] **Step 1: Add Sparkle import and updater controller**
+- [ ] **Step 1: Add Sparkle import and updater controller (macOS-only)**
 
 At the top of `ILSCRMApp.swift`, add:
 
 ```swift
+#if os(macOS)
 import Sparkle
+#endif
 ```
 
-Add a property to the struct:
+Add a property to the struct (inside `#if os(macOS)`):
 
 ```swift
+#if os(macOS)
 private let updaterController: SPUStandardUpdaterController
+#endif
 ```
 
-- [ ] **Step 2: Initialize updater in init()**
+- [ ] **Step 2: Initialize updater in init() (macOS-only)**
 
 At the end of the existing `init()`, before the closing brace, add:
 
 ```swift
+#if os(macOS)
 updaterController = SPUStandardUpdaterController(
     startingUpdater: true,
     updaterDelegate: nil,
     userDriverDelegate: nil
 )
+#endif
 ```
 
-- [ ] **Step 3: Add Check for Updates menu item**
+- [ ] **Step 3: Add Check for Updates menu item (macOS-only)**
 
-In the `body`, inside the `#if os(macOS)` block, add a `.commands` modifier to `WindowGroup`:
+Add a `.commands` modifier to `WindowGroup`. The `.commands` modifier is macOS-only:
 
 ```swift
-WindowGroup {
-    ContentView()
-        .environment(syncEngine)
-}
-.modelContainer(container)
-.defaultSize(width: 1200, height: 800)
-.windowResizability(.contentMinSize)
+#if os(macOS)
 .commands {
     CommandGroup(after: .appInfo) {
         CheckForUpdatesView(updater: updaterController.updater)
     }
 }
+#endif
 ```
 
-- [ ] **Step 4: Create CheckForUpdatesView helper**
+- [ ] **Step 4: Create CheckForUpdatesView helper (macOS-only)**
 
-Add at the bottom of `ILSCRMApp.swift` (or as a separate file if preferred):
+Add at the bottom of `ILSCRMApp.swift`, wrapped in `#if os(macOS)`:
 
 ```swift
+#if os(macOS)
 struct CheckForUpdatesView: View {
     @ObservedObject private var checkForUpdatesViewModel: CheckForUpdatesViewModel
 
@@ -330,6 +358,7 @@ final class CheckForUpdatesViewModel: ObservableObject {
         updater.checkForUpdates()
     }
 }
+#endif
 ```
 
 - [ ] **Step 5: Add Info.plist keys via project.yml**
@@ -340,9 +369,10 @@ In `project.yml`, under the ILS CRM target `settings.base`, add:
 INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/edwardhodge-usa/ils-crm/main/appcast.xml"
 INFOPLIST_KEY_SUPublicEDKey: "PLACEHOLDER_REPLACE_AFTER_KEY_GENERATION"
 INFOPLIST_KEY_SUEnableAutomaticChecks: YES
+INFOPLIST_KEY_SUScheduledCheckInterval: 14400
 ```
 
-Note: `SUPublicEDKey` will be replaced with the real key after running `generate_keys` in Task 5.
+Note: `SUPublicEDKey` will be replaced with the real key after running `generate_keys` in Task 5. `SUScheduledCheckInterval` = 14400 seconds (4 hours), matching Electron's auto-update interval.
 
 - [ ] **Step 6: Regenerate Xcode project and verify build**
 
@@ -357,7 +387,7 @@ Expected: `BUILD SUCCEEDED`
 
 ```bash
 cd swift-app
-git add ILSCRMApp.swift project.yml "ILS CRM.xcodeproj"
+git add "ILS CRM/ILSCRMApp.swift" project.yml "ILS CRM.xcodeproj"
 git commit -m "feat: integrate Sparkle auto-updater with Check for Updates menu"
 ```
 
@@ -545,8 +575,12 @@ actor LicenseService {
     // MARK: - Check-In (fire and forget)
 
     private nonisolated func fireCheckIn(pat: String, recordId: String) {
+        // Capture actor properties as locals to avoid accessing self in detached task
+        let baseId = "appMIBpSZpJ0vsiz1"
+        let tableId = "tblQhmjhL5WA8rP7S"
+
         Task.detached {
-            let url = URL(string: "https://api.airtable.com/v0/\(self.baseId)/\(self.tableId)/\(recordId)")!
+            let url = URL(string: "https://api.airtable.com/v0/\(baseId)/\(tableId)/\(recordId)")!
             var request = URLRequest(url: url)
             request.httpMethod = "PATCH"
             request.setValue("Bearer \(pat)", forHTTPHeaderField: "Authorization")
@@ -687,7 +721,11 @@ struct RevokedView: View {
             // Admin email link
             Button("admin@imaginelabstudios.com") {
                 if let url = URL(string: "mailto:admin@imaginelabstudios.com") {
+                    #if os(macOS)
                     NSWorkspace.shared.open(url)
+                    #else
+                    UIApplication.shared.open(url)
+                    #endif
                 }
             }
             .buttonStyle(.plain)
@@ -697,7 +735,11 @@ struct RevokedView: View {
 
             // Quit button
             Button("Quit") {
+                #if os(macOS)
                 NSApplication.shared.terminate(nil)
+                #else
+                exit(0)
+                #endif
             }
             .buttonStyle(.bordered)
             .controlSize(.regular)
@@ -758,7 +800,11 @@ struct OfflineLockView: View {
 
             // Quit button
             Button("Quit") {
+                #if os(macOS)
                 NSApplication.shared.terminate(nil)
+                #else
+                exit(0)
+                #endif
             }
             .buttonStyle(.bordered)
             .controlSize(.regular)
@@ -795,47 +841,133 @@ git add "ILS CRM/Views/Auth/" "ILS CRM.xcodeproj"
 git commit -m "feat: add RevokedView and OfflineLockView — license lock screens"
 ```
 
-### Task 8: Wire License Check into App Startup
+### Task 8: Create AppStateManager and Wire License Check
 
 **Files:**
+- Create: `swift-app/ILS CRM/Services/AppStateManager.swift`
 - Modify: `swift-app/ILS CRM/ILSCRMApp.swift`
 
-- [ ] **Step 1: Add app state enum and license integration**
+Using an `@Observable` class instead of methods on the `App` struct. The `App` struct is recreated by SwiftUI, so `@State` on it works for simple values but spawning background Tasks from struct methods captures a copy — state mutations from the periodic re-check would silently fail. The `@Observable` class is a stable reference that survives struct recreation.
 
-Add the `AppState` enum above the `ILSCRMApp` struct:
+- [ ] **Step 1: Create AppStateManager**
+
+Write to `swift-app/ILS CRM/Services/AppStateManager.swift`:
 
 ```swift
-/// App state machine — mirrors Electron's appState in App.tsx
-enum AppState {
-    case loading
-    case revoked
-    case offlineLocked
-    case onboarding
-    case ready
+import Foundation
+import Observation
+import os
+
+/// Manages app lifecycle state: license validation, grace period, periodic re-check.
+/// Uses @Observable so SwiftUI views react to state changes automatically.
+///
+/// Extracted from App struct to avoid @State capture bugs — the App struct is
+/// recreated by SwiftUI, so background Tasks on it capture stale copies.
+@Observable
+@MainActor
+final class AppStateManager {
+    enum AppState {
+        case loading
+        case revoked
+        case offlineLocked
+        case onboarding
+        case ready
+    }
+
+    var appState: AppState = .loading
+
+    private let logger = Logger(subsystem: "com.ils-crm", category: "app-state")
+    private var periodicCheckTask: Task<Void, Never>?
+
+    deinit {
+        periodicCheckTask?.cancel()
+    }
+
+    // MARK: - License Check
+
+    func performLicenseCheck() async {
+        let email = UserDefaults.standard.string(forKey: "user_email") ?? ""
+
+        // No email yet — skip license check (onboarding hasn't happened)
+        guard !email.isEmpty else {
+            appState = .onboarding
+            return
+        }
+
+        // Check if license PAT is configured
+        let licenseService = LicenseService.shared
+        guard await licenseService.hasPAT() else {
+            // No license PAT — proceed to app (license check not configured yet)
+            logger.info("No license PAT configured, skipping license check")
+            appState = .ready
+            return
+        }
+
+        let status = await licenseService.checkLicense(email: email)
+
+        switch status {
+        case .active:
+            await licenseService.saveLastVerified()
+            logger.info("License valid, starting app")
+            appState = .ready
+            startPeriodicLicenseCheck(email: email)
+        case .error(let message):
+            if await licenseService.isWithinGracePeriod() {
+                logger.warning("License check failed (\(message)), within grace period")
+                appState = .ready
+                startPeriodicLicenseCheck(email: email)
+            } else {
+                logger.error("License check failed, grace period expired")
+                appState = .offlineLocked
+            }
+        case .revoked, .suspended, .notFound:
+            logger.error("License not active: \(String(describing: status))")
+            licenseService.deleteLocalStore()
+            appState = .revoked
+        }
+    }
+
+    // MARK: - Periodic Re-check
+
+    private func startPeriodicLicenseCheck(email: String) {
+        periodicCheckTask?.cancel()
+        periodicCheckTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2 * 60 * 60)) // 2 hours
+                guard !Task.isCancelled else { break }
+
+                let status = await LicenseService.shared.checkLicense(email: email)
+                switch status {
+                case .active:
+                    await LicenseService.shared.saveLastVerified()
+                case .error:
+                    if await !LicenseService.shared.isWithinGracePeriod() {
+                        await MainActor.run { self?.appState = .offlineLocked }
+                    }
+                case .revoked, .suspended, .notFound:
+                    LicenseService.shared.deleteLocalStore()
+                    await MainActor.run { self?.appState = .revoked }
+                }
+            }
+        }
+    }
 }
 ```
 
-- [ ] **Step 2: Replace ContentView root with state-driven view**
+- [ ] **Step 2: Update ILSCRMApp to use AppStateManager**
 
-Replace the `ILSCRMApp` struct's `body` property. The new version:
-
-1. Uses `@State var appState: AppState = .loading`
-2. Shows the appropriate view based on state
-3. Runs license check in `.task` modifier
-4. Starts a 2-hour periodic re-check timer
-
-The `WindowGroup` content becomes:
+In `ILSCRMApp.swift`, add a `@State` property for the manager:
 
 ```swift
-@State private var appState: AppState = .loading
+@State private var appStateManager = AppStateManager()
 ```
 
-And the `WindowGroup` body switches on `appState`:
+Replace the `WindowGroup` content to switch on `appStateManager.appState`:
 
 ```swift
 WindowGroup {
     Group {
-        switch appState {
+        switch appStateManager.appState {
         case .loading:
             ProgressView("Verifying license…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -843,83 +975,16 @@ WindowGroup {
             RevokedView()
         case .offlineLocked:
             OfflineLockView()
-        case .onboarding:
-            ContentView()
-                .environment(syncEngine)
-        case .ready:
+        case .onboarding, .ready:
             ContentView()
                 .environment(syncEngine)
         }
     }
-    .task { await performLicenseCheck() }
+    .task { await appStateManager.performLicenseCheck() }
 }
 ```
 
-- [ ] **Step 3: Add license check methods**
-
-Add these methods to `ILSCRMApp`:
-
-```swift
-private func performLicenseCheck() async {
-    let email = UserDefaults.standard.string(forKey: "user_email") ?? ""
-
-    // No email yet — skip license check (onboarding hasn't happened)
-    guard !email.isEmpty else {
-        appState = .onboarding
-        return
-    }
-
-    // Check if license PAT is configured
-    let licenseService = LicenseService.shared
-    guard await licenseService.hasPAT() else {
-        // No license PAT — proceed to app (license check not configured yet)
-        appState = .ready
-        return
-    }
-
-    let status = await licenseService.checkLicense(email: email)
-
-    switch status {
-    case .active:
-        await licenseService.saveLastVerified()
-        appState = .ready
-        startPeriodicLicenseCheck(email: email)
-    case .error:
-        if await licenseService.isWithinGracePeriod() {
-            appState = .ready
-            startPeriodicLicenseCheck(email: email)
-        } else {
-            appState = .offlineLocked
-        }
-    case .revoked, .suspended, .notFound:
-        licenseService.deleteLocalStore()
-        appState = .revoked
-    }
-}
-
-private func startPeriodicLicenseCheck(email: String) {
-    // Re-check every 2 hours
-    Task {
-        while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(2 * 60 * 60))
-            let status = await LicenseService.shared.checkLicense(email: email)
-            switch status {
-            case .active:
-                await LicenseService.shared.saveLastVerified()
-            case .error:
-                if await !LicenseService.shared.isWithinGracePeriod() {
-                    await MainActor.run { appState = .offlineLocked }
-                }
-            case .revoked, .suspended, .notFound:
-                LicenseService.shared.deleteLocalStore()
-                await MainActor.run { appState = .revoked }
-            }
-        }
-    }
-}
-```
-
-- [ ] **Step 4: Verify build**
+- [ ] **Step 3: Verify build**
 
 ```bash
 cd swift-app && xcodegen generate
@@ -928,61 +993,122 @@ xcodebuild build -project "ILS CRM.xcodeproj" -scheme "ILS CRM" -configuration D
 
 Expected: `BUILD SUCCEEDED`
 
-- [ ] **Step 5: Commit**
-
-```bash
-cd swift-app
-git add "ILS CRM/ILSCRMApp.swift" "ILS CRM.xcodeproj"
-git commit -m "feat: wire license check into app startup with state machine + periodic re-check"
-```
-
----
-
-## Wave 4: Bootstrap & Smoke Test
-
-### Task 9: Store License PAT in Keychain
-
-The license PAT needs to be stored in the Keychain before the license check will work. This is a one-time setup step.
-
-- [ ] **Step 1: Add license PAT storage to SettingsView (or run via debug helper)**
-
-The simplest approach: store the PAT on first launch. Add a call in `SettingsView.onAppear` or create a small bootstrap in `ILSCRMApp`:
-
-```swift
-// In performLicenseCheck(), before the guard for hasPAT():
-// Bootstrap: store the license PAT if not already in Keychain
-if await !licenseService.hasPAT() {
-    // PAT from license-config.ts — same token used by Electron
-    try? await licenseService.savePAT("REDACTED_AIRTABLE_PAT")
-}
-```
-
-Note: This embeds the PAT in source. For a private employee app this is acceptable (same as Electron's gitignored `license-config.ts`). The file containing this is already in `.gitignore` territory — but since Swift source files are tracked, add a comment noting this is the license PAT and should not be committed to public repos.
-
-Alternative: Add a "License" section to SettingsView with a SecureField for the PAT. This is cleaner but adds more UI work.
-
-- [ ] **Step 2: Set user_email in UserDefaults**
-
-The license check needs `user_email` in UserDefaults. This should already be set during onboarding. Verify:
-
-```swift
-UserDefaults.standard.string(forKey: "user_email")
-```
-
-If nil, the license check is skipped (goes to onboarding). Ensure the onboarding flow or SettingsView saves this value.
-
-- [ ] **Step 3: Run the app and verify license check**
-
-Launch the app in Xcode. Check console logs for:
-- `[License] ` log messages showing the check result
-- App should reach the main UI if the license is active
-
 - [ ] **Step 4: Commit**
 
 ```bash
 cd swift-app
+git add "ILS CRM/Services/AppStateManager.swift" "ILS CRM/ILSCRMApp.swift" "ILS CRM.xcodeproj"
+git commit -m "feat: wire license check into app startup via AppStateManager"
+```
+
+---
+
+## Wave 4: Settings UI + Smoke Test
+
+### Task 9: Add User Email & License PAT to Settings
+
+**Files:**
+- Modify: `swift-app/ILS CRM/Views/Settings/SettingsView.swift`
+
+The license check needs two values that don't exist in the Swift app yet:
+- `user_email` — used to look up the license record in Airtable
+- License PAT — stored in Keychain, used to authenticate with the licensing base
+
+Both are entered via SettingsView (not hardcoded in source — the repo is tracked on GitHub).
+
+- [ ] **Step 1: Add email and license PAT fields to SettingsView**
+
+Add new `@AppStorage` and `@State` properties:
+
+```swift
+@AppStorage("user_email") private var userEmail = ""
+@State private var licensePAT = ""
+```
+
+Add a new Section before the "Airtable Connection" section:
+
+```swift
+Section("User") {
+    TextField("Email Address", text: $userEmail)
+        .textFieldStyle(.roundedBorder)
+        .help("Used for license verification")
+}
+
+Section("License") {
+    SecureField("License Key", text: $licensePAT)
+        .textFieldStyle(.roundedBorder)
+
+    Button("Save License Key") {
+        saveLicensePAT()
+    }
+    .disabled(licensePAT.isEmpty)
+}
+```
+
+Add the save method:
+
+```swift
+private func saveLicensePAT() {
+    Task {
+        do {
+            try await LicenseService.shared.savePAT(licensePAT)
+            withAnimation { showSaveConfirmation = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation { showSaveConfirmation = false }
+            }
+        } catch {
+            print("[SettingsView] Failed to save license PAT: \(error.localizedDescription)")
+        }
+    }
+}
+```
+
+In `onAppear`, also load the existing license PAT:
+
+```swift
+if let storedPAT = KeychainService.read(key: "license-pat") {
+    licensePAT = storedPAT
+}
+```
+
+- [ ] **Step 2: Verify build**
+
+```bash
+cd swift-app && xcodegen generate
+xcodebuild build -project "ILS CRM.xcodeproj" -scheme "ILS CRM" -configuration Debug -destination "platform=macOS" 2>&1 | tail -5
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+cd swift-app
+git add "ILS CRM/Views/Settings/SettingsView.swift" "ILS CRM.xcodeproj"
+git commit -m "feat: add user email and license PAT fields to Settings"
+```
+
+### Task 10: Smoke Test
+
+- [ ] **Step 1: Run the app in Xcode**
+
+Open `swift-app/ILS CRM.xcodeproj` in Xcode and run. Expected flow:
+- App shows "Verifying license…" briefly
+- If no email/PAT configured: goes straight to main UI (license check skipped)
+- After entering email + license PAT in Settings and restarting: license check runs, console shows `[app-state] License valid, starting app`
+
+- [ ] **Step 2: Verify Settings fields work**
+
+In the running app, go to Settings:
+- Enter email address
+- Enter license PAT (from Electron's `license-config.ts`)
+- Save both
+- Restart app — license check should now validate
+
+- [ ] **Step 3: Commit any fixes**
+
+```bash
+cd swift-app
 git add -A
-git commit -m "feat: bootstrap license PAT and smoke test license check flow"
+git commit -m "fix: smoke test adjustments for license check flow"
 ```
 
 ---
@@ -991,10 +1117,10 @@ git commit -m "feat: bootstrap license PAT and smoke test license check flow"
 
 | Signal | Route |
 |--------|-------|
-| 9 tasks, multi-file, 3 waves | `/do` (subagents) |
+| 10 tasks, multi-file, 4 waves | `/do` (subagents) |
 
 Wave 1 (Tasks 1-3) has a manual gate: Edward must create the Developer ID Application certificate and store notarization credentials. Tasks 1-2 can be done by subagents. Task 3 requires interactive verification.
 
-Waves 2-3 (Tasks 4-8) are fully automatable.
+Waves 2-3 (Tasks 4-8) are fully automatable by subagents.
 
-Wave 4 (Task 9) needs Edward to verify the running app.
+Wave 4 (Tasks 9-10) adds Settings UI fields and requires Edward to verify the running app.
