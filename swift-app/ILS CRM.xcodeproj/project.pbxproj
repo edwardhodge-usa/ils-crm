@@ -598,7 +598,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 8RHA62T6FQ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "ILS CRM+";
@@ -608,7 +608,7 @@
 				INFOPLIST_KEY_SUPublicEDKey = "TEYI9o0zD1tc95dmkSIyvCN17FtqT0kXPo3F+pSHatw=";
 				INFOPLIST_KEY_SUScheduledCheckInterval = 14400;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MARKETING_VERSION = 1.0.6;
+				MARKETING_VERSION = 1.0.7;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.imaginelabstudios.ils-crm";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -789,7 +789,7 @@
 				CODE_SIGN_ENTITLEMENTS = "ILS CRM/ILS CRM.entitlements";
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 8RHA62T6FQ;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -800,7 +800,7 @@
 				INFOPLIST_KEY_SUPublicEDKey = "TEYI9o0zD1tc95dmkSIyvCN17FtqT0kXPo3F+pSHatw=";
 				INFOPLIST_KEY_SUScheduledCheckInterval = 14400;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MARKETING_VERSION = 1.0.6;
+				MARKETING_VERSION = 1.0.7;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.imaginelabstudios.ils-crm";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
