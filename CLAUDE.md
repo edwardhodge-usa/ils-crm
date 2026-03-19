@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM — Airtable schema management, API integrations, Electron desktop app + Swift app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Swift/SwiftUI (swift-app/), Airtable API (backend)
-- **Status**: v3.4.7 / Swift v1.0.5 — On main
+- **Status**: v3.4.8 / Swift v1.0.6 — On main
 - **Repo**: edwardhodge-usa/ils-crm | **Base ID**: appYXbUdcmSwBoPFU
 
 ## Project Scope
