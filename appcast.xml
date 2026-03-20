@@ -5,6 +5,26 @@
         <description>ILS CRM+ macOS App Updates</description>
         <language>en</language>
         <item>
+            <title>Version 1.1.1</title>
+            <sparkle:version>10</sparkle:version>
+            <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <pubDate>Thu, 20 Mar 2026 00:00:00 +0000</pubDate>
+            <description><![CDATA[
+                <ul>
+                    <li>Task sorting — 5 sort options within grouped sections</li>
+                    <li>Assigned To picker in task create/edit form</li>
+                    <li>Collaborator write-back — assignee changes now push to Airtable</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/edwardhodge-usa/ils-crm/releases/download/v1.1.1/ILS-CRM-1.1.1-x86_64+arm64.dmg"
+                length="3881144"
+                type="application/octet-stream"
+                sparkle:edSignature="wiC3AgiVg4xXPEoElgrDzZo6KZjqkS6qFyQdZLP6lTWL1S9sokAwpUHK/jJ5HXf5OTu+cgwwsTBeaaD6E9+lDg=="
+            />
+        </item>
+        <item>
             <title>Version 1.1.0</title>
             <sparkle:version>9</sparkle:version>
             <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
