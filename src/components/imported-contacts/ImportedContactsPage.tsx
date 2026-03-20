@@ -32,6 +32,19 @@ function initials(name: string): string {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Parse a JSON-encoded multi-select array and return the first value (for display) */
+function parseMultiSelect(raw: unknown): string | null {
+  if (!raw) return null
+  const s = String(raw)
+  if (s.startsWith('[')) {
+    try {
+      const arr = JSON.parse(s)
+      if (Array.isArray(arr) && arr.length > 0) return arr[0]
+    } catch { /* not JSON */ }
+  }
+  return s
+}
+
 /** Build a display name from available fields */
 function getContactName(contact: Record<string, unknown>): string {
   // Try the primary field first
@@ -181,7 +194,7 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
   const source = (contact.import_source as string | null) ?? null
   const importDate = contact.import_date ?? null
   const status = (contact.onboarding_status as string | null) ?? null
-  const categorization = (contact.categorization as string | null) ?? null
+  const categorization = parseMultiSelect(contact.categorization)
   const notes = (contact.note as string | null) ?? null
   const importedBy = parseCollaboratorName((contact.imported_by as string | null) ?? null)
   const assignedAdmin = parseCollaboratorName((contact.assigned_admin as string | null) ?? null)
