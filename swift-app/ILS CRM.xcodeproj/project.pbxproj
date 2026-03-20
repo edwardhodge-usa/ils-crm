@@ -14,6 +14,7 @@
 		141E801CD0E7D895A261D4AD /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F940D1601214B19B51F716 /* TasksView.swift */; };
 		1ACFC5383147C9326C6B6113 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */; };
 		1E022A0BD2BA8760C00B2ED4 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE314248FE2D8796FC6CF433 /* Project.swift */; };
+		21FE99C66A073A46002E9CCF /* BentoComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AA5E8114E123796534ED260 /* BentoComponents.swift */; };
 		2F2B540BE6651C6070BB48A6 /* Project+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C07D862A21FBBB8121DAE0 /* Project+Airtable.swift */; };
 		30901135097226C483D1DEB2 /* LicenseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4441B2730DB9DFA459D4FBA2 /* LicenseService.swift */; };
 		32A37AC7A71BCA3C59781505 /* PortalLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */; };
@@ -123,6 +124,7 @@
 		7D57C205199B792B326959B6 /* DetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailComponents.swift; sourceTree = "<group>"; };
 		80AAFC4F81B96A6478FEDDBA /* ImportedContactDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedContactDetailView.swift; sourceTree = "<group>"; };
 		89C658F412AEC8BC5883E5EA /* CRMTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRMTask.swift; sourceTree = "<group>"; };
+		8AA5E8114E123796534ED260 /* BentoComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoComponents.swift; sourceTree = "<group>"; };
 		8D68C7F1FA49E86B89C127B6 /* InteractionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractionDetailView.swift; sourceTree = "<group>"; };
 		91E7DA8774A3960554DDDB99 /* ImportedContact+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ImportedContact+Airtable.swift"; sourceTree = "<group>"; };
 		9270D2C7DC2115B929126C4E /* PortalAccessDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalAccessDetailView.swift; sourceTree = "<group>"; };
@@ -253,6 +255,7 @@
 		495AB2326DEFF9F68C0C7703 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				8AA5E8114E123796534ED260 /* BentoComponents.swift */,
 				7D57C205199B792B326959B6 /* DetailComponents.swift */,
 				A09B51751718308565E912A8 /* EditableAvatarView.swift */,
 				5CE5BF78A83434AD89F1FFCD /* LinkedRecordPicker.swift */,
@@ -518,6 +521,7 @@
 				55DFA7A044C0B594B5A5354E /* AirtableConvertible.swift in Sources */,
 				449038EC80DE762E7082426D /* AirtableService.swift in Sources */,
 				B4B487342A3ADC5D920D605A /* AppStateManager.swift in Sources */,
+				21FE99C66A073A46002E9CCF /* BentoComponents.swift in Sources */,
 				D456DB1C39A4368CBFC3FD11 /* CRMTask+Airtable.swift in Sources */,
 				9249063E8DC1713631C37A1E /* CRMTask.swift in Sources */,
 				106ADEB53369675C780A9283 /* ClientPage+Airtable.swift in Sources */,
