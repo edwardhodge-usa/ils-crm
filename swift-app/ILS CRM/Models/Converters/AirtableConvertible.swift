@@ -108,10 +108,18 @@ struct AirtableFields {
     }
 
     /// Collaborator fields: returns the `.name` string from `{id, email, name}` object.
-    /// Collaborator fields are read-only — never included in push payloads.
     func collaboratorName(for fieldId: String) -> String? {
         guard let dict = raw[fieldId] as? [String: Any] else { return nil }
         return dict["name"] as? String
+    }
+
+    /// Collaborator fields: returns the full JSON string of the `{id, email, name}` object
+    /// for storage. Used to preserve collaborator data for write-back to Airtable.
+    func collaboratorData(for fieldId: String) -> String? {
+        guard let dict = raw[fieldId] as? [String: Any] else { return nil }
+        guard let data = try? JSONSerialization.data(withJSONObject: dict),
+              let json = String(data: data, encoding: .utf8) else { return nil }
+        return json
     }
 
     // MARK: - Date Formatters (static, reused)
@@ -162,8 +170,9 @@ protocol AirtableConvertible: PersistentModel {
     static func from(record: AirtableRecord, context: ModelContext) -> Self
 
     /// Converts the model's writable fields to an Airtable-compatible dictionary.
-    /// Read-only fields (formula, lookup, rollup, collaborator, autoNumber)
-    /// must be excluded. Returns empty dict for read-only tables.
+    /// Read-only fields (formula, lookup, rollup, autoNumber) must be excluded.
+    /// Collaborator fields use `setCollaborator()` to send `{id: "usrXXX"}` format.
+    /// Returns empty dict for read-only tables.
     func toAirtableFields() -> [String: Any]
 }
 
@@ -225,6 +234,21 @@ struct AirtableFieldsBuilder {
     /// Sends NSNull() when empty so cleared links propagate to Airtable.
     mutating func setLinkedIds(_ fieldId: String, _ value: [String]) {
         fields[fieldId] = value.isEmpty ? NSNull() : value as Any
+    }
+
+    /// Sets a collaborator field from stored JSON data string.
+    /// Parses the JSON (e.g. `{"id":"usrXXX","email":"...","name":"..."}`) and sends
+    /// only `{"id":"usrXXX"}` — the format Airtable requires for collaborator writes.
+    /// Sends NSNull() when nil to clear the field.
+    mutating func setCollaborator(_ fieldId: String, _ jsonData: String?) {
+        guard let jsonData, !jsonData.isEmpty,
+              let data = jsonData.data(using: .utf8),
+              let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let userId = dict["id"] as? String else {
+            fields[fieldId] = NSNull()
+            return
+        }
+        fields[fieldId] = ["id": userId]
     }
 
     // MARK: - Date Formatters

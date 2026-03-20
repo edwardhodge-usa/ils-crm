@@ -34,6 +34,17 @@ struct TaskFormView: View {
         Array(Set(allTasks.compactMap { $0.assignedTo }.filter { !$0.isEmpty })).sorted()
     }
 
+    /// Maps display name → full collaborator JSON string from existing tasks.
+    /// Same approach as Electron's `buildCollaboratorMap(records, fieldName)`.
+    private var collaboratorMap: [String: String] {
+        Dictionary(
+            allTasks
+                .filter { $0.assignedTo != nil && $0.assignedToData != nil }
+                .map { ($0.assignedTo!, $0.assignedToData!) },
+            uniquingKeysWith: { _, last in last }
+        )
+    }
+
     init(crmTask: CRMTask? = nil, initialAssignee: String? = nil) {
         self.crmTask = crmTask
         self.initialAssignee = initialAssignee
@@ -151,12 +162,17 @@ struct TaskFormView: View {
         let name = taskName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
 
+        // Resolve collaborator data from picker selection
+        let resolvedAssignedTo = assignedTo.isEmpty ? nil : assignedTo
+        let resolvedAssignedToData = resolvedAssignedTo.flatMap { collaboratorMap[$0] }
+
         if let task = crmTask {
             task.task          = name
             task.status        = status
             task.priority      = priority.isEmpty  ? nil : priority
             task.type          = type.isEmpty      ? nil : type
-            task.assignedTo    = assignedTo.isEmpty ? nil : assignedTo
+            task.assignedTo    = resolvedAssignedTo
+            task.assignedToData = resolvedAssignedToData
             task.dueDate       = hasDueDate        ? dueDate : nil
             task.completedDate = (status == "Completed" && hasCompletedDate) ? completedDate : nil
             task.notes         = notes.isEmpty     ? nil : notes
@@ -171,7 +187,8 @@ struct TaskFormView: View {
             newTask.status        = status
             newTask.priority      = priority.isEmpty  ? nil : priority
             newTask.type          = type.isEmpty      ? nil : type
-            newTask.assignedTo    = assignedTo.isEmpty ? nil : assignedTo
+            newTask.assignedTo    = resolvedAssignedTo
+            newTask.assignedToData = resolvedAssignedToData
             newTask.dueDate       = hasDueDate        ? dueDate : nil
             newTask.completedDate = (status == "Completed" && hasCompletedDate) ? completedDate : nil
             newTask.notes         = notes.isEmpty     ? nil : notes

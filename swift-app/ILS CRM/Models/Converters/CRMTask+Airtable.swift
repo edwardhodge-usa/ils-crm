@@ -34,6 +34,7 @@ extension CRMTask: AirtableConvertible {
         model.projectsIds = f.stringArray(for: F.projects)
         model.proposalIds = f.stringArray(for: F.proposal)
         model.assignedTo = f.collaboratorName(for: F.assignedTo)
+        model.assignedToData = f.collaboratorData(for: F.assignedTo)
         return model
     }
 
@@ -50,7 +51,7 @@ extension CRMTask: AirtableConvertible {
         b.setLinkedIds(F.contacts, contactsIds)
         b.setLinkedIds(F.projects, projectsIds)
         b.setLinkedIds(F.proposal, proposalIds)
-        // assignedTo (collaborator) excluded
+        b.setCollaborator(F.assignedTo, assignedToData)
         return b.fields
     }
 }

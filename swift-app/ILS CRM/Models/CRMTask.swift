@@ -23,8 +23,9 @@ final class CRMTask {
     var type: String?              // fldXcqtkVSh60H20b
     var priority: String?          // fldREFoOWpRN4Ejfg
 
-    // Collaborator (read-only — not pushed to Airtable)
-    var assignedTo: String?        // fldtfWkEqvv5YHODj
+    // Collaborator
+    var assignedTo: String?        // fldtfWkEqvv5YHODj (display name)
+    var assignedToData: String?    // full collaborator JSON: {"id":"usrXXX","email":"...","name":"..."}
 
     // Linked Record IDs
     var salesOpportunitiesIds: [String]  // fldhzkBEvT2UlcW7g → Opportunities

@@ -21,9 +21,9 @@
 
 ## Feature Requests
 
-- [ ] **#6** Task grouping and sorting (group by project, assignee, type)
-- [ ] **#8** Task detail view with linked contact/company display
-- [ ] **#16** Task create form — add "Assigned To" field, defaults to currently selected assignee in task list sidebar
+- [x] ~~**#6** Task sorting~~ — sort dropdown in TasksView with 5 options (Due Date, A-Z, Z-A, Priority, Created), persists via @AppStorage (completed 2026-03-20)
+- [x] ~~**#8** Task detail view with linked contact/company display~~ — already implemented (verified 2026-03-20)
+- [x] ~~**#16** Task create form — Assigned To picker + collaborator write-back~~ — picker populated from existing assignees, collaborator JSON stored for Airtable push (completed 2026-03-20)
 - [ ] **#17** Task detail view — redesign as bento box layout (matching Contact 360 pattern)
 
 ## Todo — Infrastructure
