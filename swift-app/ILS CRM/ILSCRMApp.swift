@@ -48,7 +48,23 @@ struct ILSCRMApp: App {
             container = c
             _syncEngine = State(initialValue: SyncEngine(modelContainer: c))
         } catch {
-            fatalError("Failed to initialize SwiftData container: \(error)")
+            // Schema changed between versions — delete stale store and retry.
+            // All data re-syncs from Airtable, so no data loss.
+            print("[App] SwiftData schema mismatch, deleting store and retrying: \(error)")
+            let fileManager = FileManager.default
+            if let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+                let storeFiles = ["ILS_CRM.store", "ILS_CRM.store-shm", "ILS_CRM.store-wal"]
+                for file in storeFiles {
+                    try? fileManager.removeItem(at: appSupport.appendingPathComponent(file))
+                }
+            }
+            do {
+                let c = try ModelContainer(for: schema, configurations: [config])
+                container = c
+                _syncEngine = State(initialValue: SyncEngine(modelContainer: c))
+            } catch {
+                fatalError("Failed to initialize SwiftData container after store reset: \(error)")
+            }
         }
 
         #if os(macOS)
@@ -82,10 +98,16 @@ struct ILSCRMApp: App {
         .defaultSize(width: 1200, height: 800)
         .windowResizability(.contentMinSize)
         #if os(macOS)
+        .windowToolbarStyle(.unified)
+        #endif
+        #if os(macOS)
         .commands {
             CommandGroup(after: .appInfo) {
                 CheckForUpdatesView(updater: updaterController.updater)
             }
+            NavigationCommands()
+            NewRecordCommand()
+            SidebarCommands()
         }
         #endif
 
@@ -96,6 +118,66 @@ struct ILSCRMApp: App {
         }
         .modelContainer(container)
         #endif
+    }
+}
+
+// MARK: - Navigation Commands (Go Menu)
+
+struct NavigationCommands: Commands {
+    @FocusedBinding(\.selectedNavItem) private var selectedNavItem
+
+    var body: some Commands {
+        CommandMenu("Go") {
+            Button("Dashboard") { selectedNavItem = .dashboard }
+                .keyboardShortcut("1", modifiers: .command)
+            Button("Contacts") { selectedNavItem = .contacts }
+                .keyboardShortcut("2", modifiers: .command)
+            Button("Companies") { selectedNavItem = .companies }
+                .keyboardShortcut("3", modifiers: .command)
+            Button("Pipeline") { selectedNavItem = .pipeline }
+                .keyboardShortcut("4", modifiers: .command)
+            Button("Tasks") { selectedNavItem = .tasks }
+                .keyboardShortcut("5", modifiers: .command)
+            Button("Projects") { selectedNavItem = .projects }
+                .keyboardShortcut("6", modifiers: .command)
+            Button("Proposals") { selectedNavItem = .proposals }
+                .keyboardShortcut("7", modifiers: .command)
+            Button("Client Portal") { selectedNavItem = .clientPortal }
+                .keyboardShortcut("8", modifiers: .command)
+            Button("Interactions") { selectedNavItem = .interactions }
+                .keyboardShortcut("9", modifiers: .command)
+            Button("Imported Contacts") { selectedNavItem = .importedContacts }
+                .keyboardShortcut("0", modifiers: .command)
+        }
+    }
+}
+
+// MARK: - New Record Command (Cmd+N)
+
+struct NewRecordCommand: Commands {
+    @FocusedValue(\.currentEntityLabel) private var entityLabel
+
+    /// Non-empty label means an entity can be created; empty/nil means disabled.
+    private var canCreate: Bool {
+        guard let label = entityLabel else { return false }
+        return !label.isEmpty
+    }
+
+    private var menuTitle: String {
+        if let label = entityLabel, !label.isEmpty {
+            return "New \(label)"
+        }
+        return "New Record"
+    }
+
+    var body: some Commands {
+        CommandGroup(replacing: .newItem) {
+            Button(menuTitle) {
+                NotificationCenter.default.post(name: .createNewRecord, object: nil)
+            }
+            .keyboardShortcut("n", modifiers: .command)
+            .disabled(!canCreate)
+        }
     }
 }
 

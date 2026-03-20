@@ -1,5 +1,29 @@
 import SwiftUI
 
+// MARK: - Focused Value Key for Navigation
+
+extension FocusedValues {
+    var selectedNavItem: Binding<NavItem?>? {
+        get { self[SelectedNavItemKey.self] }
+        set { self[SelectedNavItemKey.self] = newValue }
+    }
+}
+
+private struct SelectedNavItemKey: FocusedValueKey {
+    typealias Value = Binding<NavItem?>
+}
+
+extension FocusedValues {
+    var currentEntityLabel: String? {
+        get { self[CurrentEntityLabelKey.self] }
+        set { self[CurrentEntityLabelKey.self] = newValue }
+    }
+}
+
+private struct CurrentEntityLabelKey: FocusedValueKey {
+    typealias Value = String
+}
+
 /// Navigation items for the main sidebar.
 enum NavItem: String, CaseIterable, Hashable {
     // CRM group
@@ -70,6 +94,21 @@ struct ContentView: View {
         NavItem(rawValue: selectedRawValue)
     }
 
+    /// Entity label for the current selection (used by Cmd+N menu command).
+    /// Empty string means no entity can be created (dashboard, clientPortal, importedContacts).
+    private var entityLabelForSelection: String {
+        switch selection {
+        case .contacts: return "Contact"
+        case .companies: return "Company"
+        case .pipeline: return "Opportunity"
+        case .tasks: return "Task"
+        case .projects: return "Project"
+        case .proposals: return "Proposal"
+        case .interactions: return "Interaction"
+        case .dashboard, .clientPortal, .importedContacts, nil: return ""
+        }
+    }
+
     /// Two-way binding for List/NavigationSplitView selection.
     private var selectionBinding: Binding<NavItem?> {
         Binding(
@@ -86,6 +125,8 @@ struct ContentView: View {
         } detail: {
             detailView
         }
+        .focusedSceneValue(\.selectedNavItem, selectionBinding)
+        .focusedSceneValue(\.currentEntityLabel, entityLabelForSelection)
         .frame(minWidth: 900, minHeight: 600)
         .onAppear {
             // Auto-configure sync from Keychain on launch (matches Electron behavior)
