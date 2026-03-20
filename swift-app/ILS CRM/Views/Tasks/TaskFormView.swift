@@ -11,7 +11,10 @@ struct TaskFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    @Query private var allTasks: [CRMTask]
+
     let crmTask: CRMTask?  // nil = create, non-nil = edit
+    let initialAssignee: String?
 
     // MARK: - Form State
 
@@ -19,11 +22,22 @@ struct TaskFormView: View {
     @State private var status: String = "To Do"
     @State private var priority: String = ""
     @State private var type: String = ""
+    @State private var assignedTo: String = ""
     @State private var dueDate: Date = Date()
     @State private var hasDueDate: Bool = false
     @State private var completedDate: Date = Date()
     @State private var hasCompletedDate: Bool = false
     @State private var notes: String = ""
+
+    /// Unique assignee names extracted from all existing tasks
+    private var assigneeOptions: [String] {
+        Array(Set(allTasks.compactMap { $0.assignedTo }.filter { !$0.isEmpty })).sorted()
+    }
+
+    init(crmTask: CRMTask? = nil, initialAssignee: String? = nil) {
+        self.crmTask = crmTask
+        self.initialAssignee = initialAssignee
+    }
 
     // MARK: - Options (matching Airtable select values)
 
@@ -65,6 +79,13 @@ struct TaskFormView: View {
                         Text(option).tag(option)
                     }
                 }
+
+                Picker("Assigned To", selection: $assignedTo) {
+                    Text("Unassigned").tag("")
+                    ForEach(assigneeOptions, id: \.self) { name in
+                        Text(name).tag(name)
+                    }
+                }
             }
 
             Section("Schedule") {
@@ -103,20 +124,24 @@ struct TaskFormView: View {
     // MARK: - Load Existing Task (edit mode)
 
     private func loadExistingTask() {
-        guard let task = crmTask else { return }
-        taskName = task.task ?? ""
-        status   = task.status   ?? "To Do"
-        priority = task.priority ?? ""
-        type     = task.type     ?? ""
-        notes    = task.notes    ?? ""
+        if let task = crmTask {
+            taskName   = task.task ?? ""
+            status     = task.status   ?? "To Do"
+            priority   = task.priority ?? ""
+            type       = task.type     ?? ""
+            assignedTo = task.assignedTo ?? ""
+            notes      = task.notes    ?? ""
 
-        if let due = task.dueDate {
-            dueDate    = due
-            hasDueDate = true
-        }
-        if let completed = task.completedDate {
-            completedDate    = completed
-            hasCompletedDate = true
+            if let due = task.dueDate {
+                dueDate    = due
+                hasDueDate = true
+            }
+            if let completed = task.completedDate {
+                completedDate    = completed
+                hasCompletedDate = true
+            }
+        } else if let initial = initialAssignee, !initial.isEmpty {
+            assignedTo = initial
         }
     }
 
@@ -131,6 +156,7 @@ struct TaskFormView: View {
             task.status        = status
             task.priority      = priority.isEmpty  ? nil : priority
             task.type          = type.isEmpty      ? nil : type
+            task.assignedTo    = assignedTo.isEmpty ? nil : assignedTo
             task.dueDate       = hasDueDate        ? dueDate : nil
             task.completedDate = (status == "Completed" && hasCompletedDate) ? completedDate : nil
             task.notes         = notes.isEmpty     ? nil : notes
@@ -145,6 +171,7 @@ struct TaskFormView: View {
             newTask.status        = status
             newTask.priority      = priority.isEmpty  ? nil : priority
             newTask.type          = type.isEmpty      ? nil : type
+            newTask.assignedTo    = assignedTo.isEmpty ? nil : assignedTo
             newTask.dueDate       = hasDueDate        ? dueDate : nil
             newTask.completedDate = (status == "Completed" && hasCompletedDate) ? completedDate : nil
             newTask.notes         = notes.isEmpty     ? nil : notes

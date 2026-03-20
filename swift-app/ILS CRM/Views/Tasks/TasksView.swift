@@ -2,6 +2,18 @@ import SwiftUI
 import SwiftData
 import Combine
 
+// MARK: - TaskSortOrder
+
+enum TaskSortOrder: String, CaseIterable, CustomStringConvertible {
+    case dueDate        = "Due Date"
+    case nameAZ         = "Name A→Z"
+    case nameZA         = "Name Z→A"
+    case priorityHighLow = "Priority"
+    case dateCreated    = "Date Created"
+
+    var description: String { rawValue }
+}
+
 // MARK: - TasksView
 
 /// Tasks — 3-column layout mirroring the Electron TasksPage.tsx + TaskListPage.tsx.
@@ -25,6 +37,9 @@ struct TasksView: View {
     // Column 3
     @State private var searchText: String = ""
     @State private var selectedTask: CRMTask?
+
+    // Sort
+    @AppStorage("sort-tasks") private var sortOrder: TaskSortOrder = .dueDate
 
     // Sheet
     @State private var showNewTask = false
@@ -174,14 +189,14 @@ struct TasksView: View {
         return result
     }
 
-    // MARK: - Grouped sections
+    // MARK: - Grouped sections (sorted within each group)
 
-    private var overdueTasks:   [CRMTask] { filteredTasks.filter { isOverdue($0) } }
-    private var todayTasks:     [CRMTask] { filteredTasks.filter { isToday($0) && !isOverdue($0) } }
-    private var waitingTasks:   [CRMTask] { filteredTasks.filter { isWaiting($0) && !isOverdue($0) && !isToday($0) } }
-    private var noDateTasks:    [CRMTask] { filteredTasks.filter { $0.dueDate == nil && !isCompleted($0) && !isWaiting($0) } }
-    private var scheduledTasks: [CRMTask] { filteredTasks.filter { isScheduled($0) && !isWaiting($0) } }
-    private var completedTasks: [CRMTask] { filteredTasks.filter { isCompleted($0) } }
+    private var overdueTasks:   [CRMTask] { sortTasks(filteredTasks.filter { isOverdue($0) }) }
+    private var todayTasks:     [CRMTask] { sortTasks(filteredTasks.filter { isToday($0) && !isOverdue($0) }) }
+    private var waitingTasks:   [CRMTask] { sortTasks(filteredTasks.filter { isWaiting($0) && !isOverdue($0) && !isToday($0) }) }
+    private var noDateTasks:    [CRMTask] { sortTasks(filteredTasks.filter { $0.dueDate == nil && !isCompleted($0) && !isWaiting($0) }) }
+    private var scheduledTasks: [CRMTask] { sortTasks(filteredTasks.filter { isScheduled($0) && !isWaiting($0) }) }
+    private var completedTasks: [CRMTask] { sortTasks(filteredTasks.filter { isCompleted($0) }) }
 
     private var filterName: String {
         let category = selectedType ?? selectedSmartList
@@ -448,6 +463,22 @@ struct TasksView: View {
 
             Divider()
 
+            // Sort control bar
+            HStack(spacing: 6) {
+                Text("\(filteredTasks.count) tasks")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                SortDropdown(
+                    options: TaskSortOrder.allCases,
+                    selection: $sortOrder
+                )
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+
+            Divider()
+
             // Grouped list
             if filteredTasks.isEmpty {
                 EmptyStateView(
@@ -648,5 +679,52 @@ struct TasksView: View {
         if p.localizedCaseInsensitiveContains("high") { return .red }
         if p.localizedCaseInsensitiveContains("medium") { return .orange }
         return Color(white: 0.5)
+    }
+
+    // MARK: - Sort helpers
+
+    /// Numeric rank for priority sorting: High=0, Medium=1, Low=2, nil/unknown=3.
+    private func priorityRank(for priority: String?) -> Int {
+        guard let p = priority else { return 3 }
+        if p.localizedCaseInsensitiveContains("high")   { return 0 }
+        if p.localizedCaseInsensitiveContains("medium") { return 1 }
+        if p.localizedCaseInsensitiveContains("low")    { return 2 }
+        return 3
+    }
+
+    /// Sort an array of tasks according to the current `sortOrder`.
+    private func sortTasks(_ tasks: [CRMTask]) -> [CRMTask] {
+        switch sortOrder {
+        case .dueDate:
+            return tasks.sorted { a, b in
+                switch (a.dueDate, b.dueDate) {
+                case (nil, nil): return false
+                case (nil, _):   return false   // nil dates last
+                case (_, nil):   return true
+                case let (ad?, bd?): return ad < bd
+                }
+            }
+        case .nameAZ:
+            return tasks.sorted {
+                ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedAscending
+            }
+        case .nameZA:
+            return tasks.sorted {
+                ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedDescending
+            }
+        case .priorityHighLow:
+            return tasks.sorted {
+                priorityRank(for: $0.priority) < priorityRank(for: $1.priority)
+            }
+        case .dateCreated:
+            return tasks.sorted { a, b in
+                switch (a.airtableModifiedAt, b.airtableModifiedAt) {
+                case (nil, nil): return false
+                case (nil, _):   return false   // nil dates last
+                case (_, nil):   return true
+                case let (ad?, bd?): return ad > bd   // newest first
+                }
+            }
+        }
     }
 }
