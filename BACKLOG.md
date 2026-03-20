@@ -7,12 +7,12 @@
 
 ## Bugs — Electron
 
-- [ ] **#4** Kanban small-window layout — 7 columns overflow on narrow screens
-- [ ] **#5** Kanban click vs drag — clicks only drag, can't navigate to deal detail
-- [ ] **#12** Engagement column shows raw JSON instead of formatted values
-- [ ] **#13** Imported Contacts — all names show "—"
-- [ ] **#14** Portal Access — Name/Email/Company fields empty (linked field resolution)
-- [ ] **#15** Portal Logs — blank records displayed
+- [x] ~~**#4** Kanban small-window layout~~ — columns now flex 140-220px with responsive reflow (fixed 2026-03-20)
+- [x] ~~**#5** Kanban click vs drag~~ — delay-based drag activation (200ms) lets clicks pass through (fixed 2026-03-20)
+- [x] ~~**#12** Engagement column shows raw JSON~~ — confirmed already working via EditableFormRow multiSelect handler (verified 2026-03-20)
+- [x] ~~**#13** Imported Contacts — all names show "—"~~ (fixed 2026-03-19)
+- [x] ~~**#14** Portal Access — Name/Email/Company fields empty~~ (fixed 2026-03-19)
+- [x] ~~**#15** Portal Logs — blank records displayed~~ — filters out records with all-null display fields (fixed 2026-03-20)
 
 ## Bugs — Swift
 

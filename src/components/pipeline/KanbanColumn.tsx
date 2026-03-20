@@ -16,7 +16,7 @@ export function KanbanColumn({ stage, deals, selectedDealId, onSelectDeal }: Kan
   const stageColor = stageDotColor(stage)
 
   return (
-    <div className="flex flex-col flex-shrink-0 w-[200px]">
+    <div className="flex flex-col min-w-[140px] flex-1 max-w-[220px]">
       {/* Column header */}
       <div
         className="flex items-center gap-2 flex-shrink-0"

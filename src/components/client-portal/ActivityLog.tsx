@@ -68,6 +68,11 @@ export default function ActivityLog({
       })
     }
 
+    // Filter out blank records (all display fields null)
+    result = result.filter(log =>
+      log.client_name || log.page_url || log.timestamp
+    )
+
     // Sort by timestamp descending
     result = [...result].sort((a, b) => {
       const ta = String(a.timestamp ?? '')
