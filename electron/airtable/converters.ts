@@ -104,7 +104,22 @@ function airtableToLocal(
         result[m.local] = checkbox(val)
         break
       case 'readonly':
-        result[m.local] = val != null ? (typeof val === 'number' ? val : str(val)) : null
+        // Lookup fields return arrays — extract first element for display
+        if (Array.isArray(val)) {
+          if (val.length === 0) {
+            result[m.local] = null
+          } else {
+            const first = val[0]
+            // Lookup of select fields may return {id, name, color} objects
+            if (first && typeof first === 'object' && 'name' in first) {
+              result[m.local] = (first as { name: string }).name || null
+            } else {
+              result[m.local] = str(first)
+            }
+          }
+        } else {
+          result[m.local] = val != null ? (typeof val === 'number' ? val : str(val)) : null
+        }
         break
       case 'collaborator':
         if (val && typeof val === 'object' && 'id' in (val as Record<string, unknown>)) {
