@@ -59,11 +59,11 @@ struct PortalAccessView: View {
             } else {
                 switch viewMode {
                 case .all:
-                    recordList
+                    allSplitView
                 case .byPage:
                     byPageList
                 case .byPerson:
-                    byPersonList
+                    byPersonSplitView
                 }
             }
         }
@@ -80,29 +80,45 @@ struct PortalAccessView: View {
                 .frame(width: 240)
             }
         }
-        .sheet(item: $selectedRecord) { record in
-            PortalAccessDetailView(record: record)
-                .frame(minWidth: 480, minHeight: 600)
-        }
         .onDisappear {
             healthService.cancelCheck()
         }
     }
 
-    // MARK: - Record List
+    // MARK: - All (Split Pane: list | detail)
 
-    private var recordList: some View {
-        List {
-            ForEach(filteredRecords, id: \.id) { record in
-                Button {
-                    selectedRecord = record
-                } label: {
-                    recordRow(record)
+    private var allSplitView: some View {
+        HStack(spacing: 0) {
+            List(selection: $selectedRecord) {
+                ForEach(filteredRecords, id: \.id) { record in
+                    Button {
+                        selectedRecord = record
+                    } label: {
+                        recordRow(record)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
+            .listStyle(.inset)
+            .frame(minWidth: 300)
+
+            Divider()
+
+            Group {
+                if let record = selectedRecord {
+                    ScrollView {
+                        PortalAccessDetailView(record: record)
+                    }
+                } else {
+                    EmptyStateView(
+                        title: "Select a record",
+                        description: "Choose a portal access record to view details.",
+                        systemImage: "person.crop.rectangle"
+                    )
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .listStyle(.inset)
     }
 
     // MARK: - By Page (Dual-Pane)
@@ -513,43 +529,63 @@ struct PortalAccessView: View {
 
     private static let defaultPageTitle = "We've prepared this overview of our capabilities, approach and video examples — please don't hesitate to reach out with any questions."
 
-    // MARK: - By Person List
+    // MARK: - By Person (Split Pane: grouped list | detail)
 
-    private var byPersonList: some View {
+    private var byPersonSplitView: some View {
         let grouped = Dictionary(grouping: filteredRecords) { record in
             record.email ?? record.contactEmailLookup ?? "No Email"
         }
         let sortedKeys = grouped.keys.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
 
-        return List {
-            ForEach(sortedKeys, id: \.self) { email in
-                let records = grouped[email] ?? []
-                let bestName = records.first.map { displayName(for: $0) } ?? email
+        return HStack(spacing: 0) {
+            List(selection: $selectedRecord) {
+                ForEach(sortedKeys, id: \.self) { email in
+                    let records = grouped[email] ?? []
+                    let bestName = records.first.map { displayName(for: $0) } ?? email
 
-                Section {
-                    ForEach(records, id: \.id) { record in
-                        Button { selectedRecord = record } label: { recordRow(record) }
-                            .buttonStyle(.plain)
-                    }
-                } header: {
-                    HStack {
-                        Image(systemName: "person")
-                        VStack(alignment: .leading) {
-                            Text(bestName)
-                            if email != "No Email" {
-                                Text(email)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+                    Section {
+                        ForEach(records, id: \.id) { record in
+                            Button { selectedRecord = record } label: { recordRow(record) }
+                                .buttonStyle(.plain)
                         }
-                        Spacer()
-                        Text("\(records.count)")
-                            .foregroundStyle(.secondary)
+                    } header: {
+                        HStack {
+                            Image(systemName: "person")
+                            VStack(alignment: .leading) {
+                                Text(bestName)
+                                if email != "No Email" {
+                                    Text(email)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Spacer()
+                            Text("\(records.count)")
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
+            .listStyle(.inset)
+            .frame(minWidth: 300)
+
+            Divider()
+
+            Group {
+                if let record = selectedRecord {
+                    ScrollView {
+                        PortalAccessDetailView(record: record)
+                    }
+                } else {
+                    EmptyStateView(
+                        title: "Select a record",
+                        description: "Choose a portal access record to view details.",
+                        systemImage: "person.crop.rectangle"
+                    )
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .listStyle(.inset)
     }
 
     // MARK: - Record Row

@@ -13,8 +13,6 @@ struct PortalAccessDetailView: View {
 
     @Query private var clientPages: [ClientPage]
 
-    @Environment(\.dismiss) private var dismiss
-
     private static let isoFormatter: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withFullDate]
@@ -147,10 +145,9 @@ struct PortalAccessDetailView: View {
     // MARK: - Body
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 10) {
+        VStack(spacing: 10) {
 
-                // MARK: Hero Card
+            // MARK: Hero Card
                 BentoHeroCard(
                     name: displayName,
                     subtitle: heroSubtitle,
@@ -309,16 +306,9 @@ struct PortalAccessDetailView: View {
                     }
                 }
 
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
         }
-        .scrollIndicators(.automatic)
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done") { dismiss() }
-            }
-        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 
     // MARK: - Save Handler
