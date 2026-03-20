@@ -33,6 +33,10 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 
 ## Lessons Learned
 
+### UI Redesign Process
+- When executing a UI redesign from an HTML mockup: (1) READ the mockup HTML file and feed its content to every subagent, (2) use the mockup as source of truth for layout, sections, and field groupings — not the data model, (3) verify the result visually against the mockup before shipping. Subagents that don't see the mockup will invent their own layouts.
+- Detail views should show inline (list | detail split pane) not as sheet popups — matches macOS HIG for master-detail. Use HStack with Divider, not `.sheet(item:)`
+
 ### Airtable API Rules
 - API cannot create formula fields, views, or delete fields — document for manual creation in UI
 - Airtable is single source of truth. Every app field MUST map to an Airtable field — no local-only data. New field checklist: (1) check Airtable, (2) create if needed, (3) add to field-maps.ts + converters.ts
