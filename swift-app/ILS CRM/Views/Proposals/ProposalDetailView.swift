@@ -1,10 +1,10 @@
 import SwiftUI
 import SwiftData
 
-/// Proposal detail pane — mirrors src/components/proposals/Proposal360Page.tsx
+/// Proposal detail pane — bento box layout.
 ///
+/// Mirrors src/components/proposals/Proposal360Page.tsx
 /// Renders inline in the split-view right panel (not as a sheet).
-/// Uses shared DetailSection / DetailFieldRow / EditableFieldRow / RelatedRecordRow components.
 /// Uses @Bindable for direct SwiftData mutation with pending-push tracking.
 struct ProposalDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -18,6 +18,23 @@ struct ProposalDetailView: View {
     init(proposal: Proposal) {
         self.proposal = proposal
     }
+
+    // MARK: - Formatters
+
+    private static let currencyFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencyCode = "USD"
+        f.maximumFractionDigits = 0
+        return f
+    }()
+
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .none
+        return f
+    }()
 
     // MARK: - Helpers
 
@@ -36,19 +53,45 @@ struct ProposalDetailView: View {
         }
     }
 
+    private func approvalColor(for status: String) -> Color {
+        switch status {
+        case "Approved":        return .green
+        case "Rejected":        return .red
+        case "Submitted",
+             "Under Review":    return .orange
+        case "Pending":         return .yellow
+        default:                return .secondary
+        }
+    }
+
+    /// True if validUntil is within 14 days from today (or already past).
+    private var isNearExpiry: Bool {
+        guard let until = proposal.validUntil else { return false }
+        let days = Calendar.current.dateComponents([.day], from: Date(), to: until).day ?? 0
+        return days <= 14
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        Self.dateFormatter.string(from: date)
+    }
+
+    private func formatCurrency(_ value: Double) -> String {
+        Self.currencyFormatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))"
+    }
+
     private func saveField(_ key: String, _ value: Any?) {
         let str = value as? String
         switch key {
-        case "status": proposal.status = str
-        case "approvalStatus": proposal.approvalStatus = str
+        case "status":           proposal.status = str
+        case "approvalStatus":   proposal.approvalStatus = str
         case "proposedValue":
             if let s = str, let d = Double(s) { proposal.proposedValue = d }
             else { proposal.proposedValue = nil }
-        case "version": proposal.version = str
-        case "templateUsed": proposal.templateUsed = str
-        case "notes": proposal.notes = str
-        case "scopeSummary": proposal.scopeSummary = str
-        case "clientFeedback": proposal.clientFeedback = str
+        case "version":          proposal.version = str
+        case "templateUsed":     proposal.templateUsed = str
+        case "notes":            proposal.notes = str
+        case "scopeSummary":     proposal.scopeSummary = str
+        case "clientFeedback":   proposal.clientFeedback = str
         case "performanceMetrics": proposal.performanceMetrics = str
         default: break
         }
@@ -56,173 +99,205 @@ struct ProposalDetailView: View {
         proposal.isPendingPush = true
     }
 
-    // Linked record ID arrays resolved to display names via SwiftData lookups.
+    // MARK: - Linked Record Resolvers
+
     private var resolvedCompanyNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
         return resolver.resolveCompanies(ids: proposal.companyIds)
     }
+
     private var resolvedClientNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
         return resolver.resolveContacts(ids: proposal.clientIds)
     }
+
     private var resolvedOpportunityNames: [String] {
         let resolver = LinkedRecordResolver(context: modelContext)
         return resolver.resolveOpportunities(ids: proposal.relatedOpportunityIds)
+    }
+
+    // MARK: - Computed Display Values
+
+    private var heroSubtitle: String? {
+        let company = resolvedCompanyNames.first
+        let contact = resolvedClientNames.first
+        let parts = [company, contact].compactMap { $0 }.filter { !$0.isEmpty }
+        guard !parts.isEmpty else { return nil }
+        return parts.joined(separator: " \u{00B7} ")
+    }
+
+    private var formattedValue: String {
+        guard let v = proposal.proposedValue, v > 0 else { return "—" }
+        return formatCurrency(v)
     }
 
     // MARK: - Body
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // ── Header ────────────────────────────────────────────
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(proposal.proposalName ?? "Untitled")
-                        .font(.title2)
-                        .fontWeight(.bold)
+            VStack(spacing: 10) {
 
+                // ── Hero Card ──────────────────────────────────────────
+                BentoHeroCard(
+                    name: proposal.proposalName ?? "Untitled",
+                    subtitle: heroSubtitle,
+                    avatarSize: 48,
+                    avatarShape: .roundedRect
+                ) {
+                    // Status pill
                     if let status = proposal.status, !status.isEmpty {
-                        StatusBadge(text: status, color: statusColor(for: status))
+                        BentoPill(text: status, color: statusColor(for: status))
                     }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 8)
-
-                // ── Proposal Info ─────────────────────────────────────
-                DetailSection(title: "PROPOSAL INFO") {
-                    VStack(spacing: 0) {
-                        DetailFieldRow(label: "Proposal Date", value: proposal.dateSent.map {
-                            DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none)
-                        } ?? "—")
-                        DetailFieldRow(label: "Expiration", value: proposal.validUntil.map {
-                            DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none)
-                        } ?? "—")
-                        EditableFieldRow(
-                            label: "Value",
-                            key: "proposedValue",
-                            type: .number(prefix: "$"),
-                            value: proposal.proposedValue.map { String(format: "%.0f", $0) },
-                            onSave: saveField
-                        )
-                        EditableFieldRow(
-                            label: "Status",
-                            key: "status",
-                            type: .singleSelect(options: [
-                                "Draft", "Pending Approval", "Approved", "Sent to Client",
-                                "Closed Won", "Closed Lost", "Submitted", "In Review", "Rejected"
-                            ]),
-                            value: proposal.status,
-                            onSave: saveField
-                        )
-                        EditableFieldRow(
-                            label: "Approval",
-                            key: "approvalStatus",
-                            type: .singleSelect(options: [
-                                "Not Submitted", "Submitted", "Approved", "Rejected", "Pending", "Under Review"
-                            ]),
-                            value: proposal.approvalStatus,
-                            onSave: saveField
-                        )
-                        EditableFieldRow(
-                            label: "Version",
-                            key: "version",
-                            type: .text,
-                            value: proposal.version,
-                            onSave: saveField
-                        )
-                        EditableFieldRow(
-                            label: "Template",
-                            key: "templateUsed",
-                            type: .singleSelect(options: [
-                                "Basic", "Detailed", "Custom", "Standard Template", "Custom Template",
-                                "Marketing Template", "IT Template", "Service Template", "Design Template",
-                                "Security Template", "Strategy Template", "HR Template", "Event Template"
-                            ]),
-                            value: proposal.templateUsed,
-                            onSave: saveField
+                    // Expiry pill — orange if within 14 days
+                    if let until = proposal.validUntil {
+                        BentoPill(
+                            text: "Expires \(formatDate(until))",
+                            color: isNearExpiry ? .orange : .secondary
                         )
                     }
+                    // Version pill — only if non-empty
+                    if let ver = proposal.version, !ver.isEmpty {
+                        BentoPill(text: "v\(ver)", color: .purple)
+                    }
+                } stats: {
+                    BentoHeroStat(value: formattedValue, label: "VALUE")
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
 
-                // ── Notes ─────────────────────────────────────────────
-                DetailSection(title: "NOTES") {
-                    VStack(spacing: 0) {
-                        EditableFieldRow(label: "", key: "notes", type: .textarea, value: proposal.notes, onSave: saveField)
+                // ── Row 1: Stat cells ─────────────────────────────────
+                BentoGrid(columns: 3) {
+                    // SENT
+                    BentoCell(title: "SENT") {
+                        if let sent = proposal.dateSent {
+                            Text(formatDate(sent))
+                                .font(.system(size: 13))
+                                .foregroundStyle(.primary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        } else {
+                            Text("—")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.tertiary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                    }
+
+                    // EXPIRES
+                    BentoCell(title: "EXPIRES") {
+                        if let until = proposal.validUntil {
+                            Text(formatDate(until))
+                                .font(.system(size: 13))
+                                .foregroundStyle(isNearExpiry ? .orange : .primary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        } else {
+                            Text("—")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.tertiary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                    }
+
+                    // APPROVAL
+                    BentoCell(title: "APPROVAL") {
+                        if let approval = proposal.approvalStatus, !approval.isEmpty {
+                            BentoPill(text: approval, color: approvalColor(for: approval))
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        } else {
+                            Text("—")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.tertiary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
 
-                // ── Scope Summary ─────────────────────────────────────
-                DetailSection(title: "SCOPE SUMMARY") {
-                    VStack(spacing: 0) {
-                        EditableFieldRow(label: "", key: "scopeSummary", type: .textarea, value: proposal.scopeSummary, onSave: saveField)
+                // ── Row 2: Notes / Scope / Linked ─────────────────────
+                BentoGrid(columns: 3) {
+                    // NOTES
+                    BentoCell(title: "NOTES") {
+                        EditableFieldRow(
+                            label: "",
+                            key: "notes",
+                            type: .textarea,
+                            value: proposal.notes,
+                            onSave: saveField
+                        )
+                    }
+
+                    // SCOPE SUMMARY
+                    BentoCell(title: "SCOPE SUMMARY") {
+                        EditableFieldRow(
+                            label: "",
+                            key: "scopeSummary",
+                            type: .textarea,
+                            value: proposal.scopeSummary,
+                            onSave: saveField
+                        )
+                    }
+
+                    // LINKED
+                    BentoCell(title: "LINKED") {
+                        VStack(alignment: .leading, spacing: 6) {
+                            if !resolvedOpportunityNames.isEmpty {
+                                ForEach(resolvedOpportunityNames, id: \.self) { name in
+                                    BentoChip(text: name)
+                                }
+                            }
+                            if !resolvedCompanyNames.isEmpty {
+                                ForEach(resolvedCompanyNames, id: \.self) { name in
+                                    BentoChip(text: name)
+                                }
+                            }
+                            if !resolvedClientNames.isEmpty {
+                                ForEach(resolvedClientNames, id: \.self) { name in
+                                    BentoChip(text: name)
+                                }
+                            }
+                            if resolvedOpportunityNames.isEmpty &&
+                               resolvedCompanyNames.isEmpty &&
+                               resolvedClientNames.isEmpty {
+                                Text("—")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
 
-                // ── Client Feedback ───────────────────────────────────
-                DetailSection(title: "CLIENT FEEDBACK") {
-                    VStack(spacing: 0) {
-                        EditableFieldRow(label: "", key: "clientFeedback", type: .textarea, value: proposal.clientFeedback, onSave: saveField)
+                // ── Row 3: Client Feedback (full-width) ───────────────
+                BentoGrid(columns: 1) {
+                    BentoCell(title: "CLIENT FEEDBACK") {
+                        EditableFieldRow(
+                            label: "",
+                            key: "clientFeedback",
+                            type: .textarea,
+                            value: proposal.clientFeedback,
+                            onSave: saveField
+                        )
                     }
                 }
-                .padding(.horizontal, 20)
-
-                // ── Related ───────────────────────────────────────────
-                DetailSection(title: "RELATED") {
-                    RelatedRecordRow(
-                        label: "Companies",
-                        items: resolvedCompanyNames,
-                        onAdd: nil
-                    )
-                    RelatedRecordRow(
-                        label: "Contacts",
-                        items: resolvedClientNames,
-                        onAdd: nil
-                    )
-                    RelatedRecordRow(
-                        label: "Opportunities",
-                        items: resolvedOpportunityNames,
-                        onAdd: nil
-                    )
+                .padding(.horizontal, 16)
+                .padding(.bottom, 24)
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    showEditSheet = true
+                } label: {
+                    Image(systemName: "pencil")
                 }
-                .padding(.horizontal, 20)
-
-                // ── Actions ───────────────────────────────────────────
-                HStack(spacing: 12) {
-                    Button {
-                        showEditSheet = true
-                    } label: {
-                        Text("Edit")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .background(Color.accentColor)
-                            .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        showDeleteConfirm = true
-                    } label: {
-                        Text("Delete")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .background(Color.red.opacity(0.12))
-                            .foregroundStyle(.red)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-                    .buttonStyle(.plain)
+                .help("Edit Proposal")
+            }
+            ToolbarItem(placement: .automatic) {
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    Image(systemName: "trash")
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 24)
-                .padding(.bottom, 20)
+                .help("Delete Proposal")
             }
         }
         .sheet(isPresented: $showEditSheet) {

@@ -8,9 +8,7 @@ import SwiftData
 /// Uses @Bindable for direct two-way editing. SwiftData auto-saves mutations;
 /// we set isPendingPush = true so the sync engine knows to push changes.
 ///
-/// Mirrors the Electron task detail pane: large editable title, Notes section,
-/// Details section with inline pickers, Related section with linked-record rows,
-/// and Complete + Delete action buttons at the bottom.
+/// Redesigned with BentoHeroCard + BentoGrid layout.
 struct TaskDetailView: View {
     @Bindable var task: CRMTask
     @Environment(\.modelContext) private var modelContext
@@ -35,6 +33,13 @@ struct TaskDetailView: View {
         return f
     }()
 
+    private static let displayDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .none
+        return f
+    }()
+
     // MARK: - Init
 
     init(task: CRMTask) {
@@ -49,6 +54,13 @@ struct TaskDetailView: View {
         return Calendar.current.startOfDay(for: due) < Calendar.current.startOfDay(for: Date()) && !isComplete
     }
 
+    private var overdueDays: Int {
+        guard let due = task.dueDate else { return 0 }
+        let start = Calendar.current.startOfDay(for: due)
+        let end = Calendar.current.startOfDay(for: Date())
+        return Calendar.current.dateComponents([.day], from: start, to: end).day ?? 0
+    }
+
     private var priorityColor: Color {
         guard let p = task.priority else { return .gray }
         if p.localizedCaseInsensitiveContains("high")   { return .red }
@@ -57,7 +69,66 @@ struct TaskDetailView: View {
         return .gray
     }
 
+    private var assigneeInitials: String {
+        guard let name = task.assignedTo, !name.isEmpty else { return "?" }
+        let parts = name.split(separator: " ")
+        let first = parts.first?.prefix(1) ?? ""
+        let last = parts.count > 1 ? parts.last!.prefix(1) : ""
+        return String(first + last).uppercased()
+    }
+
+    private var isComplete: Bool {
+        task.status?.localizedCaseInsensitiveContains("complet") ?? false
+    }
+
+    private var completedDateDisplay: String {
+        guard let d = task.completedDate else { return "—" }
+        return Self.displayDateFormatter.string(from: d)
+    }
+
     private func markModified() {
+        task.localModifiedAt = Date()
+        task.isPendingPush = true
+    }
+
+    // MARK: - Linked Record Labels
+
+    private var salesOpportunityLabels: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return resolver.resolveOpportunities(ids: task.salesOpportunitiesIds)
+    }
+    private var contactLabels: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return resolver.resolveContacts(ids: task.contactsIds)
+    }
+    private var projectLabels: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return resolver.resolveProjects(ids: task.projectsIds)
+    }
+    private var proposalLabels: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return resolver.resolveProposals(ids: task.proposalIds)
+    }
+
+    // MARK: - Save Field
+
+    private func saveField(_ key: String, _ value: Any?) {
+        let stringVal = value as? String
+        switch key {
+        case "task": task.task = stringVal
+        case "priority": task.priority = stringVal
+        case "status": task.status = stringVal
+        case "type": task.type = stringVal
+        case "assignedTo": task.assignedTo = stringVal
+        case "notes": task.notes = stringVal
+        case "dueDate":
+            if let dateStr = stringVal {
+                task.dueDate = Self.isoFormatter.date(from: dateStr)
+            } else {
+                task.dueDate = nil
+            }
+        default: break
+        }
         task.localModifiedAt = Date()
         task.isPendingPush = true
     }
@@ -75,44 +146,26 @@ struct TaskDetailView: View {
                         .padding(.top, 14)
                 }
 
-                // Editable task name
-                titleField
-                    .padding(.horizontal, 16)
-                    .padding(.top, isOverdue ? 10 : 18)
+                // Hero card: checkbox icon + task name + pills + stats
+                heroSection
+                    .padding(.top, isOverdue ? 10 : 14)
+                    .padding(.bottom, 8)
 
-                // DETAILS section
-                DetailSection(title: "Details") {
-                    detailsSection
+                // Row 1: Schedule + Notes
+                BentoGrid(columns: 2) {
+                    scheduleCell
+                    notesCell
                 }
                 .padding(.horizontal, 16)
+                .padding(.bottom, 10)
 
-                // NOTES section
-                DetailSection(title: "Notes") {
-                    VStack(spacing: 0) {
-                        EditableFieldRow(
-                            label: "Notes",
-                            key: "notes",
-                            type: .textarea,
-                            value: task.notes,
-                            onSave: { key, val in saveField(key, val) }
-                        )
-                    }
-                    .background(Color(.controlBackgroundColor))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                // Row 2: Linked Records + Actions
+                BentoGrid(columns: 2) {
+                    linkedRecordsCell
+                    actionsCell
                 }
                 .padding(.horizontal, 16)
-
-                // RELATED section
-                DetailSection(title: "Related") {
-                    relatedSection
-                }
-                .padding(.horizontal, 16)
-
-                // Action buttons
-                actionButtons
-                    .padding(.horizontal, 16)
-                    .padding(.top, 20)
-                    .padding(.bottom, 24)
+                .padding(.bottom, 24)
             }
         }
         .confirmationDialog(
@@ -191,194 +244,209 @@ struct TaskDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
-    // MARK: - Editable Title
+    // MARK: - Hero Section
 
-    private var titleField: some View {
-        TextField("Task name", text: Binding(
-            get: { task.task ?? "" },
-            set: { task.task = $0.isEmpty ? nil : $0 }
-        ), onCommit: {
-            markModified()
-        })
-        .font(.title3)
-        .fontWeight(.semibold)
-        .textFieldStyle(.plain)
+    private var heroSection: some View {
+        HStack(spacing: 12) {
+            // Checkbox circle icon
+            Image(systemName: isComplete ? "checkmark.circle.fill" : "circle")
+                .font(.system(size: 28))
+                .foregroundStyle(isComplete ? .green : .secondary)
+                .padding(.leading, 16)
+
+            BentoHeroCard(
+                name: task.task ?? "Untitled Task",
+                avatarSize: 0,
+                avatarShape: .circle
+            ) {
+                // Pills: priority, status, type
+                if let priority = task.priority, !priority.isEmpty {
+                    BentoPill(text: priority, color: priorityColor)
+                }
+                if let status = task.status, !status.isEmpty {
+                    BentoPill(text: status, color: .blue)
+                }
+                if let type = task.type, !type.isEmpty {
+                    BentoPill(text: type, color: .purple)
+                }
+            } stats: {
+                // Overdue days stat
+                if isOverdue {
+                    VStack(spacing: 2) {
+                        Text("\(overdueDays)")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.red)
+                        Text("OVERDUE")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    BentoHeroStat(value: "—", label: "OVERDUE")
+                }
+                // Assigned initials stat
+                BentoHeroStat(value: assigneeInitials, label: "ASSIGNED")
+            }
+        }
+    }
+
+    // MARK: - Schedule Cell
+
+    private var scheduleCell: some View {
+        BentoCell(title: "Schedule") {
+            VStack(spacing: 0) {
+                EditableFieldRow(
+                    label: "Due Date",
+                    key: "dueDate",
+                    type: .date,
+                    value: task.dueDate.map { Self.isoFormatter.string(from: $0) },
+                    onSave: { key, val in saveField(key, val) }
+                )
+                EditableFieldRow(
+                    label: "Status",
+                    key: "status",
+                    type: .singleSelect(options: ["To Do", "In Progress", "Waiting", "Completed", "Cancelled"]),
+                    value: task.status,
+                    onSave: { key, val in saveField(key, val) }
+                )
+                BentoFieldRow(
+                    label: "Completed",
+                    value: completedDateDisplay
+                )
+            }
+        }
+    }
+
+    // MARK: - Notes Cell
+
+    private var notesCell: some View {
+        BentoCell(title: "Notes") {
+            EditableFieldRow(
+                label: "",
+                key: "notes",
+                type: .textarea,
+                value: task.notes,
+                onSave: { key, val in saveField(key, val) }
+            )
+        }
+    }
+
+    // MARK: - Linked Records Cell
+
+    private var linkedRecordsCell: some View {
+        BentoCell(title: "Linked Records") {
+            VStack(alignment: .leading, spacing: 8) {
+                linkedRecordGroup(
+                    label: "Opportunities",
+                    items: salesOpportunityLabels,
+                    onAdd: { showingOpportunitiesPicker = true }
+                )
+                linkedRecordGroup(
+                    label: "Contacts",
+                    items: contactLabels,
+                    onAdd: { showingContactsPicker = true }
+                )
+                linkedRecordGroup(
+                    label: "Projects",
+                    items: projectLabels,
+                    onAdd: { showingProjectsPicker = true }
+                )
+                linkedRecordGroup(
+                    label: "Proposals",
+                    items: proposalLabels,
+                    onAdd: { showingProposalsPicker = true }
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func linkedRecordGroup(label: String, items: [String], onAdd: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Text(label)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button {
+                    onAdd()
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if items.isEmpty {
+                Text("None")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.tertiary)
+            } else {
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(items, id: \.self) { item in
+                        BentoChip(text: item)
+                    }
+                }
+            }
+        }
         .padding(.bottom, 4)
     }
 
-    // MARK: - Details Section
+    // MARK: - Actions Cell
 
-    private var detailsSection: some View {
-        VStack(spacing: 0) {
-            EditableFieldRow(
-                label: "Task",
-                key: "task",
-                type: .text,
-                value: task.task,
-                onSave: { key, val in saveField(key, val) }
-            )
-
-            EditableFieldRow(
-                label: "Due Date",
-                key: "dueDate",
-                type: .date,
-                value: task.dueDate.map { Self.isoFormatter.string(from: $0) },
-                onSave: { key, val in saveField(key, val) }
-            )
-
-            EditableFieldRow(
-                label: "Priority",
-                key: "priority",
-                type: .singleSelect(options: ["🔴 High", "🟡 Medium", "🟢 Low"]),
-                value: task.priority,
-                onSave: { key, val in saveField(key, val) }
-            )
-
-            EditableFieldRow(
-                label: "Status",
-                key: "status",
-                type: .singleSelect(options: ["To Do", "In Progress", "Waiting", "Completed", "Cancelled"]),
-                value: task.status,
-                onSave: { key, val in saveField(key, val) }
-            )
-
-            EditableFieldRow(
-                label: "Type",
-                key: "type",
-                type: .singleSelect(options: [
-                    "Schedule Meeting", "Send Qualifications", "Follow-up Email",
-                    "Follow-up Call", "Other", "Presentation Deck", "Research",
-                    "Administrative", "Send Proposal", "Internal Review", "Project", "Travel"
-                ]),
-                value: task.type,
-                onSave: { key, val in saveField(key, val) }
-            )
-
-            EditableFieldRow(
-                label: "Assigned To",
-                key: "assignedTo",
-                type: .singleSelect(options: assigneeOptions),
-                value: task.assignedTo,
-                onSave: { key, val in saveField(key, val) }
-            )
-        }
-        .background(Color(.controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-
-    // MARK: - Save Field
-
-    private func saveField(_ key: String, _ value: Any?) {
-        let stringVal = value as? String
-        switch key {
-        case "task": task.task = stringVal
-        case "priority": task.priority = stringVal
-        case "status": task.status = stringVal
-        case "type": task.type = stringVal
-        case "assignedTo": task.assignedTo = stringVal
-        case "notes": task.notes = stringVal
-        case "dueDate":
-            if let dateStr = stringVal {
-                task.dueDate = Self.isoFormatter.date(from: dateStr)
-            } else {
-                task.dueDate = nil
-            }
-        default: break
-        }
-        task.localModifiedAt = Date()
-        task.isPendingPush = true
-    }
-
-    // MARK: - Related Section
-
-    private var relatedSection: some View {
-        VStack(spacing: 0) {
-            RelatedRecordRow(
-                label: "Opportunities",
-                items: salesOpportunityLabels,
-                onAdd: { showingOpportunitiesPicker = true }
-            )
-            RelatedRecordRow(
-                label: "Contacts",
-                items: contactLabels,
-                onAdd: { showingContactsPicker = true }
-            )
-            RelatedRecordRow(
-                label: "Projects",
-                items: projectLabels,
-                onAdd: { showingProjectsPicker = true }
-            )
-            RelatedRecordRow(
-                label: "Proposals",
-                items: proposalLabels,
-                onAdd: { showingProposalsPicker = true }
-            )
-        }
-    }
-
-    // Linked record ID arrays resolved to display names via SwiftData lookups.
-    private var salesOpportunityLabels: [String] {
-        let resolver = LinkedRecordResolver(context: modelContext)
-        return resolver.resolveOpportunities(ids: task.salesOpportunitiesIds)
-    }
-    private var contactLabels: [String] {
-        let resolver = LinkedRecordResolver(context: modelContext)
-        return resolver.resolveContacts(ids: task.contactsIds)
-    }
-    private var projectLabels: [String] {
-        let resolver = LinkedRecordResolver(context: modelContext)
-        return resolver.resolveProjects(ids: task.projectsIds)
-    }
-    private var proposalLabels: [String] {
-        let resolver = LinkedRecordResolver(context: modelContext)
-        return resolver.resolveProposals(ids: task.proposalIds)
-    }
-
-    // MARK: - Action Buttons
-
-    private var actionButtons: some View {
-        HStack(spacing: 12) {
-            // Complete button
-            Button {
-                let wasCompleted = task.status?.localizedCaseInsensitiveContains("complet") ?? false
-                task.status = wasCompleted ? "To Do" : "Completed"
-                if !wasCompleted {
-                    task.completedDate = Date()
-                } else {
-                    task.completedDate = nil
+    private var actionsCell: some View {
+        BentoCell(title: "Actions") {
+            VStack(spacing: 10) {
+                // Complete button
+                Button {
+                    let wasCompleted = task.status?.localizedCaseInsensitiveContains("complet") ?? false
+                    task.status = wasCompleted ? "To Do" : "Completed"
+                    if !wasCompleted {
+                        task.completedDate = Date()
+                    } else {
+                        task.completedDate = nil
+                    }
+                    markModified()
+                } label: {
+                    Label(isComplete ? "Completed" : "Complete",
+                          systemImage: isComplete ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 13, weight: .medium))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.accentColor)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
-                markModified()
-            } label: {
-                let isComplete = task.status?.localizedCaseInsensitiveContains("complet") ?? false
-                Label(isComplete ? "Completed" : "Complete", systemImage: isComplete ? "checkmark.circle.fill" : "circle")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 7)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.accentColor)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-            .buttonStyle(.plain)
+                .buttonStyle(.plain)
 
-            // Delete button
-            Button {
-                showDeleteConfirm = true
-            } label: {
-                Text("Delete")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.red)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 7)
-                    .frame(maxWidth: .infinity)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.red.opacity(0.4), lineWidth: 1)
-                    )
+                // Delete button
+                Button {
+                    showDeleteConfirm = true
+                } label: {
+                    Text("Delete")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.red)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .frame(maxWidth: .infinity)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+
+                // Metadata
+                if let modified = task.localModifiedAt {
+                    VStack(spacing: 0) {
+                        BentoFieldRow(
+                            label: "Modified",
+                            value: Self.displayDateFormatter.string(from: modified)
+                        )
+                    }
+                }
             }
-            .buttonStyle(.plain)
         }
     }
 }

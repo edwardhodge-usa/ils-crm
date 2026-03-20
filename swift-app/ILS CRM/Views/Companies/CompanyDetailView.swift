@@ -1,18 +1,14 @@
 import SwiftUI
 import SwiftData
 
-/// Company detail pane — mirrors src/components/companies/Company360Page.tsx
+/// Company detail pane — Bento Box layout.
 ///
-/// Displays:
-/// - Breadcrumb (small company name)
-/// - DetailHeader: avatar + name + location subtitle + Website button
-/// - StatsRow: Contacts | Open Opps | Total Value
-/// - COMPANY INFO section: Website (link), Address, Founded, Industry, Type, Size, Revenue, Lead Source, NAICS
-/// - CONTACTS section: resolved contacts with avatar + name + title + chevron
-/// - OPEN OPPORTUNITIES section: resolved opportunities or empty state
-/// - PROJECTS section: linked project count (if any)
-/// - PROPOSALS section: linked proposal count (if any)
-/// - Edit / Delete actions
+/// Layout:
+/// - BentoHeroCard: logo avatar (roundedRect 56px) + name + "Industry · Location" subtitle
+///   + Website pill + Call pill + People/Deals/Pipeline stats
+/// - BentoGrid (2 columns) Row 1: PEOPLE cell + ACTIVE DEAL cell
+/// - BentoGrid (2 columns) Row 2: COMPANY DETAILS cell + LOCATION & CONTACT cell
+/// - Edit / Delete moved to toolbar
 struct CompanyDetailView: View {
     let company: Company
     let allContacts: [Contact]
@@ -55,11 +51,11 @@ struct CompanyDetailView: View {
 
     private var totalValue: String {
         let sum = openOpportunities.compactMap { $0.dealValue }.reduce(0, +)
-        if sum == 0 { return "—" }
+        if sum == 0 { return "\u{2014}" }
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: sum)) ?? "—"
+        return formatter.string(from: NSNumber(value: sum)) ?? "\u{2014}"
     }
 
     private var fullAddress: String {
@@ -73,91 +69,110 @@ struct CompanyDetailView: View {
         return parts.joined(separator: ", ")
     }
 
+    /// Hero subtitle: "Industry · City, State" or either part alone
+    private var heroSubtitle: String? {
+        let industry = company.industry?.isEmpty == false ? company.industry : nil
+        let location = locationSubtitle.isEmpty ? nil : locationSubtitle
+        let parts = [industry, location].compactMap { $0 }
+        if parts.isEmpty { return nil }
+        return parts.joined(separator: " \u{00B7} ")
+    }
+
     // MARK: - Body
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 10) {
 
-                // Breadcrumb
-                Text(company.companyName ?? "")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 4)
+                // MARK: Hero Card
+                HStack(spacing: 14) {
+                    EditableAvatarView(
+                        name: company.companyName ?? "?",
+                        size: 56,
+                        photoURL: company.logoUrl.flatMap { URL(string: $0) },
+                        shape: .roundedRect,
+                        isUploading: isUploadingLogo,
+                        websiteDomain: company.website,
+                        onPhotoSelected: { data in uploadCompanyLogo(data) },
+                        onPhotoRemoved: { removeCompanyLogo() }
+                    )
+                    .id(company.logoUrl)
 
-                // Edit / Delete toolbar row
-                HStack {
-                    Spacer()
-                    Button {
-                        showEdit = true
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
-                            .font(.system(size: 12))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(company.companyName ?? "Unknown")
+                            .font(.system(size: 16, weight: .semibold))
+                            .lineLimit(1)
+
+                        if let subtitle = heroSubtitle {
+                            Text(subtitle)
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+
+                        // Action pills
+                        HStack(spacing: 6) {
+                            if let url = websiteURL, let displayWeb = company.website {
+                                Button {
+                                    if let u = URL(string: url) {
+                                        NSWorkspace.shared.open(u)
+                                    }
+                                } label: {
+                                    BentoPill(text: "Website", color: .blue)
+                                }
+                                .buttonStyle(.plain)
+                                .help(displayWeb)
+                            }
+
+                        }
+                        .padding(.top, 2)
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
 
-                    Button {
-                        showDeleteConfirm = true
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                            .font(.system(size: 12))
+                    Spacer(minLength: 8)
+
+                    // Stats
+                    HStack(spacing: 16) {
+                        BentoHeroStat(value: "\(linkedContacts.count)", label: "People")
+                        BentoHeroStat(value: "\(openOpportunities.count)", label: "Active Deals")
+                        BentoHeroStat(value: totalValue, label: "Pipeline")
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.red.opacity(0.8))
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 8)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
 
-                // Header
-                DetailHeader(
-                    name: company.companyName ?? "Unknown",
-                    subtitle: locationSubtitle.isEmpty ? nil : locationSubtitle,
-                    actionLabel: websiteURL != nil ? "Website" : nil,
-                    actionURL: websiteURL,
-                    photoURL: company.logoUrl.flatMap { URL(string: $0) },
-                    isCompany: true,
-                    isUploading: isUploadingLogo,
-                    websiteDomain: company.website,
-                    onPhotoSelected: { data in uploadCompanyLogo(data) },
-                    onPhotoRemoved: { removeCompanyLogo() }
-                )
-                .padding(.horizontal, 20)
-                .padding(.bottom, 16)
-                .id(company.logoUrl) // Force re-render when logo URL changes after sync
+                // MARK: Grid Row 1 — People + Active Deal
+                BentoGrid(columns: 2) {
+                    peopleBentoCell
+                    activeDealBentoCell
+                }
 
-                // Stats Row
-                StatsRow(items: [
-                    (label: "Contacts",    value: "\(linkedContacts.count)"),
-                    (label: "Open Opps",   value: "\(openOpportunities.count)"),
-                    (label: "Total Value", value: totalValue)
-                ])
-                .padding(.horizontal, 20)
-                .padding(.bottom, 4)
-
-                // Company Info
-                companyInfoSection
-                    .padding(.horizontal, 20)
-
-                // Contacts
-                contactsSection
-                    .padding(.horizontal, 20)
-
-                // Open Opportunities
-                opportunitiesSection
-                    .padding(.horizontal, 20)
-
-                // Projects
-                projectsSection
-                    .padding(.horizontal, 20)
-
-                // Proposals
-                proposalsSection
-                    .padding(.horizontal, 20)
+                // MARK: Grid Row 2 — Company Details + Location & Contact
+                BentoGrid(columns: 2) {
+                    companyDetailsBentoCell
+                    locationContactBentoCell
+                }
 
                 Spacer(minLength: 32)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+        }
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    showEdit = true
+                } label: {
+                    Image(systemName: "pencil")
+                }
+                .help("Edit Company")
+            }
+            ToolbarItem(placement: .automatic) {
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .help("Delete Company")
             }
         }
         .sheet(isPresented: $showEdit) {
@@ -216,273 +231,226 @@ struct CompanyDetailView: View {
         }
     }
 
-    // MARK: - Company Info Section
+    // MARK: - People BentoCell
 
-    @ViewBuilder
-    private var companyInfoSection: some View {
-        let hasWebsite = websiteURL != nil
-        let hasAddress = !fullAddress.isEmpty
-        let hasYear    = company.foundingYear != nil
-        let hasIndustry = !(company.industry ?? "").isEmpty
-        let hasType = !(company.companyType ?? "").isEmpty
-        let hasSize = !(company.companySize ?? "").isEmpty
-        let hasRevenue = !(company.annualRevenue ?? "").isEmpty
-        let hasLeadSource = !(company.leadSource ?? "").isEmpty
-        let hasNaics = !(company.naicsCode ?? "").isEmpty
-
-        if hasWebsite || hasAddress || hasYear || hasIndustry || hasType || hasSize || hasRevenue || hasLeadSource || hasNaics {
-            DetailSection(title: "COMPANY INFO") {
-                if let url = websiteURL, let displayWeb = company.website {
-                    DetailFieldRow(
-                        label: "Website",
-                        value: displayWeb,
-                        isLink: true,
-                        linkURL: url
-                    )
+    private var peopleBentoCell: some View {
+        BentoCell(title: "People") {
+            VStack(alignment: .leading, spacing: 0) {
+                // Header button row
+                HStack {
+                    Spacer()
+                    Button {
+                        showingContactsPicker = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Color.accentColor)
+                    }
+                    .buttonStyle(.plain)
                 }
+                .padding(.bottom, 4)
 
-                if !fullAddress.isEmpty {
-                    DetailFieldRow(label: "Address", value: fullAddress)
-                }
-
-                if let year = company.foundingYear {
-                    DetailFieldRow(label: "Founded", value: "\(year)")
-                }
-
-                if let industry = company.industry, !industry.isEmpty {
-                    DetailFieldRow(label: "Industry", value: industry)
-                }
-
-                if let companyType = company.companyType, !companyType.isEmpty {
-                    DetailFieldRow(label: "Type", value: companyType)
-                }
-
-                if let companySize = company.companySize, !companySize.isEmpty {
-                    DetailFieldRow(label: "Size", value: companySize)
-                }
-
-                if let annualRevenue = company.annualRevenue, !annualRevenue.isEmpty {
-                    DetailFieldRow(label: "Annual Revenue", value: annualRevenue)
-                }
-
-                if let leadSource = company.leadSource, !leadSource.isEmpty {
-                    DetailFieldRow(label: "Lead Source", value: leadSource)
-                }
-
-                if let naicsCode = company.naicsCode, !naicsCode.isEmpty {
-                    DetailFieldRow(label: "NAICS Code", value: naicsCode)
-                }
-            }
-        }
-    }
-
-    // MARK: - Contacts Section
-
-    private var contactsSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text("CONTACTS")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .tracking(0.5)
-                Spacer()
-                Button {
-                    showingContactsPicker = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color.accentColor)
-                }
-                .buttonStyle(.plain)
-            }
-
-            if linkedContacts.isEmpty {
-                Text("No contacts")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 12)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(linkedContacts, id: \.id) { contact in
-                        contactRow(contact)
-                        if contact.id != linkedContacts.last?.id {
-                            Divider()
-                                .padding(.leading, 52)
+                if linkedContacts.isEmpty {
+                    Text("No contacts")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 8)
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(linkedContacts, id: \.id) { contact in
+                            contactRow(contact)
+                            if contact.id != linkedContacts.last?.id {
+                                Divider()
+                                    .padding(.leading, 42)
+                            }
                         }
                     }
                 }
-                .background(Color(.controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
             }
         }
-        .padding(.top, 16)
     }
 
     private func contactRow(_ contact: Contact) -> some View {
-        HStack(spacing: 10) {
-            AvatarView(name: contact.contactName ?? "?", avatarSize: .small)
+        HStack(spacing: 8) {
+            AvatarView(name: contact.contactName ?? "?", size: 30, shape: .circle)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(contact.contactName ?? "Unknown")
                     .font(.system(size: 13, weight: .medium))
+                    .lineLimit(1)
 
                 if let title = contact.jobTitle, !title.isEmpty {
                     Text(title)
-                        .font(.caption)
+                        .font(.system(size: 11))
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
             }
 
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.tertiary)
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 
-    // MARK: - Opportunities Section
+    // MARK: - Active Deal BentoCell
 
-    private var opportunitiesSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text("OPEN OPPORTUNITIES")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .tracking(0.5)
-                Spacer()
-                Button {
-                    showingOpportunitiesPicker = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color.accentColor)
+    private var activeDealBentoCell: some View {
+        BentoCell(title: "Active Deal") {
+            VStack(alignment: .leading, spacing: 0) {
+                // Header button row
+                HStack {
+                    Spacer()
+                    Button {
+                        showingOpportunitiesPicker = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Color.accentColor)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-            }
+                .padding(.bottom, 4)
 
-            if openOpportunities.isEmpty {
-                Text("No open opportunities")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 12)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(openOpportunities, id: \.id) { opp in
-                        opportunityRow(opp)
-                        if opp.id != openOpportunities.last?.id {
-                            Divider()
-                                .padding(.leading, 12)
+                if let opp = openOpportunities.first {
+                    // Opportunity name + stage pill + value
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(opp.opportunityName ?? "Untitled")
+                            .font(.system(size: 13, weight: .medium))
+                            .lineLimit(2)
+
+                        HStack(spacing: 6) {
+                            if let stage = opp.salesStage, !stage.isEmpty {
+                                BentoPill(text: stage, color: stageColor(for: stage))
+                            }
+
+                            if let value = opp.dealValue, value > 0 {
+                                Text(formattedCurrency(value))
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .padding(.bottom, 8)
+
+                    // Project chips below divider
+                    if !company.projectsIds.isEmpty {
+                        Divider()
+                            .padding(.bottom, 8)
+
+                        HStack {
+                            Button {
+                                showingProjectsPicker = true
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                            .buttonStyle(.plain)
+
+                            Spacer()
+                        }
+                        .padding(.bottom, 4)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                ForEach(company.projectsIds, id: \.self) { projectId in
+                                    BentoChip(text: projectId)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Text("No active deals")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 8)
+
+                    // Still show projects section if there are any
+                    if !company.projectsIds.isEmpty {
+                        Divider()
+                            .padding(.vertical, 6)
+
+                        HStack {
+                            Button {
+                                showingProjectsPicker = true
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                            .buttonStyle(.plain)
+
+                            Spacer()
+                        }
+                        .padding(.bottom, 4)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                ForEach(company.projectsIds, id: \.self) { projectId in
+                                    BentoChip(text: projectId)
+                                }
+                            }
                         }
                     }
                 }
-                .background(Color(.controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
             }
         }
-        .padding(.top, 16)
     }
 
-    private func opportunityRow(_ opp: Opportunity) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(opp.opportunityName ?? "Untitled")
-                    .font(.system(size: 13, weight: .medium))
-
-                if let stage = opp.salesStage, !stage.isEmpty {
-                    Text(stage)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Spacer()
-
-            if let value = opp.dealValue, value > 0 {
-                Text(formattedCurrency(value))
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-    }
-
-    private func formattedCurrency(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))"
-    }
-
-    // MARK: - Projects Section
-
-    private var projectsSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text("PROJECTS")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .tracking(0.5)
-                Spacer()
-                Button {
-                    showingProjectsPicker = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color.accentColor)
-                }
-                .buttonStyle(.plain)
-            }
-
-            if company.projectsIds.isEmpty {
-                Text("No projects")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 12)
-            } else {
-                HStack {
-                    Image(systemName: "folder")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                    Text("\(company.projectsIds.count) linked project\(company.projectsIds.count == 1 ? "" : "s")")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Color(.controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-        }
-        .padding(.top, 16)
-    }
-
-    // MARK: - Proposals Section
+    // MARK: - Company Details BentoCell
 
     @ViewBuilder
-    private var proposalsSection: some View {
-        if !company.proposalsIds.isEmpty {
-            DetailSection(title: "PROPOSALS") {
-                HStack {
-                    Image(systemName: "doc.text")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                    Text("\(company.proposalsIds.count) linked proposal\(company.proposalsIds.count == 1 ? "" : "s")")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                    Spacer()
+    private var companyDetailsBentoCell: some View {
+        let hasIndustry = !(company.industry ?? "").isEmpty
+        let hasSize = !(company.companySize ?? "").isEmpty
+        let hasRevenue = !(company.annualRevenue ?? "").isEmpty
+        let hasFounded = company.foundingYear != nil
+        let hasLeadSource = !(company.leadSource ?? "").isEmpty
+
+        if hasIndustry || hasSize || hasRevenue || hasFounded || hasLeadSource {
+            BentoCell(title: "Company Details") {
+                VStack(spacing: 0) {
+                    if let industry = company.industry, !industry.isEmpty {
+                        BentoFieldRow(label: "Industry", value: industry)
+                    }
+                    if let size = company.companySize, !size.isEmpty {
+                        BentoFieldRow(label: "Size", value: size)
+                    }
+                    if let revenue = company.annualRevenue, !revenue.isEmpty {
+                        BentoFieldRow(label: "Revenue", value: revenue)
+                    }
+                    if let year = company.foundingYear {
+                        BentoFieldRow(label: "Founded", value: "\(year)")
+                    }
+                    if let leadSource = company.leadSource, !leadSource.isEmpty {
+                        BentoFieldRow(label: "Lead Source", value: leadSource)
+                    }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Color(.controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+        }
+    }
+
+    // MARK: - Location & Contact BentoCell
+
+    @ViewBuilder
+    private var locationContactBentoCell: some View {
+        let hasAddress = !fullAddress.isEmpty
+        let hasWebsite = websiteURL != nil
+        let hasCity = !(company.city ?? "").isEmpty
+
+        if hasAddress || hasWebsite || hasCity {
+            BentoCell(title: "Location & Contact") {
+                VStack(spacing: 0) {
+                    if !fullAddress.isEmpty {
+                        BentoFieldRow(label: "Address", value: fullAddress)
+                    } else if let city = company.city, !city.isEmpty {
+                        let locationParts = [city, company.stateRegion].compactMap { $0?.isEmpty == false ? $0 : nil }
+                        BentoFieldRow(label: "City", value: locationParts.joined(separator: ", "))
+                    }
+                    if let website = company.website, !website.isEmpty {
+                        BentoFieldRow(label: "Website", value: website)
+                    }
+                }
             }
         }
     }
@@ -527,11 +495,33 @@ struct CompanyDetailView: View {
 
     // MARK: - Helpers
 
-    /// Determines whether a sales stage should be counted as "open".
-    /// Closed/won/lost stages are excluded.
     private func isOpenStage(_ stage: String?) -> Bool {
         guard let stage else { return true }
         let lower = stage.lowercased()
         return !lower.contains("closed") && !lower.contains("won") && !lower.contains("lost")
+    }
+
+    private func formattedCurrency(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))"
+    }
+
+    private func stageColor(for stage: String) -> Color {
+        switch stage {
+        case "Initial Contact":    return .blue
+        case "Qualification":      return .cyan
+        case "Meeting Scheduled":  return .orange
+        case "Proposal Sent":      return .indigo
+        case "Negotiation":        return .teal
+        case "Contract Sent":      return .mint
+        case "Development":        return .purple
+        case "Investment":         return .pink
+        case "Closed Won":         return .green
+        case "Closed Lost":        return .red
+        case "Future Client":      return .yellow
+        default:                   return .blue
+        }
     }
 }
