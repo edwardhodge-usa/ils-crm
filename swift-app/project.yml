@@ -25,6 +25,8 @@ targets:
     info:
       path: ILS CRM/Info.plist
       properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleDisplayName: "ILS CRM+"
         LSApplicationCategoryType: "public.app-category.business"
         SUFeedURL: "https://raw.githubusercontent.com/edwardhodge-usa/ils-crm/main/appcast.xml"
