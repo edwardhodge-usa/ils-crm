@@ -4,5 +4,27 @@
         <title>ILS CRM+</title>
         <description>ILS CRM+ macOS App Updates</description>
         <language>en</language>
+        <item>
+            <title>Version 1.1.0</title>
+            <sparkle:version>9</sparkle:version>
+            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <pubDate>Wed, 19 Mar 2026 23:00:00 +0000</pubDate>
+            <description><![CDATA[
+                <ul>
+                    <li>Clear date button for inline date fields</li>
+                    <li>Sparkle auto-update framework integrated</li>
+                    <li>Contacts Company field migrated to linked records</li>
+                    <li>Improved lookup field handling for Portal Access</li>
+                    <li>Fixed Imported Contacts categorization display</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/edwardhodge-usa/ils-crm/releases/download/v1.1.0/ILS-CRM-1.1.0-arm64.dmg"
+                length="3828085"
+                type="application/octet-stream"
+                sparkle:edSignature="3be7tNs1hz2T0S2SIUWxEq+HIXQ3gzrwaAC9YNRLW/ZPp7ptIHiAixlX5K6/BhjDwtnXLtT6SPM0W/n2rxR2Ag=="
+            />
+        </item>
     </channel>
 </rss>
