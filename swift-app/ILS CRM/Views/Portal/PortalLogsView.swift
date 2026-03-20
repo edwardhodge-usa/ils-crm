@@ -115,141 +115,117 @@ struct PortalLogsView: View {
 
 // MARK: - Log Detail Sheet
 
-/// Simple detail sheet for a portal log entry showing all available fields.
+/// Bento-layout detail sheet for a portal log entry showing all available fields.
 private struct PortalLogDetailSheet: View {
     let log: PortalLog
 
     @Environment(\.dismiss) private var dismiss
 
+    // MARK: - Computed Properties
+
+    private var displayName: String {
+        log.clientName ?? log.clientEmail ?? "Unknown visitor"
+    }
+
+    private var heroSubtitle: String? {
+        guard let timestamp = log.timestamp else { return nil }
+        return timestamp.formatted(date: .abbreviated, time: .shortened)
+    }
+
+    private var locationString: String {
+        [log.city, log.region, log.country]
+            .compactMap { $0 }
+            .filter { !$0.isEmpty }
+            .joined(separator: ", ")
+    }
+
+    // MARK: - Body
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                // Header
-                VStack(spacing: 6) {
-                    Image(systemName: "globe")
-                        .font(.system(size: 28))
-                        .foregroundStyle(.secondary)
+            VStack(spacing: 10) {
 
-                    Text(log.clientName ?? log.clientEmail ?? "Unknown visitor")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .multilineTextAlignment(.center)
+                // MARK: Hero Card
+                BentoHeroCard(
+                    name: displayName,
+                    subtitle: heroSubtitle,
+                    avatarSize: 56,
+                    avatarShape: .circle
+                ) {
+                    EmptyView()
+                } stats: {
+                    EmptyView()
+                }
 
-                    if let timestamp = log.timestamp {
-                        Text(timestamp.formatted(date: .abbreviated, time: .shortened))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                // MARK: Grid — Visitor + Location
+                BentoGrid(columns: 2) {
+                    BentoCell(title: "Visitor") {
+                        VStack(spacing: 0) {
+                            BentoFieldRow(label: "Name", value: log.clientName ?? "")
+                            BentoFieldRow(label: "Email", value: log.clientEmail ?? "")
+                            BentoFieldRow(label: "Company", value: log.company ?? "")
+                            BentoFieldRow(label: "Page URL", value: log.pageUrl ?? "")
+                        }
+                    }
+
+                    BentoCell(title: "Location") {
+                        VStack(spacing: 0) {
+                            BentoFieldRow(label: "Location", value: locationString)
+                            BentoFieldRow(label: "IP Address", value: log.ipAddress ?? "")
+                        }
                     }
                 }
-                .padding(.top, 24)
-                .padding(.bottom, 16)
-                .frame(maxWidth: .infinity)
 
-                Form {
-                    visitorSection
-                    locationSection
-                    technicalSection
-                    detailSection
+                // MARK: Technical
+                BentoCell(title: "Technical") {
+                    VStack(alignment: .leading, spacing: 0) {
+                        BentoFieldRow(label: "Clarity Session", value: log.claritySession ?? "")
+
+                        if let ua = log.userAgent, !ua.isEmpty {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("User Agent")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                                Text(ua)
+                                    .font(.caption2)
+                                    .foregroundStyle(.primary)
+                                    .textSelection(.enabled)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .padding(.top, 8)
+                        }
+                    }
                 }
-                .formStyle(.grouped)
+
+                // MARK: Details
+                BentoCell(title: "Details") {
+                    VStack(alignment: .leading, spacing: 0) {
+                        BentoFieldRow(
+                            label: "Log #",
+                            value: log.autoId.map { "\($0)" } ?? ""
+                        )
+                        BentoFieldRow(
+                            label: "Timestamp",
+                            value: log.timestamp?.formatted(date: .complete, time: .complete) ?? ""
+                        )
+
+                        Text(log.id)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, 8)
+                    }
+                }
+
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") { dismiss() }
             }
-        }
-    }
-
-    @ViewBuilder
-    private var visitorSection: some View {
-        let hasName = log.clientName?.isEmpty == false
-        let hasEmail = log.clientEmail?.isEmpty == false
-        let hasCompany = log.company?.isEmpty == false
-        let hasPage = log.pageUrl?.isEmpty == false
-
-        if hasName || hasEmail || hasCompany || hasPage {
-            Section("Visitor") {
-                if let name = log.clientName, !name.isEmpty {
-                    FieldRow(label: "Name", value: name)
-                }
-                if let email = log.clientEmail, !email.isEmpty {
-                    FieldRow(label: "Email", value: email)
-                }
-                if let company = log.company, !company.isEmpty {
-                    FieldRow(label: "Company", value: company)
-                }
-                if let page = log.pageUrl, !page.isEmpty {
-                    FieldRow(label: "Page URL", value: page)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var locationSection: some View {
-        let hasCity = log.city?.isEmpty == false
-        let hasRegion = log.region?.isEmpty == false
-        let hasCountry = log.country?.isEmpty == false
-        let hasIP = log.ipAddress?.isEmpty == false
-
-        if hasCity || hasRegion || hasCountry || hasIP {
-            Section("Location") {
-                if hasCity || hasRegion || hasCountry {
-                    let location = [log.city, log.region, log.country]
-                        .compactMap { $0 }
-                        .filter { !$0.isEmpty }
-                        .joined(separator: ", ")
-                    if !location.isEmpty {
-                        FieldRow(label: "Location", value: location)
-                    }
-                }
-                if let ip = log.ipAddress, !ip.isEmpty {
-                    FieldRow(label: "IP Address", value: ip)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var technicalSection: some View {
-        let hasUserAgent = log.userAgent?.isEmpty == false
-        let hasClarity = log.claritySession?.isEmpty == false
-
-        if hasUserAgent || hasClarity {
-            Section("Technical") {
-                if let ua = log.userAgent, !ua.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("User Agent")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(ua)
-                            .font(.caption2)
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                if let clarity = log.claritySession, !clarity.isEmpty {
-                    FieldRow(label: "Clarity Session", value: clarity)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var detailSection: some View {
-        Section("Details") {
-            if let autoId = log.autoId {
-                FieldRow(label: "Log #", value: "\(autoId)")
-            }
-            if let ts = log.timestamp {
-                FieldRow(label: "Timestamp", value: ts.formatted(date: .complete, time: .complete))
-            }
-            Text(log.id)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

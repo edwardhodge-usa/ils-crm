@@ -1,14 +1,17 @@
 import SwiftUI
+import SwiftData
 
-/// Portal Access detail view — inline editing with click-to-edit fields.
+/// Portal Access detail view — bento box layout.
 ///
-/// Mirrors the Electron Portal Access detail pane. Uses @Bindable for direct
-/// SwiftData mutation with auto-save on blur/commit.
-///
-/// Uses shared DetailComponents (DetailSection, EditableFieldRow, DetailFieldRow)
-/// for consistent inline editing across all entity detail views.
+/// Single ScrollView wrapping:
+/// - BentoHeroCard (avatar, name, subtitle, action pills, stats)
+/// - BentoGrid row 1: Access Status + Portal & Business
+/// - BentoGrid row 2: Key Dates + Notes
+/// - Conditional: Linked Contact cell
 struct PortalAccessDetailView: View {
     @Bindable var record: PortalAccessRecord
+
+    @Query private var clientPages: [ClientPage]
 
     @Environment(\.dismiss) private var dismiss
 
@@ -18,210 +21,302 @@ struct PortalAccessDetailView: View {
         return f
     }()
 
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // MARK: - Header
-                headerSection
-                    .padding(.top, 24)
-                    .padding(.bottom, 16)
+    // MARK: - Computed Properties
 
-                // MARK: - Editable Sections
-                accessInfoSection
-                portalBusinessSection
-                keyDatesSection
-                notesSection
-                contactLookupSection
-                detailsSection
-
-                Spacer(minLength: 24)
-            }
-            .padding(.horizontal, 16)
-        }
-        .scrollIndicators(.automatic)
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done") { dismiss() }
-            }
-        }
+    /// Best display name for the record.
+    private var displayName: String {
+        if let name = record.name, !name.isEmpty { return name }
+        if let lookup = record.contactNameLookup, !lookup.isEmpty { return lookup }
+        if let email = record.email, !email.isEmpty { return email }
+        if let page = record.pageAddress, !page.isEmpty { return page }
+        return "Unknown"
     }
 
-    // MARK: - Header
-
-    private var headerSection: some View {
-        VStack(spacing: 8) {
-            AvatarView(name: displayName, size: AvatarSize.xlarge.dimension)
-
-            Text(displayName)
-                .font(.title2)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
-
-            if let position = record.positionTitle, !position.isEmpty {
-                Text(position)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-
-            if let status = record.status, !status.isEmpty {
-                BadgeView(text: status, color: statusColor(status))
-            }
-        }
-        .frame(maxWidth: .infinity)
+    /// Hero subtitle: "Position · Company" or just one
+    private var heroSubtitle: String? {
+        let parts = [record.positionTitle, record.company].compactMap { $0 }.filter { !$0.isEmpty }
+        if parts.isEmpty { return nil }
+        return parts.joined(separator: " \u{00B7} ")
     }
 
-    // MARK: - Access Info
-
-    private var accessInfoSection: some View {
-        DetailSection(title: "ACCESS INFO") {
-            EditableFieldRow(label: "Page Address", key: "pageAddress", type: .readonly,
-                value: record.pageAddress)
-            EditableFieldRow(label: "Stage", key: "stage",
-                type: .singleSelect(options: [
-                    "Prospect", "Lead", "Client", "Past Client", "Partner"
-                ]),
-                value: record.stage, onSave: saveField)
-            EditableFieldRow(label: "Status", key: "status",
-                type: .singleSelect(options: [
-                    "ACTIVE", "IN-ACTIVE", "PENDING", "EXPIRED", "REVOKED"
-                ]),
-                value: record.status, onSave: saveField)
-            EditableFieldRow(label: "Email", key: "email", type: .readonly,
-                value: record.email, isLink: true)
-            EditableFieldRow(label: "Position", key: "positionTitle", type: .text,
-                value: record.positionTitle, onSave: saveField)
-            EditableFieldRow(label: "Company", key: "company", type: .readonly,
-                value: record.company)
-            EditableFieldRow(label: "Decision Maker", key: "decisionMaker", type: .text,
-                value: record.decisionMaker, onSave: saveField)
-            EditableFieldRow(label: "Lead Source", key: "leadSource", type: .text,
-                value: record.leadSource, onSave: saveField)
-        }
+    /// Days active since dateAdded.
+    private var daysActive: String {
+        guard let dateAdded = record.dateAdded else { return "\u{2014}" }
+        let days = Calendar.current.dateComponents([.day], from: dateAdded, to: Date()).day ?? 0
+        return "\(days)"
     }
 
-    // MARK: - Portal & Business
-
-    private var portalBusinessSection: some View {
-        DetailSection(title: "PORTAL & BUSINESS") {
-            EditableFieldRow(label: "Website", key: "website", type: .text,
-                value: record.website, isLink: true, onSave: saveField)
-            EditableFieldRow(label: "Phone", key: "phoneNumber", type: .text,
-                value: record.phoneNumber, isLink: true, onSave: saveField)
-            EditableFieldRow(label: "Industry", key: "industry", type: .text,
-                value: record.industry, onSave: saveField)
-            EditableFieldRow(label: "Project Budget", key: "projectBudget",
-                type: .number(prefix: "$"),
-                value: record.projectBudget.map { String(format: "%.0f", $0) },
-                onSave: saveField)
-            EditableFieldRow(label: "Services", key: "servicesInterestedIn",
-                type: .multiSelect(options: [
-                    "Strategy/Consulting", "Design/Concept Development",
-                    "Production/Fabrication Oversight", "Opening/Operations Support",
-                    "Executive Producing"
-                ]),
-                value: record.servicesInterestedIn.joined(separator: ", "),
-                onSave: saveField)
+    /// Count of enabled video sections from linked ClientPage.
+    private var sectionsCount: String {
+        guard let addr = record.pageAddress,
+              let page = clientPages.first(where: { $0.pageAddress == addr }) else {
+            return "\u{2014}"
         }
+        let count = [page.head, page.vPrMagic, page.vHighLight, page.v360, page.vFullL]
+            .filter { $0 }
+            .count
+        return "\(count)"
     }
 
-    // MARK: - Key Dates
-
-    private var keyDatesSection: some View {
-        DetailSection(title: "KEY DATES") {
-            EditableFieldRow(label: "Follow Up", key: "followUpDate", type: .date,
-                value: record.followUpDate.map { Self.isoFormatter.string(from: $0) },
-                onSave: saveField)
-            EditableFieldRow(label: "Expected Start", key: "expectedProjectStartDate", type: .date,
-                value: record.expectedProjectStartDate.map { Self.isoFormatter.string(from: $0) },
-                onSave: saveField)
-            DetailFieldRow(label: "Date Added", value: record.dateAdded.map {
-                DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none)
-            } ?? "—")
-        }
+    /// Formatted project budget as currency.
+    private var formattedBudget: String {
+        guard let budget = record.projectBudget, budget > 0 else { return "\u{2014}" }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        formatter.currencyCode = "USD"
+        return formatter.string(from: NSNumber(value: budget)) ?? "$\(Int(budget))"
     }
 
-    // MARK: - Notes
-
-    private var notesSection: some View {
-        DetailSection(title: "NOTES") {
-            EditableFieldRow(label: "", key: "notes", type: .textarea,
-                value: record.notes, onSave: saveField)
-        }
+    /// Stage color for pills.
+    private func stageColor(_ stage: String) -> Color {
+        let lower = stage.lowercased()
+        if lower.contains("client") { return .green }
+        if lower.contains("lead") { return .orange }
+        if lower.contains("prospect") { return .blue }
+        if lower.contains("partner") { return .teal }
+        if lower.contains("past") { return .red }
+        return .secondary
     }
 
-    // MARK: - Linked Contact Lookups (readonly)
+    /// Status color: ACTIVE = green, IN-ACTIVE = red, others = secondary.
+    private func statusColor(_ status: String) -> Color {
+        let upper = status.uppercased()
+        if upper.contains("ACTIVE") && !upper.contains("IN-ACTIVE") && !upper.contains("INACTIVE") {
+            return .green
+        }
+        if upper.contains("IN-ACTIVE") || upper.contains("INACTIVE") {
+            return .red
+        }
+        if upper.contains("PENDING") { return .orange }
+        if upper.contains("EXPIRED") { return .yellow }
+        if upper.contains("REVOKED") { return .red }
+        return .secondary
+    }
 
-    @ViewBuilder
-    private var contactLookupSection: some View {
-        let hasAny = [
+    /// Whether any contact lookup fields are populated.
+    private var hasContactLookupData: Bool {
+        let fields: [String?] = [
             record.contactNameLookup, record.contactEmailLookup,
             record.contactPhoneLookup, record.contactJobTitleLookup,
             record.contactCompanyLookup, record.contactIndustryLookup,
             record.contactWebsiteLookup, record.contactTagsLookup,
             record.contactAddressLineLookup, record.contactCityLookup,
             record.contactStateLookup, record.contactCountryLookup
-        ].contains { $0?.isEmpty == false }
-
-        if hasAny {
-            DetailSection(title: "LINKED CONTACT") {
-                if let name = record.contactNameLookup, !name.isEmpty {
-                    DetailFieldRow(label: "Name", value: name)
-                }
-                if let email = record.contactEmailLookup, !email.isEmpty {
-                    DetailFieldRow(label: "Email", value: email, isLink: true,
-                        linkURL: "mailto:\(email)")
-                }
-                if let phone = record.contactPhoneLookup, !phone.isEmpty {
-                    DetailFieldRow(label: "Phone", value: phone, isLink: true,
-                        linkURL: "tel:\(phone)")
-                }
-                if let jobTitle = record.contactJobTitleLookup, !jobTitle.isEmpty {
-                    DetailFieldRow(label: "Job Title", value: jobTitle)
-                }
-                if let company = record.contactCompanyLookup, !company.isEmpty {
-                    DetailFieldRow(label: "Company", value: company)
-                }
-                if let industry = record.contactIndustryLookup, !industry.isEmpty {
-                    DetailFieldRow(label: "Industry", value: industry)
-                }
-                if let website = record.contactWebsiteLookup, !website.isEmpty {
-                    DetailFieldRow(label: "Website", value: website, isLink: true,
-                        linkURL: website.hasPrefix("http") ? website : "https://\(website)")
-                }
-                if let tags = record.contactTagsLookup, !tags.isEmpty {
-                    DetailFieldRow(label: "Tags", value: tags)
-                }
-                if hasContactAddressFields {
-                    DetailFieldRow(label: "Location", value: contactLocationFormatted)
-                }
-            }
-        }
+        ]
+        return fields.contains { $0?.isEmpty == false }
     }
 
-    // MARK: - Details (metadata, readonly)
+    /// Whether any contact address lookup fields are populated.
+    private var hasContactAddressFields: Bool {
+        let fields: [String?] = [
+            record.contactAddressLineLookup,
+            record.contactCityLookup,
+            record.contactStateLookup,
+            record.contactCountryLookup
+        ]
+        return fields.contains { $0?.isEmpty == false }
+    }
 
-    private var detailsSection: some View {
-        DetailSection(title: "DETAILS") {
-            if let modified = record.airtableModifiedAt {
-                DetailFieldRow(label: "Last Modified",
-                    value: modified.formatted(date: .abbreviated, time: .shortened))
-            }
-            if let localMod = record.localModifiedAt {
-                DetailFieldRow(label: "Local Modified",
-                    value: localMod.formatted(date: .abbreviated, time: .shortened))
-            }
-            VStack(spacing: 0) {
-                HStack {
-                    Text(record.id)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .textSelection(.enabled)
-                    Spacer()
+    /// Formatted contact location from lookup fields.
+    private var contactLocationFormatted: String {
+        var parts: [String] = []
+
+        if let line = record.contactAddressLineLookup, !line.isEmpty {
+            parts.append(line)
+        }
+
+        var cityStateParts: [String] = []
+        if let city = record.contactCityLookup, !city.isEmpty {
+            cityStateParts.append(city)
+        }
+        if let state = record.contactStateLookup, !state.isEmpty {
+            cityStateParts.append(state)
+        }
+        if !cityStateParts.isEmpty {
+            parts.append(cityStateParts.joined(separator: ", "))
+        }
+
+        if let country = record.contactCountryLookup, !country.isEmpty {
+            parts.append(country)
+        }
+
+        return parts.joined(separator: "\n")
+    }
+
+    // MARK: - Body
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 10) {
+
+                // MARK: Hero Card
+                BentoHeroCard(
+                    name: displayName,
+                    subtitle: heroSubtitle,
+                    avatarSize: 56,
+                    avatarShape: .circle
+                ) {
+                    // Action pills
+                    if let email = record.email, !email.isEmpty {
+                        Button {
+                            if let url = URL(string: "mailto:\(email)") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        } label: {
+                            BentoPill(text: "Email", color: .accentColor)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    if let pageUrl = record.framerPageUrl, !pageUrl.isEmpty {
+                        Button {
+                            let urlStr = pageUrl.hasPrefix("http") ? pageUrl : "https://\(pageUrl)"
+                            if let url = URL(string: urlStr) {
+                                NSWorkspace.shared.open(url)
+                            }
+                        } label: {
+                            BentoPill(text: "Portal", color: .green)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } stats: {
+                    BentoHeroStat(value: daysActive, label: "Days Active")
+                    BentoHeroStat(value: sectionsCount, label: "Sections")
+                    BentoHeroStat(value: formattedBudget, label: "Budget")
                 }
-                .padding(.horizontal, 12)
-                .frame(minHeight: 28)
-                Divider()
+
+                // MARK: Grid Row 1 — Access Status + Portal & Business
+                BentoGrid(columns: 2) {
+
+                    // ACCESS STATUS
+                    BentoCell(title: "Access Status") {
+                        VStack(alignment: .leading, spacing: 8) {
+
+                            // Stage + Status pills
+                            HStack(spacing: 6) {
+                                if let stage = record.stage, !stage.isEmpty {
+                                    BentoPill(text: stage, color: stageColor(stage))
+                                }
+                                if let status = record.status, !status.isEmpty {
+                                    BentoPill(text: status, color: statusColor(status))
+                                }
+                            }
+
+                            Divider()
+
+                            VStack(spacing: 0) {
+                                BentoFieldRow(label: "Lead Source", value: record.leadSource ?? "")
+                                BentoFieldRow(label: "Decision Maker", value: record.decisionMaker ?? "")
+                                BentoFieldRow(
+                                    label: "Services",
+                                    value: record.servicesInterestedIn.isEmpty
+                                        ? ""
+                                        : record.servicesInterestedIn.joined(separator: ", ")
+                                )
+                            }
+                        }
+                    }
+
+                    // PORTAL & BUSINESS
+                    BentoCell(title: "Portal & Business") {
+                        VStack(spacing: 0) {
+                            BentoFieldRow(label: "Page Address", value: record.pageAddress ?? "")
+                            BentoFieldRow(label: "Website", value: record.website ?? "")
+                            BentoFieldRow(label: "Phone", value: record.phoneNumber ?? "")
+                            BentoFieldRow(label: "Industry", value: record.industry ?? "")
+                        }
+                    }
+                }
+
+                // MARK: Grid Row 2 — Key Dates + Notes
+                BentoGrid(columns: 2) {
+
+                    // KEY DATES
+                    BentoCell(title: "Key Dates") {
+                        VStack(spacing: 0) {
+                            BentoFieldRow(
+                                label: "Date Added",
+                                value: record.dateAdded.map {
+                                    DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none)
+                                } ?? ""
+                            )
+
+                            EditableFieldRow(
+                                label: "Follow Up",
+                                key: "followUpDate",
+                                type: .date,
+                                value: record.followUpDate.map { Self.isoFormatter.string(from: $0) },
+                                onSave: saveField
+                            )
+
+                            EditableFieldRow(
+                                label: "Expected Start",
+                                key: "expectedProjectStartDate",
+                                type: .date,
+                                value: record.expectedProjectStartDate.map { Self.isoFormatter.string(from: $0) },
+                                onSave: saveField
+                            )
+                        }
+                    }
+
+                    // NOTES
+                    BentoCell(title: "Notes") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            EditableFieldRow(
+                                label: "",
+                                key: "notes",
+                                type: .textarea,
+                                value: record.notes,
+                                onSave: saveField
+                            )
+                        }
+                    }
+                }
+
+                // MARK: Conditional — Linked Contact
+                if hasContactLookupData {
+                    BentoCell(title: "Linked Contact") {
+                        VStack(spacing: 0) {
+                            if let name = record.contactNameLookup, !name.isEmpty {
+                                BentoFieldRow(label: "Name", value: name)
+                            }
+                            if let email = record.contactEmailLookup, !email.isEmpty {
+                                BentoFieldRow(label: "Email", value: email)
+                            }
+                            if let phone = record.contactPhoneLookup, !phone.isEmpty {
+                                BentoFieldRow(label: "Phone", value: phone)
+                            }
+                            if let jobTitle = record.contactJobTitleLookup, !jobTitle.isEmpty {
+                                BentoFieldRow(label: "Job Title", value: jobTitle)
+                            }
+                            if let company = record.contactCompanyLookup, !company.isEmpty {
+                                BentoFieldRow(label: "Company", value: company)
+                            }
+                            if let industry = record.contactIndustryLookup, !industry.isEmpty {
+                                BentoFieldRow(label: "Industry", value: industry)
+                            }
+                            if let website = record.contactWebsiteLookup, !website.isEmpty {
+                                BentoFieldRow(label: "Website", value: website)
+                            }
+                            if let tags = record.contactTagsLookup, !tags.isEmpty {
+                                BentoFieldRow(label: "Tags", value: tags)
+                            }
+                            if hasContactAddressFields {
+                                BentoFieldRow(label: "Location", value: contactLocationFormatted)
+                            }
+                        }
+                    }
+                }
+
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+        .scrollIndicators(.automatic)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") { dismiss() }
             }
         }
     }
@@ -261,66 +356,6 @@ struct PortalAccessDetailView: View {
         record.localModifiedAt = Date()
         record.isPendingPush = true
     }
-
-    // MARK: - Helpers
-
-    /// Best display name for the record.
-    private var displayName: String {
-        if let name = record.name, !name.isEmpty { return name }
-        if let lookup = record.contactNameLookup, !lookup.isEmpty { return lookup }
-        if let email = record.email, !email.isEmpty { return email }
-        if let page = record.pageAddress, !page.isEmpty { return page }
-        return "Unknown"
-    }
-
-    /// Status color: ACTIVE = green, IN-ACTIVE = red, others = secondary.
-    private func statusColor(_ status: String) -> Color {
-        let upper = status.uppercased()
-        if upper.contains("ACTIVE") && !upper.contains("IN-ACTIVE") && !upper.contains("INACTIVE") {
-            return .green
-        }
-        if upper.contains("IN-ACTIVE") || upper.contains("INACTIVE") {
-            return .red
-        }
-        return .secondary
-    }
-
-    /// Whether any contact address lookup fields are populated.
-    private var hasContactAddressFields: Bool {
-        let fields: [String?] = [
-            record.contactAddressLineLookup,
-            record.contactCityLookup,
-            record.contactStateLookup,
-            record.contactCountryLookup
-        ]
-        return fields.contains { $0?.isEmpty == false }
-    }
-
-    /// Formatted contact location from lookup fields.
-    private var contactLocationFormatted: String {
-        var parts: [String] = []
-
-        if let line = record.contactAddressLineLookup, !line.isEmpty {
-            parts.append(line)
-        }
-
-        var cityStateParts: [String] = []
-        if let city = record.contactCityLookup, !city.isEmpty {
-            cityStateParts.append(city)
-        }
-        if let state = record.contactStateLookup, !state.isEmpty {
-            cityStateParts.append(state)
-        }
-        if !cityStateParts.isEmpty {
-            parts.append(cityStateParts.joined(separator: ", "))
-        }
-
-        if let country = record.contactCountryLookup, !country.isEmpty {
-            parts.append(country)
-        }
-
-        return parts.joined(separator: "\n")
-    }
 }
 
 // MARK: - Preview
@@ -345,5 +380,5 @@ struct PortalAccessDetailView: View {
     record.contactJobTitleLookup = "CEO"
 
     return PortalAccessDetailView(record: record)
-        .frame(width: 500, height: 800)
+        .frame(width: 720, height: 600)
 }

@@ -325,58 +325,82 @@ struct PortalAccessView: View {
 
                     // Page fields + Section toggles (only if ClientPage record exists)
                     if let page = clientPage(for: pageAddress) {
-                        VStack(alignment: .leading, spacing: 0) {
-                            // Client Name + Page Title + Subtitle
-                            if let name = page.clientName, !name.isEmpty {
-                                fieldRow("Client Name", value: name)
-                                    .padding(.horizontal, 16)
-                            }
-                            pageTitleRow(page.pageTitle)
-                                .padding(.horizontal, 16)
-                            if let subtitle = page.pageSubtitle, !subtitle.isEmpty {
-                                fieldRow("Subtitle", value: subtitle)
-                                    .padding(.horizontal, 16)
+                        // Page Details bento cell
+                        BentoCell(title: "Page Details") {
+                            VStack(spacing: 0) {
+                                BentoFieldRow(label: "Client Name", value: page.clientName ?? "\u{2014}")
+                                BentoFieldRow(label: "Page Title", value: {
+                                    let isEmpty = page.pageTitle == nil || page.pageTitle!.isEmpty
+                                    return isEmpty ? Self.defaultPageTitle : page.pageTitle!
+                                }())
+                                if let subtitle = page.pageSubtitle, !subtitle.isEmpty {
+                                    BentoFieldRow(label: "Subtitle", value: subtitle)
+                                }
+                                if let addr = page.pageAddress {
+                                    BentoFieldRow(label: "Page Address", value: addr)
+                                }
+                                if let deck = page.deckUrl, !deck.isEmpty {
+                                    // Custom row for Deck URL with clickable link
+                                    VStack(spacing: 0) {
+                                        HStack {
+                                            Text("Deck URL")
+                                                .font(.system(size: 13))
+                                                .foregroundStyle(.secondary)
+                                            Spacer()
+                                            if let url = URL(string: deck.hasPrefix("http") ? deck : "https://\(deck)") {
+                                                Link(deck, destination: url)
+                                                    .font(.system(size: 13))
+                                                    .lineLimit(2)
+                                                    .multilineTextAlignment(.trailing)
+                                            } else {
+                                                Text(deck)
+                                                    .font(.system(size: 13))
+                                                    .foregroundStyle(.primary)
+                                                    .lineLimit(2)
+                                                    .multilineTextAlignment(.trailing)
+                                            }
+                                        }
+                                        .frame(minHeight: 28)
+                                        Divider()
+                                    }
+                                }
+                                if let prep = page.preparedFor, !prep.isEmpty {
+                                    BentoFieldRow(label: "Prepared For", value: prep)
+                                }
+                                if let ty = page.thankYou, !ty.isEmpty {
+                                    BentoFieldRow(label: "Thank You", value: ty)
+                                }
                             }
                         }
-                        .padding(.bottom, 8)
-
-                        // Form box with page fields
-                        VStack(spacing: 0) {
-                            if let addr = page.pageAddress {
-                                formRow("Page Address", value: addr)
-                            }
-                            if let deck = page.deckUrl, !deck.isEmpty {
-                                formRow("Deck URL", value: deck, isLink: true)
-                            }
-                            if let prep = page.preparedFor, !prep.isEmpty {
-                                formRow("Prepared For", value: prep)
-                            }
-                            if let ty = page.thankYou, !ty.isEmpty {
-                                formRow("Thank You", value: ty)
-                            }
-                        }
-                        .background(Color(nsColor: .controlBackgroundColor))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         .padding(.horizontal, 16)
                         .padding(.bottom, 12)
 
-                        // Section toggles
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("PAGE SECTIONS")
-                                .font(.system(size: 11, weight: .bold))
-                                .tracking(0.5)
-                                .foregroundStyle(.secondary)
-
-                            HStack(spacing: 8) {
-                                sectionDot("Header", isOn: page.head)
-                                sectionDot("Practical Magic", isOn: page.vPrMagic)
-                                sectionDot("Highlights", isOn: page.vHighLight)
-                                sectionDot("360 Video", isOn: page.v360)
-                                sectionDot("Full Length", isOn: page.vFullL)
+                        // Video Sections bento cell with interactive toggles
+                        BentoCell(title: "Video Sections") {
+                            VStack(spacing: 0) {
+                                BentoToggleRow(label: "Header", isOn: Binding(
+                                    get: { page.head },
+                                    set: { page.head = $0; page.isPendingPush = true; page.localModifiedAt = Date() }
+                                ))
+                                BentoToggleRow(label: "Practical Magic", isOn: Binding(
+                                    get: { page.vPrMagic },
+                                    set: { page.vPrMagic = $0; page.isPendingPush = true; page.localModifiedAt = Date() }
+                                ))
+                                BentoToggleRow(label: "Highlights", isOn: Binding(
+                                    get: { page.vHighLight },
+                                    set: { page.vHighLight = $0; page.isPendingPush = true; page.localModifiedAt = Date() }
+                                ))
+                                BentoToggleRow(label: "360", isOn: Binding(
+                                    get: { page.v360 },
+                                    set: { page.v360 = $0; page.isPendingPush = true; page.localModifiedAt = Date() }
+                                ))
+                                BentoToggleRow(label: "Full Length", isOn: Binding(
+                                    get: { page.vFullL },
+                                    set: { page.vFullL = $0; page.isPendingPush = true; page.localModifiedAt = Date() }
+                                ))
                             }
                         }
                         .padding(.horizontal, 16)
-                        .padding(.top, 4)
                         .padding(.bottom, 12)
                     }
 
@@ -488,79 +512,6 @@ struct PortalAccessView: View {
     // MARK: - Page Field Helpers
 
     private static let defaultPageTitle = "We've prepared this overview of our capabilities, approach and video examples — please don't hesitate to reach out with any questions."
-
-    @ViewBuilder
-    private func pageTitleRow(_ title: String?) -> some View {
-        let isEmpty = title == nil || title!.isEmpty
-        let displayText = isEmpty ? Self.defaultPageTitle : title!
-        HStack(alignment: .top) {
-            Text("Page Title")
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(displayText)
-                .font(.system(size: 13))
-                .foregroundStyle(isEmpty ? .tertiary : .primary)
-                .italic(isEmpty)
-                .multilineTextAlignment(.trailing)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.vertical, 6)
-    }
-
-    @ViewBuilder
-    private func fieldRow(_ label: String, value: String) -> some View {
-        HStack {
-            Text(label)
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .font(.system(size: 13))
-                .foregroundStyle(.primary)
-                .multilineTextAlignment(.trailing)
-        }
-        .padding(.vertical, 6)
-    }
-
-    @ViewBuilder
-    private func formRow(_ label: String, value: String, isLink: Bool = false) -> some View {
-        HStack {
-            Text(label)
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            Spacer()
-            if isLink, let url = URL(string: value.hasPrefix("http") ? value : "https://\(value)") {
-                Link(value, destination: url)
-                    .font(.system(size: 13))
-            } else {
-                Text(value)
-                    .font(.system(size: 13))
-                    .foregroundStyle(.primary)
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .overlay(alignment: .bottom) {
-            Divider().padding(.leading, 12)
-        }
-    }
-
-    @ViewBuilder
-    private func sectionDot(_ label: String, isOn: Bool) -> some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(isOn ? Color.green : Color(nsColor: .tertiaryLabelColor))
-                .frame(width: 8, height: 8)
-            Text(label)
-                .font(.system(size: 11))
-                .foregroundStyle(isOn ? .primary : .secondary)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .clipShape(Capsule())
-    }
 
     // MARK: - By Person List
 
