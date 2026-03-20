@@ -58,6 +58,11 @@ struct CompanyDetailView: View {
         return formatter.string(from: NSNumber(value: sum)) ?? "\u{2014}"
     }
 
+    private var resolvedProjectNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return resolver.resolveProjects(ids: company.projectsIds)
+    }
+
     private var fullAddress: String {
         let parts: [String] = [
             company.address,
@@ -353,8 +358,8 @@ struct CompanyDetailView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 6) {
-                                ForEach(company.projectsIds, id: \.self) { projectId in
-                                    BentoChip(text: projectId)
+                                ForEach(resolvedProjectNames, id: \.self) { name in
+                                    BentoChip(text: name)
                                 }
                             }
                         }
@@ -386,8 +391,8 @@ struct CompanyDetailView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 6) {
-                                ForEach(company.projectsIds, id: \.self) { projectId in
-                                    BentoChip(text: projectId)
+                                ForEach(resolvedProjectNames, id: \.self) { name in
+                                    BentoChip(text: name)
                                 }
                             }
                         }

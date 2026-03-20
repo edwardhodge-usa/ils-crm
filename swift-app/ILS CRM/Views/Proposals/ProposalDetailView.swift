@@ -162,8 +162,6 @@ struct ProposalDetailView: View {
                 } stats: {
                     BentoHeroStat(value: formattedValue, label: "VALUE")
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
 
                 // ── Row 1: Stat cells ─────────────────────────────────
                 BentoGrid(columns: 3) {

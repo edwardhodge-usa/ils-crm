@@ -456,7 +456,6 @@ struct ContactDetailView: View {
 
 /// A simple flow layout that wraps children to the next line when they exceed
 /// the available width. Used for tag/badge pills across detail views.
-/// NOTE: TaskDetailView.swift also defines FlowLayout — that duplicate must be removed.
 struct FlowLayout: Layout {
     var spacing: CGFloat = 6
 

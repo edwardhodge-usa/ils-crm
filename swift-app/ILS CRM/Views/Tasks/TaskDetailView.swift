@@ -234,8 +234,7 @@ struct TaskDetailView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.yellow)
             Text("This task is overdue")
-                .font(.subheadline)
-                .fontWeight(.medium)
+                .font(.system(size: 13, weight: .medium))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
