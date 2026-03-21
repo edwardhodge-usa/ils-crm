@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM — Airtable schema management, API integrations, Electron desktop app + Swift app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Swift/SwiftUI (swift-app/), Airtable API (backend)
-- **Status**: v3.4.8 / Swift v1.1.1 — On main
+- **Status**: v3.4.8 / Swift v1.2.1 — On main
 - **Repo**: edwardhodge-usa/ils-crm | **Base ID**: appYXbUdcmSwBoPFU
 
 ## Project Scope
@@ -93,6 +93,7 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - Use `text-[var(--text-on-accent)]` for text on colored backgrounds — never raw `text-white`
 - `--text-label` (42% opacity dark mode) too faint for readable content — minimum is `--text-secondary` (55%)
 - ILS CRM readability: body 14-15px, supporting 12-13px, uppercase headers 11-12px (not strict HIG 13px minimums)
+- `Color.secondary.opacity(0.12)` invisible in dark mode for pill controls — use `Color(nsColor: .controlBackgroundColor)` + `.strokeBorder(Color.primary.opacity(0.1))` for visible unselected state
 - macOS scrollbars: overlay-style (native), transparent scrollbar thumb background
 - HIG sidebar active state: solid `--color-accent` bg + `--text-on-accent` text
 
