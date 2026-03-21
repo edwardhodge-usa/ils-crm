@@ -96,8 +96,14 @@ struct PortalAccessView: View {
                         .padding(.vertical, 6)
                         .background(
                             Capsule(style: .continuous)
-                                .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.12))
+                                .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
                         )
+                        .overlay {
+                            if !isSelected {
+                                Capsule(style: .continuous)
+                                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+                            }
+                        }
                 }
                 .buttonStyle(.plain)
             }

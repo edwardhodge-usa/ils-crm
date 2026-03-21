@@ -169,30 +169,36 @@ struct CompaniesView: View {
 
             Divider()
 
-            // Search + Sort bar
-            HStack(spacing: 8) {
-                HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                    TextField("Search companies...", text: $searchText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 13))
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background(Color(.controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+            // Search bar
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                TextField("Search companies...", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Color(.controlBackgroundColor))
 
-                HStack(spacing: 4) {
-                    sortOptionButton("Name A–Z", value: "name")
+            Divider()
+
+            // Sort bar
+            HStack(spacing: 6) {
+                Text("\(filteredCompanies.count) companies")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                HStack(spacing: 3) {
+                    sortOptionButton("Name", value: "name")
                     sortOptionButton("Type", value: "type")
                     sortOptionButton("Industry", value: "industry")
                     sortOptionButton("Newest", value: "newest")
                 }
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.vertical, 6)
 
             Divider()
 
@@ -225,14 +231,20 @@ struct CompaniesView: View {
         return Button(title) {
             sortBy = value
         }
-        .font(.system(size: 11, weight: .semibold))
+        .font(.caption)
         .foregroundStyle(isSelected ? Color.white : Color.primary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 4)
         .background(
             Capsule(style: .continuous)
-                .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.12))
+                .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
         )
+        .overlay {
+            if !isSelected {
+                Capsule(style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+            }
+        }
         .buttonStyle(.plain)
     }
 

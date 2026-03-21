@@ -138,30 +138,36 @@ struct ProjectsView: View {
 
             Divider()
 
-            // Search + Sort bar
-            HStack(spacing: 8) {
-                HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                    TextField("Search projects...", text: $searchText)
-                        .textFieldStyle(.plain)
-                        .font(.subheadline)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background(Color(.textBackgroundColor).opacity(0.5))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+            // Search bar
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                TextField("Search projects...", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Color(.controlBackgroundColor))
 
-                HStack(spacing: 4) {
-                    sortOptionButton("Name A–Z", value: "name")
+            Divider()
+
+            // Sort bar
+            HStack(spacing: 6) {
+                Text("\(filteredProjects.count) projects")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                HStack(spacing: 3) {
+                    sortOptionButton("Name", value: "name")
                     sortOptionButton("Status", value: "status")
                     sortOptionButton("Company", value: "company")
                     sortOptionButton("Newest", value: "newest")
                 }
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.vertical, 6)
 
             Divider()
 
@@ -190,14 +196,20 @@ struct ProjectsView: View {
         return Button(title) {
             sortBy = value
         }
-        .font(.system(size: 11, weight: .semibold))
+        .font(.caption)
         .foregroundStyle(isSelected ? Color.white : Color.primary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 4)
         .background(
             Capsule(style: .continuous)
-                .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.12))
+                .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
         )
+        .overlay {
+            if !isSelected {
+                Capsule(style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+            }
+        }
         .buttonStyle(.plain)
     }
 

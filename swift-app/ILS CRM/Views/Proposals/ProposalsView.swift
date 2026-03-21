@@ -145,8 +145,8 @@ struct ProposalsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    HStack(spacing: 4) {
-                        sortOptionButton("Name A–Z", value: "name")
+                    HStack(spacing: 3) {
+                        sortOptionButton("Name", value: "name")
                         sortOptionButton("Status", value: "status")
                         sortOptionButton("Company", value: "company")
                         sortOptionButton("Value", value: "value")
@@ -214,14 +214,20 @@ struct ProposalsView: View {
         return Button(title) {
             sortBy = value
         }
-        .font(.system(size: 11, weight: .semibold))
+        .font(.caption)
         .foregroundStyle(isSelected ? Color.white : Color.primary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 4)
         .background(
             Capsule(style: .continuous)
-                .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.12))
+                .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
         )
+        .overlay {
+            if !isSelected {
+                Capsule(style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+            }
+        }
         .buttonStyle(.plain)
     }
 

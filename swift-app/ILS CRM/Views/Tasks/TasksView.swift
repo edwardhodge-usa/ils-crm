@@ -6,10 +6,10 @@ import Combine
 
 enum TaskSortOrder: String, CaseIterable, CustomStringConvertible {
     case dueDate        = "Due Date"
-    case nameAZ         = "Name A→Z"
-    case nameZA         = "Name Z→A"
+    case nameAZ         = "Name A–Z"
+    case nameZA         = "Name Z–A"
     case priorityHighLow = "Priority"
-    case dateCreated    = "Date Created"
+    case dateCreated    = "Created"
 
     var description: String { rawValue }
 }

@@ -245,17 +245,17 @@ struct ContentView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Label(item.title, systemImage: item.icon)
-                            .foregroundStyle(isSelected ? Color.white : Color.primary)
                         Spacer()
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(isSelected ? Color.accentColor : Color.clear)
-                    )
-                    .contentShape(Rectangle())
                 }
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(isSelected ? Color.accentColor : Color.clear)
+                )
+                .contentShape(Rectangle())
                 .buttonStyle(.plain)
                 .tag(item)
                 .accessibilityIdentifier("nav_\(item.rawValue)")

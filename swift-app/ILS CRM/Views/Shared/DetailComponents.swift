@@ -594,7 +594,7 @@ struct SortDropdown<T: Hashable & CustomStringConvertible>: View {
     @Binding var selection: T
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 3) {
             ForEach(options, id: \.self) { option in
                 let isSelected = selection == option
 
@@ -603,20 +603,21 @@ struct SortDropdown<T: Hashable & CustomStringConvertible>: View {
                 }
                 .font(.caption)
                 .foregroundStyle(isSelected ? Color.white : Color.primary)
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 7)
                 .padding(.vertical, 4)
                 .background(
                     Capsule(style: .continuous)
-                        .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.12))
+                        .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
                 )
+                .overlay {
+                    if !isSelected {
+                        Capsule(style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+                    }
+                }
                 .buttonStyle(.plain)
             }
         }
-        .padding(3)
-        .background(
-            Capsule(style: .continuous)
-                .fill(Color.secondary.opacity(0.08))
-        )
     }
 }
 
