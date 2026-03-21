@@ -40,8 +40,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.imaginelabstudios.ils-crm
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
-        MARKETING_VERSION: "1.2.0"
-        CURRENT_PROJECT_VERSION: 11
+        MARKETING_VERSION: "1.2.1"
+        CURRENT_PROJECT_VERSION: 12
         GENERATE_INFOPLIST_FILE: NO
         DEVELOPMENT_TEAM: "8RHA62T6FQ"
       configs:
