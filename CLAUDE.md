@@ -82,6 +82,7 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - `ISO8601DateFormatter` with `.withInternetDateTime` requires full datetime — Airtable date-only fields send bare `YYYY-MM-DD`. Use `DateFormatter(dateFormat: "yyyy-MM-dd")` as fallback
 - `Dictionary(uniqueKeysWithValues:)` crashes on duplicate keys — always use `Dictionary(..., uniquingKeysWith: { _, last in last })` for SwiftData fetch results
 - `settings:set` IPC must be restricted to a `WRITABLE_SETTINGS` allowlist — renderer can bypass license grace period by writing `license_last_verified`
+- **Swift archive stale DerivedData** — `rm -rf build/` before archiving only cleans local output. DerivedData caches stale Release intermediates. ALWAYS nuke project DerivedData + resolve packages before release archives: `rm -rf ~/Library/Developer/Xcode/DerivedData/PROJECT*/ && xcodebuild -resolvePackageDependencies`
 - Dashboard SQL: `categorization` is stored as JSON array — use `NOT LIKE '%Archived%'` instead of `NOT IN ('Archived')` for filtering
 - Airtable formula escaping: use `''` (two single quotes), not `\'` — Airtable uses SQL-style string escaping
 - `useRef(fn)` only sets the initial value — add `ref.current = fn` on every render to prevent stale closures
