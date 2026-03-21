@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM — Airtable schema management, API integrations, Electron desktop app + Swift app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Swift/SwiftUI (swift-app/), Airtable API (backend)
-- **Status**: v3.4.8 / Swift v1.0.6 — On main
+- **Status**: v3.4.8 / Swift v1.1.1 — On main
 - **Repo**: edwardhodge-usa/ils-crm | **Base ID**: appYXbUdcmSwBoPFU
 
 ## Project Scope
@@ -117,7 +117,7 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 
 ## Memory
 
-Vault memory for this project: `~/Library/Mobile Documents/com~apple~CloudDocs/80_Obsidian Vault/ImagineLab Studios/Claude Memory/projects/ils-crm.md`
+Vault memory for this project: `~/Library/Mobile Documents/com~apple~CloudDocs/80_Obsidian Vault/ImagineLab Studios/Claude Memory/apps/ils-crm.md`
 
 When writing to vault memory: APPEND with date prefix, never rewrite. Cross-project patterns go to `_shared/`.
 

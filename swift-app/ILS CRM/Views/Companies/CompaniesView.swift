@@ -184,23 +184,12 @@ struct CompaniesView: View {
                 .background(Color(.controlBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 6))
 
-                Menu {
-                    Button("Name A–Z") { sortBy = "name" }
-                    Button("Type") { sortBy = "type" }
-                    Button("Industry") { sortBy = "industry" }
-                    Button("Newest First") { sortBy = "newest" }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(sortLabel)
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.system(size: 9))
-                            .foregroundStyle(.secondary)
-                    }
+                HStack(spacing: 4) {
+                    sortOptionButton("Name A–Z", value: "name")
+                    sortOptionButton("Type", value: "type")
+                    sortOptionButton("Industry", value: "industry")
+                    sortOptionButton("Newest", value: "newest")
                 }
-                .menuStyle(.borderlessButton)
-                .fixedSize()
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -228,6 +217,23 @@ struct CompaniesView: View {
                 companyList
             }
         }
+    }
+
+    private func sortOptionButton(_ title: String, value: String) -> some View {
+        let isSelected = sortBy == value
+
+        return Button(title) {
+            sortBy = value
+        }
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundStyle(isSelected ? Color.white : Color.primary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(
+            Capsule(style: .continuous)
+                .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.12))
+        )
+        .buttonStyle(.plain)
     }
 
     // MARK: - Company List

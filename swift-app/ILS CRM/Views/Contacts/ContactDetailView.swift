@@ -7,12 +7,15 @@ struct ContactDetailView: View {
 
     @Query private var opportunities: [Opportunity]
     @Query private var companies: [Company]
+    @Query private var contacts: [Contact]
 
     @State private var showEditContact = false
     @State private var showDeleteConfirm = false
     @State private var isUploadingPhoto = false
     @State private var showingOpportunitiesPicker = false
     @State private var showingCompaniesPicker = false
+    @State private var selectedLinkedCompany: Company?
+    @State private var selectedLinkedOpportunity: Opportunity?
 
     @Environment(\.modelContext) private var context
     @Environment(SyncEngine.self) private var syncEngine
@@ -140,20 +143,9 @@ struct ContactDetailView: View {
             VStack(alignment: .leading, spacing: 10) {
                 heroSection
 
-                BentoGrid(columns: 2) {
-                    overviewCell
-                    communicationCell
-                }
-
-                BentoGrid(columns: 2) {
-                    timelineCell
-                    linkedRecordsCell
-                }
-
-                BentoGrid(columns: 2) {
-                    opportunitiesCell
-                    notesCell
-                }
+                detailRow(overviewCell, communicationCell)
+                detailRow(timelineCell, linkedRecordsCell)
+                detailRow(opportunitiesCell, notesCell)
 
                 if hasPartnerData {
                     partnerVendorCell
@@ -221,6 +213,39 @@ struct ContactDetailView: View {
                     contact.isPendingPush = true
                 }
             )
+        }
+        .sheet(item: $selectedLinkedCompany) { company in
+            NavigationStack {
+                CompanyDetailView(
+                    company: company,
+                    allContacts: contacts,
+                    onEdit: nil,
+                    onDelete: nil
+                )
+                .navigationTitle(company.companyName ?? "Company")
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            selectedLinkedCompany = nil
+                        }
+                    }
+                }
+            }
+            .frame(minWidth: 780, minHeight: 620)
+        }
+        .sheet(item: $selectedLinkedOpportunity) { opportunity in
+            NavigationStack {
+                OpportunityDetailView(opportunity: opportunity)
+                    .navigationTitle(opportunity.opportunityName ?? "Opportunity")
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") {
+                                selectedLinkedOpportunity = nil
+                            }
+                        }
+                    }
+            }
+            .frame(minWidth: 720, minHeight: 620)
         }
     }
 
@@ -309,10 +334,10 @@ struct ContactDetailView: View {
                 }
 
                 VStack(spacing: 0) {
-                    BentoFieldRow(label: "Industry", value: contact.industry ?? "")
-                    BentoFieldRow(label: "Lead Source", value: contact.leadSource ?? "")
-                    BentoFieldRow(label: "Title", value: contact.jobTitle ?? "")
-                    BentoFieldRow(label: "Website", value: contact.website ?? "")
+                    EditableFieldRow(label: "Industry", key: "industry", type: .text, value: contact.industry, onSave: saveField)
+                    EditableFieldRow(label: "Lead Source", key: "leadSource", type: .text, value: contact.leadSource, onSave: saveField)
+                    EditableFieldRow(label: "Title", key: "jobTitle", type: .text, value: contact.jobTitle, onSave: saveField)
+                    readOnlyLinkRow(label: "Website", value: contact.website, prefix: nil)
                 }
 
                 if !eventTags.isEmpty {
@@ -341,12 +366,18 @@ struct ContactDetailView: View {
     private var timelineCell: some View {
         BentoCell(title: "Timeline & Location") {
             VStack(spacing: 0) {
-                BentoFieldRow(label: "Last Contact", value: formattedDate(contact.lastContactDate))
-                BentoFieldRow(label: "Last Interaction", value: formattedDate(contact.lastInteractionDate))
-                BentoFieldRow(label: "Imported", value: formattedDate(contact.importDate))
-                BentoFieldRow(label: "Review Done", value: formattedDate(contact.reviewCompletionDate))
-                BentoFieldRow(label: "Location", value: locationText)
-                BentoFieldRow(label: "Address", value: contact.addressLine ?? "")
+                EditableFieldRow(
+                    label: "Last Contact",
+                    key: "lastContactDate",
+                    type: .date,
+                    value: isoDateString(contact.lastContactDate),
+                    onSave: saveField
+                )
+                readOnlyRow(label: "Last Interaction", value: formattedDate(contact.lastInteractionDate))
+                readOnlyRow(label: "Imported", value: formattedDate(contact.importDate))
+                readOnlyRow(label: "Review Done", value: formattedDate(contact.reviewCompletionDate))
+                readOnlyRow(label: "Location", value: locationText)
+                EditableFieldRow(label: "Address", key: "addressLine", type: .text, value: contact.addressLine, onSave: saveField)
             }
         }
     }
@@ -361,24 +392,28 @@ struct ContactDetailView: View {
                             .foregroundStyle(.secondary)
                             .textCase(.uppercase)
                         Spacer()
-                        Button {
+                        sectionActionButton(
+                            title: resolvedCompanyNames.isEmpty ? "Link Company" : "Manage",
+                            systemImage: "plus.circle"
+                        ) {
                             showingCompaniesPicker = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 12, weight: .semibold))
                         }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(Color.accentColor)
                     }
 
                     if resolvedCompanyNames.isEmpty {
-                        Text("No linked companies")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                        emptyLinkedState(
+                            message: "No linked companies",
+                            actionTitle: "Link Company"
+                        ) {
+                            showingCompaniesPicker = true
+                        }
                     } else {
                         FlowLayout(spacing: 6) {
-                            ForEach(resolvedCompanyNames, id: \.self) { companyName in
-                                BentoChip(text: companyName, onTap: { showingCompaniesPicker = true })
+                            ForEach(linkedCompanies, id: \.id) { company in
+                                BentoChip(
+                                    text: company.companyName ?? "Unnamed Company",
+                                    onTap: { selectedLinkedCompany = company }
+                                )
                             }
                         }
                     }
@@ -393,34 +428,42 @@ struct ContactDetailView: View {
                             .foregroundStyle(.secondary)
                             .textCase(.uppercase)
                         Spacer()
-                        Button {
+                        sectionActionButton(
+                            title: linkedOpportunities.isEmpty ? "Link Opportunity" : "Manage",
+                            systemImage: "plus.circle"
+                        ) {
                             showingOpportunitiesPicker = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 12, weight: .semibold))
                         }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(Color.accentColor)
                     }
 
                     if linkedOpportunities.isEmpty {
-                        Text("No linked opportunities")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                        emptyLinkedState(
+                            message: "No linked opportunities",
+                            actionTitle: "Link Opportunity"
+                        ) {
+                            showingOpportunitiesPicker = true
+                        }
                     } else {
                         VStack(alignment: .leading, spacing: 6) {
                             ForEach(linkedOpportunities.prefix(4), id: \.id) { opportunity in
-                                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                                    Text(opportunity.opportunityName ?? "Untitled Opportunity")
-                                        .font(.system(size: 13, weight: .medium))
-                                        .lineLimit(1)
+                                Button {
+                                    selectedLinkedOpportunity = opportunity
+                                } label: {
+                                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                        Text(opportunity.opportunityName ?? "Untitled Opportunity")
+                                            .font(.system(size: 13, weight: .medium))
+                                            .foregroundStyle(.primary)
+                                            .lineLimit(1)
 
-                                    Spacer()
+                                        Spacer()
 
-                                    if let stage = opportunity.salesStage, !stage.isEmpty {
-                                        BentoPill(text: stage, color: stageColor(for: opportunity.salesStage))
+                                        if let stage = opportunity.salesStage, !stage.isEmpty {
+                                            BentoPill(text: stage, color: stageColor(for: opportunity.salesStage))
+                                        }
                                     }
+                                    .contentShape(Rectangle())
                                 }
+                                .buttonStyle(.plain)
                             }
 
                             if linkedOpportunities.count > 4 {
@@ -446,36 +489,43 @@ struct ContactDetailView: View {
                         .padding(.vertical, 8)
                 } else {
                     ForEach(openOpportunities, id: \.id) { opportunity in
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack(alignment: .firstTextBaseline) {
-                                Text(opportunity.opportunityName ?? "Untitled Opportunity")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .lineLimit(1)
+                        Button {
+                            selectedLinkedOpportunity = opportunity
+                        } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack(alignment: .firstTextBaseline) {
+                                    Text(opportunity.opportunityName ?? "Untitled Opportunity")
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(1)
 
-                                Spacer()
+                                    Spacer()
 
-                                if let dealValue = opportunity.dealValue, dealValue > 0 {
-                                    Text(formattedCurrency(dealValue))
-                                        .font(.system(size: 12, weight: .semibold))
-                                        .foregroundStyle(stageColor(for: opportunity.salesStage))
+                                    if let dealValue = opportunity.dealValue, dealValue > 0 {
+                                        Text(formattedCurrency(dealValue))
+                                            .font(.system(size: 12, weight: .semibold))
+                                            .foregroundStyle(stageColor(for: opportunity.salesStage))
+                                    }
+                                }
+
+                                HStack {
+                                    if let stage = opportunity.salesStage, !stage.isEmpty {
+                                        BentoPill(text: stage, color: stageColor(for: opportunity.salesStage))
+                                    }
+
+                                    Spacer()
+
+                                    if let closeDate = opportunity.expectedCloseDate {
+                                        Text(formattedDate(closeDate))
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(.secondary)
+                                    }
                                 }
                             }
-
-                            HStack {
-                                if let stage = opportunity.salesStage, !stage.isEmpty {
-                                    BentoPill(text: stage, color: stageColor(for: opportunity.salesStage))
-                                }
-
-                                Spacer()
-
-                                if let closeDate = opportunity.expectedCloseDate {
-                                    Text(formattedDate(closeDate))
-                                        .font(.system(size: 12))
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
+                            .padding(.vertical, 8)
+                            .contentShape(Rectangle())
                         }
-                        .padding(.vertical, 8)
+                        .buttonStyle(.plain)
 
                         if opportunity.id != openOpportunities.last?.id {
                             Divider()
@@ -512,13 +562,68 @@ struct ContactDetailView: View {
     private var partnerVendorCell: some View {
         BentoCell(title: "Partner / Vendor") {
             VStack(spacing: 0) {
-                BentoFieldRow(label: "Partner Type", value: contact.partnerType ?? "")
-                BentoFieldRow(label: "Partner Status", value: contact.partnerStatus ?? "")
-                BentoFieldRow(label: "Rate Info", value: contact.rateInfo ?? "")
-                BentoFieldRow(label: "Quality", value: contact.qualityRating ?? "")
-                BentoFieldRow(label: "Reliability", value: contact.reliabilityRating ?? "")
+                EditableFieldRow(label: "Partner Type", key: "partnerType", type: .text, value: contact.partnerType, onSave: saveField)
+                EditableFieldRow(label: "Partner Status", key: "partnerStatus", type: .text, value: contact.partnerStatus, onSave: saveField)
+                EditableFieldRow(label: "Rate Info", key: "rateInfo", type: .text, value: contact.rateInfo, onSave: saveField)
+                EditableFieldRow(label: "Quality", key: "qualityRating", type: .text, value: contact.qualityRating, onSave: saveField)
+                EditableFieldRow(label: "Reliability", key: "reliabilityRating", type: .text, value: contact.reliabilityRating, onSave: saveField)
             }
         }
+    }
+
+    private func detailRow<Leading: View, Trailing: View>(
+        _ leading: Leading,
+        _ trailing: Trailing
+    ) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            leading
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+            trailing
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
+    }
+
+    private func sectionActionButton(
+        title: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.system(size: 12, weight: .semibold))
+        }
+        .buttonStyle(.borderless)
+        .labelStyle(.titleAndIcon)
+    }
+
+    private func emptyLinkedState(
+        message: String,
+        actionTitle: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(message)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+
+            Button(actionTitle, action: action)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func readOnlyRow(label: String, value: String) -> some View {
+        DetailFieldRow(label: label, value: value)
+    }
+
+    private func readOnlyLinkRow(label: String, value: String?, prefix: String?) -> some View {
+        DetailFieldRow(
+            label: label,
+            value: value.map { displayValue(for: label, value: $0) } ?? "—",
+            isLink: value?.isEmpty == false,
+            linkURL: value.map { resolvedURL(value: $0, prefix: prefix) }
+        )
     }
 
     @ViewBuilder
@@ -590,6 +695,11 @@ struct ContactDetailView: View {
     private func formattedDate(_ date: Date?) -> String {
         guard let date else { return "—" }
         return Self.dateFormatter.string(from: date)
+    }
+
+    private func isoDateString(_ date: Date?) -> String? {
+        guard let date else { return nil }
+        return Self.isoFormatter.string(from: date)
     }
 
     private func stageColor(for stage: String?) -> Color {

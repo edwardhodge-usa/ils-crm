@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 // MARK: - Focused Value Key for Navigation
 
@@ -237,9 +238,27 @@ struct ContentView: View {
     private func sidebarSection(title: String, items: [NavItem]) -> some View {
         Section {
             ForEach(items, id: \.self) { item in
-                Label(item.title, systemImage: item.icon)
-                    .tag(item)
-                    .accessibilityIdentifier("nav_\(item.rawValue)")
+                let isSelected = selectedRawValue == item.rawValue
+
+                Button {
+                    selectedRawValue = item.rawValue
+                } label: {
+                    HStack(spacing: 10) {
+                        Label(item.title, systemImage: item.icon)
+                            .foregroundStyle(isSelected ? Color.white : Color.primary)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(isSelected ? Color.accentColor : Color.clear)
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .tag(item)
+                .accessibilityIdentifier("nav_\(item.rawValue)")
             }
         } header: {
             Text(title)
@@ -293,4 +312,149 @@ struct ContentView: View {
             DashboardView()
         }
     }
+}
+
+@MainActor
+private let appShellPreviewContainer: ModelContainer = {
+    do {
+        let schema = Schema([
+            Contact.self,
+            Company.self,
+            Opportunity.self,
+            Project.self,
+            Proposal.self,
+            CRMTask.self,
+            Interaction.self,
+            ImportedContact.self,
+            Specialty.self,
+            PortalAccessRecord.self,
+            PortalLog.self,
+            ClientPage.self
+        ])
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [configuration])
+        let context = container.mainContext
+
+        let company = Company(id: "preview-company-acme", companyName: "Acme Architecture")
+        company.industry = "Architecture"
+        company.website = "acmearchitecture.com"
+        company.city = "Los Angeles"
+        company.stateRegion = "CA"
+
+        let contact = Contact(
+            id: "preview-contact-jordan",
+            contactName: "Jordan Lee",
+            categorization: ["Client"]
+        )
+        contact.firstName = "Jordan"
+        contact.lastName = "Lee"
+        contact.email = "jordan@acmearchitecture.com"
+        contact.jobTitle = "Principal"
+        contact.companiesIds = [company.id]
+        contact.localModifiedAt = Date()
+
+        let opportunity = Opportunity(
+            id: "preview-opportunity-riverside",
+            opportunityName: "Riverside Campus Expansion"
+        )
+        opportunity.salesStage = "Proposal Sent"
+        opportunity.dealValue = 185_000
+        opportunity.companyIds = [company.id]
+        opportunity.associatedContactIds = [contact.id]
+        opportunity.expectedCloseDate = Calendar.current.date(byAdding: .day, value: 45, to: Date())
+
+        let task = CRMTask(id: "preview-task-followup", task: "Send follow-up proposal")
+        task.status = "Open"
+        task.priority = "High"
+        task.dueDate = Calendar.current.date(byAdding: .day, value: 3, to: Date())
+        task.contactsIds = [contact.id]
+        task.salesOpportunitiesIds = [opportunity.id]
+
+        let project = Project(id: "preview-project-raiders", projectName: "Raiders Hospitality Buildout")
+        project.status = "Active"
+        project.clientIds = [company.id]
+        project.primaryContactIds = [contact.id]
+        project.salesOpportunitiesIds = [opportunity.id]
+
+        let proposal = Proposal(id: "preview-proposal-q2", proposalName: "Q2 Expansion Proposal")
+        proposal.status = "Sent"
+        proposal.companyIds = [company.id]
+        proposal.clientIds = [contact.id]
+        proposal.relatedOpportunityIds = [opportunity.id]
+        proposal.proposedValue = 185_000
+
+        let interaction = Interaction(id: "preview-interaction-kickoff", subject: "Kickoff Call")
+        interaction.type = "Call"
+        interaction.direction = "Outbound"
+        interaction.date = Calendar.current.date(byAdding: .day, value: -2, to: Date())
+        interaction.contactsIds = [contact.id]
+        interaction.salesOpportunitiesIds = [opportunity.id]
+
+        let imported = ImportedContact(id: "preview-imported-sam", importedContactName: "Sam Rivera")
+        imported.company = "Northstar Builders"
+        imported.email = "sam@northstarbuilders.com"
+        imported.jobTitle = "VP Development"
+        imported.onboardingStatus = "Pending Review"
+
+        let specialty = Specialty(id: "preview-specialty-experiential", specialty: "Experiential Design")
+
+        let clientPage = ClientPage(id: "preview-clientpage-raiders")
+        clientPage.pageAddress = "las-vegas-raiders"
+        clientPage.clientName = "Las Vegas Raiders"
+        clientPage.pageTitle = "Welcome to the Raiders Portal"
+        clientPage.pageSubtitle = "Capabilities, case studies, and next steps"
+        clientPage.preparedFor = "Jordan Lee"
+        clientPage.head = true
+        clientPage.vPrMagic = true
+        clientPage.vHighLight = true
+        clientPage.v360 = false
+        clientPage.vFullL = true
+
+        let portalAccess = PortalAccessRecord(id: "preview-portalaccess-jordan", name: "Jordan Lee")
+        portalAccess.email = "jordan@acmearchitecture.com"
+        portalAccess.company = "Acme Architecture"
+        portalAccess.pageAddress = "las-vegas-raiders"
+        portalAccess.status = "ACTIVE"
+        portalAccess.stage = "Prospect"
+        portalAccess.dateAdded = Calendar.current.date(byAdding: .day, value: -14, to: Date())
+        portalAccess.contactIds = [contact.id]
+        portalAccess.framerPageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
+
+        let portalLog = PortalLog(id: "preview-portallog-1")
+        portalLog.clientName = "Jordan Lee"
+        portalLog.clientEmail = "jordan@acmearchitecture.com"
+        portalLog.company = "Acme Architecture"
+        portalLog.pageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
+        portalLog.timestamp = Calendar.current.date(byAdding: .day, value: -1, to: Date())
+        portalLog.city = "Los Angeles"
+        portalLog.region = "CA"
+        portalLog.country = "US"
+
+        context.insert(company)
+        context.insert(contact)
+        context.insert(opportunity)
+        context.insert(task)
+        context.insert(project)
+        context.insert(proposal)
+        context.insert(interaction)
+        context.insert(imported)
+        context.insert(specialty)
+        context.insert(clientPage)
+        context.insert(portalAccess)
+        context.insert(portalLog)
+
+        return container
+    } catch {
+        fatalError("Failed to create app shell preview container: \(error)")
+    }
+}()
+
+@MainActor
+private let appShellPreviewSyncEngine = SyncEngine(modelContainer: appShellPreviewContainer)
+
+#Preview("App Shell") {
+    ContentView()
+        .frame(width: 1440, height: 900)
+        .modelContainer(appShellPreviewContainer)
+        .environment(appShellPreviewSyncEngine)
 }

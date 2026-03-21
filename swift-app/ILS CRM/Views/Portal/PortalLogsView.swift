@@ -233,19 +233,45 @@ private struct PortalLogDetailSheet: View {
 // MARK: - Preview
 
 #Preview {
-    let log = PortalLog(id: "recLog1")
-    log.clientName = "John Smith"
-    log.clientEmail = "john@example.com"
-    log.company = "Acme Corp"
-    log.pageUrl = "https://portal.imaginelabstudios.com/acme"
-    log.timestamp = Date()
-    log.city = "New York"
-    log.region = "NY"
-    log.country = "US"
-    log.autoId = 42
-
     return NavigationStack {
         PortalLogsView()
     }
-    .modelContainer(for: PortalLog.self, inMemory: true)
+    .modelContainer(PortalLogsPreviewData.makeContainer())
+}
+
+@MainActor
+private enum PortalLogsPreviewData {
+    static func makeContainer() -> ModelContainer {
+        let schema = Schema([PortalLog.self])
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: schema, configurations: [configuration])
+        let context = container.mainContext
+
+        let recent = PortalLog(id: "recLog1")
+        recent.clientName = "John Smith"
+        recent.clientEmail = "john@example.com"
+        recent.company = "Acme Corp"
+        recent.pageUrl = "https://portal.imaginelabstudios.com/acme"
+        recent.timestamp = Date()
+        recent.city = "New York"
+        recent.region = "NY"
+        recent.country = "US"
+        recent.autoId = 42
+
+        let older = PortalLog(id: "recLog2")
+        older.clientName = "Kristen Banks"
+        older.clientEmail = "kristen@raiders.com"
+        older.company = "Las Vegas Raiders"
+        older.pageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
+        older.timestamp = Calendar.current.date(byAdding: .hour, value: -8, to: Date())
+        older.city = "Las Vegas"
+        older.region = "NV"
+        older.country = "US"
+        older.autoId = 43
+
+        context.insert(recent)
+        context.insert(older)
+
+        return container
+    }
 }

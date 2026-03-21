@@ -242,7 +242,7 @@ final class SyncEngine {
             // Update local records with real Airtable IDs
             // batchCreate returns records in the same order as the input
             for (index, airtableRecord) in createdRecords.enumerated() where index < creates.count {
-                if let newId = airtableRecord["id"] as? String {
+                if airtableRecord["id"] as? String != nil {
                     // Delete old local record and insert fresh from Airtable response
                     context.delete(creates[index])
                     if let record = AirtableRecord(json: airtableRecord) {

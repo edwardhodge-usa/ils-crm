@@ -3,18 +3,22 @@ import XCTest
 final class ILS_CRM_UITests: XCTestCase {
     let app = XCUIApplication()
 
+    private func pause(for seconds: TimeInterval) {
+        RunLoop.current.run(until: Date(timeIntervalSinceNow: seconds))
+    }
+
     override func setUpWithError() throws {
         continueAfterFailure = true
         app.launch()
-        sleep(2)
+        pause(for: 2)
 
         // SwiftUI window restoration may not open a window on launch.
         // If no window exists, use the menu bar to open one.
         if app.windows.count == 0 {
             app.menuBars.menuBarItems["File"].click()
-            Thread.sleep(forTimeInterval: 0.5)
+            pause(for: 0.5)
             app.menuBars.menuItems["New Window"].click()
-            sleep(2)
+            pause(for: 2)
         }
 
         print("APP windows: \(app.windows.count)")
@@ -64,7 +68,7 @@ final class ILS_CRM_UITests: XCTestCase {
         for tab in tabs {
             if let navItem = element(tab.id, timeout: 5) {
                 navItem.tap()
-                sleep(1)
+                pause(for: 1)
                 let screenshot = app.screenshot()
                 let attachment = XCTAttachment(screenshot: screenshot)
                 attachment.name = "Tab_\(tab.name)"
@@ -85,7 +89,7 @@ final class ILS_CRM_UITests: XCTestCase {
             return
         }
         tasksNav.tap()
-        sleep(1)
+        pause(for: 1)
 
         let smartLists = [
             ("smartlist_all_tasks", "AllTasks"),
@@ -100,7 +104,7 @@ final class ILS_CRM_UITests: XCTestCase {
         for (id, name) in smartLists {
             if let item = element(id, timeout: 3) {
                 item.tap()
-                sleep(1)
+                pause(for: 1)
                 let screenshot = app.screenshot()
                 let attachment = XCTAttachment(screenshot: screenshot)
                 attachment.name = "SmartList_\(name)"
@@ -119,7 +123,7 @@ final class ILS_CRM_UITests: XCTestCase {
             return
         }
         tasksNav.tap()
-        sleep(1)
+        pause(for: 1)
 
         let types = [
             ("type_schedule_meeting", "ScheduleMeeting"),
@@ -133,7 +137,7 @@ final class ILS_CRM_UITests: XCTestCase {
         for (id, name) in types {
             if let item = element(id, timeout: 3) {
                 item.tap()
-                sleep(1)
+                pause(for: 1)
                 let screenshot = app.screenshot()
                 let attachment = XCTAttachment(screenshot: screenshot)
                 attachment.name = "Type_\(name)"
@@ -155,7 +159,7 @@ final class ILS_CRM_UITests: XCTestCase {
             return
         }
         tasksNav.tap()
-        sleep(1)
+        pause(for: 1)
         let taskScreenshot = app.screenshot()
         let taskAttachment = XCTAttachment(screenshot: taskScreenshot)
         taskAttachment.name = "tasks-detail-view"
@@ -168,7 +172,7 @@ final class ILS_CRM_UITests: XCTestCase {
             return
         }
         portalNav.tap()
-        sleep(1)
+        pause(for: 1)
         let portalScreenshot = app.screenshot()
         let portalAttachment = XCTAttachment(screenshot: portalScreenshot)
         portalAttachment.name = "client-portal-view"
@@ -180,7 +184,7 @@ final class ILS_CRM_UITests: XCTestCase {
 
     /// Probe element types to find how SwiftUI exposes sidebar items.
     func testProbeElementTypes() throws {
-        sleep(3)
+        pause(for: 3)
 
         // Try finding "Dashboard" text by various element types
         let types: [(String, XCUIElementQuery)] = [

@@ -587,31 +587,36 @@ struct RelatedRecordRow: View {
 
 // MARK: - SortDropdown
 
-/// Small menu picker for sort options.
-/// Renders as current selection label + chevron using SwiftUI Menu.
+/// Compact inline picker for sort options.
+/// Uses explicit buttons so selection remains easy to test in previews.
 struct SortDropdown<T: Hashable & CustomStringConvertible>: View {
     let options: [T]
     @Binding var selection: T
 
     var body: some View {
-        Menu {
+        HStack(spacing: 4) {
             ForEach(options, id: \.self) { option in
+                let isSelected = selection == option
+
                 Button(option.description) {
                     selection = option
                 }
-            }
-        } label: {
-            HStack(spacing: 3) {
-                Text(selection.description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(.secondary)
+                .font(.caption)
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.12))
+                )
+                .buttonStyle(.plain)
             }
         }
-        .menuStyle(.borderlessButton)
-        .fixedSize()
+        .padding(3)
+        .background(
+            Capsule(style: .continuous)
+                .fill(Color.secondary.opacity(0.08))
+        )
     }
 }
 

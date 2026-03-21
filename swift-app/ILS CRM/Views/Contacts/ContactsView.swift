@@ -573,3 +573,94 @@ private extension String {
         isEmpty ? nil : self
     }
 }
+@MainActor
+private let contactsPreviewContainer: ModelContainer = {
+    do {
+        let schema = Schema([
+            Contact.self,
+            Company.self,
+            Opportunity.self,
+            Project.self,
+            Proposal.self,
+            CRMTask.self,
+            Interaction.self,
+            ImportedContact.self,
+            Specialty.self,
+            PortalAccessRecord.self,
+            PortalLog.self,
+            ClientPage.self
+        ])
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [configuration])
+        let context = container.mainContext
+
+        let acme = Company(id: "preview-company-acme", companyName: "Acme Architecture")
+        let northstar = Company(id: "preview-company-northstar", companyName: "Northstar Builders")
+
+        let jordan = Contact(
+            id: "preview-contact-jordan",
+            contactName: "Jordan Lee",
+            categorization: ["Client"]
+        )
+        jordan.firstName = "Jordan"
+        jordan.lastName = "Lee"
+        jordan.jobTitle = "Principal"
+        jordan.email = "jordan@acmearchitecture.com"
+        jordan.companiesIds = [acme.id]
+        jordan.localModifiedAt = Date()
+
+        let casey = Contact(
+            id: "preview-contact-casey",
+            contactName: "Casey Morgan",
+            categorization: ["Lead"]
+        )
+        casey.firstName = "Casey"
+        casey.lastName = "Morgan"
+        casey.jobTitle = "Project Director"
+        casey.email = "casey@northstarbuilders.com"
+        casey.companiesIds = [northstar.id]
+        casey.localModifiedAt = Calendar.current.date(byAdding: .day, value: -2, to: Date())
+
+        let taylor = Contact(
+            id: "preview-contact-taylor",
+            contactName: "Taylor Brooks",
+            categorization: ["Prospect"]
+        )
+        taylor.firstName = "Taylor"
+        taylor.lastName = "Brooks"
+        taylor.jobTitle = "Design Manager"
+        taylor.email = "taylor@example.com"
+        taylor.localModifiedAt = Calendar.current.date(byAdding: .day, value: -7, to: Date())
+
+        let opportunity = Opportunity(
+            id: "preview-opportunity-riverside",
+            opportunityName: "Riverside Campus Expansion"
+        )
+        opportunity.salesStage = "Proposal Sent"
+        opportunity.associatedContactIds = [jordan.id]
+        opportunity.companyIds = [acme.id]
+        opportunity.dealValue = 185_000
+        opportunity.localModifiedAt = Date()
+
+        context.insert(acme)
+        context.insert(northstar)
+        context.insert(jordan)
+        context.insert(casey)
+        context.insert(taylor)
+        context.insert(opportunity)
+
+        return container
+    } catch {
+        fatalError("Failed to create ContactsView preview container: \(error)")
+    }
+}()
+
+@MainActor
+private let contactsPreviewSyncEngine = SyncEngine(modelContainer: contactsPreviewContainer)
+
+#Preview {
+    ContactsView()
+        .frame(width: 1200, height: 800)
+        .modelContainer(contactsPreviewContainer)
+        .environment(contactsPreviewSyncEngine)
+}

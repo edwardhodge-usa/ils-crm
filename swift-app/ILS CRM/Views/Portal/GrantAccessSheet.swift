@@ -54,8 +54,13 @@ struct GrantAccessSheet: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("Grant Access")
-                    .font(.system(size: 15, weight: .semibold))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Grant Access")
+                        .font(.system(size: 15, weight: .semibold))
+                    Text("Select a contact to grant portal access for this page.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
                 Button("Cancel") { dismiss() }
                     .buttonStyle(.plain)
@@ -64,12 +69,6 @@ struct GrantAccessSheet: View {
             .padding(12)
 
             Divider()
-
-            // Search
-            TextField("Search contacts...", text: $searchText)
-                .textFieldStyle(.roundedBorder)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
 
             // Page context
             HStack(spacing: 6) {
@@ -83,9 +82,24 @@ struct GrantAccessSheet: View {
                 Spacer()
             }
             .padding(.horizontal, 14)
-            .padding(.bottom, 6)
+            .padding(.vertical, 8)
 
             Divider()
+
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                TextField("Search contacts...", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Color(.controlBackgroundColor))
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
 
             // Contact list
             if filteredContacts.isEmpty {
@@ -139,7 +153,12 @@ struct GrantAccessSheet: View {
             }
 
             Spacer()
+
+            Image(systemName: "plus.circle.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(Color.accentColor)
         }
+        .padding(.vertical, 4)
         .contentShape(Rectangle())
     }
 

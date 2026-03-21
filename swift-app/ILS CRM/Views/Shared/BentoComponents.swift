@@ -81,10 +81,12 @@ struct BentoHeroStat: View {
 // MARK: - BentoCell
 
 /// Rounded card container with uppercase title and arbitrary content.
-/// Background uses `controlBackgroundColor`, corner radius 10.
+/// Uses a raised material surface so cards read as distinct tiles in split views.
 struct BentoCell<Content: View>: View {
     let title: String
     @ViewBuilder let content: () -> Content
+
+    private let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -101,8 +103,12 @@ struct BentoCell<Content: View>: View {
                 .padding(.bottom, 12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(.regularMaterial, in: shape)
+        .overlay {
+            shape
+                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
     }
 }
 
@@ -190,7 +196,7 @@ struct BentoToggleRow: View {
 // MARK: - BentoChip
 
 /// Tappable pill for linked records: text 12px/600, blue color,
-/// `Color.accentColor.opacity(0.12)` background, 6px corner radius,
+/// accent-tinted fill with a light border for clearer separation from the card,
 /// horizontal padding 10, vertical 4. Optional onTap closure.
 struct BentoChip: View {
     let text: String
@@ -214,16 +220,22 @@ struct BentoChip: View {
             .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(Color.accentColor)
             .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(Color.accentColor.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.accentColor.opacity(0.12))
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(Color.accentColor.opacity(0.18), lineWidth: 1)
+            }
     }
 }
 
 // MARK: - BentoPill
 
 /// Status/category badge: text 12px/600, configurable color,
-/// `color.opacity(0.18)` background, capsule shape,
+/// accent-tinted capsule with border so pills remain visible on neutral surfaces,
 /// horizontal padding 8, vertical 3.
 struct BentoPill: View {
     let text: String
@@ -233,10 +245,16 @@ struct BentoPill: View {
         Text(text)
             .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(color.opacity(0.18))
-            .clipShape(Capsule())
+            .padding(.horizontal, 9)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(color.opacity(0.16))
+            )
+            .overlay {
+                Capsule()
+                    .stroke(color.opacity(0.22), lineWidth: 1)
+            }
     }
 }
 

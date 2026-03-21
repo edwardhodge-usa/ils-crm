@@ -23,6 +23,8 @@ struct PortalAccessView: View {
     @State private var selectedAccessRecord: PortalAccessRecord?
     @State private var showGrantAccess = false
     @State private var healthService = FramerHealthService()
+    @Environment(\.modelContext) private var modelContext
+    @Environment(SyncEngine.self) private var syncEngine
 
     // MARK: - Filtered Data
 
@@ -71,18 +73,40 @@ struct PortalAccessView: View {
         .navigationTitle("Client Portal")
         .toolbar {
             ToolbarItem(placement: .automatic) {
-                Picker("View", selection: $viewMode) {
-                    ForEach(PortalViewMode.allCases, id: \.self) { mode in
-                        Text(mode.rawValue).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 240)
+                portalModeTabs
             }
         }
         .onDisappear {
             healthService.cancelCheck()
         }
+    }
+
+    private var portalModeTabs: some View {
+        HStack(spacing: 6) {
+            ForEach(PortalViewMode.allCases, id: \.self) { mode in
+                let isSelected = viewMode == mode
+
+                Button {
+                    viewMode = mode
+                } label: {
+                    Text(mode.rawValue)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(isSelected ? Color.white : Color.primary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.12))
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(
+            Capsule(style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        )
     }
 
     // MARK: - All (Split Pane: list | detail)
@@ -297,202 +321,30 @@ struct PortalAccessView: View {
     }
 
     private func pageDetailContent(pageAddress: String, pageRecords: [PortalAccessRecord]) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Header
-            VStack(alignment: .leading, spacing: 4) {
-                Text(pageDisplayName(for: pageAddress, records: pageRecords))
-                    .font(.system(size: 15, weight: .bold))
-                Text(pageAddress)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
+        let page = clientPage(for: pageAddress)
 
-            Divider()
+        return ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                pageHeroCard(pageAddress: pageAddress, pageRecords: pageRecords, page: page)
 
-            // URL bar + Page fields + Section toggles + Access records
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    // URL Bar
-                    if pageAddress != "No Page" && !pageAddress.isEmpty {
-                        HStack {
-                            Text("imaginelabstudios.com/ils-clients/\(pageAddress)")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                            Spacer()
-                            Button("Open") {
-                                if let url = URL(string: "https://imaginelabstudios.com/ils-clients/\(pageAddress)") {
-                                    NSWorkspace.shared.open(url)
-                                }
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
-                        }
-                        .padding(10)
-                        .background(Color(nsColor: .controlBackgroundColor))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .padding(.horizontal, 16)
-                        .padding(.top, 12)
-                        .padding(.bottom, 12)
-                    }
+                if pageAddress != "No Page" && !pageAddress.isEmpty {
+                    pageURLBar(pageAddress: pageAddress)
+                }
 
-                    // Page fields + Section toggles (only if ClientPage record exists)
-                    if let page = clientPage(for: pageAddress) {
-                        // Page Details bento cell
-                        BentoCell(title: "Page Details") {
-                            VStack(spacing: 0) {
-                                BentoFieldRow(label: "Client Name", value: page.clientName ?? "\u{2014}")
-                                BentoFieldRow(label: "Page Title", value: {
-                                    let isEmpty = page.pageTitle == nil || page.pageTitle!.isEmpty
-                                    return isEmpty ? Self.defaultPageTitle : page.pageTitle!
-                                }())
-                                if let subtitle = page.pageSubtitle, !subtitle.isEmpty {
-                                    BentoFieldRow(label: "Subtitle", value: subtitle)
-                                }
-                                if let addr = page.pageAddress {
-                                    BentoFieldRow(label: "Page Address", value: addr)
-                                }
-                                if let deck = page.deckUrl, !deck.isEmpty {
-                                    // Custom row for Deck URL with clickable link
-                                    VStack(spacing: 0) {
-                                        HStack {
-                                            Text("Deck URL")
-                                                .font(.system(size: 13))
-                                                .foregroundStyle(.secondary)
-                                            Spacer()
-                                            if let url = URL(string: deck.hasPrefix("http") ? deck : "https://\(deck)") {
-                                                Link(deck, destination: url)
-                                                    .font(.system(size: 13))
-                                                    .lineLimit(2)
-                                                    .multilineTextAlignment(.trailing)
-                                            } else {
-                                                Text(deck)
-                                                    .font(.system(size: 13))
-                                                    .foregroundStyle(.primary)
-                                                    .lineLimit(2)
-                                                    .multilineTextAlignment(.trailing)
-                                            }
-                                        }
-                                        .frame(minHeight: 28)
-                                        Divider()
-                                    }
-                                }
-                                if let prep = page.preparedFor, !prep.isEmpty {
-                                    BentoFieldRow(label: "Prepared For", value: prep)
-                                }
-                                if let ty = page.thankYou, !ty.isEmpty {
-                                    BentoFieldRow(label: "Thank You", value: ty)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 12)
-
-                        // Video Sections bento cell with interactive toggles
-                        BentoCell(title: "Video Sections") {
-                            VStack(spacing: 0) {
-                                BentoToggleRow(label: "Header", isOn: Binding(
-                                    get: { page.head },
-                                    set: { page.head = $0; page.isPendingPush = true; page.localModifiedAt = Date() }
-                                ))
-                                BentoToggleRow(label: "Practical Magic", isOn: Binding(
-                                    get: { page.vPrMagic },
-                                    set: { page.vPrMagic = $0; page.isPendingPush = true; page.localModifiedAt = Date() }
-                                ))
-                                BentoToggleRow(label: "Highlights", isOn: Binding(
-                                    get: { page.vHighLight },
-                                    set: { page.vHighLight = $0; page.isPendingPush = true; page.localModifiedAt = Date() }
-                                ))
-                                BentoToggleRow(label: "360", isOn: Binding(
-                                    get: { page.v360 },
-                                    set: { page.v360 = $0; page.isPendingPush = true; page.localModifiedAt = Date() }
-                                ))
-                                BentoToggleRow(label: "Full Length", isOn: Binding(
-                                    get: { page.vFullL },
-                                    set: { page.vFullL = $0; page.isPendingPush = true; page.localModifiedAt = Date() }
-                                ))
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 12)
-                    }
-
-                    // Section header + Grant Access button
-                    HStack {
-                        Text("PEOPLE WITH ACCESS (\(pageRecords.count))")
-                            .font(.system(size: 11, weight: .bold))
-                            .tracking(0.5)
-                            .foregroundStyle(.secondary)
-                            .textCase(.uppercase)
-
-                        Spacer()
-
-                        Button {
-                            showGrantAccess = true
-                        } label: {
-                            Label("Grant Access", systemImage: "person.badge.plus")
-                                .font(.system(size: 11))
-                        }
-                        .buttonStyle(.borderless)
-                        .controlSize(.small)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 12)
-                    .padding(.bottom, 8)
-                    .sheet(isPresented: $showGrantAccess) {
-                        GrantAccessSheet(pageAddress: pageAddress)
-                    }
-
-                    // Access records list
-                    VStack(spacing: 0) {
-                        ForEach(pageRecords, id: \.id) { record in
-                            Button {
-                                selectedAccessRecord = record
-                            } label: {
-                                HStack(spacing: 10) {
-                                    AvatarView(name: displayName(for: record), avatarSize: .small)
-
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(displayName(for: record))
-                                            .font(.system(size: 13, weight: .medium))
-                                            .foregroundStyle(.primary)
-                                            .lineLimit(1)
-
-                                        if let subtitle = personSubtitle(for: record) {
-                                            Text(subtitle)
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                                .lineLimit(1)
-                                        }
-                                    }
-
-                                    Spacer()
-
-                                    if let stage = record.stage, !stage.isEmpty {
-                                        StatusBadge(text: stage, color: stageColor(stage))
-                                    }
-
-                                    if let dateAdded = record.dateAdded {
-                                        Text(dateAdded.formatted(date: .abbreviated, time: .omitted))
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-
-                            Divider()
-                                .padding(.leading, 54)
-                        }
+                if let page {
+                    BentoGrid(columns: 2) {
+                        pageContentCell(page)
+                        sectionTogglesCell(page)
                     }
                 }
+
+                peopleWithAccessCell(pageAddress: pageAddress, pageRecords: pageRecords)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+        .sheet(isPresented: $showGrantAccess) {
+            GrantAccessSheet(pageAddress: pageAddress)
         }
     }
 
@@ -528,6 +380,345 @@ struct PortalAccessView: View {
     // MARK: - Page Field Helpers
 
     private static let defaultPageTitle = "We've prepared this overview of our capabilities, approach and video examples — please don't hesitate to reach out with any questions."
+
+    private func pageHeroCard(pageAddress: String, pageRecords: [PortalAccessRecord], page: ClientPage?) -> some View {
+        HStack(spacing: 14) {
+            AvatarView(
+                name: pageDisplayName(for: pageAddress, records: pageRecords),
+                size: 56,
+                shape: .roundedRect
+            )
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(pageDisplayName(for: pageAddress, records: pageRecords))
+                    .font(.system(size: 16, weight: .semibold))
+                    .lineLimit(1)
+
+                Text(pageAddress)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                HStack(spacing: 6) {
+                    BentoPill(text: pageHealthLabel(for: pageAddress), color: pageHealthColor(for: pageAddress))
+
+                    if pageAddress != "No Page" && !pageAddress.isEmpty {
+                        Button {
+                            openPortalPage(pageAddress)
+                        } label: {
+                            BentoPill(text: "Open Page", color: .accentColor)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.top, 2)
+            }
+
+            Spacer(minLength: 12)
+
+            HStack(spacing: 16) {
+                BentoHeroStat(value: "\(pageRecords.count)", label: "People")
+                BentoHeroStat(value: videoSectionSummary(for: page), label: "Videos On")
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        }
+    }
+
+    private func pageURLBar(pageAddress: String) -> some View {
+        HStack(spacing: 10) {
+            Text("imaginelabstudios.com/ils-clients/\(pageAddress)")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            Spacer()
+
+            Button("Open") {
+                openPortalPage(pageAddress)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
+        }
+        .padding(10)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        }
+    }
+
+    private func pageContentCell(_ page: ClientPage) -> some View {
+        BentoCell(title: "Page Content") {
+            VStack(alignment: .leading, spacing: 10) {
+                BentoTextInput(
+                    label: "Page Title",
+                    value: page.pageTitle?.trimmedNilIfEmpty ?? Self.defaultPageTitle,
+                    onSave: { newValue in
+                        page.pageTitle = newValue.trimmedNilIfEmpty
+                        markPageDirty(page)
+                    }
+                )
+                BentoTextInput(
+                    label: "Subtitle",
+                    value: page.pageSubtitle ?? "",
+                    placeholder: "Add a subtitle...",
+                    onSave: { newValue in
+                        page.pageSubtitle = newValue.trimmedNilIfEmpty
+                        markPageDirty(page)
+                    }
+                )
+                BentoTextInput(
+                    label: "Prepared For",
+                    value: page.preparedFor ?? "",
+                    placeholder: "Client contact",
+                    onSave: { newValue in
+                        page.preparedFor = newValue.trimmedNilIfEmpty
+                        markPageDirty(page)
+                    }
+                )
+                BentoTextInput(
+                    label: "Thank You",
+                    value: page.thankYou ?? "",
+                    placeholder: "Closing message",
+                    onSave: { newValue in
+                        page.thankYou = newValue.trimmedNilIfEmpty
+                        markPageDirty(page)
+                    }
+                )
+                BentoTextInput(
+                    label: "Deck URL",
+                    value: page.deckUrl ?? "",
+                    placeholder: "drive.google.com/...",
+                    onSave: { newValue in
+                        page.deckUrl = newValue.trimmedNilIfEmpty
+                        markPageDirty(page)
+                    }
+                )
+            }
+        }
+    }
+
+    private func sectionTogglesCell(_ page: ClientPage) -> some View {
+        BentoCell(title: "Section Toggles") {
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Video Sections")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 18), GridItem(.flexible(), spacing: 18)], spacing: 8) {
+                        portalToggle("Practical Magic", binding: portalPageBinding(page, keyPath: \.vPrMagic))
+                        portalToggle("Show Highlights", binding: portalPageBinding(page, keyPath: \.vHighLight))
+                        portalToggle("360 Videos", binding: portalPageBinding(page, keyPath: \.v360))
+                        portalToggle("Full Length", binding: portalPageBinding(page, keyPath: \.vFullL))
+                    }
+                }
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Page Sections")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 18), GridItem(.flexible(), spacing: 18)], spacing: 8) {
+                        portalToggle("Header", binding: portalPageBinding(page, keyPath: \.head))
+                        portalStaticToggle("Photos", isOn: true)
+                        portalStaticToggle("Team", isOn: false)
+                        portalStaticToggle("Testimonials", isOn: true)
+                    }
+                }
+            }
+        }
+    }
+
+    private func peopleWithAccessCell(pageAddress: String, pageRecords: [PortalAccessRecord]) -> some View {
+        BentoCell(title: "People With Access (\(pageRecords.count))") {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("Invite and manage who can see this portal page.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+
+                    Button {
+                        showGrantAccess = true
+                    } label: {
+                        Label("Grant Access", systemImage: "plus.circle")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .buttonStyle(.borderless)
+                }
+                .padding(.bottom, 8)
+
+                ForEach(pageRecords, id: \.id) { record in
+                    Button {
+                        selectedAccessRecord = record
+                    } label: {
+                        HStack(spacing: 10) {
+                            AvatarView(name: displayName(for: record), avatarSize: .small)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(displayName(for: record))
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+
+                                if let subtitle = accessRowSubtitle(for: record, pageAddress: pageAddress) {
+                                    Text(subtitle)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                            }
+
+                            Spacer()
+
+                            if let stage = record.stage, !stage.isEmpty {
+                                BentoPill(text: stage, color: stageColor(stage))
+                            }
+
+                            if let dateAdded = record.dateAdded {
+                                Text(dateAdded.formatted(date: .abbreviated, time: .omitted))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 48, alignment: .trailing)
+                            }
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .padding(.vertical, 10)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+
+                    if record.id != pageRecords.last?.id {
+                        Divider()
+                            .padding(.leading, 44)
+                    }
+                }
+            }
+        }
+    }
+
+    private func portalToggle(_ title: String, binding: Binding<Bool>) -> some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.system(size: 13))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+
+            Spacer()
+
+            Toggle("", isOn: binding)
+                .toggleStyle(.switch)
+                .labelsHidden()
+        }
+        .frame(minHeight: 30)
+    }
+
+    private func portalStaticToggle(_ title: String, isOn: Bool) -> some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            Spacer()
+
+            Toggle("", isOn: .constant(isOn))
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .disabled(true)
+        }
+        .frame(minHeight: 30)
+        .opacity(0.85)
+    }
+
+    private func portalPageBinding(_ page: ClientPage, keyPath: ReferenceWritableKeyPath<ClientPage, Bool>) -> Binding<Bool> {
+        Binding(
+            get: { page[keyPath: keyPath] },
+            set: { newValue in
+                page[keyPath: keyPath] = newValue
+                markPageDirty(page)
+            }
+        )
+    }
+
+    private func markPageDirty(_ page: ClientPage) {
+        page.isPendingPush = true
+        page.localModifiedAt = Date()
+    }
+
+    private func openPortalPage(_ pageAddress: String) {
+        guard let url = URL(string: "https://imaginelabstudios.com/ils-clients/\(pageAddress)") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    private func pageHealthLabel(for pageAddress: String) -> String {
+        if healthService.isChecking, healthService.healthMap[pageAddress] == nil {
+            return "Checking"
+        }
+
+        switch healthService.healthMap[pageAddress] {
+        case .some(.live):
+            return "Live"
+        case .some(.error):
+            return "Issue"
+        case .some(.unchecked), .none:
+            return "Unchecked"
+        }
+    }
+
+    private func pageHealthColor(for pageAddress: String) -> Color {
+        if healthService.isChecking, healthService.healthMap[pageAddress] == nil {
+            return .orange
+        }
+
+        switch healthService.healthMap[pageAddress] {
+        case .some(.live):
+            return .green
+        case .some(.error):
+            return .red
+        case .some(.unchecked), .none:
+            return .secondary
+        }
+    }
+
+    private func videoSectionSummary(for page: ClientPage?) -> String {
+        guard let page else { return "0/4" }
+        let enabled = [page.vPrMagic, page.vHighLight, page.v360, page.vFullL].filter { $0 }.count
+        return "\(enabled)/4"
+    }
+
+    private func accessRowSubtitle(for record: PortalAccessRecord, pageAddress: String) -> String? {
+        let company = record.company ?? record.contactCompanyLookup
+        let email = record.email ?? record.contactEmailLookup
+
+        switch (company, email) {
+        case let (company?, email?) where !company.isEmpty && !email.isEmpty:
+            return "\(company) · \(email)"
+        case let (_, email?) where !email.isEmpty:
+            return "\(pageDisplayName(for: pageAddress, records: [record])) · \(email)"
+        case let (company?, _) where !company.isEmpty:
+            return company
+        default:
+            return nil
+        }
+    }
+
+    private func revokeAccess(_ record: PortalAccessRecord) {
+        syncEngine.trackDeletion(tableId: PortalAccessRecord.airtableTableId, recordId: record.id)
+        modelContext.delete(record)
+    }
 
     // MARK: - By Client (Split Pane: list | detail)
 
@@ -695,18 +886,107 @@ struct PortalAccessView: View {
     }
 }
 
+private extension String {
+    var trimmedNilIfEmpty: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+}
+
 // MARK: - Preview
 
 #Preview {
-    let record = PortalAccessRecord(id: "recTest1", name: "Haus Collection")
-    record.pageAddress = "haus-collection"
-    record.email = "client@example.com"
-    record.status = "ACTIVE"
-    record.stage = "Live"
-    record.company = "Haus Group"
+    let container = PortalPreviewData.makePortalAccessContainer()
 
     return NavigationStack {
         PortalAccessView()
     }
-    .modelContainer(for: [PortalAccessRecord.self, ClientPage.self], inMemory: true)
+    .modelContainer(container)
+    .environment(SyncEngine(modelContainer: container))
+}
+
+@MainActor
+private enum PortalPreviewData {
+    static func makePortalAccessContainer() -> ModelContainer {
+        let schema = Schema([
+            PortalAccessRecord.self,
+            ClientPage.self,
+            PortalLog.self,
+            Contact.self,
+            Company.self,
+        ])
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: schema, configurations: [configuration])
+        let context = container.mainContext
+
+        let page = ClientPage(id: "page_lvr")
+        page.pageAddress = "las-vegas-raiders"
+        page.clientName = "Las Vegas Raiders"
+        page.pageTitle = "We've prepared this overview of our capabilities, approach and video examples."
+        page.pageSubtitle = "Your Vision, Our Expertise"
+        page.preparedFor = "Kristen Banks, VP Operations"
+        page.thankYou = "Thank you for considering ImagineLab Studios."
+        page.deckUrl = "drive.google.com/raiders-deck"
+        page.head = true
+        page.vPrMagic = true
+        page.vHighLight = true
+        page.v360 = false
+        page.vFullL = true
+
+        let kristen = PortalAccessRecord(id: "access_kristen", name: "Kristen Banks")
+        kristen.pageAddress = "las-vegas-raiders"
+        kristen.email = "kristen@raiders.com"
+        kristen.status = "ACTIVE"
+        kristen.stage = "Client"
+        kristen.company = "Las Vegas Raiders"
+        kristen.dateAdded = Calendar.current.date(byAdding: .day, value: -48, to: Date())
+        kristen.framerPageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
+
+        let murph = PortalAccessRecord(id: "access_murph", name: "Murph")
+        murph.pageAddress = "las-vegas-raiders"
+        murph.email = "murph@raiders.com"
+        murph.status = "ACTIVE"
+        murph.stage = "Client"
+        murph.company = "Las Vegas Raiders"
+        murph.dateAdded = Calendar.current.date(byAdding: .day, value: -12, to: Date())
+        murph.framerPageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
+
+        let blackstonePage = ClientPage(id: "page_blackstone")
+        blackstonePage.pageAddress = "blackstone-group"
+        blackstonePage.clientName = "Blackstone Group"
+        blackstonePage.pageTitle = "A private portal overview tailored for Blackstone."
+        blackstonePage.vPrMagic = true
+
+        let blackstone = PortalAccessRecord(id: "access_blackstone", name: "Jordan Lee")
+        blackstone.pageAddress = "blackstone-group"
+        blackstone.email = "jordan@blackstone.com"
+        blackstone.status = "ACTIVE"
+        blackstone.stage = "Prospect"
+        blackstone.company = "Blackstone Group"
+        blackstone.dateAdded = Calendar.current.date(byAdding: .day, value: -6, to: Date())
+
+        let log1 = PortalLog(id: "log_1")
+        log1.clientName = "Kristen Banks"
+        log1.clientEmail = "kristen@raiders.com"
+        log1.company = "Las Vegas Raiders"
+        log1.pageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
+        log1.timestamp = Calendar.current.date(byAdding: .day, value: -1, to: Date())
+
+        let log2 = PortalLog(id: "log_2")
+        log2.clientName = "Murph"
+        log2.clientEmail = "murph@raiders.com"
+        log2.company = "Las Vegas Raiders"
+        log2.pageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
+        log2.timestamp = Calendar.current.date(byAdding: .day, value: -3, to: Date())
+
+        context.insert(page)
+        context.insert(kristen)
+        context.insert(murph)
+        context.insert(blackstonePage)
+        context.insert(blackstone)
+        context.insert(log1)
+        context.insert(log2)
+
+        return container
+    }
 }

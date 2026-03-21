@@ -75,6 +75,11 @@ struct PortalAccessDetailView: View {
         return DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .none)
     }
 
+    private var portalPageURL: String? {
+        guard let addr = record.pageAddress, !addr.isEmpty else { return nil }
+        return "https://imaginelabstudios.com/ils-clients/\(addr)"
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -104,91 +109,90 @@ struct PortalAccessDetailView: View {
                 BentoHeroStat(value: lastLoginDays, label: "Last Login")
             }
 
-            // MARK: Row 1 — Video Sections + Page Sections
-            BentoGrid(columns: 2) {
-
-                // VIDEO SECTIONS
-                BentoCell(title: "Video Sections") {
-                    if let page = linkedClientPage {
-                        toggleGrid([
-                            ("Practical Magic", page.vPrMagic),
-                            ("Show Highlights", page.vHighLight),
-                            ("360 Videos", page.v360),
-                            ("Full Length", page.vFullL),
-                        ])
-                    } else {
-                        Text("No page data")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                // PAGE SECTIONS
-                // ClientPage model currently only has video toggles.
-                // Show placeholder per mockup structure — these fields
-                // will map to Airtable once the schema is extended.
-                BentoCell(title: "Page Sections") {
-                    Text("No page data")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            // MARK: Row 2 — Access Details + Activity
-            BentoGrid(columns: 2) {
-
-                // ACCESS DETAILS
-                BentoCell(title: "Access Details") {
-                    VStack(spacing: 0) {
-                        // Page Address — shown in accent color as tappable link
-                        VStack(spacing: 0) {
-                            HStack {
-                                Text("Page Address")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                if let addr = record.pageAddress, !addr.isEmpty {
-                                    Button {
-                                        if let url = URL(string: "https://imaginelabstudios.com/ils-clients/\(addr)") {
-                                            NSWorkspace.shared.open(url)
-                                        }
-                                    } label: {
-                                        Text(addr)
-                                            .font(.system(size: 13))
-                                            .foregroundStyle(Color.accentColor)
-                                            .lineLimit(1)
-                                    }
-                                    .buttonStyle(.plain)
-                                } else {
-                                    Text("\u{2014}")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(.primary)
-                                }
-                            }
-                            .frame(minHeight: 28)
-                            Divider()
-                        }
-
-                        // Auth Code — masked
-                        BentoFieldRow(label: "Auth Code", value: "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}")
-
-                        // Email
-                        BentoFieldRow(label: "Email", value: record.email ?? record.contactEmailLookup ?? "\u{2014}")
-                    }
-                }
-
-                // ACTIVITY
-                BentoCell(title: "Activity") {
-                    VStack(spacing: 0) {
-                        BentoFieldRow(label: "Last Login", value: lastLoginFormatted)
-                        BentoFieldRow(label: "Total Logins", value: totalLogins)
-                        BentoFieldRow(label: "Created", value: dateAddedFormatted)
-                    }
-                }
-            }
+            detailRow(videoSectionsCell, pageSectionsCell)
+            detailRow(accessDetailsCell, activityCell)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+    }
+
+    private var videoSectionsCell: some View {
+        BentoCell(title: "Video Sections") {
+            if let page = linkedClientPage {
+                toggleGrid([
+                    ("Practical Magic", page.vPrMagic),
+                    ("Show Highlights", page.vHighLight),
+                    ("360 Videos", page.v360),
+                    ("Full Length", page.vFullL),
+                ])
+            } else {
+                Text("No page data")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var pageSectionsCell: some View {
+        BentoCell(title: "Page Sections") {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Additional page sections are not yet modeled in SwiftData.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+
+                if let portalPageURL {
+                    Button {
+                        openURL(portalPageURL)
+                    } label: {
+                        Label("Open Portal Page", systemImage: "arrow.up.right.square")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .buttonStyle(.borderless)
+                }
+            }
+        }
+    }
+
+    private var accessDetailsCell: some View {
+        BentoCell(title: "Access Details") {
+            VStack(spacing: 0) {
+                DetailFieldRow(
+                    label: "Page Address",
+                    value: record.pageAddress ?? "\u{2014}",
+                    isLink: portalPageURL != nil,
+                    linkURL: portalPageURL
+                )
+                BentoFieldRow(label: "Auth Code", value: "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}")
+                DetailFieldRow(
+                    label: "Email",
+                    value: record.email ?? record.contactEmailLookup ?? "\u{2014}",
+                    isLink: (record.email ?? record.contactEmailLookup)?.isEmpty == false,
+                    linkURL: (record.email ?? record.contactEmailLookup).map { "mailto:\($0)" }
+                )
+            }
+        }
+    }
+
+    private var activityCell: some View {
+        BentoCell(title: "Activity") {
+            VStack(spacing: 0) {
+                DetailFieldRow(label: "Last Login", value: lastLoginFormatted)
+                DetailFieldRow(label: "Total Logins", value: totalLogins)
+                DetailFieldRow(label: "Created", value: dateAddedFormatted)
+            }
+        }
+    }
+
+    private func detailRow<Leading: View, Trailing: View>(
+        _ leading: Leading,
+        _ trailing: Trailing
+    ) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            leading
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+            trailing
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
     }
 
     // MARK: - Toggle Grid Helper
@@ -220,20 +224,65 @@ struct PortalAccessDetailView: View {
             }
         }
     }
+
+    private func openURL(_ rawValue: String) {
+        guard let url = URL(string: rawValue) else { return }
+        NSWorkspace.shared.open(url)
+    }
 }
 
 // MARK: - Preview
 
 #Preview {
-    let record = PortalAccessRecord(id: "recTest1", name: "Kristen Banks")
-    record.pageAddress = "las-vegas-raiders"
-    record.email = "kristen@raiders.com"
-    record.status = "ACTIVE"
-    record.stage = "Client"
-    record.company = "Las Vegas Raiders"
-    record.framerPageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
-    record.dateAdded = Calendar.current.date(byAdding: .month, value: -2, to: Date())
+    let container = PortalAccessDetailPreviewData.makeContainer()
+    let descriptor = FetchDescriptor<PortalAccessRecord>()
+    let record = try! container.mainContext.fetch(descriptor).first!
 
     return PortalAccessDetailView(record: record)
         .frame(width: 720, height: 600)
+        .modelContainer(container)
+}
+
+@MainActor
+private enum PortalAccessDetailPreviewData {
+    static func makeContainer() -> ModelContainer {
+        let schema = Schema([
+            PortalAccessRecord.self,
+            ClientPage.self,
+            PortalLog.self,
+        ])
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: schema, configurations: [configuration])
+        let context = container.mainContext
+
+        let page = ClientPage(id: "page_lvr")
+        page.pageAddress = "las-vegas-raiders"
+        page.clientName = "Las Vegas Raiders"
+        page.vPrMagic = true
+        page.vHighLight = true
+        page.v360 = false
+        page.vFullL = true
+
+        let record = PortalAccessRecord(id: "recTest1", name: "Kristen Banks")
+        record.pageAddress = "las-vegas-raiders"
+        record.email = "kristen@raiders.com"
+        record.status = "ACTIVE"
+        record.stage = "Client"
+        record.company = "Las Vegas Raiders"
+        record.framerPageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
+        record.dateAdded = Calendar.current.date(byAdding: .month, value: -2, to: Date())
+
+        let log = PortalLog(id: "portal_log_1")
+        log.clientName = "Kristen Banks"
+        log.clientEmail = "kristen@raiders.com"
+        log.company = "Las Vegas Raiders"
+        log.pageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
+        log.timestamp = Calendar.current.date(byAdding: .day, value: -2, to: Date())
+
+        context.insert(page)
+        context.insert(record)
+        context.insert(log)
+
+        return container
+    }
 }
