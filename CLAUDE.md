@@ -36,6 +36,7 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 ### UI Redesign Process
 - When executing a UI redesign from an HTML mockup: (1) READ the mockup HTML file and feed its content to every subagent, (2) use the mockup as source of truth for layout, sections, and field groupings — not the data model, (3) verify the result visually against the mockup before shipping. Subagents that don't see the mockup will invent their own layouts.
 - Detail views should show inline (list | detail split pane) not as sheet popups — matches macOS HIG for master-detail. Use HStack with Divider, not `.sheet(item:)`
+- **2026-03-20** — Build success ≠ visual correctness. After /do subagents complete UI tasks: build, RUN the app, SCREENSHOT each modified view, COMPARE against mockup, SHOW user. Never declare "ready to ship" based only on compilation. The /do skill Step 3 and Rule 4 now enforce this.
 
 ### Airtable API Rules
 - API cannot create formula fields, views, or delete fields — document for manual creation in UI
