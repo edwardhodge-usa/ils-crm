@@ -1,23 +1,17 @@
 import SwiftUI
 import SwiftData
 
-/// Portal Access detail view — bento box layout.
+/// Portal Access detail view — bento box layout matching the Portal "Proposed Bento" mockup.
 ///
 /// Single ScrollView wrapping:
-/// - BentoHeroCard (avatar, name, subtitle, action pills, stats)
-/// - BentoGrid row 1: Access Status + Portal & Business
-/// - BentoGrid row 2: Key Dates + Notes
-/// - Conditional: Linked Contact cell
+/// - BentoHeroCard (avatar, name, company subtitle, "View Portal" pill, Sections + Last Login stats)
+/// - BentoGrid row 1: Video Sections + Page Sections (toggle indicators)
+/// - BentoGrid row 2: Access Details + Activity
 struct PortalAccessDetailView: View {
     @Bindable var record: PortalAccessRecord
 
     @Query private var clientPages: [ClientPage]
-
-    private static let isoFormatter: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withFullDate]
-        return f
-    }()
+    @Query(sort: \PortalLog.timestamp, order: .reverse) private var portalLogs: [PortalLog]
 
     // MARK: - Computed Properties
 
@@ -30,116 +24,55 @@ struct PortalAccessDetailView: View {
         return "Unknown"
     }
 
-    /// Hero subtitle: "Position · Company" or just one
+    /// Hero subtitle: company name (matching mockup "Las Vegas Raiders").
     private var heroSubtitle: String? {
-        let parts = [record.positionTitle, record.company].compactMap { $0 }.filter { !$0.isEmpty }
-        if parts.isEmpty { return nil }
-        return parts.joined(separator: " \u{00B7} ")
+        if let company = record.company, !company.isEmpty { return company }
+        if let lookup = record.contactCompanyLookup, !lookup.isEmpty { return lookup }
+        return nil
     }
 
-    /// Days active since dateAdded.
-    private var daysActive: String {
-        guard let dateAdded = record.dateAdded else { return "\u{2014}" }
-        let days = Calendar.current.dateComponents([.day], from: dateAdded, to: Date()).day ?? 0
-        return "\(days)"
+    /// Linked ClientPage for this record's page address.
+    private var linkedClientPage: ClientPage? {
+        guard let addr = record.pageAddress else { return nil }
+        return clientPages.first { $0.pageAddress == addr }
     }
 
-    /// Count of enabled video sections from linked ClientPage.
-    private var sectionsCount: String {
-        guard let addr = record.pageAddress,
-              let page = clientPages.first(where: { $0.pageAddress == addr }) else {
-            return "\u{2014}"
-        }
-        let count = [page.head, page.vPrMagic, page.vHighLight, page.v360, page.vFullL]
-            .filter { $0 }
-            .count
-        return "\(count)"
+    /// Count of enabled video section toggles from linked ClientPage.
+    private var sectionsCount: Int {
+        guard let page = linkedClientPage else { return 0 }
+        return [page.vPrMagic, page.vHighLight, page.v360, page.vFullL].filter { $0 }.count
     }
 
-    /// Formatted project budget as currency.
-    private var formattedBudget: String {
-        guard let budget = record.projectBudget, budget > 0 else { return "\u{2014}" }
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.maximumFractionDigits = 0
-        formatter.currencyCode = "USD"
-        return formatter.string(from: NSNumber(value: budget)) ?? "$\(Int(budget))"
+    /// Portal logs matching this record's email.
+    private var matchingLogs: [PortalLog] {
+        guard let email = record.email ?? record.contactEmailLookup, !email.isEmpty else { return [] }
+        let lower = email.lowercased()
+        return portalLogs.filter { ($0.clientEmail ?? "").lowercased() == lower }
     }
 
-    /// Stage color for pills.
-    private func stageColor(_ stage: String) -> Color {
-        let lower = stage.lowercased()
-        if lower.contains("client") { return .green }
-        if lower.contains("lead") { return .orange }
-        if lower.contains("prospect") { return .blue }
-        if lower.contains("partner") { return .teal }
-        if lower.contains("past") { return .red }
-        return .secondary
+    /// Days since most recent PortalLog entry, formatted as "Nd" or em dash.
+    private var lastLoginDays: String {
+        guard let mostRecent = matchingLogs.first?.timestamp else { return "\u{2014}" }
+        let days = Calendar.current.dateComponents([.day], from: mostRecent, to: Date()).day ?? 0
+        return "\(days)d"
     }
 
-    /// Status color: ACTIVE = green, IN-ACTIVE = red, others = secondary.
-    private func statusColor(_ status: String) -> Color {
-        let upper = status.uppercased()
-        if upper.contains("ACTIVE") && !upper.contains("IN-ACTIVE") && !upper.contains("INACTIVE") {
-            return .green
-        }
-        if upper.contains("IN-ACTIVE") || upper.contains("INACTIVE") {
-            return .red
-        }
-        if upper.contains("PENDING") { return .orange }
-        if upper.contains("EXPIRED") { return .yellow }
-        if upper.contains("REVOKED") { return .red }
-        return .secondary
+    /// Most recent login date formatted for Activity cell.
+    private var lastLoginFormatted: String {
+        guard let mostRecent = matchingLogs.first?.timestamp else { return "\u{2014}" }
+        return DateFormatter.localizedString(from: mostRecent, dateStyle: .medium, timeStyle: .none)
     }
 
-    /// Whether any contact lookup fields are populated.
-    private var hasContactLookupData: Bool {
-        let fields: [String?] = [
-            record.contactNameLookup, record.contactEmailLookup,
-            record.contactPhoneLookup, record.contactJobTitleLookup,
-            record.contactCompanyLookup, record.contactIndustryLookup,
-            record.contactWebsiteLookup, record.contactTagsLookup,
-            record.contactAddressLineLookup, record.contactCityLookup,
-            record.contactStateLookup, record.contactCountryLookup
-        ]
-        return fields.contains { $0?.isEmpty == false }
+    /// Total login count.
+    private var totalLogins: String {
+        let count = matchingLogs.count
+        return count > 0 ? "\(count)" : "\u{2014}"
     }
 
-    /// Whether any contact address lookup fields are populated.
-    private var hasContactAddressFields: Bool {
-        let fields: [String?] = [
-            record.contactAddressLineLookup,
-            record.contactCityLookup,
-            record.contactStateLookup,
-            record.contactCountryLookup
-        ]
-        return fields.contains { $0?.isEmpty == false }
-    }
-
-    /// Formatted contact location from lookup fields.
-    private var contactLocationFormatted: String {
-        var parts: [String] = []
-
-        if let line = record.contactAddressLineLookup, !line.isEmpty {
-            parts.append(line)
-        }
-
-        var cityStateParts: [String] = []
-        if let city = record.contactCityLookup, !city.isEmpty {
-            cityStateParts.append(city)
-        }
-        if let state = record.contactStateLookup, !state.isEmpty {
-            cityStateParts.append(state)
-        }
-        if !cityStateParts.isEmpty {
-            parts.append(cityStateParts.joined(separator: ", "))
-        }
-
-        if let country = record.contactCountryLookup, !country.isEmpty {
-            parts.append(country)
-        }
-
-        return parts.joined(separator: "\n")
+    /// Date added formatted.
+    private var dateAddedFormatted: String {
+        guard let date = record.dateAdded else { return "\u{2014}" }
+        return DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .none)
     }
 
     // MARK: - Body
@@ -148,226 +81,158 @@ struct PortalAccessDetailView: View {
         VStack(spacing: 10) {
 
             // MARK: Hero Card
-                BentoHeroCard(
-                    name: displayName,
-                    subtitle: heroSubtitle,
-                    avatarSize: 56,
-                    avatarShape: .circle
-                ) {
-                    // Action pills
-                    if let email = record.email, !email.isEmpty {
-                        Button {
-                            if let url = URL(string: "mailto:\(email)") {
-                                NSWorkspace.shared.open(url)
-                            }
-                        } label: {
-                            BentoPill(text: "Email", color: .accentColor)
+            BentoHeroCard(
+                name: displayName,
+                subtitle: heroSubtitle,
+                avatarSize: 56,
+                avatarShape: .circle
+            ) {
+                // Action pill: "View Portal"
+                if let pageUrl = record.framerPageUrl, !pageUrl.isEmpty {
+                    Button {
+                        let urlStr = pageUrl.hasPrefix("http") ? pageUrl : "https://\(pageUrl)"
+                        if let url = URL(string: urlStr) {
+                            NSWorkspace.shared.open(url)
                         }
-                        .buttonStyle(.plain)
+                    } label: {
+                        BentoPill(text: "View Portal", color: .blue)
                     }
+                    .buttonStyle(.plain)
+                }
+            } stats: {
+                BentoHeroStat(value: "\(sectionsCount)", label: "Sections")
+                BentoHeroStat(value: lastLoginDays, label: "Last Login")
+            }
 
-                    if let pageUrl = record.framerPageUrl, !pageUrl.isEmpty {
-                        Button {
-                            let urlStr = pageUrl.hasPrefix("http") ? pageUrl : "https://\(pageUrl)"
-                            if let url = URL(string: urlStr) {
-                                NSWorkspace.shared.open(url)
-                            }
-                        } label: {
-                            BentoPill(text: "Portal", color: .green)
-                        }
-                        .buttonStyle(.plain)
+            // MARK: Row 1 — Video Sections + Page Sections
+            BentoGrid(columns: 2) {
+
+                // VIDEO SECTIONS
+                BentoCell(title: "Video Sections") {
+                    if let page = linkedClientPage {
+                        toggleGrid([
+                            ("Practical Magic", page.vPrMagic),
+                            ("Show Highlights", page.vHighLight),
+                            ("360 Videos", page.v360),
+                            ("Full Length", page.vFullL),
+                        ])
+                    } else {
+                        Text("No page data")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
                     }
-                } stats: {
-                    BentoHeroStat(value: daysActive, label: "Days Active")
-                    BentoHeroStat(value: sectionsCount, label: "Sections")
-                    BentoHeroStat(value: formattedBudget, label: "Budget")
                 }
 
-                // MARK: Grid Row 1 — Access Status + Portal & Business
-                BentoGrid(columns: 2) {
+                // PAGE SECTIONS
+                // ClientPage model currently only has video toggles.
+                // Show placeholder per mockup structure — these fields
+                // will map to Airtable once the schema is extended.
+                BentoCell(title: "Page Sections") {
+                    Text("No page data")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+            }
 
-                    // ACCESS STATUS
-                    BentoCell(title: "Access Status") {
-                        VStack(alignment: .leading, spacing: 8) {
+            // MARK: Row 2 — Access Details + Activity
+            BentoGrid(columns: 2) {
 
-                            // Stage + Status pills
-                            HStack(spacing: 6) {
-                                if let stage = record.stage, !stage.isEmpty {
-                                    BentoPill(text: stage, color: stageColor(stage))
-                                }
-                                if let status = record.status, !status.isEmpty {
-                                    BentoPill(text: status, color: statusColor(status))
+                // ACCESS DETAILS
+                BentoCell(title: "Access Details") {
+                    VStack(spacing: 0) {
+                        // Page Address — shown in accent color as tappable link
+                        VStack(spacing: 0) {
+                            HStack {
+                                Text("Page Address")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                if let addr = record.pageAddress, !addr.isEmpty {
+                                    Button {
+                                        if let url = URL(string: "https://imaginelabstudios.com/ils-clients/\(addr)") {
+                                            NSWorkspace.shared.open(url)
+                                        }
+                                    } label: {
+                                        Text(addr)
+                                            .font(.system(size: 13))
+                                            .foregroundStyle(Color.accentColor)
+                                            .lineLimit(1)
+                                    }
+                                    .buttonStyle(.plain)
+                                } else {
+                                    Text("\u{2014}")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(.primary)
                                 }
                             }
-
+                            .frame(minHeight: 28)
                             Divider()
-
-                            VStack(spacing: 0) {
-                                BentoFieldRow(label: "Lead Source", value: record.leadSource ?? "")
-                                BentoFieldRow(label: "Decision Maker", value: record.decisionMaker ?? "")
-                                BentoFieldRow(
-                                    label: "Services",
-                                    value: record.servicesInterestedIn.isEmpty
-                                        ? ""
-                                        : record.servicesInterestedIn.joined(separator: ", ")
-                                )
-                            }
                         }
-                    }
 
-                    // PORTAL & BUSINESS
-                    BentoCell(title: "Portal & Business") {
-                        VStack(spacing: 0) {
-                            BentoFieldRow(label: "Page Address", value: record.pageAddress ?? "")
-                            BentoFieldRow(label: "Website", value: record.website ?? "")
-                            BentoFieldRow(label: "Phone", value: record.phoneNumber ?? "")
-                            BentoFieldRow(label: "Industry", value: record.industry ?? "")
-                        }
+                        // Auth Code — masked
+                        BentoFieldRow(label: "Auth Code", value: "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}")
+
+                        // Email
+                        BentoFieldRow(label: "Email", value: record.email ?? record.contactEmailLookup ?? "\u{2014}")
                     }
                 }
 
-                // MARK: Grid Row 2 — Key Dates + Notes
-                BentoGrid(columns: 2) {
-
-                    // KEY DATES
-                    BentoCell(title: "Key Dates") {
-                        VStack(spacing: 0) {
-                            BentoFieldRow(
-                                label: "Date Added",
-                                value: record.dateAdded.map {
-                                    DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none)
-                                } ?? ""
-                            )
-
-                            EditableFieldRow(
-                                label: "Follow Up",
-                                key: "followUpDate",
-                                type: .date,
-                                value: record.followUpDate.map { Self.isoFormatter.string(from: $0) },
-                                onSave: saveField
-                            )
-
-                            EditableFieldRow(
-                                label: "Expected Start",
-                                key: "expectedProjectStartDate",
-                                type: .date,
-                                value: record.expectedProjectStartDate.map { Self.isoFormatter.string(from: $0) },
-                                onSave: saveField
-                            )
-                        }
-                    }
-
-                    // NOTES
-                    BentoCell(title: "Notes") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            EditableFieldRow(
-                                label: "",
-                                key: "notes",
-                                type: .textarea,
-                                value: record.notes,
-                                onSave: saveField
-                            )
-                        }
+                // ACTIVITY
+                BentoCell(title: "Activity") {
+                    VStack(spacing: 0) {
+                        BentoFieldRow(label: "Last Login", value: lastLoginFormatted)
+                        BentoFieldRow(label: "Total Logins", value: totalLogins)
+                        BentoFieldRow(label: "Created", value: dateAddedFormatted)
                     }
                 }
-
-                // MARK: Conditional — Linked Contact
-                if hasContactLookupData {
-                    BentoCell(title: "Linked Contact") {
-                        VStack(spacing: 0) {
-                            if let name = record.contactNameLookup, !name.isEmpty {
-                                BentoFieldRow(label: "Name", value: name)
-                            }
-                            if let email = record.contactEmailLookup, !email.isEmpty {
-                                BentoFieldRow(label: "Email", value: email)
-                            }
-                            if let phone = record.contactPhoneLookup, !phone.isEmpty {
-                                BentoFieldRow(label: "Phone", value: phone)
-                            }
-                            if let jobTitle = record.contactJobTitleLookup, !jobTitle.isEmpty {
-                                BentoFieldRow(label: "Job Title", value: jobTitle)
-                            }
-                            if let company = record.contactCompanyLookup, !company.isEmpty {
-                                BentoFieldRow(label: "Company", value: company)
-                            }
-                            if let industry = record.contactIndustryLookup, !industry.isEmpty {
-                                BentoFieldRow(label: "Industry", value: industry)
-                            }
-                            if let website = record.contactWebsiteLookup, !website.isEmpty {
-                                BentoFieldRow(label: "Website", value: website)
-                            }
-                            if let tags = record.contactTagsLookup, !tags.isEmpty {
-                                BentoFieldRow(label: "Tags", value: tags)
-                            }
-                            if hasContactAddressFields {
-                                BentoFieldRow(label: "Location", value: contactLocationFormatted)
-                            }
-                        }
-                    }
-                }
-
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
     }
 
-    // MARK: - Save Handler
+    // MARK: - Toggle Grid Helper
 
-    private func saveField(_ key: String, _ value: Any?) {
-        let str = value as? String
-        switch key {
-        case "stage": record.stage = str
-        case "status": record.status = str
-        case "leadSource": record.leadSource = str
-        case "servicesInterestedIn":
-            record.servicesInterestedIn = str?.components(separatedBy: ",")
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-                .filter { !$0.isEmpty } ?? []
-        case "projectBudget":
-            if let s = str, let d = Double(s) { record.projectBudget = d }
-            else { record.projectBudget = nil }
-        case "followUpDate":
-            if let s = str {
-                record.followUpDate = Self.isoFormatter.date(from: s)
-            } else { record.followUpDate = nil }
-        case "expectedProjectStartDate":
-            if let s = str {
-                record.expectedProjectStartDate = Self.isoFormatter.date(from: s)
-            } else { record.expectedProjectStartDate = nil }
-        case "decisionMaker": record.decisionMaker = str
-        case "positionTitle": record.positionTitle = str
-        case "phoneNumber": record.phoneNumber = str
-        case "website": record.website = str
-        case "industry": record.industry = str
-        case "address": record.address = str
-        case "notes": record.notes = str
-        default: break
+    /// 2-column grid of display-only toggle indicators matching the mockup style.
+    private func toggleGrid(_ items: [(String, Bool)]) -> some View {
+        let columns = [
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8),
+        ]
+        return LazyVGrid(columns: columns, spacing: 6) {
+            ForEach(items, id: \.0) { label, isOn in
+                HStack(spacing: 4) {
+                    Text(label)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    Spacer(minLength: 2)
+                    if isOn {
+                        Text("\u{2713} On")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.green)
+                    } else {
+                        Text("\u{2717} Off")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
         }
-        record.localModifiedAt = Date()
-        record.isPendingPush = true
     }
 }
 
 // MARK: - Preview
 
 #Preview {
-    let record = PortalAccessRecord(id: "recTest1", name: "Haus Collection")
-    record.pageAddress = "haus-collection"
-    record.email = "client@example.com"
+    let record = PortalAccessRecord(id: "recTest1", name: "Kristen Banks")
+    record.pageAddress = "las-vegas-raiders"
+    record.email = "kristen@raiders.com"
     record.status = "ACTIVE"
-    record.stage = "Lead"
-    record.company = "Haus Group"
-    record.positionTitle = "Creative Director"
-    record.industry = "Real Estate"
-    record.website = "https://hauscollection.com"
-    record.framerPageUrl = "https://portal.imaginelabstudios.com/haus-collection"
-    record.notes = "Premium client portal — showcasing brand identity and web design work."
-    record.dateAdded = Calendar.current.date(byAdding: .month, value: -3, to: Date())
-    record.projectBudget = 25000
-    record.servicesInterestedIn = ["Strategy/Consulting", "Design/Concept Development"]
-    record.contactNameLookup = "Jane Doe"
-    record.contactEmailLookup = "jane@hauscollection.com"
-    record.contactJobTitleLookup = "CEO"
+    record.stage = "Client"
+    record.company = "Las Vegas Raiders"
+    record.framerPageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
+    record.dateAdded = Calendar.current.date(byAdding: .month, value: -2, to: Date())
 
     return PortalAccessDetailView(record: record)
         .frame(width: 720, height: 600)

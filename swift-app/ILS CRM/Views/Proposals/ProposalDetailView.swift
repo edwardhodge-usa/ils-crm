@@ -3,7 +3,7 @@ import SwiftData
 
 /// Proposal detail pane — bento box layout.
 ///
-/// Mirrors src/components/proposals/Proposal360Page.tsx
+/// Mirrors the approved "Proposed Bento" mockup from current-vs-proposed.html.
 /// Renders inline in the split-view right panel (not as a sheet).
 /// Uses @Bindable for direct SwiftData mutation with pending-push tracking.
 struct ProposalDetailView: View {
@@ -21,18 +21,15 @@ struct ProposalDetailView: View {
 
     // MARK: - Formatters
 
-    private static let currencyFormatter: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "USD"
-        f.maximumFractionDigits = 0
+    private static let shortMonthDay: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
         return f
     }()
 
-    private static let dateFormatter: DateFormatter = {
+    private static let yearOnly: DateFormatter = {
         let f = DateFormatter()
-        f.dateStyle = .medium
-        f.timeStyle = .none
+        f.dateFormat = "yyyy"
         return f
     }()
 
@@ -53,17 +50,6 @@ struct ProposalDetailView: View {
         }
     }
 
-    private func approvalColor(for status: String) -> Color {
-        switch status {
-        case "Approved":        return .green
-        case "Rejected":        return .red
-        case "Submitted",
-             "Under Review":    return .orange
-        case "Pending":         return .yellow
-        default:                return .secondary
-        }
-    }
-
     /// True if validUntil is within 14 days from today (or already past).
     private var isNearExpiry: Bool {
         guard let until = proposal.validUntil else { return false }
@@ -71,12 +57,19 @@ struct ProposalDetailView: View {
         return days <= 14
     }
 
-    private func formatDate(_ date: Date) -> String {
-        Self.dateFormatter.string(from: date)
+    /// Days remaining until validUntil. Negative if past.
+    private var daysRemaining: Int? {
+        guard let until = proposal.validUntil else { return nil }
+        return Calendar.current.dateComponents([.day], from: Date(), to: until).day
     }
 
-    private func formatCurrency(_ value: Double) -> String {
-        Self.currencyFormatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))"
+    /// Abbreviated currency: "$185K" for values >= 1000, "$500" for smaller.
+    private func abbreviatedCurrency(_ value: Double) -> String {
+        if value >= 1_000 {
+            return "$\(Int(value / 1_000))K"
+        } else {
+            return "$\(Int(value))"
+        }
     }
 
     private func saveField(_ key: String, _ value: Any?) {
@@ -90,8 +83,6 @@ struct ProposalDetailView: View {
         case "version":          proposal.version = str
         case "templateUsed":     proposal.templateUsed = str
         case "notes":            proposal.notes = str
-        case "scopeSummary":     proposal.scopeSummary = str
-        case "clientFeedback":   proposal.clientFeedback = str
         case "performanceMetrics": proposal.performanceMetrics = str
         default: break
         }
@@ -116,6 +107,11 @@ struct ProposalDetailView: View {
         return resolver.resolveOpportunities(ids: proposal.relatedOpportunityIds)
     }
 
+    private var resolvedTaskNames: [String] {
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return resolver.resolveTasks(ids: proposal.tasksIds)
+    }
+
     // MARK: - Computed Display Values
 
     private var heroSubtitle: String? {
@@ -127,8 +123,8 @@ struct ProposalDetailView: View {
     }
 
     private var formattedValue: String {
-        guard let v = proposal.proposedValue, v > 0 else { return "—" }
-        return formatCurrency(v)
+        guard let v = proposal.proposedValue, v > 0 else { return "\u{2014}" }
+        return abbreviatedCurrency(v)
     }
 
     // MARK: - Body
@@ -141,67 +137,79 @@ struct ProposalDetailView: View {
                 BentoHeroCard(
                     name: proposal.proposalName ?? "Untitled",
                     subtitle: heroSubtitle,
-                    avatarSize: 48,
+                    avatarSize: 0,
                     avatarShape: .roundedRect
                 ) {
                     // Status pill
                     if let status = proposal.status, !status.isEmpty {
                         BentoPill(text: status, color: statusColor(for: status))
                     }
-                    // Expiry pill — orange if within 14 days
-                    if let until = proposal.validUntil {
-                        BentoPill(
-                            text: "Expires \(formatDate(until))",
-                            color: isNearExpiry ? .orange : .secondary
-                        )
-                    }
-                    // Version pill — only if non-empty
-                    if let ver = proposal.version, !ver.isEmpty {
-                        BentoPill(text: "v\(ver)", color: .purple)
+                    // Days remaining pill
+                    if let days = daysRemaining {
+                        if days > 0 {
+                            BentoPill(text: "\(days) days remaining", color: .green)
+                        } else if days == 0 {
+                            BentoPill(text: "Expires today", color: .orange)
+                        } else {
+                            BentoPill(text: "Expired", color: .red)
+                        }
                     }
                 } stats: {
-                    BentoHeroStat(value: formattedValue, label: "VALUE")
+                    BentoHeroStat(
+                        value: formattedValue,
+                        label: "VALUE"
+                    )
                 }
 
-                // ── Row 1: Stat cells ─────────────────────────────────
+                // ── Row 1: Date Sent | Valid Until | Opportunity ─────
                 BentoGrid(columns: 3) {
-                    // SENT
-                    BentoCell(title: "SENT") {
+                    // DATE SENT
+                    BentoCell(title: "DATE SENT") {
                         if let sent = proposal.dateSent {
-                            Text(formatDate(sent))
-                                .font(.system(size: 13))
-                                .foregroundStyle(.primary)
-                                .frame(maxWidth: .infinity, alignment: .center)
+                            VStack(spacing: 2) {
+                                Text(Self.shortMonthDay.string(from: sent))
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(.primary)
+                                Text(Self.yearOnly.string(from: sent))
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
                         } else {
-                            Text("—")
-                                .font(.system(size: 13))
+                            Text("\u{2014}")
+                                .font(.system(size: 16))
                                 .foregroundStyle(.tertiary)
                                 .frame(maxWidth: .infinity, alignment: .center)
                         }
                     }
 
-                    // EXPIRES
-                    BentoCell(title: "EXPIRES") {
+                    // VALID UNTIL
+                    BentoCell(title: "VALID UNTIL") {
                         if let until = proposal.validUntil {
-                            Text(formatDate(until))
-                                .font(.system(size: 13))
-                                .foregroundStyle(isNearExpiry ? .orange : .primary)
-                                .frame(maxWidth: .infinity, alignment: .center)
+                            VStack(spacing: 2) {
+                                Text(Self.shortMonthDay.string(from: until))
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(isNearExpiry ? .orange : .primary)
+                                Text(Self.yearOnly.string(from: until))
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
                         } else {
-                            Text("—")
-                                .font(.system(size: 13))
+                            Text("\u{2014}")
+                                .font(.system(size: 16))
                                 .foregroundStyle(.tertiary)
                                 .frame(maxWidth: .infinity, alignment: .center)
                         }
                     }
 
-                    // APPROVAL
-                    BentoCell(title: "APPROVAL") {
-                        if let approval = proposal.approvalStatus, !approval.isEmpty {
-                            BentoPill(text: approval, color: approvalColor(for: approval))
+                    // OPPORTUNITY
+                    BentoCell(title: "OPPORTUNITY") {
+                        if let name = resolvedOpportunityNames.first {
+                            BentoChip(text: name)
                                 .frame(maxWidth: .infinity, alignment: .center)
                         } else {
-                            Text("—")
+                            Text("\u{2014}")
                                 .font(.system(size: 13))
                                 .foregroundStyle(.tertiary)
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -210,8 +218,23 @@ struct ProposalDetailView: View {
                 }
                 .padding(.horizontal, 16)
 
-                // ── Row 2: Notes / Scope / Linked ─────────────────────
-                BentoGrid(columns: 3) {
+                // ── Row 2: Linked Tasks | Notes ─────────────────────
+                BentoGrid(columns: 2) {
+                    // LINKED TASKS
+                    BentoCell(title: "LINKED TASKS") {
+                        if resolvedTaskNames.isEmpty {
+                            Text("No linked tasks")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        } else {
+                            VStack(alignment: .leading, spacing: 6) {
+                                ForEach(resolvedTaskNames, id: \.self) { name in
+                                    BentoChip(text: name)
+                                }
+                            }
+                        }
+                    }
+
                     // NOTES
                     BentoCell(title: "NOTES") {
                         EditableFieldRow(
@@ -219,59 +242,6 @@ struct ProposalDetailView: View {
                             key: "notes",
                             type: .textarea,
                             value: proposal.notes,
-                            onSave: saveField
-                        )
-                    }
-
-                    // SCOPE SUMMARY
-                    BentoCell(title: "SCOPE SUMMARY") {
-                        EditableFieldRow(
-                            label: "",
-                            key: "scopeSummary",
-                            type: .textarea,
-                            value: proposal.scopeSummary,
-                            onSave: saveField
-                        )
-                    }
-
-                    // LINKED
-                    BentoCell(title: "LINKED") {
-                        VStack(alignment: .leading, spacing: 6) {
-                            if !resolvedOpportunityNames.isEmpty {
-                                ForEach(resolvedOpportunityNames, id: \.self) { name in
-                                    BentoChip(text: name)
-                                }
-                            }
-                            if !resolvedCompanyNames.isEmpty {
-                                ForEach(resolvedCompanyNames, id: \.self) { name in
-                                    BentoChip(text: name)
-                                }
-                            }
-                            if !resolvedClientNames.isEmpty {
-                                ForEach(resolvedClientNames, id: \.self) { name in
-                                    BentoChip(text: name)
-                                }
-                            }
-                            if resolvedOpportunityNames.isEmpty &&
-                               resolvedCompanyNames.isEmpty &&
-                               resolvedClientNames.isEmpty {
-                                Text("—")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(.tertiary)
-                            }
-                        }
-                    }
-                }
-                .padding(.horizontal, 16)
-
-                // ── Row 3: Client Feedback (full-width) ───────────────
-                BentoGrid(columns: 1) {
-                    BentoCell(title: "CLIENT FEEDBACK") {
-                        EditableFieldRow(
-                            label: "",
-                            key: "clientFeedback",
-                            type: .textarea,
-                            value: proposal.clientFeedback,
                             onSave: saveField
                         )
                     }

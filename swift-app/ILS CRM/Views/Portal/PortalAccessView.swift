@@ -1,11 +1,11 @@
 import SwiftUI
 import SwiftData
 
-/// View mode for portal access records: flat list, grouped by page, or grouped by person.
+/// View mode for portal access records: by client, grouped by page, or all access.
 enum PortalViewMode: String, CaseIterable {
-    case all = "All"
+    case byClient = "By Client"
     case byPage = "By Page"
-    case byPerson = "By Person"
+    case all = "All Access"
 }
 
 /// Portal Access list with three viewing modes: All (flat list),
@@ -18,7 +18,7 @@ struct PortalAccessView: View {
     @Query private var clientPages: [ClientPage]
     @State private var searchText = ""
     @State private var selectedRecord: PortalAccessRecord?
-    @State private var viewMode: PortalViewMode = .all
+    @State private var viewMode: PortalViewMode = .byClient
     @State private var selectedPage: String?
     @State private var selectedAccessRecord: PortalAccessRecord?
     @State private var showGrantAccess = false
@@ -58,12 +58,12 @@ struct PortalAccessView: View {
                 )
             } else {
                 switch viewMode {
-                case .all:
-                    allSplitView
+                case .byClient:
+                    byClientSplitView
                 case .byPage:
                     byPageList
-                case .byPerson:
-                    byPersonSplitView
+                case .all:
+                    allSplitView
                 }
             }
         }
@@ -529,41 +529,24 @@ struct PortalAccessView: View {
 
     private static let defaultPageTitle = "We've prepared this overview of our capabilities, approach and video examples — please don't hesitate to reach out with any questions."
 
-    // MARK: - By Person (Split Pane: grouped list | detail)
+    // MARK: - By Client (Split Pane: list | detail)
 
-    private var byPersonSplitView: some View {
-        let grouped = Dictionary(grouping: filteredRecords) { record in
-            record.email ?? record.contactEmailLookup ?? "No Email"
-        }
-        let sortedKeys = grouped.keys.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    /// Count of enabled section toggles for a given page address.
+    private func sectionCount(for pageAddress: String?) -> Int {
+        guard let page = clientPage(for: pageAddress) else { return 0 }
+        return [page.vPrMagic, page.vHighLight, page.v360, page.vFullL].filter { $0 }.count
+    }
 
-        return HStack(spacing: 0) {
+    private var byClientSplitView: some View {
+        HStack(spacing: 0) {
             List(selection: $selectedRecord) {
-                ForEach(sortedKeys, id: \.self) { email in
-                    let records = grouped[email] ?? []
-                    let bestName = records.first.map { displayName(for: $0) } ?? email
-
-                    Section {
-                        ForEach(records, id: \.id) { record in
-                            Button { selectedRecord = record } label: { recordRow(record) }
-                                .buttonStyle(.plain)
-                        }
-                    } header: {
-                        HStack {
-                            Image(systemName: "person")
-                            VStack(alignment: .leading) {
-                                Text(bestName)
-                                if email != "No Email" {
-                                    Text(email)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            Spacer()
-                            Text("\(records.count)")
-                                .foregroundStyle(.secondary)
-                        }
+                ForEach(filteredRecords, id: \.id) { record in
+                    Button {
+                        selectedRecord = record
+                    } label: {
+                        byClientRow(record)
                     }
+                    .buttonStyle(.plain)
                 }
             }
             .listStyle(.inset)
@@ -586,6 +569,44 @@ struct PortalAccessView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    /// Row for By Client mode: name + "Company · N sections" subtitle.
+    private func byClientRow(_ record: PortalAccessRecord) -> some View {
+        HStack(spacing: 12) {
+            AvatarView(name: displayName(for: record), size: 32)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(displayName(for: record))
+                    .font(.body)
+                    .lineLimit(1)
+
+                Text(byClientSubtitle(for: record))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            if let status = record.status, !status.isEmpty {
+                BadgeView(
+                    text: status,
+                    color: statusColor(status)
+                )
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    /// Subtitle for By Client row: "Company · N sections".
+    private func byClientSubtitle(for record: PortalAccessRecord) -> String {
+        let company = record.company ?? record.contactCompanyLookup ?? ""
+        let count = sectionCount(for: record.pageAddress)
+        if company.isEmpty {
+            return "\(count) section\(count == 1 ? "" : "s")"
+        }
+        return "\(company) \u{00B7} \(count) section\(count == 1 ? "" : "s")"
     }
 
     // MARK: - Record Row
