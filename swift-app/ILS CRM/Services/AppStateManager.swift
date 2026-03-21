@@ -21,7 +21,7 @@ final class AppStateManager {
     var appState: AppState = .loading
 
     private let logger = Logger(subsystem: "com.ils-crm", category: "app-state")
-    nonisolated(unsafe) private var periodicCheckTask: Task<Void, Never>?
+    @ObservationIgnored private var periodicCheckTask: Task<Void, Never>?
 
     deinit {
         periodicCheckTask?.cancel()

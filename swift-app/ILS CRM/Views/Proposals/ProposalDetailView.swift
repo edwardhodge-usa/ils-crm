@@ -50,6 +50,16 @@ struct ProposalDetailView: View {
         }
     }
 
+    private func approvalColor(for status: String) -> Color {
+        switch status {
+        case "Approved":                    return .green
+        case "Rejected", "Closed Lost":     return .red
+        case "Pending Approval", "In Review": return .orange
+        case "Submitted":                   return .purple
+        default:                            return .secondary
+        }
+    }
+
     /// True if validUntil is within 14 days from today (or already past).
     private var isNearExpiry: Bool {
         guard let until = proposal.validUntil else { return false }
@@ -84,6 +94,8 @@ struct ProposalDetailView: View {
         case "templateUsed":     proposal.templateUsed = str
         case "notes":            proposal.notes = str
         case "performanceMetrics": proposal.performanceMetrics = str
+        case "scopeSummary":     proposal.scopeSummary = str
+        case "clientFeedback":   proposal.clientFeedback = str
         default: break
         }
         proposal.localModifiedAt = Date()
@@ -154,6 +166,10 @@ struct ProposalDetailView: View {
                             BentoPill(text: "Expired", color: .red)
                         }
                     }
+                    // Version pill
+                    if let version = proposal.version, !version.isEmpty {
+                        BentoPill(text: version, color: .secondary)
+                    }
                 } stats: {
                     BentoHeroStat(
                         value: formattedValue,
@@ -161,7 +177,7 @@ struct ProposalDetailView: View {
                     )
                 }
 
-                // ── Row 1: Date Sent | Valid Until | Opportunity ─────
+                // ── Row 1: Date Sent | Valid Until | Approval ────────
                 BentoGrid(columns: 3) {
                     // DATE SENT
                     BentoCell(title: "DATE SENT") {
@@ -203,10 +219,10 @@ struct ProposalDetailView: View {
                         }
                     }
 
-                    // OPPORTUNITY
-                    BentoCell(title: "OPPORTUNITY") {
-                        if let name = resolvedOpportunityNames.first {
-                            BentoChip(text: name)
+                    // APPROVAL
+                    BentoCell(title: "APPROVAL") {
+                        if let approval = proposal.approvalStatus, !approval.isEmpty {
+                            BentoPill(text: approval, color: approvalColor(for: approval))
                                 .frame(maxWidth: .infinity, alignment: .center)
                         } else {
                             Text("\u{2014}")
@@ -218,23 +234,8 @@ struct ProposalDetailView: View {
                 }
                 .padding(.horizontal, 16)
 
-                // ── Row 2: Linked Tasks | Notes ─────────────────────
-                BentoGrid(columns: 2) {
-                    // LINKED TASKS
-                    BentoCell(title: "LINKED TASKS") {
-                        if resolvedTaskNames.isEmpty {
-                            Text("No linked tasks")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        } else {
-                            VStack(alignment: .leading, spacing: 6) {
-                                ForEach(resolvedTaskNames, id: \.self) { name in
-                                    BentoChip(text: name)
-                                }
-                            }
-                        }
-                    }
-
+                // ── Row 2: Notes | Scope Summary | Linked ────────────
+                BentoGrid(columns: 3) {
                     // NOTES
                     BentoCell(title: "NOTES") {
                         EditableFieldRow(
@@ -242,6 +243,86 @@ struct ProposalDetailView: View {
                             key: "notes",
                             type: .textarea,
                             value: proposal.notes,
+                            onSave: saveField
+                        )
+                    }
+
+                    // SCOPE SUMMARY
+                    BentoCell(title: "SCOPE SUMMARY") {
+                        EditableFieldRow(
+                            label: "",
+                            key: "scopeSummary",
+                            type: .textarea,
+                            value: proposal.scopeSummary,
+                            onSave: saveField
+                        )
+                    }
+
+                    // LINKED
+                    BentoCell(title: "LINKED") {
+                        VStack(spacing: 0) {
+                            // Opportunity
+                            HStack {
+                                Text("Opportunity")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                if let name = resolvedOpportunityNames.first {
+                                    BentoChip(text: name)
+                                } else {
+                                    Text("\u{2014}")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .frame(minHeight: 28)
+                            Divider()
+
+                            // Company
+                            HStack {
+                                Text("Company")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                if let name = resolvedCompanyNames.first {
+                                    BentoChip(text: name)
+                                } else {
+                                    Text("\u{2014}")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .frame(minHeight: 28)
+                            Divider()
+
+                            // Contact
+                            HStack {
+                                Text("Contact")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                if let name = resolvedClientNames.first {
+                                    BentoChip(text: name)
+                                } else {
+                                    Text("\u{2014}")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .frame(minHeight: 28)
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+
+                // ── Row 3: Client Feedback (full-width) ───────────────
+                BentoGrid(columns: 1) {
+                    BentoCell(title: "CLIENT FEEDBACK") {
+                        EditableFieldRow(
+                            label: "",
+                            key: "clientFeedback",
+                            type: .textarea,
+                            value: proposal.clientFeedback,
                             onSave: saveField
                         )
                     }

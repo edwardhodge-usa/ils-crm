@@ -5,9 +5,9 @@ import SwiftData
 ///
 /// Layout:
 /// - BentoHeroCard: logo avatar (roundedRect 56px) + name + "Industry · Location" subtitle
-///   + Website pill + Call pill + Contacts/Active Opp/Revenue stats
-/// - BentoGrid (2 columns) Row 1: COMPANY INFO cell + LOCATION & CONTACT cell
-/// - BentoGrid (2 columns) Row 2: PEOPLE/OPPS/PROJECTS combined cell + NOTES cell
+///   + Website pill + Call pill + People/Active Deal/Pipeline stats
+/// - BentoGrid (2 columns) Row 1: PEOPLE cell (avatar rows) + ACTIVE DEAL cell
+/// - BentoGrid (2 columns) Row 2: COMPANY DETAILS cell + LOCATION & CONTACT cell
 /// - Edit / Delete in toolbar
 struct CompanyDetailView: View {
     let company: Company
@@ -49,11 +49,11 @@ struct CompanyDetailView: View {
         return w.contains("://") ? w : "https://\(w)"
     }
 
-    private var revenueDisplay: String {
-        if let revenue = company.annualRevenue, !revenue.isEmpty {
-            return revenue
-        }
-        return "\u{2014}"
+    /// Pipeline display: sum of open opportunity dealValues, formatted as abbreviated currency.
+    private var pipelineDisplay: String {
+        let total = openOpportunities.compactMap(\.dealValue).reduce(0, +)
+        guard total > 0 else { return "\u{2014}" }
+        return abbreviatedCurrency(total)
     }
 
     private var resolvedProjectNames: [String] {
@@ -149,24 +149,24 @@ struct CompanyDetailView: View {
 
                     // Stats
                     HStack(spacing: 16) {
-                        BentoHeroStat(value: "\(linkedContacts.count)", label: "Contacts")
-                        BentoHeroStat(value: "\(openOpportunities.count)", label: "Active Opp")
-                        BentoHeroStat(value: revenueDisplay, label: "Revenue")
+                        BentoHeroStat(value: "\(linkedContacts.count)", label: "People")
+                        BentoHeroStat(value: "\(openOpportunities.count)", label: "Active Deal")
+                        BentoHeroStat(value: pipelineDisplay, label: "Pipeline")
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
 
-                // MARK: Grid Row 1 — Company Info + Location & Contact
+                // MARK: Grid Row 1 — People + Active Deal
                 BentoGrid(columns: 2) {
-                    companyInfoBentoCell
-                    locationContactBentoCell
+                    peopleBentoCell
+                    activeDealBentoCell
                 }
 
-                // MARK: Grid Row 2 — People/Opps/Projects + Notes
+                // MARK: Grid Row 2 — Company Details + Location & Contact
                 BentoGrid(columns: 2) {
-                    linkedRecordsBentoCell
-                    notesBentoCell
+                    companyDetailsBentoCell
+                    locationContactBentoCell
                 }
 
                 Spacer(minLength: 32)
@@ -272,95 +272,100 @@ struct CompanyDetailView: View {
         }
     }
 
-    // MARK: - Company Info BentoCell (Row 1, left)
+    // MARK: - People BentoCell (Row 1, left) — Avatar rows
 
-    private var companyInfoBentoCell: some View {
-        BentoCell(title: "Company Info") {
-            VStack(spacing: 0) {
-                BentoFieldRow(label: "Industry", value: company.industry ?? "\u{2014}")
-                BentoFieldRow(label: "Size", value: company.companySize ?? "\u{2014}")
-                BentoFieldRow(label: "Revenue", value: company.annualRevenue ?? "\u{2014}")
-                BentoFieldRow(label: "Lead Source", value: company.leadSource ?? "\u{2014}")
-            }
-        }
-    }
-
-    // MARK: - Location & Contact BentoCell (Row 1, right)
-
-    private var locationContactBentoCell: some View {
-        BentoCell(title: "Location & Contact") {
-            VStack(spacing: 0) {
-                BentoFieldRow(label: "City", value: company.city ?? "\u{2014}")
-                BentoFieldRow(label: "State", value: company.stateRegion ?? "\u{2014}")
-                BentoFieldRow(label: "Country", value: company.country ?? "\u{2014}")
-                if let phone = companyPhone, !phone.isEmpty {
-                    BentoFieldRow(label: "Phone", value: phone)
-                } else {
-                    BentoFieldRow(label: "Phone", value: "\u{2014}")
-                }
-            }
-        }
-    }
-
-    // MARK: - Linked Records BentoCell (Row 2, left) — People + Opps + Projects combined
-
-    private var linkedRecordsBentoCell: some View {
+    private var peopleBentoCell: some View {
         BentoCell(title: "People") {
             VStack(alignment: .leading, spacing: 0) {
-                // People chips
                 if linkedContacts.isEmpty {
                     Text("No contacts linked")
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                         .padding(.vertical, 4)
                 } else {
-                    FlowLayout(spacing: 6) {
-                        ForEach(linkedContacts, id: \.id) { contact in
-                            BentoChip(text: contact.contactName ?? "Unknown")
-                        }
-                    }
-                }
+                    ForEach(Array(linkedContacts.enumerated()), id: \.element.id) { index, contact in
+                        HStack(spacing: 10) {
+                            AvatarView(
+                                name: contact.contactName ?? "?",
+                                size: 30,
+                                photoURL: contact.contactPhotoUrl.flatMap { URL(string: $0) },
+                                shape: .circle
+                            )
 
-                // Opportunities subsection
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("OPPORTUNITIES")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(.secondary)
-                        .tracking(0.5)
-                        .padding(.top, 10)
-                        .padding(.bottom, 6)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(contact.contactName ?? "Unknown")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
 
-                    if resolvedOpportunityNames.isEmpty {
-                        Text("No opportunities linked")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
-                            .padding(.vertical, 4)
-                    } else {
-                        FlowLayout(spacing: 6) {
-                            ForEach(resolvedOpportunityNames, id: \.self) { name in
-                                BentoChip(text: name)
+                                if let title = contact.jobTitle, !title.isEmpty {
+                                    Text(title)
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
                             }
+
+                            Spacer()
+                        }
+                        .padding(.vertical, 6)
+
+                        if index < linkedContacts.count - 1 {
+                            Divider()
                         }
                     }
                 }
+            }
+        }
+    }
 
-                // Projects subsection
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("PROJECTS")
-                        .font(.system(size: 11, weight: .bold))
+    // MARK: - Active Deal BentoCell (Row 1, right)
+
+    private var activeDealBentoCell: some View {
+        BentoCell(title: "Active Deal") {
+            VStack(alignment: .leading, spacing: 0) {
+                if openOpportunities.isEmpty {
+                    Text("No active deals")
+                        .font(.system(size: 13))
                         .foregroundStyle(.secondary)
-                        .tracking(0.5)
-                        .padding(.top, 10)
+                        .padding(.vertical, 4)
+                } else {
+                    let deal = openOpportunities[0]
+
+                    // Deal name
+                    Text(deal.opportunityName ?? "Untitled Deal")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
                         .padding(.bottom, 6)
 
-                    if resolvedProjectNames.isEmpty {
-                        Text("No projects linked")
-                            .font(.system(size: 13))
+                    // Stage pill + value
+                    HStack(spacing: 8) {
+                        if let stage = deal.salesStage, !stage.isEmpty {
+                            BentoPill(text: stage, color: stageColor(for: stage))
+                        }
+
+                        if let value = deal.dealValue, value > 0 {
+                            Text(abbreviatedCurrency(value))
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.green)
+                        }
+                    }
+
+                    // Projects sub-section
+                    let dealProjectNames = resolveDealProjects(deal)
+                    if !dealProjectNames.isEmpty {
+                        Divider()
+                            .padding(.vertical, 8)
+
+                        Text("PROJECTS")
+                            .font(.system(size: 11, weight: .bold))
                             .foregroundStyle(.secondary)
-                            .padding(.vertical, 4)
-                    } else {
+                            .tracking(0.5)
+                            .padding(.bottom, 6)
+
                         FlowLayout(spacing: 6) {
-                            ForEach(resolvedProjectNames, id: \.self) { name in
+                            ForEach(dealProjectNames, id: \.self) { name in
                                 BentoChip(text: name)
                             }
                         }
@@ -370,23 +375,44 @@ struct CompanyDetailView: View {
         }
     }
 
-    // MARK: - Notes BentoCell (Row 2, right)
+    // MARK: - Company Details BentoCell (Row 2, left)
 
-    private var notesBentoCell: some View {
-        BentoCell(title: "Notes") {
-            EditableFieldRow(
-                label: "",
-                key: "notes",
-                type: .textarea,
-                value: notesText,
-                onSave: { _, newValue in
-                    if let text = newValue as? String {
-                        company.notes = text
-                        company.localModifiedAt = Date()
-                        company.isPendingPush = true
-                    }
+    private var companyDetailsBentoCell: some View {
+        BentoCell(title: "Company Details") {
+            VStack(spacing: 0) {
+                BentoFieldRow(label: "Industry", value: company.industry ?? "\u{2014}")
+                BentoFieldRow(label: "Size", value: company.companySize ?? "\u{2014}")
+                BentoFieldRow(label: "Revenue", value: company.annualRevenue ?? "\u{2014}")
+                if let founded = company.foundingYear {
+                    BentoFieldRow(label: "Founded", value: "\(founded)")
                 }
-            )
+                BentoFieldRow(label: "Lead Source", value: company.leadSource ?? "\u{2014}")
+            }
+        }
+    }
+
+    // MARK: - Location & Contact BentoCell (Row 2, right)
+
+    private var locationContactBentoCell: some View {
+        BentoCell(title: "Location & Contact") {
+            VStack(spacing: 0) {
+                if let address = company.address, !address.isEmpty {
+                    BentoFieldRow(label: "Address", value: address)
+                }
+                BentoFieldRow(label: "City", value: {
+                    let parts: [String] = [company.city, company.stateRegion, company.country]
+                        .compactMap { $0?.isEmpty == false ? $0 : nil }
+                    return parts.isEmpty ? "\u{2014}" : parts.joined(separator: ", ")
+                }())
+                if let phone = companyPhone, !phone.isEmpty {
+                    BentoFieldRow(label: "Phone", value: phone)
+                } else {
+                    BentoFieldRow(label: "Phone", value: "\u{2014}")
+                }
+                if let website = company.website, !website.isEmpty {
+                    BentoFieldRow(label: "Website", value: website)
+                }
+            }
         }
     }
 
@@ -446,5 +472,48 @@ struct CompanyDetailView: View {
         guard let stage else { return true }
         let lower = stage.lowercased()
         return !lower.contains("closed") && !lower.contains("won") && !lower.contains("lost")
+    }
+
+    /// Stage color lookup — mirrors PipelineView's stageColors map.
+    private func stageColor(for stage: String) -> Color {
+        let colors: [String: Color] = [
+            "Initial Contact": .blue,
+            "Qualification": .cyan,
+            "Meeting Scheduled": .orange,
+            "Proposal Sent": .indigo,
+            "Negotiation": .teal,
+            "Contract Sent": .mint,
+            "Development": .purple,
+            "Investment": .pink,
+            "Closed Won": .green,
+            "Closed Lost": .red,
+        ]
+        return colors[stage] ?? .gray
+    }
+
+    /// Format a Double as abbreviated currency: "$1.2K", "$185K", "$2.3M"
+    private func abbreviatedCurrency(_ value: Double) -> String {
+        if value >= 1_000_000 {
+            let millions = value / 1_000_000
+            if millions.truncatingRemainder(dividingBy: 1) == 0 {
+                return "$\(Int(millions))M"
+            }
+            return String(format: "$%.1fM", millions)
+        } else if value >= 1_000 {
+            let thousands = value / 1_000
+            if thousands.truncatingRemainder(dividingBy: 1) == 0 {
+                return "$\(Int(thousands))K"
+            }
+            return String(format: "$%.1fK", thousands)
+        } else {
+            return String(format: "$%.0f", value)
+        }
+    }
+
+    /// Resolve project names for a specific opportunity's linked projects.
+    private func resolveDealProjects(_ deal: Opportunity) -> [String] {
+        guard !deal.projectIds.isEmpty else { return [] }
+        let resolver = LinkedRecordResolver(context: modelContext)
+        return resolver.resolveProjects(ids: deal.projectIds)
     }
 }
