@@ -76,10 +76,14 @@ actor AirtableService {
     // MARK: - Fetch Single Record
 
     func fetchRecord(tableId: String, recordId: String) async throws -> [String: Any] {
-        let url = AirtableConfig.apiBaseURL
+        let baseURL = AirtableConfig.apiBaseURL
             .appendingPathComponent(baseId)
             .appendingPathComponent(tableId)
             .appendingPathComponent(recordId)
+
+        var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "returnFieldsByFieldId", value: "true")]
+        let url = components.url!
 
         let (data, response) = try await session.data(from: url)
 

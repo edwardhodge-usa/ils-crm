@@ -62,12 +62,12 @@ struct AirtableCRUDTests {
 
         try await Task.sleep(nanoseconds: 500_000_000)
 
-        // Verify create — fetchRecord returns field NAMES (no returnFieldsByFieldId param)
+        // Verify create — fetchRecord returns field IDs (returnFieldsByFieldId=true)
         var fetched = try await fetchFields(tableId: tableId, recordId: contactId)
-        #expect(fetched["First Name"] as? String == "__TEST_\(ts)_SwiftJohn")
-        #expect(fetched["Last Name"] as? String == "SwiftTestContact")
-        #expect(fetched["Email"] as? String == "__test_swift_\(ts)@test.invalid")
-        #expect(fetched["Industry"] as? String == "Technology")
+        #expect(fetched["fldBzVPUdMy99vfvp"] as? String == "__TEST_\(ts)_SwiftJohn")
+        #expect(fetched["fldq4VxEf0jJgi6O5"] as? String == "SwiftTestContact")
+        #expect(fetched["fldBjSvbdd5WXmoIG"] as? String == "__test_swift_\(ts)@test.invalid")
+        #expect(fetched["fldHoIj9zCNB15avX"] as? String == "Technology")
 
         // Update
         try await service.batchUpdate(tableId: tableId, records: [(
@@ -82,9 +82,9 @@ struct AirtableCRUDTests {
 
         // Verify update
         fetched = try await fetchFields(tableId: tableId, recordId: contactId)
-        #expect(fetched["Email"] as? String == "__test_swift_\(ts)_updated@test.invalid")
-        #expect(fetched["Industry"] as? String == "Healthcare")
-        #expect(fetched["First Name"] as? String == "__TEST_\(ts)_SwiftJohn")
+        #expect(fetched["fldBjSvbdd5WXmoIG"] as? String == "__test_swift_\(ts)_updated@test.invalid")
+        #expect(fetched["fldHoIj9zCNB15avX"] as? String == "Healthcare")
+        #expect(fetched["fldBzVPUdMy99vfvp"] as? String == "__TEST_\(ts)_SwiftJohn")
 
         // Delete
         try await service.batchDelete(tableId: tableId, recordIds: [contactId])
@@ -121,9 +121,9 @@ struct AirtableCRUDTests {
         try await Task.sleep(nanoseconds: 500_000_000)
 
         var fetched = try await fetchFields(tableId: tableId, recordId: companyId)
-        #expect(fetched["Company Name"] as? String == "__TEST_\(ts)_SwiftCorp")
-        #expect(fetched["Type"] as? String == "Prospect")
-        #expect(fetched["Industry"] as? String == "Technology")
+        #expect(fetched["fldVYiMOLq3LJgbZ3"] as? String == "__TEST_\(ts)_SwiftCorp")
+        #expect(fetched["fldtLJxxK5oT6Nzjn"] as? String == "Prospect")
+        #expect(fetched["fldPz4rknFpmEXZAD"] as? String == "Technology")
 
         try await service.batchUpdate(tableId: tableId, records: [(
             id: companyId,
@@ -136,8 +136,8 @@ struct AirtableCRUDTests {
         try await Task.sleep(nanoseconds: 500_000_000)
 
         fetched = try await fetchFields(tableId: tableId, recordId: companyId)
-        #expect(fetched["Type"] as? String == "Active Client")
-        #expect(fetched["Industry"] as? String == "Entertainment")
+        #expect(fetched["fldtLJxxK5oT6Nzjn"] as? String == "Active Client")
+        #expect(fetched["fldPz4rknFpmEXZAD"] as? String == "Entertainment")
 
         try await service.batchDelete(tableId: tableId, recordIds: [companyId])
         createdIds.removeAll { $0 == companyId }
@@ -192,10 +192,10 @@ struct AirtableCRUDTests {
 
         // Verify create
         var fetched = try await fetchFields(tableId: portalTableId, recordId: portalId)
-        #expect(fetched["Name"] as? String == "__TEST_\(ts)_SwiftPortal")
-        #expect(fetched["Page Address"] as? String == "__test-swift-\(ts)")
-        #expect(fetched["Status"] as? String == "ACTIVE")
-        let linked = fetched["Contact"] as? [String] ?? []
+        #expect(fetched["fldqnVE5ppj8ACyf3"] as? String == "__TEST_\(ts)_SwiftPortal")
+        #expect(fetched["fldkAjPIMUMlHNT2A"] as? String == "__test-swift-\(ts)")
+        #expect(fetched["fldqbzNiTFt7jpdyW"] as? String == "ACTIVE")
+        let linked = fetched["fld1tMK48dxrLU9R4"] as? [String] ?? []
         #expect(linked.contains(contactId))
 
         // Update
@@ -211,8 +211,8 @@ struct AirtableCRUDTests {
 
         // Verify update
         fetched = try await fetchFields(tableId: portalTableId, recordId: portalId)
-        #expect(fetched["Status"] as? String == "IN-ACTIVE")
-        #expect(fetched["Page Title"] as? String == "Updated Test Page")
+        #expect(fetched["fldqbzNiTFt7jpdyW"] as? String == "IN-ACTIVE")
+        #expect(fetched["flddcfM0XRw309R9P"] as? String == "Updated Test Page")
 
         // Delete portal (keep contact for cleanup)
         try await service.batchDelete(tableId: portalTableId, recordIds: [portalId])
