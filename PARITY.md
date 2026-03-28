@@ -76,7 +76,7 @@
 |---------|----------------|--------------|-------|
 | Contact list with filters | Done | Stub | `ContactListPage.tsx` → `ContactsView.swift` |
 | Contact 360 detail view | Done | Stub | `Contact360Page.tsx` → `Contact360View` |
-| Contact create/edit form | Done | Stub | `ContactForm.tsx` → `ContactFormView` |
+| Contact create/edit form | Done | Done | `ContactForm.tsx` → `ContactFormView` |
 | Contact row component | Done | TODO | `ContactRow.tsx` — inline in list for now |
 | Contact stats | Done | TODO | `ContactStats.tsx` |
 | Filter tabs (All/Leads/Clients/etc.) | Done | TODO | `FilterTabs.tsx` — needs SwiftUI picker |
@@ -239,7 +239,7 @@
 | Data Models | 11 | 11 | 0 | 0 |
 | Navigation | 6 | 0 | 2 | 4 |
 | Dashboard | 6 | 0 | 1 | 5 |
-| Contacts | 8 | 0 | 3 | 5 |
+| Contacts | 8 | 1 | 2 | 5 |
 | Companies | 4 | 0 | 3 | 1 |
 | Pipeline | 9 | 0 | 3 | 6 |
 | Tasks | 6 | 0 | 3 | 3 |
@@ -253,7 +253,7 @@
 | Search & Commands | 3 | 0 | 0 | 3 |
 | Data Operations | 10 | 6 | 0 | 4 |
 | Platform | 3 | 0 | 0 | 3 |
-| **TOTAL** | **121** | **35** | **30** | **57** |
+| **TOTAL** | **121** | **36** | **29** | **57** |
 
 Swift now has **35 features done** (29%) — up from 4.
 Key milestones completed: full sync engine (push-first-then-pull), all 11 data models with sync properties + converters, Settings with Keychain API key storage, batch CRUD operations, polling, cross-app sync lock.
