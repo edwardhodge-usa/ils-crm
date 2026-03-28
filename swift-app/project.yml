@@ -71,3 +71,17 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGNING_REQUIRED: NO
         CODE_SIGNING_ALLOWED: YES
+  ILS CRM Tests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: ILS CRM Tests
+    dependencies:
+      - target: ILS CRM
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.imaginelabstudios.ils-crm.tests
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: YES
