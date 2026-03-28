@@ -34,6 +34,14 @@
 - [x] ~~First GitHub Release with notarized Swift DMG~~ (v1.0.7 + v1.1.0, completed 2026-03-19)
 - [x] ~~Test Sparkle auto-update end-to-end~~ (fixed: repo made public so appcast.xml + DMG assets are reachable, completed 2026-03-20)
 - [x] ~~Test license check against Airtable licensing table~~ (verified both Electron + Swift with rotated PAT, completed 2026-03-20)
+- [x] ~~Airtable CRUD integration tests~~ — 24 Electron + 5 Swift tests covering all writable fields, linked records, cross-entity relationships, converter pipeline, and UI smoke (completed 2026-03-27)
+- [x] ~~Standalone `__TEST_` record cleanup script~~ — `scripts/cleanup-test-records.ts` (completed 2026-03-27)
+
+## Bugs — Discovered in Testing (2026-03-27)
+
+- [x] ~~**S3** Dead Portal Access `company` field (fldYZ1Su7WnNPxf17)~~ — Airtable rejects as UNKNOWN_FIELD_NAME. Removed from field-maps, converters, Swift model, and views. Company now comes via Contact→Company linked record chain (fixed 2026-03-27)
+- [x] ~~**S4** Swift `fetchRecord` returns field names instead of IDs~~ — missing `returnFieldsByFieldId=true` query param, inconsistent with `fetchAllRecords`. Fixed in AirtableService.swift (fixed 2026-03-27)
+- [ ] **S5** 4 pre-existing Electron unit test failures — ContactRow, NewContactSheet, DealCard, Badge tests fail (not caused by integration test work, existed before)
 
 ## Todo — Data Architecture
 
