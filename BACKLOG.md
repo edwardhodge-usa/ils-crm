@@ -70,9 +70,9 @@
 - [ ] No Proposal → Rate Card link — Proposals table doesn't link to which Rate Card roles were included
 - [ ] Contract milestones unstructured — Opportunities "Contract Milestones" is freeform text, needs structured data for milestone-based invoicing
 - [ ] Revenue share not in Airtable — Laura's 50% net profit share is only in the vault, not queryable
-- [ ] "Standard Hourly" in Rate Card is actually the discount rate (10% external discount baked in) — rename or add "Full Rate" field
+- [ ] "Standard Hourly" in Rate Card is actually the discount rate (10% external discount baked in) — rename or add "Full Rate" field. **Must be done manually in Airtable UI** (API can't rename fields)
 - [ ] No retainer vs standard rate selection logic — need "Is Retainer Client" flag on Companies or inference from Engagement Type
-- [ ] "Writer Senior" vs "Senior Writer" duplicate in Rate Card — same rate, one should be deactivated
+- [x] ~~"Writer Senior" vs "Senior Writer" duplicate in Rate Card~~ — deactivated "Writer Senior" (rec2PSnVf6xizBKmz), kept "Senior Writer" as canonical. 0 Person Rates references. (fixed 2026-03-28)
 
 ## Todo — Manual Cleanup
 
