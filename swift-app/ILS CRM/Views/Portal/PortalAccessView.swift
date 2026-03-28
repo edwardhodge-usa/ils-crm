@@ -35,7 +35,7 @@ struct PortalAccessView: View {
             (record.name?.localizedCaseInsensitiveContains(query) ?? false) ||
             (record.email?.localizedCaseInsensitiveContains(query) ?? false) ||
             (record.pageAddress?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (record.company?.localizedCaseInsensitiveContains(query) ?? false) ||
+            (record.contactCompanyLookup?.localizedCaseInsensitiveContains(query) ?? false) ||
             (record.contactNameLookup?.localizedCaseInsensitiveContains(query) ?? false) ||
             (record.contactCompanyLookup?.localizedCaseInsensitiveContains(query) ?? false) ||
             (record.contactEmailLookup?.localizedCaseInsensitiveContains(query) ?? false)
@@ -359,7 +359,7 @@ struct PortalAccessView: View {
         if let email = record.email ?? record.contactEmailLookup, !email.isEmpty {
             return email
         }
-        if let company = record.company ?? record.contactCompanyLookup, !company.isEmpty {
+        if let company = record.contactCompanyLookup, !company.isEmpty {
             return company
         }
         return nil
@@ -706,7 +706,7 @@ struct PortalAccessView: View {
     }
 
     private func accessRowSubtitle(for record: PortalAccessRecord, pageAddress: String) -> String? {
-        let company = record.company ?? record.contactCompanyLookup
+        let company = record.contactCompanyLookup
         let email = record.email ?? record.contactEmailLookup
 
         switch (company, email) {
@@ -798,7 +798,7 @@ struct PortalAccessView: View {
 
     /// Subtitle for By Client row: "Company · N sections".
     private func byClientSubtitle(for record: PortalAccessRecord) -> String {
-        let company = record.company ?? record.contactCompanyLookup ?? ""
+        let company = record.contactCompanyLookup ?? ""
         let count = sectionCount(for: record.pageAddress)
         if company.isEmpty {
             return "\(count) section\(count == 1 ? "" : "s")"
@@ -856,7 +856,7 @@ struct PortalAccessView: View {
         if let email = record.email ?? record.contactEmailLookup, !email.isEmpty {
             return email
         }
-        if let company = record.company ?? record.contactCompanyLookup, !company.isEmpty {
+        if let company = record.contactCompanyLookup, !company.isEmpty {
             return company
         }
         return nil
@@ -944,7 +944,6 @@ private enum PortalPreviewData {
         kristen.email = "kristen@raiders.com"
         kristen.status = "ACTIVE"
         kristen.stage = "Client"
-        kristen.company = "Las Vegas Raiders"
         kristen.dateAdded = Calendar.current.date(byAdding: .day, value: -48, to: Date())
         kristen.framerPageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
 
@@ -953,7 +952,6 @@ private enum PortalPreviewData {
         murph.email = "murph@raiders.com"
         murph.status = "ACTIVE"
         murph.stage = "Client"
-        murph.company = "Las Vegas Raiders"
         murph.dateAdded = Calendar.current.date(byAdding: .day, value: -12, to: Date())
         murph.framerPageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
 
@@ -968,7 +966,6 @@ private enum PortalPreviewData {
         blackstone.email = "jordan@blackstone.com"
         blackstone.status = "ACTIVE"
         blackstone.stage = "Prospect"
-        blackstone.company = "Blackstone Group"
         blackstone.dateAdded = Calendar.current.date(byAdding: .day, value: -6, to: Date())
 
         let log1 = PortalLog(id: "log_1")

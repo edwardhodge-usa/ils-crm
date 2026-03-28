@@ -26,7 +26,6 @@ struct PortalAccessDetailView: View {
 
     /// Hero subtitle: company name (matching mockup "Las Vegas Raiders").
     private var heroSubtitle: String? {
-        if let company = record.company, !company.isEmpty { return company }
         if let lookup = record.contactCompanyLookup, !lookup.isEmpty { return lookup }
         return nil
     }
@@ -268,7 +267,6 @@ private enum PortalAccessDetailPreviewData {
         record.email = "kristen@raiders.com"
         record.status = "ACTIVE"
         record.stage = "Client"
-        record.company = "Las Vegas Raiders"
         record.framerPageUrl = "https://imaginelabstudios.com/ils-clients/las-vegas-raiders"
         record.dateAdded = Calendar.current.date(byAdding: .month, value: -2, to: Date())
 
