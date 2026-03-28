@@ -10,6 +10,7 @@
 		024D905AD69C70469BB2802B /* Opportunity.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5AC5FD0C4B654A1AC21455 /* Opportunity.swift */; };
 		0754912CF7D6E72BBF046CEC /* OfflineLockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58CE9F45A1B999C143E2F3AA /* OfflineLockView.swift */; };
 		0945ADA4071C21E97B28C933 /* Specialty.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85AC6A57D105A7C7B62A7BD /* Specialty.swift */; };
+		0A5B4B18C437830933FA900E /* UISmokeCRUDTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48F8B3D8F49202EB1F5C7913 /* UISmokeCRUDTests.swift */; };
 		106ADEB53369675C780A9283 /* ClientPage+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316C309AD146E8B39E732EC0 /* ClientPage+Airtable.swift */; };
 		141E801CD0E7D895A261D4AD /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F940D1601214B19B51F716 /* TasksView.swift */; };
 		1ACFC5383147C9326C6B6113 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */; };
@@ -110,6 +111,7 @@
 		41AEF7B9304DFAE44834536F /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
 		4441B2730DB9DFA459D4FBA2 /* LicenseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseService.swift; sourceTree = "<group>"; };
 		48DD1C12C88BD4E268591904 /* PortalAccessRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalAccessRecord.swift; sourceTree = "<group>"; };
+		48F8B3D8F49202EB1F5C7913 /* UISmokeCRUDTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UISmokeCRUDTests.swift; sourceTree = "<group>"; };
 		4A4004166840F7FE3EEA205D /* CRMTask+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CRMTask+Airtable.swift"; sourceTree = "<group>"; };
 		4AE64E65874DA7EEAD56BA2C /* PortalAccessRecord+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PortalAccessRecord+Airtable.swift"; sourceTree = "<group>"; };
 		4CFC604A95E0A130C6EAFC7C /* Contact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Contact.swift; sourceTree = "<group>"; };
@@ -278,6 +280,7 @@
 			isa = PBXGroup;
 			children = (
 				C64BA68513C875444438907A /* ILS_CRM_UITests.swift */,
+				48F8B3D8F49202EB1F5C7913 /* UISmokeCRUDTests.swift */,
 			);
 			path = "ILS CRM UITests";
 			sourceTree = "<group>";
@@ -549,6 +552,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BC02322F46633F5E380D68DC /* ILS_CRM_UITests.swift in Sources */,
+				0A5B4B18C437830933FA900E /* UISmokeCRUDTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
