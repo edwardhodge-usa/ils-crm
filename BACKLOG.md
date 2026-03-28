@@ -43,20 +43,20 @@
 - [x] ~~**S4** Swift `fetchRecord` returns field names instead of IDs~~ — missing `returnFieldsByFieldId=true` query param. Fixed in AirtableService.swift (fixed 2026-03-27)
 
 ### CRITICAL — /grill findings (2026-03-27)
-- [ ] **S5** `P0` 4 Electron unit test failures — ContactRow, DealCard, Badge use inline styles but tests assert CSS class names. NewContactSheet test can't find fields (Sheet portal issue). Fix: add class names to components or rewrite tests with `toHaveStyle`
-- [ ] **E1** `P0` Sync engine partial batch push (sync-engine.ts:204) — `markPushed` is all-or-nothing after `batchUpdate`. Partial batch failure re-pushes already-written records. Fix: mark pushed per-batch inside the loop
-- [ ] **E2** `P0` Unhandled upsert in .then() (sync-engine.ts:404) — if SQLite throws after successful Airtable write, record stuck `_pending_push=1` forever, next sync overwrites Airtable with stale local. Fix: wrap upsert in try/catch
-- [ ] **S6** `P0` TOCTOU race in Swift sync lock (SyncEngine.swift:79-98) — `fileExists` + `write` is not atomic. Also silent write failure returns `true`. Fix: use `open(O_CREAT|O_EXCL)` and check write result
-- [ ] **S7** `P0` Test cleanup leak — `defer { Task { await cleanup() } }` in AirtableCRUDTests creates unstructured Task that may not complete before test runner exits. Leaks `__TEST_` records into production Airtable
+- [x] ~~**S5** `P0` 4 Electron unit test failures~~ — rewritten tests to use `toHaveStyle` for inline styles, added `role="group"` aria-label to categorization field (fixed 2026-03-28)
+- [x] ~~**E1** `P0` Sync engine partial batch push~~ — pushTable now marks pushed per-batch (≤10), not all-or-nothing (fixed 2026-03-28)
+- [x] ~~**E2** `P0` Unhandled upsert in .then()~~ — upsert wrapped in try/catch with single retry (fixed 2026-03-28)
+- [x] ~~**S6** `P0` TOCTOU race in Swift sync lock~~ — replaced with POSIX `open(O_CREAT|O_EXCL)` atomic lock creation (fixed 2026-03-28)
+- [x] ~~**S7** `P0` Test cleanup leak~~ — replaced `defer { Task {} }` with do/catch + awaited cleanup in 3 test functions (fixed 2026-03-28)
 
 ### WARNING — /grill findings (2026-03-27)
-- [ ] **S8** `P1` Delete-then-insert sync invalidates @Bindable references (SyncEngine.swift:325) — detail view crash if sync fires while open. Fix: update fields in-place instead of delete+insert
-- [ ] **S9** `P1` project.yml CODE_SIGN_STYLE: Automatic + Developer ID — contradicts documented lesson (2026-03-21), will break notarized builds. Fix: use Manual + full identity string
-- [ ] **S10** `P1` Unvalidated pageAddress URL injection (PortalAccessView.swift:668) — open redirect via crafted Airtable data. Fix: percent-encode or validate host
-- [ ] **S11** `P1` No 429 retry in Swift AirtableService — single rate limit hit aborts entire sync. Fix: add exponential backoff
-- [ ] **E3** `P1` auth:save-user IPC writes user identity with zero input validation (register.ts:374). Fix: validate shape + PAT prefix
-- [ ] **E4** `P1` batchDelete URL doesn't encodeURIComponent record IDs (client.ts:265)
-- [ ] **S12** `P1` GrantAccessSheet double-submit creates duplicate portal records — no concurrency guard
+- [x] ~~**S8** `P1` Delete-then-insert sync invalidates @Bindable~~ — pullTable now uses in-place field update via `updateFields(of:from:context:)` on all 12 converters (fixed 2026-03-28)
+- [x] ~~**S9** `P1` project.yml CODE_SIGN_STYLE: Automatic + Developer ID~~ — changed to Manual + full identity string (fixed 2026-03-28)
+- [x] ~~**S10** `P1` Unvalidated pageAddress URL injection~~ — percent-encoded + scheme/host validation added (fixed 2026-03-28)
+- [x] ~~**S11** `P1` No 429 retry in Swift AirtableService~~ — added `performWithRetry` with exponential backoff on all 6 API methods (fixed 2026-03-28)
+- [x] ~~**E3** `P1` auth:save-user zero input validation~~ — validates object shape, PAT prefix, base ID prefix (fixed 2026-03-28)
+- [x] ~~**E4** `P1` batchDelete URL doesn't encodeURIComponent~~ — added `encodeURIComponent` on record IDs (fixed 2026-03-28)
+- [x] ~~**S12** `P1` GrantAccessSheet double-submit~~ — added `isGranting` state guard (fixed 2026-03-28)
 - [ ] **E5** `P2` ui-smoke.test.ts only tests `toAirtable`, never `fromAirtable` — half the converter pipeline untested
 - [ ] **E6** `P2` field-maps.ts `eventTags` commented as "Multi-Line Text" but converter treats as multiSelect — doc mismatch
 - [ ] **S13** `P2` PortalAccessView.swift:40 — `contactCompanyLookup` searched twice (duplicate condition), missing a search field
