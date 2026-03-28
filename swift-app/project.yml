@@ -16,6 +16,22 @@ packages:
     url: https://github.com/sparkle-project/Sparkle
     from: "2.6.0"
 
+schemes:
+  ILS CRM:
+    build:
+      targets:
+        ILS CRM: all
+        ILS CRM Tests: [test]
+        ILS CRM UITests: [test]
+    test:
+      environmentVariables:
+        - variable: AIRTABLE_API_KEY
+          value: $(AIRTABLE_API_KEY)
+          isEnabled: true
+      targets:
+        - name: ILS CRM Tests
+        - name: ILS CRM UITests
+
 targets:
   ILS CRM:
     type: application
@@ -85,3 +101,5 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGNING_REQUIRED: NO
         CODE_SIGNING_ALLOWED: YES
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/ILS CRM.app/Contents/MacOS/ILS CRM"

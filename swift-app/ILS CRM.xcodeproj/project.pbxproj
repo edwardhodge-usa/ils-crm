@@ -36,6 +36,7 @@
 		5498D0C4CB1B1F07FFD985B3 /* PortalLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96E233D4EA498B4D591789D1 /* PortalLog.swift */; };
 		55DFA7A044C0B594B5A5354E /* AirtableConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77BD5729BF2FB116515E6ECF /* AirtableConvertible.swift */; };
 		577D8DAFD2F517D9CB1FBE10 /* ProposalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20E951223991FB76B8FAB891 /* ProposalsView.swift */; };
+		5883B6127874396EA5FFAFA9 /* AirtableCRUDTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1AB4AC70FDF9110FCC9AC88 /* AirtableCRUDTests.swift */; };
 		5C43F54A5B574A7B450EA2A7 /* ImportedContactDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80AAFC4F81B96A6478FEDDBA /* ImportedContactDetailView.swift */; };
 		5E3277207BAB0C745FF8D7F7 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A161B8DCBD0CDF39AAA10C /* SharedComponents.swift */; };
 		65C3E1A6C84B7EDD12D1DB4B /* ImportedContact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7890DD79DA9A6657609855 /* ImportedContact.swift */; };
@@ -84,6 +85,13 @@
 			remoteGlobalIDString = 4CDF06EFDDA8A408714299C4;
 			remoteInfo = "ILS CRM";
 		};
+		72F7877B421792A8002D1D3D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C559CE298287DA202E635C77 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4CDF06EFDDA8A408714299C4;
+			remoteInfo = "ILS CRM";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -111,6 +119,7 @@
 		5CE5BF78A83434AD89F1FFCD /* LinkedRecordPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedRecordPicker.swift; sourceTree = "<group>"; };
 		5E0C38FCC1781130B2EA6A71 /* RevokedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevokedView.swift; sourceTree = "<group>"; };
 		649C44D1AA43D3C6B31DC0B2 /* Company.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Company.swift; sourceTree = "<group>"; };
+		65576474EA39607893CC6541 /* ILS CRM Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ILS CRM Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		668D676CC891E3198DACD13B /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
 		66D7C2ED321ED09895486FDF /* CompanyDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanyDetailView.swift; sourceTree = "<group>"; };
 		67C683F26915642FCBFD399A /* SyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncEngine.swift; sourceTree = "<group>"; };
@@ -139,6 +148,7 @@
 		A85AC6A57D105A7C7B62A7BD /* Specialty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Specialty.swift; sourceTree = "<group>"; };
 		AC5CD50B3294A213BF296FBD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		AD5AC5FD0C4B654A1AC21455 /* Opportunity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Opportunity.swift; sourceTree = "<group>"; };
+		B1AB4AC70FDF9110FCC9AC88 /* AirtableCRUDTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirtableCRUDTests.swift; sourceTree = "<group>"; };
 		B46488C4FC77689E54BDF129 /* InteractionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractionsView.swift; sourceTree = "<group>"; };
 		B6A17675D518A087D5687C46 /* Proposal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Proposal.swift; sourceTree = "<group>"; };
 		C59EBB89A28F4676116D8A6D /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
@@ -276,6 +286,7 @@
 			isa = PBXGroup;
 			children = (
 				339D803B4C8F401D46F93A87 /* ILS CRM */,
+				6EA0BA3F0B9F3CA82DD5CD75 /* ILS CRM Tests */,
 				4A208AB2419EE1537C804FAF /* ILS CRM UITests */,
 				AE72CAFF765D498C5278F9CE /* Products */,
 			);
@@ -351,6 +362,14 @@
 			path = Projects;
 			sourceTree = "<group>";
 		};
+		6EA0BA3F0B9F3CA82DD5CD75 /* ILS CRM Tests */ = {
+			isa = PBXGroup;
+			children = (
+				B1AB4AC70FDF9110FCC9AC88 /* AirtableCRUDTests.swift */,
+			);
+			path = "ILS CRM Tests";
+			sourceTree = "<group>";
+		};
 		778B127DB35576970E8CC5BE /* Auth */ = {
 			isa = PBXGroup;
 			children = (
@@ -372,6 +391,7 @@
 		AE72CAFF765D498C5278F9CE /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				65576474EA39607893CC6541 /* ILS CRM Tests.xctest */,
 				A5F055B58CBACC91E93393F4 /* ILS CRM UITests.xctest */,
 				F314F3062428983FA086B791 /* ILS CRM.app */,
 			);
@@ -463,6 +483,24 @@
 			productReference = A5F055B58CBACC91E93393F4 /* ILS CRM UITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		6192C5A444A3BF52783A448A /* ILS CRM Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CBE92C43AEB1ED3FE3224855 /* Build configuration list for PBXNativeTarget "ILS CRM Tests" */;
+			buildPhases = (
+				87B69385DDFE164DA5512D5A /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3DACE908ACD249ABF4DE4511 /* PBXTargetDependency */,
+			);
+			name = "ILS CRM Tests";
+			packageProductDependencies = (
+			);
+			productName = "ILS CRM Tests";
+			productReference = 65576474EA39607893CC6541 /* ILS CRM Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -499,6 +537,7 @@
 			projectRoot = "";
 			targets = (
 				4CDF06EFDDA8A408714299C4 /* ILS CRM */,
+				6192C5A444A3BF52783A448A /* ILS CRM Tests */,
 				5D233A71CBAC41879B6B78EC /* ILS CRM UITests */,
 			);
 		};
@@ -510,6 +549,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				BC02322F46633F5E380D68DC /* ILS_CRM_UITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		87B69385DDFE164DA5512D5A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5883B6127874396EA5FFAFA9 /* AirtableCRUDTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -592,6 +639,11 @@
 			isa = PBXTargetDependency;
 			target = 4CDF06EFDDA8A408714299C4 /* ILS CRM */;
 			targetProxy = 1DA86CEDC858F0A5EA262783 /* PBXContainerItemProxy */;
+		};
+		3DACE908ACD249ABF4DE4511 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4CDF06EFDDA8A408714299C4 /* ILS CRM */;
+			targetProxy = 72F7877B421792A8002D1D3D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -741,6 +793,26 @@
 			};
 			name = Debug;
 		};
+		BD368D7EA0DA58B11C5EF24F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.imaginelabstudios.ils-crm.tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ILS CRM.app/Contents/MacOS/ILS CRM";
+			};
+			name = Debug;
+		};
 		F064A775DC43B40489FBE497 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -807,6 +879,26 @@
 			};
 			name = Release;
 		};
+		FEEDA5F570A63B065505F6AA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.imaginelabstudios.ils-crm.tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ILS CRM.app/Contents/MacOS/ILS CRM";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -824,6 +916,15 @@
 			buildConfigurations = (
 				F064A775DC43B40489FBE497 /* Debug */,
 				F77AFDC471F71118732856EE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CBE92C43AEB1ED3FE3224855 /* Build configuration list for PBXNativeTarget "ILS CRM Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD368D7EA0DA58B11C5EF24F /* Debug */,
+				FEEDA5F570A63B065505F6AA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
