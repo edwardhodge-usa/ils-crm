@@ -445,7 +445,6 @@ const PORTAL_ACCESS_MAPPINGS: FieldMapping[] = [
   { local: 'email', airtable: PORTAL_ACCESS.email, type: 'text' },
   { local: 'page_address', airtable: PORTAL_ACCESS.pageAddress, type: 'text' },
   { local: 'decision_maker', airtable: PORTAL_ACCESS.decisionMaker, type: 'text' },
-  // company field deleted from Airtable (replaced by Contact → Company linked record chain)
   { local: 'address', airtable: PORTAL_ACCESS.address, type: 'text' },
   { local: 'primary_contact', airtable: PORTAL_ACCESS.primaryContact, type: 'text' },
   { local: 'position_title', airtable: PORTAL_ACCESS.positionTitle, type: 'text' },

@@ -18,7 +18,6 @@ final class PortalAccessRecord {
     var email: String?                   // fldU70JpJQ1GpbRNQ
     var pageAddress: String?             // fldkAjPIMUMlHNT2A
     var decisionMaker: String?           // fldn0nMxnqpHkLykk
-    var company: String?                 // fldYZ1Su7WnNPxf17
     var address: String?                 // fldvaQB8wzgaLLn2Y
     var primaryContact: String?          // fldqESjieqvuj1k4P
     var positionTitle: String?           // fld2UX68BMEk768Ao

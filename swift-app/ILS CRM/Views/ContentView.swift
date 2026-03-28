@@ -412,7 +412,6 @@ private let appShellPreviewContainer: ModelContainer = {
 
         let portalAccess = PortalAccessRecord(id: "preview-portalaccess-jordan", name: "Jordan Lee")
         portalAccess.email = "jordan@acmearchitecture.com"
-        portalAccess.company = "Acme Architecture"
         portalAccess.pageAddress = "las-vegas-raiders"
         portalAccess.status = "ACTIVE"
         portalAccess.stage = "Prospect"

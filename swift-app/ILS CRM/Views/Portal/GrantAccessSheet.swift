@@ -179,7 +179,6 @@ struct GrantAccessSheet: View {
         )
         record.pageAddress = pageAddress
         record.email = contact.email
-        record.company = resolvedCompanyName(for: contact)
         record.status = "ACTIVE"
         record.stage = "Prospect"
         record.dateAdded = Date()

@@ -8,7 +8,6 @@ private enum F {
     static let email = "fldU70JpJQ1GpbRNQ"
     static let pageAddress = "fldkAjPIMUMlHNT2A"
     static let decisionMaker = "fldn0nMxnqpHkLykk"
-    static let company = "fldYZ1Su7WnNPxf17"
     static let address = "fldvaQB8wzgaLLn2Y"
     static let primaryContact = "fldqESjieqvuj1k4P"
     static let positionTitle = "fld2UX68BMEk768Ao"
@@ -55,7 +54,6 @@ extension PortalAccessRecord: AirtableConvertible {
         model.email = f.string(for: F.email)
         model.pageAddress = f.string(for: F.pageAddress)
         model.decisionMaker = f.string(for: F.decisionMaker)
-        model.company = f.string(for: F.company)
         model.address = f.string(for: F.address)
         model.primaryContact = f.string(for: F.primaryContact)
         model.positionTitle = f.string(for: F.positionTitle)
@@ -96,7 +94,6 @@ extension PortalAccessRecord: AirtableConvertible {
         b.set(F.email, email)
         b.set(F.pageAddress, pageAddress)
         b.set(F.decisionMaker, decisionMaker)
-        b.set(F.company, company)
         b.set(F.address, address)
         b.set(F.primaryContact, primaryContact)
         b.set(F.positionTitle, positionTitle)

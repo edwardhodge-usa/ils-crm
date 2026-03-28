@@ -339,7 +339,6 @@ export const PORTAL_ACCESS = {
   email: 'fldU70JpJQ1GpbRNQ',
   pageAddress: 'fldkAjPIMUMlHNT2A',
   decisionMaker: 'fldn0nMxnqpHkLykk',
-  company: 'fldYZ1Su7WnNPxf17',
   address: 'fldvaQB8wzgaLLn2Y',
   primaryContact: 'fldqESjieqvuj1k4P',
   positionTitle: 'fld2UX68BMEk768Ao',
