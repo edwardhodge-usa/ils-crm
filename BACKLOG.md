@@ -76,7 +76,7 @@
 
 ## Todo — Manual Cleanup
 
-- [ ] Delete placeholder Tasks record (`recDA1o3TBZjdmcJE`)
+- [x] ~~Delete placeholder Tasks record (`recDA1o3TBZjdmcJE`)~~ — record no longer exists (verified 2026-03-28)
 
 ## Todo — Swift QA
 
