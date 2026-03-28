@@ -40,5 +40,8 @@ test('applies selected styles when isSelected is true', () => {
   const { container } = render(
     <ContactRow contact={mockContact} isSelected={true} onClick={() => {}} />
   )
-  expect(container.firstChild).toHaveClass('contact-row--selected')
+  expect(container.firstChild).toHaveStyle({
+    borderLeftColor: 'var(--color-accent)',
+    background: 'var(--color-accent-translucent)',
+  })
 })

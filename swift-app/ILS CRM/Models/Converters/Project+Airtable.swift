@@ -47,6 +47,27 @@ extension Project: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: Project, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        existing.projectName = f.string(for: F.projectName)
+        existing.location = f.string(for: F.location)
+        existing.projectDescription = f.string(for: F.description)
+        existing.keyMilestones = f.string(for: F.keyMilestones)
+        existing.lessonsLearned = f.string(for: F.lessonsLearned)
+        existing.contractValue = f.double(for: F.contractValue)
+        existing.startDate = f.date(for: F.startDate)
+        existing.targetCompletion = f.date(for: F.targetCompletion)
+        existing.actualCompletion = f.date(for: F.actualCompletion)
+        existing.status = f.string(for: F.status)
+        existing.engagementType = f.stringArray(for: F.engagementType)
+        existing.salesOpportunitiesIds = f.stringArray(for: F.salesOpportunities)
+        existing.clientIds = f.stringArray(for: F.client)
+        existing.tasksIds = f.stringArray(for: F.tasks)
+        existing.primaryContactIds = f.stringArray(for: F.primaryContact)
+        existing.contactsIds = f.stringArray(for: F.contacts)
+        existing.isPendingPush = false
+    }
+
     func toAirtableFields() -> [String: Any] {
         var b = AirtableFieldsBuilder()
         b.set(F.projectName, projectName)

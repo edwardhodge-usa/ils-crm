@@ -67,8 +67,8 @@ targets:
           CODE_SIGNING_REQUIRED: YES
           CODE_SIGNING_ALLOWED: YES
         Release:
-          CODE_SIGN_IDENTITY: "Developer ID Application"
-          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_IDENTITY: "Developer ID Application: Imaginelab Studios (8RHA62T6FQ)"
+          CODE_SIGN_STYLE: Manual
           CODE_SIGNING_REQUIRED: YES
           CODE_SIGNING_ALLOWED: YES
           ENABLE_HARDENED_RUNTIME: YES

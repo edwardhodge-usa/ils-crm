@@ -53,7 +53,7 @@ actor AirtableService {
             components.queryItems = queryItems
             let url = components.url!
 
-            let (data, response) = try await session.data(from: url)
+            let (data, response) = try await performWithRetry(from: url)
 
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
@@ -85,7 +85,7 @@ actor AirtableService {
         components.queryItems = [URLQueryItem(name: "returnFieldsByFieldId", value: "true")]
         let url = components.url!
 
-        let (data, response) = try await session.data(from: url)
+        let (data, response) = try await performWithRetry(from: url)
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
@@ -142,7 +142,7 @@ actor AirtableService {
             var request = URLRequest(url: components.url!)
             request.httpMethod = "DELETE"
 
-            let (_, response) = try await session.data(for: request)
+            let (_, response) = try await performWithRetry(request)
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
                 let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
@@ -159,7 +159,7 @@ actor AirtableService {
     func fetchFieldMetadata(tableId: String) async throws -> [String: Any] {
         let url = URL(string: "https://api.airtable.com/v0/meta/bases/\(baseId)/tables")!
 
-        let (data, response) = try await session.data(from: url)
+        let (data, response) = try await performWithRetry(from: url)
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
@@ -246,6 +246,39 @@ actor AirtableService {
         ])
     }
 
+    // MARK: - Retry with Exponential Backoff
+
+    /// Executes a URLSession request with automatic 429 retry and exponential backoff.
+    /// Reads Retry-After header (defaults to 30s if missing), retries up to maxRetries times
+    /// with exponential backoff (wait × 1, wait × 2, wait × 4).
+    private func performWithRetry(_ request: URLRequest, maxRetries: Int = 3) async throws -> (Data, URLResponse) {
+        var lastError: Error?
+        for attempt in 0..<(maxRetries + 1) {
+            let (data, response) = try await session.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return (data, response) }
+
+            if http.statusCode == 429 {
+                guard attempt < maxRetries else {
+                    throw lastError ?? AirtableError.httpError(statusCode: 429, tableId: "unknown")
+                }
+                let retryAfter = Double(http.value(forHTTPHeaderField: "Retry-After") ?? "") ?? 30.0
+                let backoff = retryAfter * pow(2.0, Double(attempt))
+                Self.logger.warning("429 rate limited — retry \(attempt + 1)/\(maxRetries) after \(backoff, privacy: .public)s")
+                try await Task.sleep(for: .seconds(backoff))
+                lastError = AirtableError.httpError(statusCode: 429, tableId: "")
+                continue
+            }
+            return (data, response)
+        }
+        throw lastError ?? AirtableError.httpError(statusCode: 429, tableId: "unknown")
+    }
+
+    /// Convenience: performs a GET request to a URL with retry, using the session's default Authorization header.
+    private func performWithRetry(from url: URL) async throws -> (Data, URLResponse) {
+        let request = URLRequest(url: url)
+        return try await performWithRetry(request)
+    }
+
     // MARK: - Private Helpers
 
     private func postRequest(tableId: String, body: [String: Any]) async throws -> [String: Any] {
@@ -257,7 +290,7 @@ actor AirtableService {
         request.httpMethod = "POST"
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await performWithRetry(request)
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
@@ -279,7 +312,7 @@ actor AirtableService {
         request.httpMethod = "PATCH"
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await performWithRetry(request)
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {

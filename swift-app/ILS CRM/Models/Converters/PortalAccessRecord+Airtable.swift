@@ -88,6 +88,47 @@ extension PortalAccessRecord: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: PortalAccessRecord, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        // Direct fields
+        existing.name = f.string(for: F.name)
+        existing.email = f.string(for: F.email)
+        existing.pageAddress = f.string(for: F.pageAddress)
+        existing.decisionMaker = f.string(for: F.decisionMaker)
+        existing.address = f.string(for: F.address)
+        existing.primaryContact = f.string(for: F.primaryContact)
+        existing.positionTitle = f.string(for: F.positionTitle)
+        existing.industry = f.string(for: F.industry)
+        existing.notes = f.string(for: F.notes)
+        existing.phoneNumber = f.string(for: F.phoneNumber)
+        existing.website = f.string(for: F.website)
+        existing.projectBudget = f.double(for: F.projectBudget)
+        existing.dateAdded = f.date(for: F.dateAdded)
+        existing.expectedProjectStartDate = f.date(for: F.expectedProjectStartDate)
+        existing.followUpDate = f.date(for: F.followUpDate)
+        existing.status = f.string(for: F.status)
+        existing.leadSource = f.string(for: F.leadSource)
+        existing.stage = f.string(for: F.stage)
+        existing.servicesInterestedIn = f.stringArray(for: F.servicesInterestedIn)
+        existing.contactIds = f.stringArray(for: F.contact)
+        // Formula (read-only — decoded but never pushed)
+        existing.framerPageUrl = f.string(for: F.framerPageUrl)
+        // Lookups (all read-only — decoded for display)
+        existing.contactNameLookup = f.string(for: F.contactNameLookup)
+        existing.contactCompanyLookup = f.string(for: F.contactCompanyLookup)
+        existing.contactEmailLookup = f.string(for: F.contactEmailLookup)
+        existing.contactPhoneLookup = f.string(for: F.contactPhoneLookup)
+        existing.contactJobTitleLookup = f.string(for: F.contactJobTitleLookup)
+        existing.contactIndustryLookup = f.string(for: F.contactIndustryLookup)
+        existing.contactTagsLookup = f.string(for: F.contactTagsLookup)
+        existing.contactWebsiteLookup = f.string(for: F.contactWebsiteLookup)
+        existing.contactAddressLineLookup = f.string(for: F.contactAddressLineLookup)
+        existing.contactCityLookup = f.string(for: F.contactCityLookup)
+        existing.contactStateLookup = f.string(for: F.contactStateLookup)
+        existing.contactCountryLookup = f.string(for: F.contactCountryLookup)
+        existing.isPendingPush = false
+    }
+
     func toAirtableFields() -> [String: Any] {
         var b = AirtableFieldsBuilder()
         b.set(F.name, name)

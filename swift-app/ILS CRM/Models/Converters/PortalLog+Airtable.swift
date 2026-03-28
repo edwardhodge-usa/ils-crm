@@ -37,6 +37,23 @@ extension PortalLog: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: PortalLog, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        existing.autoId = f.int(for: F.autoId)
+        existing.clientEmail = f.string(for: F.clientEmail)
+        existing.clientName = f.string(for: F.clientName)
+        existing.company = f.string(for: F.company)
+        existing.ipAddress = f.string(for: F.ipAddress)
+        existing.city = f.string(for: F.city)
+        existing.region = f.string(for: F.region)
+        existing.country = f.string(for: F.country)
+        existing.userAgent = f.string(for: F.userAgent)
+        existing.claritySession = f.string(for: F.claritySession)
+        existing.pageUrl = f.string(for: F.pageUrl)
+        existing.timestamp = f.date(for: F.timestamp)
+        existing.isPendingPush = false
+    }
+
     /// Portal Logs is READ-ONLY — never push.
     func toAirtableFields() -> [String: Any] {
         [:]  // Read-only table — no push

@@ -38,6 +38,24 @@ extension CRMTask: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: CRMTask, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        existing.task = f.string(for: F.task)
+        existing.notes = f.string(for: F.notes)
+        existing.dueDate = f.date(for: F.dueDate)
+        existing.completedDate = f.date(for: F.completedDate)
+        existing.status = f.string(for: F.status)          // stored with emoji prefix
+        existing.type = f.string(for: F.type)
+        existing.priority = f.string(for: F.priority)      // stored with emoji prefix
+        existing.salesOpportunitiesIds = f.stringArray(for: F.salesOpportunities)
+        existing.contactsIds = f.stringArray(for: F.contacts)
+        existing.projectsIds = f.stringArray(for: F.projects)
+        existing.proposalIds = f.stringArray(for: F.proposal)
+        existing.assignedTo = f.collaboratorName(for: F.assignedTo)
+        existing.assignedToData = f.collaboratorData(for: F.assignedTo)
+        existing.isPendingPush = false
+    }
+
     func toAirtableFields() -> [String: Any] {
         var b = AirtableFieldsBuilder()
         b.set(F.task, task)

@@ -64,6 +64,36 @@ extension Company: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: Company, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        existing.companyName = f.string(for: F.companyName)
+        existing.address = f.string(for: F.address)
+        existing.city = f.string(for: F.city)
+        existing.stateRegion = f.string(for: F.stateRegion)
+        existing.country = f.string(for: F.country)
+        existing.referredBy = f.string(for: F.referredBy)
+        existing.naicsCode = f.string(for: F.naicsCode)
+        existing.companyType = f.string(for: F.companyType)
+        existing.companySize = f.string(for: F.companySize)
+        existing.annualRevenue = f.string(for: F.annualRevenue)
+        existing.postalCode = f.string(for: F.postalCode)
+        existing.notes = f.string(for: F.notes)
+        existing.companyDescription = f.string(for: F.companyDescription)
+        existing.website = f.string(for: F.website)
+        existing.linkedInUrl = f.string(for: F.linkedInUrl)
+        existing.foundingYear = f.int(for: F.foundingYear)
+        existing.createdDate = f.date(for: F.createdDate)
+        existing.type = f.string(for: F.type)
+        existing.industry = f.string(for: F.industry)
+        existing.leadSource = f.string(for: F.leadSource)
+        existing.salesOpportunitiesIds = f.stringArray(for: F.salesOpportunities)
+        existing.projectsIds = f.stringArray(for: F.projects)
+        existing.contactsIds = f.stringArray(for: F.contacts)
+        existing.proposalsIds = f.stringArray(for: F.proposals)
+        existing.logoUrl = f.attachmentUrl(for: F.attachments)
+        existing.isPendingPush = false
+    }
+
     func toAirtableFields() -> [String: Any] {
         var b = AirtableFieldsBuilder()
         b.set(F.companyName, companyName)

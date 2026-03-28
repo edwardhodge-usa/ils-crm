@@ -6,12 +6,18 @@ test('renders children', () => {
   expect(screen.getByText('Proposal Sent')).toBeInTheDocument()
 })
 
-test('applies proposal variant class', () => {
+test('applies proposal variant styles', () => {
   const { container } = render(<Badge variant="proposal">Proposal Sent</Badge>)
-  expect(container.firstChild).toHaveClass('badge--proposal')
+  expect(container.firstChild).toHaveStyle({
+    color: 'var(--stage-proposal)',
+    background: 'var(--stage-proposal-bg)',
+  })
 })
 
-test('applies default variant when no variant given', () => {
+test('applies default variant styles when no variant given', () => {
   const { container } = render(<Badge>No variant</Badge>)
-  expect(container.firstChild).toHaveClass('badge--default')
+  expect(container.firstChild).toHaveStyle({
+    color: 'var(--text-secondary)',
+    background: 'var(--bg-tertiary)',
+  })
 })

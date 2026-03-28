@@ -16,6 +16,7 @@ struct GrantAccessSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var searchText = ""
+    @State private var isGranting = false
 
     // MARK: - Derived Data
 
@@ -165,12 +166,15 @@ struct GrantAccessSheet: View {
     // MARK: - Grant Access
 
     private func grantAccess(to contact: Contact) {
+        guard !isGranting else { return }
+        isGranting = true
+
         // Prevent duplicate access — check if this contact already has access to this page
         let hasAccess = existingAccess.contains { record in
             record.pageAddress == pageAddress &&
             record.contactIds.contains(contact.id)
         }
-        if hasAccess { dismiss(); return }
+        if hasAccess { isGranting = false; dismiss(); return }
 
         let record = PortalAccessRecord(
             id: "local_\(UUID().uuidString)",
@@ -185,6 +189,7 @@ struct GrantAccessSheet: View {
         record.contactIds = [contact.id]
 
         context.insert(record)
+        isGranting = false
         dismiss()
     }
 }

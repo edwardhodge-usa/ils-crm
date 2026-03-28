@@ -41,6 +41,23 @@ extension Proposal: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: Proposal, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        existing.proposalName = f.string(for: F.proposalName)
+        existing.version = f.string(for: F.version)
+        existing.clientFeedback = f.string(for: F.clientFeedback)
+        existing.performanceMetrics = f.string(for: F.performanceMetrics)
+        existing.notes = f.string(for: F.notes)
+        existing.status = f.string(for: F.status)
+        existing.templateUsed = f.string(for: F.templateUsed)
+        existing.approvalStatus = f.string(for: F.approvalStatus)
+        existing.clientIds = f.stringArray(for: F.client)
+        existing.companyIds = f.stringArray(for: F.company)
+        existing.relatedOpportunityIds = f.stringArray(for: F.relatedOpportunity)
+        existing.tasksIds = f.stringArray(for: F.tasks)
+        existing.isPendingPush = false
+    }
+
     func toAirtableFields() -> [String: Any] {
         var b = AirtableFieldsBuilder()
         b.set(F.proposalName, proposalName)

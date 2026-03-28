@@ -31,7 +31,8 @@ test('renders probability', () => {
   expect(screen.getByText('65%')).toBeInTheDocument()
 })
 
-test('applies selected class when selected', () => {
+test('applies selected border when selected', () => {
   const { container } = render(<DealCard id={mockDeal.id} deal={mockDeal} isSelected={true} onClick={() => {}} />)
-  expect(container.firstChild).toHaveClass('deal-card--selected')
+  const el = container.firstChild as HTMLElement
+  expect(el.style.border).toBe('1px solid var(--color-accent)')
 })

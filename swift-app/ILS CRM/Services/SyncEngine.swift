@@ -77,25 +77,26 @@ final class SyncEngine {
     /// from both the Electron and Swift apps against the same Airtable base.
     /// Returns `true` if the lock was acquired, `false` if another app holds it.
     private func acquireSyncLock() -> Bool {
-        let fm = FileManager.default
-
-        if fm.fileExists(atPath: Self.lockFilePath) {
-            // Read timestamp from existing lock file
-            if let contents = try? String(contentsOfFile: Self.lockFilePath, encoding: .utf8) {
-                let formatter = ISO8601DateFormatter()
-                if let lockDate = formatter.date(from: contents),
-                   abs(lockDate.timeIntervalSinceNow) < 120 {
-                    // Lock is fresh — another app is syncing
-                    return false
-                }
+        // Check for stale lock first
+        if FileManager.default.fileExists(atPath: Self.lockFilePath) {
+            if let attrs = try? FileManager.default.attributesOfItem(atPath: Self.lockFilePath),
+               let modified = attrs[.modificationDate] as? Date,
+               abs(modified.timeIntervalSinceNow) < 120 {
+                return false // Fresh lock held by another app
             }
-            // Lock is stale or unparseable — remove it
-            try? fm.removeItem(atPath: Self.lockFilePath)
+            // Stale lock — remove it
+            try? FileManager.default.removeItem(atPath: Self.lockFilePath)
         }
 
-        // Write current timestamp to lock file
+        // Atomic create: O_CREAT|O_EXCL fails if file already exists (no TOCTOU race)
+        let fd = Darwin.open(Self.lockFilePath, O_WRONLY | O_CREAT | O_EXCL, 0o644)
+        guard fd >= 0 else { return false }
+
         let timestamp = Date().ISO8601Format()
-        try? timestamp.write(toFile: Self.lockFilePath, atomically: true, encoding: .utf8)
+        timestamp.withCString { ptr in
+            _ = Darwin.write(fd, ptr, strlen(ptr))
+        }
+        Darwin.close(fd)
         return true
     }
 
@@ -317,15 +318,16 @@ final class SyncEngine {
         let existing = try context.fetch(FetchDescriptor<T>())
         let existingById = Dictionary(existing.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
 
-        // Upsert: delete-then-insert for each record (simplest correct approach
-        // that avoids SwiftData @Attribute(.unique) constraint violations)
+        // Upsert: update existing in-place to preserve SwiftData object identity,
+        // or insert new records that don't exist locally yet.
         for record in records {
             if let old = existingById[record.id] {
                 if old.isPendingPush { continue }
-                context.delete(old)
+                T.updateFields(of: old, from: record, context: context)
+            } else {
+                let model = T.from(record: record, context: context)
+                context.insert(model)
             }
-            let model = T.from(record: record, context: context)
-            context.insert(model)
         }
 
         // Delete records not in Airtable (unless pending push)

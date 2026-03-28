@@ -515,7 +515,6 @@
 				TargetAttributes = {
 					4CDF06EFDDA8A408714299C4 = {
 						DevelopmentTeam = 8RHA62T6FQ;
-						ProvisioningStyle = Automatic;
 					};
 					5D233A71CBAC41879B6B78EC = {
 						TestTargetID = 4CDF06EFDDA8A408714299C4;
@@ -864,8 +863,8 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = "ILS CRM/ILS CRM.entitlements";
-				CODE_SIGN_IDENTITY = "Developer ID Application";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Developer ID Application: Imaginelab Studios (8RHA62T6FQ)";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = 8RHA62T6FQ;
 				ENABLE_HARDENED_RUNTIME = YES;

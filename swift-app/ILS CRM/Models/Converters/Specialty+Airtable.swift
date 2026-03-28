@@ -20,6 +20,14 @@ extension Specialty: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: Specialty, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        existing.specialty = f.string(for: F.specialty)
+        existing.importedContactsIds = f.stringArray(for: F.importedContacts)
+        existing.contactsIds = f.stringArray(for: F.contacts)
+        existing.isPendingPush = false
+    }
+
     /// Specialties is READ-ONLY — never push. Returns empty dict.
     func toAirtableFields() -> [String: Any] {
         [:]  // Read-only table — no push

@@ -169,6 +169,11 @@ protocol AirtableConvertible: PersistentModel {
     /// The ModelContext is provided for querying related models if needed.
     static func from(record: AirtableRecord, context: ModelContext) -> Self
 
+    /// Updates an existing model's fields from a fresh Airtable record.
+    /// Used during sync to preserve SwiftData object identity (no delete+insert).
+    /// Copies every field that `from(record:context:)` sets except `id`.
+    static func updateFields(of existing: Self, from record: AirtableRecord, context: ModelContext)
+
     /// Converts the model's writable fields to an Airtable-compatible dictionary.
     /// Read-only fields (formula, lookup, rollup, autoNumber) must be excluded.
     /// Collaborator fields use `setCollaborator()` to send `{id: "usrXXX"}` format.

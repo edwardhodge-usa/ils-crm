@@ -201,10 +201,14 @@ async function pushTable(
     toUpdate.push({ id: record.id as string, fields })
   }
 
-  if (toUpdate.length > 0) {
-    await batchUpdate(tableId, toUpdate, { apiKey, baseId })
-    for (const record of pending) {
-      markPushed(tableName, record.id as string)
+  // Push in batches of 10, marking each batch as pushed immediately after success.
+  // If a batch fails, already-marked batches stay correct and remaining stay _pending_push=1.
+  const BATCH_SIZE = 10
+  for (let i = 0; i < toUpdate.length; i += BATCH_SIZE) {
+    const batch = toUpdate.slice(i, i + BATCH_SIZE)
+    await batchUpdate(tableId, batch, { apiKey, baseId })
+    for (const rec of batch) {
+      markPushed(tableName, rec.id)
     }
   }
 
@@ -401,10 +405,21 @@ export async function updateRecord(
     if (isDev) console.log(`[Sync] updateRecord ${tableName}/${id} → sending fields:`, JSON.stringify(airtableFields, null, 2))
     batchUpdate(tableId, [{ id, fields: airtableFields }], { apiKey: config.apiKey, baseId: config.baseId })
       .then(() => {
-        upsert(tableName, id, {
-          _airtable_modified_at: new Date().toISOString(),
-          _pending_push: 0,
-        })
+        try {
+          upsert(tableName, id, {
+            _airtable_modified_at: new Date().toISOString(),
+            _pending_push: 0,
+          })
+        } catch (upsertErr) {
+          console.error(`[Sync] updateRecord markPushed FAILED ${tableName}/${id}:`, String(upsertErr))
+          // Retry the mark once — Airtable write already succeeded
+          try {
+            upsert(tableName, id, { _pending_push: 0 })
+          } catch {
+            // Give up — record will be re-pushed on next sync, but won't overwrite Airtable
+            // because the Airtable data is already current
+          }
+        }
       })
       .catch((err) => {
         console.error(`[Sync] updateRecord push FAILED ${tableName}/${id}:`, String(err))

@@ -262,7 +262,7 @@ export async function batchDelete(
 
   for (let i = 0; i < recordIds.length; i += 10) {
     const batch = recordIds.slice(i, i + 10)
-    const params = batch.map(id => `records[]=${id}`).join('&')
+    const params = batch.map(id => `records[]=${encodeURIComponent(id)}`).join('&')
 
     await airtableRequest(`${tableId}?${params}`, {
       method: 'DELETE',

@@ -373,6 +373,20 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
 
   ipcMain.handle('auth:save-user', async (_e, user: { id: string; name: string; email: string; apiKey: string; baseId: string }) => {
     try {
+      // Validate input shape and values
+      if (!user || typeof user !== 'object') {
+        return { success: false, error: 'Invalid input' }
+      }
+      if (typeof user.apiKey !== 'string' || !user.apiKey.startsWith('pat')) {
+        return { success: false, error: 'Invalid API key format — must start with "pat"' }
+      }
+      if (typeof user.baseId !== 'string' || !user.baseId.startsWith('app')) {
+        return { success: false, error: 'Invalid base ID format — must start with "app"' }
+      }
+      if (typeof user.id !== 'string' || typeof user.name !== 'string' || typeof user.email !== 'string') {
+        return { success: false, error: 'Invalid user data — id, name, and email must be strings' }
+      }
+
       setSetting('user_id', user.id)
       setSetting('user_name', user.name)
       setSetting('user_email', user.email)

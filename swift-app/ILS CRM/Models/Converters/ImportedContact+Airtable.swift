@@ -118,6 +118,57 @@ extension ImportedContact: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: ImportedContact, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        existing.importedContactName = f.string(for: F.importedContactName)
+        existing.company = f.string(for: F.company)
+        existing.firstName = f.string(for: F.firstName)
+        existing.lastName = f.string(for: F.lastName)
+        existing.jobTitle = f.string(for: F.jobTitle)
+        existing.email = f.string(for: F.email)
+        existing.eventTags = f.string(for: F.eventTags)
+        existing.addressLine = f.string(for: F.addressLine)
+        existing.city = f.string(for: F.city)
+        existing.state = f.string(for: F.state)
+        existing.country = f.string(for: F.country)
+        existing.companyFoundingYear = f.string(for: F.companyFoundingYear)
+        existing.companyNaicsCode = f.string(for: F.companyNaicsCode)
+        existing.companyType = f.string(for: F.companyType)
+        existing.companySize = f.string(for: F.companySize)
+        existing.companyIndustry = f.string(for: F.companyIndustry)
+        existing.companyAnnualRevenue = f.string(for: F.companyAnnualRevenue)
+        existing.companyStreetAddress = f.string(for: F.companyStreetAddress)
+        existing.companyStreetAddress2 = f.string(for: F.companyStreetAddress2)
+        existing.companyCity = f.string(for: F.companyCity)
+        existing.companyState = f.string(for: F.companyState)
+        existing.companyCountry = f.string(for: F.companyCountry)
+        existing.companyPostalCode = f.string(for: F.companyPostalCode)
+        existing.postalCode = f.string(for: F.postalCode)
+        existing.companyDescription = f.string(for: F.companyDescription)
+        existing.note = f.string(for: F.note)
+        existing.reasonForRejection = f.string(for: F.reasonForRejection)
+        existing.reviewNotes = f.string(for: F.reviewNotes)
+        existing.phone = f.string(for: F.phone)
+        existing.mobilePhone = f.string(for: F.mobilePhone)
+        existing.otherPhone = f.string(for: F.otherPhone)
+        existing.workPhone = f.string(for: F.workPhone)
+        existing.officePhone = f.string(for: F.officePhone)
+        existing.fax = f.string(for: F.fax)
+        existing.linkedInUrl = f.string(for: F.linkedInUrl)
+        existing.website = f.string(for: F.website)
+        existing.contactPhotoUrl = f.string(for: F.contactPhotoUrl)
+        existing.businessCardImageUrl = f.string(for: F.businessCardImageUrl)
+        existing.importDate = f.date(for: F.importDate)
+        existing.categorization = f.string(for: F.categorization)
+        existing.onboardingStatus = f.string(for: F.onboardingStatus)
+        existing.importSource = f.string(for: F.importSource)
+        existing.tags = f.stringArray(for: F.tags)
+        existing.syncToContacts = f.bool(for: F.syncToContacts)
+        existing.specialtiesIds = f.stringArray(for: F.specialties)
+        existing.relatedCrmContactIds = f.stringArray(for: F.relatedCrmContact)
+        existing.isPendingPush = false
+    }
+
     /// ImportedContacts uses approve/reject workflow, not general CRUD push.
     /// Only onboardingStatus and reasonForRejection are pushed.
     func toAirtableFields() -> [String: Any] {

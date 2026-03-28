@@ -58,6 +58,33 @@ extension Opportunity: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: Opportunity, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        existing.opportunityName = f.string(for: F.opportunityName)
+        existing.referredBy = f.string(for: F.referredBy)
+        existing.notesAbout = f.string(for: F.notesAbout)
+        existing.contractMilestones = f.string(for: F.contractMilestones)
+        existing.lossNotes = f.string(for: F.lossNotes)
+        existing.dealValue = f.double(for: F.dealValue)
+        existing.expectedCloseDate = f.date(for: F.expectedCloseDate)
+        existing.nextMeetingDate = f.date(for: F.nextMeetingDate)
+        existing.salesStage = f.string(for: F.salesStage)
+        existing.probability = f.string(for: F.probability)        // stored with prefix
+        existing.qualsType = f.string(for: F.qualsType)
+        existing.leadSource = f.string(for: F.leadSource)
+        existing.winLossReason = f.string(for: F.winLossReason)
+        existing.engagementType = f.stringArray(for: F.engagementType)
+        existing.qualificationsSent = f.bool(for: F.qualificationsSent)
+        existing.companyIds = f.stringArray(for: F.company)
+        existing.associatedContactIds = f.stringArray(for: F.associatedContact)
+        existing.tasksIds = f.stringArray(for: F.tasks)
+        existing.interactionsIds = f.stringArray(for: F.interactions)
+        existing.projectIds = f.stringArray(for: F.project)
+        existing.proposalsIds = f.stringArray(for: F.proposals)
+        existing.probabilityValue = f.double(for: F.probabilityValue)  // read-only but stored
+        existing.isPendingPush = false
+    }
+
     func toAirtableFields() -> [String: Any] {
         var b = AirtableFieldsBuilder()
         b.set(F.opportunityName, opportunityName)

@@ -6,7 +6,7 @@ test('renders all required fields', () => {
   expect(screen.getByLabelText(/first name/i)).toBeInTheDocument()
   expect(screen.getByLabelText(/last name/i)).toBeInTheDocument()
   expect(screen.getByLabelText(/company/i)).toBeInTheDocument()
-  expect(screen.getByLabelText(/categorization/i)).toBeInTheDocument()
+  expect(screen.getByRole('group', { name: /categorization/i })).toBeInTheDocument()
   expect(screen.getByLabelText(/mobile/i)).toBeInTheDocument()
   expect(screen.getByLabelText(/linkedin/i)).toBeInTheDocument()
   expect(screen.getByLabelText(/event.*where/i)).toBeInTheDocument()

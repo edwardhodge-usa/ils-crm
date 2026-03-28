@@ -665,7 +665,9 @@ struct PortalAccessView: View {
     }
 
     private func openPortalPage(_ pageAddress: String) {
-        guard let url = URL(string: "https://imaginelabstudios.com/ils-clients/\(pageAddress)") else { return }
+        let encoded = pageAddress.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? pageAddress
+        guard let url = URL(string: "https://imaginelabstudios.com/ils-clients/\(encoded)"),
+              url.scheme == "https", url.host == "imaginelabstudios.com" else { return }
         NSWorkspace.shared.open(url)
     }
 

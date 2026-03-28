@@ -30,6 +30,19 @@ extension Interaction: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: Interaction, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        existing.subject = f.string(for: F.subject)
+        existing.summary = f.string(for: F.summary)
+        existing.nextSteps = f.string(for: F.nextSteps)
+        existing.date = f.date(for: F.date)
+        existing.type = f.string(for: F.type)
+        existing.direction = f.string(for: F.direction)
+        existing.contactsIds = f.stringArray(for: F.contacts)
+        existing.salesOpportunitiesIds = f.stringArray(for: F.salesOpportunities)
+        existing.isPendingPush = false
+    }
+
     func toAirtableFields() -> [String: Any] {
         var b = AirtableFieldsBuilder()
         b.set(F.subject, subject)

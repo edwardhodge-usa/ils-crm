@@ -139,6 +139,8 @@ export function NewContactSheet({ isOpen, onClose, onSave }: NewContactSheetProp
           </FormField>
           <FormField label="Categorization" htmlFor="categorization">
             <div
+              role="group"
+              aria-label="Categorization"
               className={inputClass}
               style={{
                 display: 'flex', flexWrap: 'wrap', gap: 4, padding: '4px 8px',

@@ -131,6 +131,68 @@ extension Contact: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: Contact, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        // Text
+        existing.contactName = f.string(for: F.contactName)
+        existing.firstName = f.string(for: F.firstName)
+        existing.lastName = f.string(for: F.lastName)
+        existing.jobTitle = f.string(for: F.jobTitle)
+        existing.importedContactName = f.string(for: F.importedContactName)
+        existing.addressLine = f.string(for: F.addressLine)
+        existing.city = f.string(for: F.city)
+        existing.state = f.string(for: F.state)
+        existing.country = f.string(for: F.country)
+        existing.postalCode = f.string(for: F.postalCode)
+        // Multiline
+        existing.notes = f.string(for: F.notes)
+        existing.reviewNotes = f.string(for: F.reviewNotes)
+        existing.reasonForRejection = f.string(for: F.reasonForRejection)
+        existing.rateInfo = f.string(for: F.rateInfo)
+        existing.leadNote = f.string(for: F.leadNote)
+        existing.eventTags = f.stringArray(for: F.eventTags).joined(separator: ", ")
+        // Contact info
+        existing.email = f.string(for: F.email)
+        existing.mobilePhone = f.string(for: F.mobilePhone)
+        existing.workPhone = f.string(for: F.workPhone)
+        existing.linkedInUrl = f.string(for: F.linkedInUrl)
+        existing.website = f.string(for: F.website)
+        // Numbers & Dates
+        existing.leadScore = f.int(for: F.leadScore)
+        existing.lastContactDate = f.date(for: F.lastContactDate)
+        existing.importDate = f.date(for: F.importDate)
+        existing.reviewCompletionDate = f.date(for: F.reviewCompletionDate)
+        // Single Selects (stored with emoji prefixes — never strip them)
+        existing.qualificationStatus = f.string(for: F.qualificationStatus)
+        existing.leadSource = f.string(for: F.leadSource)
+        existing.industry = f.string(for: F.industry)
+        existing.importSource = f.string(for: F.importSource)
+        existing.onboardingStatus = f.string(for: F.onboardingStatus)
+        existing.categorization = f.stringArray(for: F.categorization)
+        existing.qualityRating = f.string(for: F.qualityRating)
+        existing.reliabilityRating = f.string(for: F.reliabilityRating)
+        existing.partnerStatus = f.string(for: F.partnerStatus)
+        existing.partnerType = f.string(for: F.partnerType)
+        // Checkbox
+        existing.syncToContacts = f.bool(for: F.syncToContacts)
+        // Linked Records
+        existing.specialtiesIds = f.stringArray(for: F.specialties)
+        existing.proposalsIds = f.stringArray(for: F.proposals)
+        existing.salesOpportunitiesIds = f.stringArray(for: F.salesOpportunities)
+        existing.importedContactsIds = f.stringArray(for: F.importedContacts)
+        existing.interactionsIds = f.stringArray(for: F.interactions)
+        existing.tasksIds = f.stringArray(for: F.tasks)
+        existing.projectsIds = f.stringArray(for: F.projects)
+        existing.companiesIds = f.stringArray(for: F.companies)
+        existing.projectsAsPartnerVendorIds = f.stringArray(for: F.projectsPartnerVendor)
+        existing.portalAccessIds = f.stringArray(for: F.portalAccess)
+        // Attachment (read-only — extract first URL from attachment array)
+        existing.contactPhotoUrl = f.attachmentUrl(for: F.contactPhoto)
+        // Read-only (decoded but never pushed)
+        existing.lastInteractionDate = f.date(for: F.lastInteractionDate)
+        existing.isPendingPush = false
+    }
+
     func toAirtableFields() -> [String: Any] {
         var b = AirtableFieldsBuilder()
         // Text (contactName excluded — now a computed field in Airtable)

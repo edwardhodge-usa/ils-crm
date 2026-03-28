@@ -37,6 +37,23 @@ extension ClientPage: AirtableConvertible {
         return model
     }
 
+    static func updateFields(of existing: ClientPage, from record: AirtableRecord, context: ModelContext) {
+        let f = record.fields
+        existing.pageAddress = f.string(for: F.pageAddress)
+        existing.clientName = f.string(for: F.clientName)
+        existing.pageTitle = f.string(for: F.pageTitle)
+        existing.pageSubtitle = f.string(for: F.pageSubtitle)
+        existing.deckUrl = f.string(for: F.deckUrl)
+        existing.preparedFor = f.string(for: F.preparedFor)
+        existing.thankYou = f.string(for: F.thankYou)
+        existing.head = f.bool(for: F.head)
+        existing.vPrMagic = f.bool(for: F.vPrMagic)
+        existing.vHighLight = f.bool(for: F.vHighLight)
+        existing.v360 = f.bool(for: F.v360)
+        existing.vFullL = f.bool(for: F.vFullL)
+        existing.isPendingPush = false
+    }
+
     func toAirtableFields() -> [String: Any] {
         var b = AirtableFieldsBuilder()
         b.set(F.pageAddress, pageAddress)
