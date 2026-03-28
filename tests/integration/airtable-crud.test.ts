@@ -65,3 +65,125 @@ describe('Contacts — Airtable CRUD', () => {
     expect(fetched).toBeNull()
   })
 })
+
+const COMPANY_FIELDS = {
+  companyName: 'fldVYiMOLq3LJgbZ3',
+  type: 'fldtLJxxK5oT6Nzjn',
+  industry: 'fldPz4rknFpmEXZAD',
+}
+
+describe('Companies — Airtable CRUD', () => {
+  let companyId: string
+  const ts = getTestTimestamp()
+
+  it('creates a company in Airtable', async () => {
+    const record = await createTestRecord(TABLES.companies, {
+      [COMPANY_FIELDS.companyName]: `__TEST_${ts}_Acme Corp`,
+      [COMPANY_FIELDS.type]: 'Prospect',
+      [COMPANY_FIELDS.industry]: 'Technology',
+    })
+
+    expect(record.id).toBeTruthy()
+    companyId = record.id
+
+    await delay(500)
+    const fetched = await fetchTestRecord(TABLES.companies, companyId)
+    expect(fetched.fields[COMPANY_FIELDS.companyName]).toBe(`__TEST_${ts}_Acme Corp`)
+    expect(fetched.fields[COMPANY_FIELDS.type]).toBe('Prospect')
+    expect(fetched.fields[COMPANY_FIELDS.industry]).toBe('Technology')
+  })
+
+  it('updates the company in Airtable', async () => {
+    expect(companyId).toBeTruthy()
+
+    await updateTestRecord(TABLES.companies, companyId, {
+      [COMPANY_FIELDS.type]: 'Active Client',
+      [COMPANY_FIELDS.industry]: 'Entertainment',
+    })
+
+    await delay(500)
+    const fetched = await fetchTestRecord(TABLES.companies, companyId)
+    expect(fetched.fields[COMPANY_FIELDS.type]).toBe('Active Client')
+    expect(fetched.fields[COMPANY_FIELDS.industry]).toBe('Entertainment')
+    expect(fetched.fields[COMPANY_FIELDS.companyName]).toBe(`__TEST_${ts}_Acme Corp`)
+  })
+
+  it('deletes the company from Airtable', async () => {
+    expect(companyId).toBeTruthy()
+
+    await deleteTestRecord(TABLES.companies, companyId)
+
+    await delay(500)
+    const fetched = await fetchTestRecordSafe(TABLES.companies, companyId)
+    expect(fetched).toBeNull()
+  })
+})
+
+const PORTAL_ACCESS_FIELDS = {
+  name: 'fldqnVE5ppj8ACyf3',
+  pageAddress: 'fldkAjPIMUMlHNT2A',
+  status: 'fldqbzNiTFt7jpdyW',
+  contact: 'fld1tMK48dxrLU9R4',
+  pageTitle: 'flddcfM0XRw309R9P',
+}
+
+describe('Portal Access — Airtable CRUD', () => {
+  let portalId: string
+  let linkedContactId: string
+  const ts = getTestTimestamp()
+
+  it('creates a portal access record linked to a contact', async () => {
+    // First create a contact to link to
+    const contact = await createTestRecord(TABLES.contacts, {
+      [CONTACT_FIELDS.firstName]: `__TEST_${ts}_Portal`,
+      [CONTACT_FIELDS.lastName]: 'LinkedContact',
+      [CONTACT_FIELDS.email]: `__test_portal_${ts}@test.invalid`,
+    })
+    linkedContactId = contact.id
+
+    await delay(300)
+
+    // Create portal access linked to that contact
+    const record = await createTestRecord(TABLES.portalAccess, {
+      [PORTAL_ACCESS_FIELDS.name]: `__TEST_${ts}_Portal`,
+      [PORTAL_ACCESS_FIELDS.pageAddress]: `__test-${ts}`,
+      [PORTAL_ACCESS_FIELDS.status]: 'ACTIVE',
+      [PORTAL_ACCESS_FIELDS.contact]: [linkedContactId],
+    })
+
+    expect(record.id).toBeTruthy()
+    portalId = record.id
+
+    await delay(500)
+    const fetched = await fetchTestRecord(TABLES.portalAccess, portalId)
+    expect(fetched.fields[PORTAL_ACCESS_FIELDS.name]).toBe(`__TEST_${ts}_Portal`)
+    expect(fetched.fields[PORTAL_ACCESS_FIELDS.pageAddress]).toBe(`__test-${ts}`)
+    expect(fetched.fields[PORTAL_ACCESS_FIELDS.status]).toBe('ACTIVE')
+    const linkedContacts = fetched.fields[PORTAL_ACCESS_FIELDS.contact] as string[]
+    expect(linkedContacts).toContain(linkedContactId)
+  })
+
+  it('updates portal access in Airtable', async () => {
+    expect(portalId).toBeTruthy()
+
+    await updateTestRecord(TABLES.portalAccess, portalId, {
+      [PORTAL_ACCESS_FIELDS.status]: 'IN-ACTIVE',
+      [PORTAL_ACCESS_FIELDS.pageTitle]: 'Updated Test Page',
+    })
+
+    await delay(500)
+    const fetched = await fetchTestRecord(TABLES.portalAccess, portalId)
+    expect(fetched.fields[PORTAL_ACCESS_FIELDS.status]).toBe('IN-ACTIVE')
+    expect(fetched.fields[PORTAL_ACCESS_FIELDS.pageTitle]).toBe('Updated Test Page')
+  })
+
+  it('deletes portal access from Airtable', async () => {
+    expect(portalId).toBeTruthy()
+
+    await deleteTestRecord(TABLES.portalAccess, portalId)
+
+    await delay(500)
+    const fetched = await fetchTestRecordSafe(TABLES.portalAccess, portalId)
+    expect(fetched).toBeNull()
+  })
+})

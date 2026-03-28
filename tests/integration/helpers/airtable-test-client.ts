@@ -60,7 +60,13 @@ export async function fetchTestRecordSafe(
   try {
     return await fetchRecord(tableId, recordId, opts)
   } catch (error) {
-    if (String(error).includes('404') || String(error).includes('NOT_FOUND')) {
+    const msg = String(error)
+    if (
+      msg.includes('404') ||
+      msg.includes('NOT_FOUND') ||
+      msg.includes('403') ||
+      msg.includes('INVALID_PERMISSIONS')
+    ) {
       return null
     }
     throw error
