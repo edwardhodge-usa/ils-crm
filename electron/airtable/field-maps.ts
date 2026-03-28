@@ -39,6 +39,8 @@ export const CONTACTS = {
   reasonForRejection: 'fldDwXhduziJxKyCx',
   rateInfo: 'fldFX8WvENPPkN6g1',
   leadNote: 'fldWtoMSWdFla3dII',
+
+  // Multi Select
   eventTags: 'fld1D4u2KbIk0aUPR',
 
   // Email

@@ -205,7 +205,7 @@ struct AirtableCRUDTests {
                 id: portalId,
                 fields: [
                     "fldqbzNiTFt7jpdyW": "IN-ACTIVE",                // Status
-                    "flddcfM0XRw309R9P": "Updated Test Page",        // Page Title
+                    "fldkAjPIMUMlHNT2A": "__test-swift-\(ts)-updated", // Page Address (in model)
                 ]
             )])
 
@@ -214,7 +214,7 @@ struct AirtableCRUDTests {
             // Verify update
             fetched = try await fetchFields(tableId: portalTableId, recordId: portalId)
             #expect(fetched["fldqbzNiTFt7jpdyW"] as? String == "IN-ACTIVE")
-            #expect(fetched["flddcfM0XRw309R9P"] as? String == "Updated Test Page")
+            #expect(fetched["fldkAjPIMUMlHNT2A"] as? String == "__test-swift-\(ts)-updated")
 
             // Delete portal (keep contact for cleanup)
             try await service.batchDelete(tableId: portalTableId, recordIds: [portalId])

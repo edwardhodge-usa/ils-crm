@@ -37,7 +37,7 @@ struct PortalAccessView: View {
             (record.pageAddress?.localizedCaseInsensitiveContains(query) ?? false) ||
             (record.contactCompanyLookup?.localizedCaseInsensitiveContains(query) ?? false) ||
             (record.contactNameLookup?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (record.contactCompanyLookup?.localizedCaseInsensitiveContains(query) ?? false) ||
+            (record.contactJobTitleLookup?.localizedCaseInsensitiveContains(query) ?? false) ||
             (record.contactEmailLookup?.localizedCaseInsensitiveContains(query) ?? false)
         }
     }

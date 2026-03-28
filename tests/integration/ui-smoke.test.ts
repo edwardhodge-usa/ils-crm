@@ -32,6 +32,14 @@ describe('UI Smoke — Converter Pipeline', () => {
     expect(fetched.fields['fldq4VxEf0jJgi6O5']).toBe('FormTest')
     expect(fetched.fields['fldBjSvbdd5WXmoIG']).toBe(`__test_uismoke_${ts}@test.invalid`)
     expect(fetched.fields['fldHoIj9zCNB15avX']).toBe('Technology')
+
+    // Test fromAirtable — round-trip: local → Airtable → fetch → fromAirtable → verify local names
+    const localRecord = converter.fromAirtable(fetched)
+    expect(localRecord.id).toBe(record.id)
+    expect(localRecord.first_name).toBe(`__TEST_${ts}_UISmoke`)
+    expect(localRecord.last_name).toBe('FormTest')
+    expect(localRecord.email).toBe(`__test_uismoke_${ts}@test.invalid`)
+    expect(localRecord.industry).toBe('Technology')
   })
 
   it('converts company form data and creates in Airtable', async () => {
@@ -52,6 +60,13 @@ describe('UI Smoke — Converter Pipeline', () => {
     expect(fetched.fields['fldVYiMOLq3LJgbZ3']).toBe(`__TEST_${ts}_UICompany`)
     expect(fetched.fields['fldtLJxxK5oT6Nzjn']).toBe('Prospect')
     expect(fetched.fields['fldPz4rknFpmEXZAD']).toBe('Entertainment')
+
+    // Test fromAirtable — round-trip: local → Airtable → fetch → fromAirtable → verify local names
+    const localRecord = converter.fromAirtable(fetched)
+    expect(localRecord.id).toBe(record.id)
+    expect(localRecord.company_name).toBe(`__TEST_${ts}_UICompany`)
+    expect(localRecord.type).toBe('Prospect')
+    expect(localRecord.industry).toBe('Entertainment')
   })
 
   it('converts portal access form data and creates in Airtable', async () => {
@@ -72,5 +87,12 @@ describe('UI Smoke — Converter Pipeline', () => {
     expect(fetched.fields['fldqnVE5ppj8ACyf3']).toBe(`__TEST_${ts}_UIPortal`)
     expect(fetched.fields['fldkAjPIMUMlHNT2A']).toBe(`__test-ui-${ts}`)
     expect(fetched.fields['fldqbzNiTFt7jpdyW']).toBe('ACTIVE')
+
+    // Test fromAirtable — round-trip: local → Airtable → fetch → fromAirtable → verify local names
+    const localRecord = converter.fromAirtable(fetched)
+    expect(localRecord.id).toBe(record.id)
+    expect(localRecord.name).toBe(`__TEST_${ts}_UIPortal`)
+    expect(localRecord.page_address).toBe(`__test-ui-${ts}`)
+    expect(localRecord.status).toBe('ACTIVE')
   })
 })

@@ -57,11 +57,11 @@
 - [x] ~~**E3** `P1` auth:save-user zero input validation~~ — validates object shape, PAT prefix, base ID prefix (fixed 2026-03-28)
 - [x] ~~**E4** `P1` batchDelete URL doesn't encodeURIComponent~~ — added `encodeURIComponent` on record IDs (fixed 2026-03-28)
 - [x] ~~**S12** `P1` GrantAccessSheet double-submit~~ — added `isGranting` state guard (fixed 2026-03-28)
-- [ ] **E5** `P2` ui-smoke.test.ts only tests `toAirtable`, never `fromAirtable` — half the converter pipeline untested
-- [ ] **E6** `P2` field-maps.ts `eventTags` commented as "Multi-Line Text" but converter treats as multiSelect — doc mismatch
-- [ ] **S13** `P2` PortalAccessView.swift:40 — `contactCompanyLookup` searched twice (duplicate condition), missing a search field
-- [ ] **S14** `P2` SWIFT_STRICT_CONCURRENCY: minimal — hides actor isolation violations
-- [ ] **S15** `P2` AirtableCRUDTests field `flddcfM0XRw309R9P` (Page Title) not in Swift model — test verifies nothing the app uses
+- [x] ~~**E5** `P2` ui-smoke.test.ts only tests `toAirtable`~~ — added fromAirtable round-trip assertions for all 3 tables (fixed 2026-03-28)
+- [x] ~~**E6** `P2` field-maps.ts `eventTags` section comment~~ — moved to `// Multi Select` section (fixed 2026-03-28)
+- [x] ~~**S13** `P2` PortalAccessView duplicate search condition~~ — replaced duplicate with `contactJobTitleLookup` (fixed 2026-03-28)
+- [x] ~~**S14** `P2` SWIFT_STRICT_CONCURRENCY: minimal~~ — upgraded to `targeted`, build clean with zero warnings (fixed 2026-03-28)
+- [x] ~~**S15** `P2` AirtableCRUDTests field not in model~~ — replaced `flddcfM0XRw309R9P` (Page Title) with `fldkAjPIMUMlHNT2A` (Page Address, in model) (fixed 2026-03-28)
 
 ## Todo — Data Architecture
 
