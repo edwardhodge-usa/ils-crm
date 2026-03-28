@@ -187,3 +187,54 @@ describe('Portal Access — Airtable CRUD', () => {
     expect(fetched).toBeNull()
   })
 })
+
+describe('Cross-Entity — Linked Records', () => {
+  const ts = getTestTimestamp()
+
+  it('creates contact + company + portal access with correct links', async () => {
+    // 1. Create company
+    const company = await createTestRecord(TABLES.companies, {
+      [COMPANY_FIELDS.companyName]: `__TEST_${ts}_LinkedCorp`,
+      [COMPANY_FIELDS.type]: 'Prospect',
+    })
+    expect(company.id).toBeTruthy()
+
+    await delay(300)
+
+    // 2. Create contact linked to company
+    const contact = await createTestRecord(TABLES.contacts, {
+      [CONTACT_FIELDS.firstName]: `__TEST_${ts}_Linked`,
+      [CONTACT_FIELDS.lastName]: 'Person',
+      [CONTACT_FIELDS.email]: `__test_linked_${ts}@test.invalid`,
+      'fldYXDUc9YKKsGTBt': [company.id], // companies linked record field
+    })
+    expect(contact.id).toBeTruthy()
+
+    await delay(300)
+
+    // 3. Create portal access linked to contact
+    const portal = await createTestRecord(TABLES.portalAccess, {
+      [PORTAL_ACCESS_FIELDS.name]: `__TEST_${ts}_LinkedPortal`,
+      [PORTAL_ACCESS_FIELDS.pageAddress]: `__test-linked-${ts}`,
+      [PORTAL_ACCESS_FIELDS.status]: 'ACTIVE',
+      [PORTAL_ACCESS_FIELDS.contact]: [contact.id],
+    })
+    expect(portal.id).toBeTruthy()
+
+    await delay(500)
+
+    // 4. Verify all links
+    const fetchedContact = await fetchTestRecord(TABLES.contacts, contact.id)
+    const contactCompanies = fetchedContact.fields['fldYXDUc9YKKsGTBt'] as string[]
+    expect(contactCompanies).toContain(company.id)
+
+    const fetchedPortal = await fetchTestRecord(TABLES.portalAccess, portal.id)
+    const portalContacts = fetchedPortal.fields[PORTAL_ACCESS_FIELDS.contact] as string[]
+    expect(portalContacts).toContain(contact.id)
+
+    // 5. Verify company has backlink to contact
+    const fetchedCompany = await fetchTestRecord(TABLES.companies, company.id)
+    const companyContacts = fetchedCompany.fields['fldQ2RK3PeAPMzkJB'] as string[]
+    expect(companyContacts).toContain(contact.id)
+  })
+})
