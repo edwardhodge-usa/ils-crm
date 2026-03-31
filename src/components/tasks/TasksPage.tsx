@@ -100,7 +100,7 @@ function buildTaskEditableFields(assigneeOptions: string[]): EditableField[] {
     { key: 'status', label: 'Status', type: 'singleSelect',
       options: ['To Do', 'In Progress', 'Waiting', 'Completed', 'Cancelled'] },
     { key: 'type', label: 'Type', type: 'singleSelect',
-      options: ['Administrative', 'Follow-up Call', 'Follow-up Email', 'Internal Review', 'Other', 'Presentation Deck', 'Research', 'Schedule Meeting', 'Send Proposal', 'Send Qualifications'] },
+      options: ['Administrative', 'Follow-up Call', 'Follow-up Email', 'Internal Review', 'Other', 'Presentation Deck', 'Project', 'Research', 'Schedule Meeting', 'Send Proposal', 'Send Qualifications', 'Travel'] },
     { key: 'assigned_to', label: 'Assigned To', type: 'singleSelect',
       options: assigneeOptions },
   ]
@@ -763,6 +763,17 @@ function TaskDetail({ task, isNewTask, assigneeOptions, collaboratorMap, onCompl
 export default function TasksPage() {
   const isDark = useDarkMode()
   const { data: rawTasks, loading, error, reload } = useEntityList(() => window.electronAPI.tasks.getAll())
+  const { data: rawProjects } = useEntityList(() => window.electronAPI.projects.getAll())
+
+  // Build project ID → name lookup for sub-grouping
+  const projectNameMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const p of rawProjects) {
+      const rec = p as Record<string, unknown>
+      if (rec.id && rec.project_name) map[rec.id as string] = rec.project_name as string
+    }
+    return map
+  }, [rawProjects])
   const [activeAssignee, setActiveAssignee] = useState<string | null>(
     () => parseCollaboratorName(localStorage.getItem('tasks-filter-assignee')) ?? null
   )
@@ -915,6 +926,41 @@ export default function TasksPage() {
 
   // Group filtered tasks into sections (only for "all" view with date sort)
   const showSections = activeCategory === 'all' && sortBy === 'date'
+
+  // Group by linked Projects when viewing a "By Type" filter
+  const isTypeFilter = activeCategory.startsWith('type:')
+  const projectGroups = useMemo(() => {
+    if (!isTypeFilter) return null
+    const groups: { name: string; tasks: TaskItem[] }[] = []
+    const byProject: Record<string, TaskItem[]> = {}
+    const noProject: TaskItem[] = []
+
+    for (const t of sortedTasks) {
+      let linkedIds: string[] = []
+      if (t.projects_ids) {
+        try { linkedIds = JSON.parse(t.projects_ids) } catch { linkedIds = [] }
+      }
+      if (linkedIds.length === 0) {
+        noProject.push(t)
+      } else {
+        for (const pid of linkedIds) {
+          const name = projectNameMap[pid] || pid
+          if (!byProject[name]) byProject[name] = []
+          byProject[name].push(t)
+        }
+      }
+    }
+
+    // Sort project groups alphabetically
+    const sortedNames = Object.keys(byProject).sort((a, b) => a.localeCompare(b))
+    for (const name of sortedNames) {
+      groups.push({ name, tasks: byProject[name] })
+    }
+    if (noProject.length > 0) {
+      groups.push({ name: 'No Project', tasks: noProject })
+    }
+    return groups
+  }, [isTypeFilter, sortedTasks, projectNameMap])
 
   const selectedTask = useMemo(() => allTasks.find(t => t.id === selectedId) ?? null, [allTasks, selectedId])
 
@@ -1116,6 +1162,38 @@ export default function TasksPage() {
                       ))
                     )
                   )}
+                </div>
+              )
+            })
+          ) : projectGroups && projectGroups.length > 0 ? (
+            // Sub-grouped by Projects (for "By Type" filters)
+            projectGroups.map(group => {
+              const groupKey = `proj:${group.name}`
+              const isCollapsed = collapsed[groupKey] ?? false
+              return (
+                <div key={group.name} style={{ borderBottom: '1px solid var(--separator)' }}>
+                  <SectionHeader
+                    label={group.name}
+                    count={group.tasks.length}
+                    icon="■"
+                    iconColor="var(--color-teal)"
+                    collapsed={isCollapsed}
+                    onToggle={() => toggleSection(groupKey)}
+                  />
+                  {!isCollapsed && group.tasks.map(t => {
+                    const section = classifyTask(t, today)
+                    return (
+                      <TaskRow
+                        key={t.id}
+                        task={t}
+                        section={section === 'complete' ? 'upcoming' : section}
+                        isSelected={t.id === selectedId}
+                        isDark={isDark}
+                        onSelect={() => setSelectedId(t.id)}
+                        onComplete={() => handleComplete(t.id)}
+                      />
+                    )
+                  })}
                 </div>
               )
             })

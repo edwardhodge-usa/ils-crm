@@ -24,6 +24,7 @@ enum TaskSortOrder: String, CaseIterable, CustomStringConvertible {
 struct TasksView: View {
 
     @Query(sort: \CRMTask.dueDate) private var tasks: [CRMTask]
+    @Query private var projects: [Project]
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
 
@@ -204,6 +205,41 @@ struct TasksView: View {
             return "\(category) — \(assignee)"
         }
         return category
+    }
+
+    // MARK: - Project name lookup (for sub-grouping by type)
+
+    private var projectNameMap: [String: String] {
+        Dictionary(projects.compactMap { p in
+            p.projectName.map { (p.id, $0) }
+        }, uniquingKeysWith: { _, last in last })
+    }
+
+    /// When a type filter is active, group tasks by their linked Projects.
+    private var projectGroups: [(name: String, tasks: [CRMTask])]? {
+        guard selectedType != nil else { return nil }
+        let sorted = sortTasks(filteredTasks)
+        var byProject: [String: [CRMTask]] = [:]
+        var noProject: [CRMTask] = []
+
+        for task in sorted {
+            if task.projectsIds.isEmpty {
+                noProject.append(task)
+            } else {
+                for pid in task.projectsIds {
+                    let name = projectNameMap[pid] ?? pid
+                    byProject[name, default: []].append(task)
+                }
+            }
+        }
+
+        var groups = byProject.keys.sorted().map { name in
+            (name: name, tasks: byProject[name]!)
+        }
+        if !noProject.isEmpty {
+            groups.append((name: "No Project", tasks: noProject))
+        }
+        return groups
     }
 
     // MARK: - Body
@@ -488,6 +524,20 @@ struct TasksView: View {
                         : "No tasks match \"\(searchText)\".",
                     systemImage: "checklist"
                 )
+            } else if let groups = projectGroups {
+                // Sub-grouped by Projects (for "By Type" filters)
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
+                        ForEach(groups, id: \.name) { group in
+                            taskSection(
+                                tasks: group.tasks,
+                                icon: { AnyView(Image(systemName: "square.fill").font(.system(size: 8)).foregroundStyle(.teal)) },
+                                label: group.name.uppercased(),
+                                labelColor: .teal
+                            )
+                        }
+                    }
+                }
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
