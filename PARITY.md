@@ -1,7 +1,7 @@
 # ILS CRM — Feature Parity Tracker
 
 > Electron (primary) vs Swift (shadow build)
-> Updated: 2026-03-02 (Wave 2: sync engine + settings)
+> Updated: 2026-03-30 (Tasks section audit — was stale, Swift well ahead)
 
 ## Status Key
 - **Done** — Fully implemented and working
@@ -110,12 +110,30 @@
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Tasks overview page | Done | Stub | `TasksPage.tsx` → `TasksView.swift` |
-| Task list with filters | Done | Stub | `TaskListPage.tsx` |
-| Task create/edit form | Done | Stub | `TaskForm.tsx` → `TaskFormView` |
-| Due date overdue highlighting | Done | Stub | Red text for overdue in Swift stub |
-| Task grouping and sorting | TODO | TODO | Feature request #6 |
-| Task detail with contact/company | TODO | TODO | Feature request #8 |
+| Tasks 3-column layout | Done | Done | `TasksPage.tsx` → `TasksView.swift` — categories / list / detail |
+| Assignee filter + avatars | Done | Done | Named assignees, unassigned, "All" row with counts |
+| Smart Lists (All/Overdue/Today/etc.) | Done | Done | 7 smart lists with counts |
+| By Type filter with swatches | Done | Done | All 12 task types with color swatches |
+| Project sub-grouping in type filter | Done | Done | Tasks grouped by linked Projects when viewing By Type |
+| Search bar | Done | Done | Full-text search across task name + notes |
+| Sort options | Done (3) | Done (5) | Electron: date/priority/alpha. Swift adds name Z-A + created |
+| Collapsible sections | Done | TODO | Electron toggles; Swift uses SwiftUI Section (no collapse) |
+| Section grouping (overdue/today/etc.) | Done | Done | Overdue / Today / Waiting / No Date / Scheduled / Completed |
+| Task row (priority dot, type badge, due) | Done | Done | Both have circular checkbox, priority dots, type color badges |
+| Task create form | Done (inline) | Done (sheet) | Swift has dedicated `TaskFormView` with all fields |
+| Due date overdue highlighting | Done | Done | Red text + overdue banner (Swift has banner, Electron doesn't) |
+| Overdue banner + days counter | TODO | Done | Swift: BentoHeroStat with overdue day count |
+| Bento hero card + pills | TODO | Done | Swift: priority/status/type pills + assigned initials stat |
+| Editable title inline | Done | TODO | Electron: input field in detail. Swift: display only in hero |
+| Priority editable in detail | Done | TODO | Electron: dropdown. Swift: read-only pill |
+| Type editable in detail | Done | TODO | Electron: dropdown. Swift: read-only pill |
+| Assigned To editable in detail | Done | TODO | Electron: dropdown. Swift: read-only stat |
+| Status editable in detail | Done | Done | Both have singleSelect dropdown |
+| Due Date editable in detail | Done | Done | Electron: DateSuggestionPicker. Swift: EditableFieldRow.date |
+| Notes editable in detail | Done | Done | Both have textarea editing |
+| Linked record pickers (4 entities) | Done | Done | Opportunities, Contacts, Projects, Proposals |
+| Complete/uncomplete toggle | Done | Done | Both toggle status + set completed_date |
+| Delete with confirm | Done | Done | Electron: ConfirmDialog. Swift: confirmationDialog |
 
 ## Proposals
 
@@ -153,7 +171,7 @@
 | Imported contacts staging list | Done | Stub | `ImportedContactsPage.tsx` → `ImportedContactsView.swift` |
 | Approve action | Done | TODO | IPC: `importedContacts:approve` |
 | Reject action (with reason) | Done | TODO | IPC: `importedContacts:reject` |
-| Name display | Bug | TODO | Electron bug #13: all names show "—" |
+| Name display | Done | TODO | Fixed: `getContactName()` reads `imported_contact_name`, falls back to `first_name`/`last_name`, then `email` |
 
 ## Portal
 
@@ -242,7 +260,7 @@
 | Contacts | 8 | 1 | 2 | 5 |
 | Companies | 4 | 0 | 3 | 1 |
 | Pipeline | 9 | 0 | 3 | 6 |
-| Tasks | 6 | 0 | 3 | 3 |
+| Tasks | 22 | 19 | 0 | 5 |
 | Proposals | 4 | 0 | 2 | 2 |
 | Projects | 5 | 0 | 2 | 3 |
 | Interactions | 5 | 0 | 2 | 3 |
@@ -253,8 +271,8 @@
 | Search & Commands | 3 | 0 | 0 | 3 |
 | Data Operations | 10 | 6 | 0 | 4 |
 | Platform | 3 | 0 | 0 | 3 |
-| **TOTAL** | **121** | **36** | **29** | **57** |
+| **TOTAL** | **137** | **55** | **26** | **59** |
 
-Swift now has **35 features done** (29%) — up from 4.
-Key milestones completed: full sync engine (push-first-then-pull), all 11 data models with sync properties + converters, Settings with Keychain API key storage, batch CRUD operations, polling, cross-app sync lock.
-**30 stubs** remain with placeholder UI, **57 features** need implementation from scratch.
+Swift now has **55 features done** (39%) — up from 36 after Tasks section audit.
+Key milestones completed: full sync engine (push-first-then-pull), all 11 data models with sync properties + converters, Settings with Keychain API key storage, batch CRUD operations, polling, cross-app sync lock. Tasks feature nearly complete (19/24 done, Swift ahead on sort/bento/overdue).
+**26 stubs** remain with placeholder UI, **59 features** need implementation from scratch.

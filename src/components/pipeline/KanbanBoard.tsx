@@ -28,7 +28,7 @@ export function KanbanBoard({ deals, selectedDealId, onSelectDeal, onMove }: Kan
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
 
   const dealsByStage = STAGES.reduce((acc, stage) => {
@@ -83,7 +83,7 @@ export function KanbanBoard({ deals, selectedDealId, onSelectDeal, onMove }: Kan
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-1 h-full overflow-x-auto px-4 py-4 pb-6">
+      <div className="flex gap-2 h-full overflow-x-auto px-4 py-4 pb-6">
         {STAGES.map(stage => (
           <KanbanColumn
             key={stage}

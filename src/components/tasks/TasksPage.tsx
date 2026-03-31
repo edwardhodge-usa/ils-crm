@@ -588,17 +588,31 @@ function TaskDetail({ task, isNewTask, assigneeOptions, collaboratorMap, onCompl
   const completed = isCompleted(task)
 
   let overdueLabel = ''
+  let overdueDays = 0
   if (task.due_date && !completed) {
     const today = new Date()
     const [y, m, d] = task.due_date.split('-').map(Number)
     const due = new Date(y, m - 1, d)
     const diffDays = Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24))
-    if (diffDays > 0) overdueLabel = `Overdue by ${diffDays} day${diffDays === 1 ? '' : 's'}`
+    if (diffDays > 0) { overdueLabel = `Overdue by ${diffDays} day${diffDays === 1 ? '' : 's'}`; overdueDays = diffDays }
     else if (diffDays === 0) overdueLabel = 'Due today'
   }
 
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '24px 28px' }}>
+      {/* Overdue banner */}
+      {overdueDays > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '8px 12px', marginBottom: 12,
+          background: 'rgba(255,59,48,0.10)', borderRadius: 8,
+          fontSize: 12, color: 'var(--color-red)',
+        }}>
+          <span>▲</span>
+          <span>Overdue by {overdueDays} day{overdueDays === 1 ? '' : 's'}</span>
+        </div>
+      )}
+
       {/* Editable Title */}
       <div style={{ marginBottom: 12 }}>
         <input
@@ -791,8 +805,8 @@ export default function TasksPage() {
   )
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [sortBy, setSortBy] = useState<'date' | 'priority' | 'alpha'>(
-    () => (localStorage.getItem('tasks-sort') as 'date' | 'priority' | 'alpha') || 'date'
+  const [sortBy, setSortBy] = useState<'date' | 'priority' | 'alpha' | 'alphaDesc' | 'created'>(
+    () => (localStorage.getItem('tasks-sort') as 'date' | 'priority' | 'alpha' | 'alphaDesc' | 'created') || 'date'
   )
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
     try { return JSON.parse(localStorage.getItem('tasks-collapsed') || '{}') } catch { return {} }
@@ -821,7 +835,7 @@ export default function TasksPage() {
     setSelectedId(null)
   }, [])
 
-  const handleSortChange = useCallback((sort: 'date' | 'priority' | 'alpha') => {
+  const handleSortChange = useCallback((sort: 'date' | 'priority' | 'alpha' | 'alphaDesc' | 'created') => {
     setSortBy(sort)
     localStorage.setItem('tasks-sort', sort)
   }, [])
@@ -920,6 +934,11 @@ export default function TasksPage() {
       })
     } else if (sortBy === 'alpha') {
       sorted.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
+    } else if (sortBy === 'alphaDesc') {
+      sorted.sort((a, b) => b.title.localeCompare(a.title, undefined, { sensitivity: 'base' }))
+    } else if (sortBy === 'created') {
+      // Airtable record IDs (rec + base32 timestamp) are chronologically sortable
+      sorted.sort((a, b) => b.id.localeCompare(a.id))
     }
     return sorted
   }, [filteredTasks, sortBy])
@@ -1075,7 +1094,7 @@ export default function TasksPage() {
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>{filteredTasks.length}</span>
             <select
               value={sortBy}
-              onChange={e => handleSortChange(e.target.value as 'date' | 'priority' | 'alpha')}
+              onChange={e => handleSortChange(e.target.value as 'date' | 'priority' | 'alpha' | 'alphaDesc' | 'created')}
               style={{
                 background: 'var(--bg-tertiary)',
                 border: '1px solid var(--separator)',
@@ -1093,6 +1112,8 @@ export default function TasksPage() {
               <option value="date">Due Date</option>
               <option value="priority">Priority</option>
               <option value="alpha">Name</option>
+              <option value="alphaDesc">Name Z-A</option>
+              <option value="created">Created</option>
             </select>
           </div>
           <button

@@ -488,7 +488,9 @@ export function EditableFormRow({ field, value, isLast = false, onSave, placehol
               display: 'flex', alignItems: 'center', gap: 5,
               cursor: 'default', borderRadius: 4, padding: '2px 6px', margin: '-2px -6px',
               transition: 'background 150ms',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              ...(field.type === 'multiSelect'
+                ? { flexWrap: 'wrap' as const, justifyContent: 'flex-end' }
+                : { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }),
               minWidth: 0, textAlign: 'right' as const,
               background: 'transparent',
             }}
@@ -504,6 +506,25 @@ export function EditableFormRow({ field, value, isLast = false, onSave, placehol
                   background: colors.bg, whiteSpace: 'nowrap',
                 }}>
                   {String(value)}
+                </span>
+              )
+            })() : field.type === 'multiSelect' ? (() => {
+              const items = parseMultiSelectValue(value)
+              if (items.length === 0) return <span>{'—'}</span>
+              return (
+                <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
+                  {items.map((item, i) => (
+                    <span key={i} style={{
+                      display: 'inline-flex', alignItems: 'center',
+                      padding: '2px 7px', borderRadius: 4,
+                      fontSize: 11, fontWeight: 500, lineHeight: 1.4,
+                      color: 'var(--text-primary)',
+                      background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {item}
+                    </span>
+                  ))}
                 </span>
               )
             })() : formatDisplayValue(value, field.type)}
