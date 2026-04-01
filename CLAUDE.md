@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM — Airtable schema management, API integrations, Electron desktop app + Swift app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Swift/SwiftUI (swift-app/), Airtable API (backend)
-- **Status**: v3.4.8 / Swift v1.2.1 — On main
+- **Status**: v3.5.1 / Swift v1.3.0 — On main
 - **Repo**: edwardhodge-usa/ils-crm | **Base ID**: appYXbUdcmSwBoPFU
 
 ## Project Scope
@@ -87,6 +87,8 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - Airtable formula escaping: use `''` (two single quotes), not `\'` — Airtable uses SQL-style string escaping
 - `useRef(fn)` only sets the initial value — add `ref.current = fn` on every render to prevent stale closures
 - `pollWindow` must be resolved dynamically via getter function — Electron windows are destroyed on close and recreated, stale refs silently drop IPC
+- React Rules of Hooks: `useMemo`/`useCallback` MUST NOT appear after early returns — move all hooks above conditionals. Contact360Page crashed because 2 `useMemo` hooks were below `if (!contact) return`
+- PARITY.md drifts: always verify claimed "Stub/TODO" status by reading actual file line counts before planning work. Dashboard (560 lines) and Contacts (1600 lines) were fully implemented but marked as stubs
 
 ### UI / HIG
 - `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements
