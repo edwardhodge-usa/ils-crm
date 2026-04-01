@@ -99,6 +99,8 @@ struct SettingsView: View {
                         .foregroundStyle(.red)
                 }
             }
+
+            GmailSettingsSection()
         }
         .formStyle(.grouped)
         .navigationTitle("Settings")

@@ -2,65 +2,145 @@ import SwiftUI
 import SwiftData
 import Combine
 
-/// Imported Contacts staging view — mirrors src/components/imported-contacts/ImportedContactsPage.tsx
+// MARK: - Sort Order
+
+enum ImportedContactSortOrder: String, CaseIterable, CustomStringConvertible {
+    case confidence = "Confidence"
+    case newest     = "Newest"
+    case threads    = "Threads"
+
+    var description: String { rawValue }
+}
+
+// MARK: - Source Filter
+
+enum ImportedContactSourceFilter: String, CaseIterable {
+    case all      = "All"
+    case email    = "Email"
+    case contacts = "Contacts"
+}
+
+// MARK: - ImportedContactsView
+
+/// Email Intelligence staging view — 2-column list/detail split.
 ///
-/// Features:
-/// - Searchable list with imported contacts sorted by name
-/// - Status badges (Approved / Rejected / pending)
-/// - Sheet-based detail view on selection
-/// - Empty state when no imported contacts exist
-///
-/// Electron hooks: useEntityList('importedContacts')
+/// Left column: source filter tabs, search, sorted list with relationship badges.
+/// Right column: inline detail pane for selected suggestion.
 struct ImportedContactsView: View {
-    @Query(sort: \ImportedContact.importedContactName) private var contacts: [ImportedContact]
+    @Query(sort: \ImportedContact.importedContactName) private var allContacts: [ImportedContact]
+    @Query private var companies: [Company]
+    @Environment(\.modelContext) private var modelContext
+    @Environment(SyncEngine.self) private var syncEngine
+
     @State private var searchText = ""
     @State private var selectedContact: ImportedContact?
+    @State private var sourceFilter: ImportedContactSourceFilter = .all
+    @AppStorage("sort-imported") private var sortOrder: ImportedContactSortOrder = .confidence
+    @State private var showReviewForm = false
     @State private var showNewContact = false
 
-    // MARK: - Filtered Data
+    // Scan engine — created lazily (not injected via environment since App doesn't provide it yet)
+    @State private var scanEngine: EmailScanEngine?
+    @State private var oAuthService = GmailOAuthService()
 
+    // MARK: - Derived Data
+
+    /// Active contacts (excludes dismissed/rejected)
+    private var activeContacts: [ImportedContact] {
+        allContacts.filter { contact in
+            let status = contact.onboardingStatus?.lowercased() ?? ""
+            return !status.contains("rejected") && !status.contains("dismissed")
+        }
+    }
+
+    /// Source-filtered contacts
+    private var sourceFilteredContacts: [ImportedContact] {
+        switch sourceFilter {
+        case .all:
+            return activeContacts
+        case .email:
+            return activeContacts.filter { ($0.source ?? "").lowercased().contains("email") }
+        case .contacts:
+            return activeContacts.filter {
+                let source = ($0.source ?? "").lowercased()
+                return !source.contains("email") && !source.isEmpty
+            }
+        }
+    }
+
+    /// Search-filtered contacts
     private var filteredContacts: [ImportedContact] {
-        if searchText.isEmpty { return contacts }
-        let query = searchText
-        return contacts.filter { contact in
-            (contact.importedContactName?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (contact.firstName?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (contact.lastName?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (contact.email?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (contact.company?.localizedCaseInsensitiveContains(query) ?? false)
+        var result = sourceFilteredContacts
+
+        if !searchText.isEmpty {
+            result = result.filter { contact in
+                (contact.importedContactName?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (contact.firstName?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (contact.lastName?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (contact.email?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (contact.company?.localizedCaseInsensitiveContains(searchText) ?? false)
+            }
+        }
+
+        return sortContacts(result)
+    }
+
+    /// Counts for source filter tabs
+    private func sourceCount(_ filter: ImportedContactSourceFilter) -> Int {
+        switch filter {
+        case .all: return activeContacts.count
+        case .email: return activeContacts.filter { ($0.source ?? "").lowercased().contains("email") }.count
+        case .contacts:
+            return activeContacts.filter {
+                let source = ($0.source ?? "").lowercased()
+                return !source.contains("email") && !source.isEmpty
+            }.count
+        }
+    }
+
+    /// Whether a contact is an enrichment row (already in CRM)
+    private func isEnrichment(_ contact: ImportedContact) -> Bool {
+        !contact.relatedCrmContactIds.isEmpty
+    }
+
+    // MARK: - Sort
+
+    private func sortContacts(_ contacts: [ImportedContact]) -> [ImportedContact] {
+        switch sortOrder {
+        case .confidence:
+            return contacts.sorted { ($0.confidenceScore ?? 0) > ($1.confidenceScore ?? 0) }
+        case .newest:
+            return contacts.sorted {
+                ($0.lastSeenDate ?? .distantPast) > ($1.lastSeenDate ?? .distantPast)
+            }
+        case .threads:
+            return contacts.sorted { ($0.emailThreadCount ?? 0) > ($1.emailThreadCount ?? 0) }
         }
     }
 
     // MARK: - Body
 
     var body: some View {
-        Group {
-            if contacts.isEmpty {
-                EmptyStateView(
-                    title: "No imported contacts",
-                    description: "Imported contacts will appear here once synced from Airtable.",
-                    systemImage: "person.crop.circle.badge.plus"
-                )
-            } else if filteredContacts.isEmpty {
-                EmptyStateView(
-                    title: "No results",
-                    description: "No imported contacts match \"\(searchText)\".",
-                    systemImage: "magnifyingglass"
-                )
-            } else {
-                contactList
-            }
+        HStack(spacing: 0) {
+            listColumn
+                .frame(width: 380)
+                .background(Color(.controlBackgroundColor))
+
+            Divider()
+
+            detailColumn
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .searchable(text: $searchText, prompt: "Search imported contacts...")
-        .navigationTitle("Imported Contacts")
-        .toolbar {
-            Button { showNewContact = true } label: {
-                Image(systemName: "plus")
+        .onAppear {
+            if scanEngine == nil {
+                let container = modelContext.container
+                let gmailClient = GmailAPIClient(oAuthService: oAuthService)
+                scanEngine = EmailScanEngine(
+                    modelContainer: container,
+                    gmailClient: gmailClient,
+                    oAuthService: oAuthService
+                )
             }
-        }
-        .sheet(item: $selectedContact) { contact in
-            ImportedContactDetailSheet(importedContact: contact)
-                .frame(minWidth: 480, minHeight: 500)
         }
         .sheet(isPresented: $showNewContact) {
             NavigationStack {
@@ -73,51 +153,300 @@ struct ImportedContactsView: View {
         }
     }
 
+    // MARK: - List Column
+
+    private var listColumn: some View {
+        VStack(spacing: 0) {
+            // Header with scan button
+            HStack(spacing: 8) {
+                Text("Email Intelligence")
+                    .font(.system(size: 15, weight: .bold))
+                    .tracking(-0.2)
+
+                Text("\(activeContacts.count)")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Color.secondary.opacity(0.12))
+                    .clipShape(Capsule())
+
+                Spacer()
+
+                if let engine = scanEngine {
+                    if engine.isScanning {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Button {
+                            Task { await engine.scanNow() }
+                        } label: {
+                            Text("Scan Now")
+                                .font(.system(size: 12, weight: .semibold))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 4)
+                                .background(Color.accentColor)
+                                .foregroundStyle(.white)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!oAuthService.isConnected)
+                    }
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+
+            // Last scan timestamp
+            if let engine = scanEngine, engine.progress.status == .complete {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.green)
+                    Text("Scan complete — \(engine.progress.candidatesFound) candidates found")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 14)
+                .padding(.bottom, 6)
+            }
+
+            Divider()
+
+            // Search bar
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.tertiary)
+                    .font(.system(size: 13))
+                TextField("Search by name or email...", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.tertiary)
+                            .font(.system(size: 13))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(.controlBackgroundColor))
+
+            Divider()
+
+            // Source filter pills
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 4) {
+                    ForEach(ImportedContactSourceFilter.allCases, id: \.self) { filter in
+                        let isSelected = sourceFilter == filter
+                        let count = sourceCount(filter)
+                        Button {
+                            sourceFilter = filter
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(filter.rawValue)
+                                    .font(.system(size: 11, weight: .medium))
+                                Text("\(count)")
+                                    .font(.system(size: 9, weight: .semibold))
+                                    .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
+                            )
+                            .foregroundStyle(isSelected ? .white : .primary)
+                            .overlay {
+                                if !isSelected {
+                                    Capsule(style: .continuous)
+                                        .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+            }
+
+            Divider()
+
+            // Sort control bar
+            HStack(spacing: 6) {
+                Text("\(filteredContacts.count) suggestions")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                SortDropdown(
+                    options: ImportedContactSortOrder.allCases,
+                    selection: $sortOrder
+                )
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+
+            Divider()
+
+            // Contact list
+            if allContacts.isEmpty {
+                EmptyStateView(
+                    title: "No suggestions yet",
+                    description: "Connect Gmail in Settings to scan for contact suggestions.",
+                    systemImage: "envelope.badge.person.crop"
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if filteredContacts.isEmpty {
+                EmptyStateView(
+                    title: "No results",
+                    description: searchText.isEmpty
+                        ? "No suggestions match the current filter."
+                        : "No suggestions match \"\(searchText)\".",
+                    systemImage: "magnifyingglass"
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                contactList
+            }
+        }
+    }
+
     // MARK: - Contact List
 
+    @ViewBuilder
     private var contactList: some View {
-        List(filteredContacts, id: \.id, selection: $selectedContact) { contact in
-            Button {
-                selectedContact = contact
-            } label: {
-                contactRow(contact)
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(filteredContacts, id: \.id) { contact in
+                    contactRow(contact)
+                    Divider().padding(.leading, 52)
+                }
             }
-            .buttonStyle(.plain)
         }
-        .listStyle(.sidebar)
+        .scrollIndicators(.hidden)
     }
 
     // MARK: - Contact Row
 
     private func contactRow(_ contact: ImportedContact) -> some View {
-        HStack(spacing: 12) {
-            AvatarView(name: displayName(for: contact), size: 32)
+        let isSelected = selectedContact?.id == contact.id
+        let enrichment = isEnrichment(contact)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(displayName(for: contact))
-                    .font(.body)
-                    .lineLimit(1)
+        return Button {
+            selectedContact = contact
+        } label: {
+            HStack(spacing: 10) {
+                AvatarView(
+                    name: displayName(for: contact),
+                    avatarSize: .medium
+                )
 
-                if let subtitle = contactSubtitle(for: contact) {
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(displayName(for: contact))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(isSelected ? .white : .primary)
                         .lineLimit(1)
+
+                    if enrichment {
+                        Text("Already in CRM — new data found")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(isSelected ? .white.opacity(0.8) : .green)
+                            .lineLimit(1)
+                    } else if let subtitle = contactSubtitle(for: contact) {
+                        Text(subtitle)
+                            .font(.caption)
+                            .foregroundStyle(isSelected ? .white.opacity(0.75) : .secondary)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                // Thread count
+                if let threads = contact.emailThreadCount, threads > 0, !isSelected {
+                    HStack(spacing: 2) {
+                        Image(systemName: "envelope")
+                            .font(.system(size: 9))
+                        Text("\(threads)")
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(Color.secondary.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                }
+
+                // Relationship type badge
+                if let relType = contact.relationshipType, !relType.isEmpty, !isSelected {
+                    StatusBadge(
+                        text: relType,
+                        color: relationshipColor(relType)
+                    )
+                }
+
+                // Confidence badge
+                if let confidence = contact.confidenceScore, !isSelected {
+                    confidenceBadge(confidence)
                 }
             }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(
+                Group {
+                    if isSelected {
+                        Color.accentColor
+                    } else if enrichment {
+                        Color.green.opacity(0.06)
+                    } else {
+                        Color.clear
+                    }
+                }
+            )
+            .overlay(alignment: .leading) {
+                if enrichment && !isSelected {
+                    Rectangle()
+                        .fill(Color.green)
+                        .frame(width: 2.5)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
 
-            Spacer()
+    // MARK: - Detail Column
 
-            if let status = contact.onboardingStatus, !status.isEmpty {
-                StatusBadge(text: status, color: onboardingStatusColor(status))
+    private var detailColumn: some View {
+        Group {
+            if let contact = selectedContact {
+                ImportedContactDetailView(
+                    importedContact: contact,
+                    onShowReviewForm: { showReviewForm = true }
+                )
+                .id(contact.id)
+                .sheet(isPresented: $showReviewForm) {
+                    SuggestionReviewForm(importedContact: contact)
+                        .frame(minWidth: 500, minHeight: 550)
+                }
+            } else {
+                EmptyStateView(
+                    title: "Select a suggestion",
+                    description: "Choose a contact suggestion from the list to review.",
+                    systemImage: "person.crop.rectangle.stack"
+                )
             }
         }
-        .padding(.vertical, 2)
     }
 
     // MARK: - Helpers
 
-    /// Returns the best display name for an imported contact.
     private func displayName(for contact: ImportedContact) -> String {
         if let name = contact.importedContactName, !name.isEmpty {
             return name
@@ -125,77 +454,57 @@ struct ImportedContactsView: View {
         let first = contact.firstName ?? ""
         let last = contact.lastName ?? ""
         let combined = "\(first) \(last)".trimmingCharacters(in: .whitespaces)
-        return combined.isEmpty ? "Unknown" : combined
+        return combined.isEmpty ? (contact.email ?? "Unknown") : combined
     }
 
-    /// Returns the best subtitle: email, then company, then import source.
     private func contactSubtitle(for contact: ImportedContact) -> String? {
-        if let email = contact.email, !email.isEmpty {
-            return email
+        var parts: [String] = []
+        if let title = contact.jobTitle, !title.isEmpty {
+            parts.append(title)
         }
         if let company = contact.company, !company.isEmpty {
-            return company
+            parts.append(company)
         }
-        if let source = contact.importSource, !source.isEmpty {
-            return source
-        }
-        return nil
+        if !parts.isEmpty { return parts.joined(separator: " \u{00B7} ") }
+        return contact.email
     }
 
-    /// Deterministic color for onboarding status badges.
-    private func onboardingStatusColor(_ status: String) -> Color {
-        let lower = status.lowercased()
-        if lower.contains("approved") { return .green }
-        if lower.contains("rejected") { return .red }
-        if lower.contains("pending") { return .orange }
+    private func relationshipColor(_ type: String) -> Color {
+        let lower = type.lowercased()
+        if lower.contains("client")     { return .blue }
+        if lower.contains("vendor")     { return .purple }
+        if lower.contains("employee")   { return .green }
+        if lower.contains("contractor") { return .orange }
+        if lower.contains("partner")    { return .teal }
         return .secondary
     }
-}
 
-// MARK: - Imported Contact Detail Sheet (with Edit button)
+    private func confidenceBadge(_ score: Double) -> some View {
+        let percentage = Int(score)
+        let color: Color = {
+            if percentage >= 80 { return .green }
+            if percentage >= 50 { return .yellow }
+            return Color(white: 0.55)
+        }()
 
-/// Wraps ImportedContactDetailView in a NavigationStack and adds an Edit toolbar button.
-private struct ImportedContactDetailSheet: View {
-    let importedContact: ImportedContact
-
-    @State private var showEditForm = false
-
-    var body: some View {
-        NavigationStack {
-            ImportedContactDetailView(importedContact: importedContact)
-                .toolbar {
-                    ToolbarItem(placement: .automatic) {
-                        Button {
-                            showEditForm = true
-                        } label: {
-                            Image(systemName: "pencil")
-                        }
-                        .help("Edit Imported Contact")
-                    }
-                }
-        }
-        .sheet(isPresented: $showEditForm) {
-            NavigationStack {
-                ImportedContactFormView(importedContact: importedContact)
-            }
-            .frame(minWidth: 500, minHeight: 600)
-        }
+        return Text("\(percentage)%")
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(color)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(color.opacity(0.15))
+            .clipShape(RoundedRectangle(cornerRadius: 4))
     }
 }
 
-// MARK: - Imported Contact Form
+// MARK: - Imported Contact Form (retained from original for create/edit)
 
-/// Create / edit form for imported contacts.
-/// Pass `importedContact: nil` to create, or an existing ImportedContact to edit.
 struct ImportedContactFormView: View {
-    let importedContact: ImportedContact?  // nil = create, non-nil = edit
+    let importedContact: ImportedContact?
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    // MARK: - Form State
-
-    // Contact fields
     @State private var importedContactName: String = ""
     @State private var firstName: String = ""
     @State private var lastName: String = ""
@@ -203,29 +512,19 @@ struct ImportedContactFormView: View {
     @State private var phone: String = ""
     @State private var mobilePhone: String = ""
     @State private var jobTitle: String = ""
-
-    // Company fields
     @State private var company: String = ""
     @State private var companyIndustry: String = ""
     @State private var companyType: String = ""
     @State private var companySize: String = ""
-
-    // Classification fields
     @State private var categorization: String = ""
     @State private var onboardingStatus: String = ""
     @State private var importSource: String = ""
-
-    // Notes
     @State private var note: String = ""
     @State private var reviewNotes: String = ""
     @State private var reasonForRejection: String = ""
-
-    // Checkbox
     @State private var syncToContacts: Bool = false
 
     private var isEditing: Bool { importedContact != nil }
-
-    // MARK: - Picker Options
 
     private static let categorizationOptions = [
         "", "Client", "Lead", "Partner", "Vendor", "Prospect", "Other"
@@ -235,14 +534,72 @@ struct ImportedContactFormView: View {
         "", "Approved", "Rejected", "Pending Review"
     ]
 
-    // MARK: - Body
-
     var body: some View {
         Form {
-            contactSection
-            companySection
-            classificationSection
-            notesSection
+            Section("Contact") {
+                TextField("Imported Contact Name", text: $importedContactName)
+                TextField("First Name", text: $firstName)
+                TextField("Last Name", text: $lastName)
+                TextField("Email", text: $email)
+                    .textContentType(.emailAddress)
+                TextField("Phone", text: $phone)
+                    .textContentType(.telephoneNumber)
+                TextField("Mobile Phone", text: $mobilePhone)
+                    .textContentType(.telephoneNumber)
+                TextField("Job Title", text: $jobTitle)
+            }
+
+            Section("Company") {
+                TextField("Company", text: $company)
+                TextField("Industry", text: $companyIndustry)
+                TextField("Company Type", text: $companyType)
+                TextField("Company Size", text: $companySize)
+            }
+
+            Section("Classification") {
+                Picker("Categorization", selection: $categorization) {
+                    ForEach(Self.categorizationOptions, id: \.self) { option in
+                        Text(option.isEmpty ? "None" : option).tag(option)
+                    }
+                }
+
+                Picker("Onboarding Status", selection: $onboardingStatus) {
+                    ForEach(Self.onboardingStatusOptions, id: \.self) { option in
+                        Text(option.isEmpty ? "None" : option).tag(option)
+                    }
+                }
+
+                TextField("Import Source", text: $importSource)
+                Toggle("Sync to Contacts", isOn: $syncToContacts)
+            }
+
+            Section("Notes") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Note")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    TextEditor(text: $note)
+                        .frame(minHeight: 80)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Review Notes")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    TextEditor(text: $reviewNotes)
+                        .frame(minHeight: 80)
+                }
+
+                if onboardingStatus == "Rejected" {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Reason for Rejection")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        TextEditor(text: $reasonForRejection)
+                            .frame(minHeight: 80)
+                    }
+                }
+            }
         }
         .formStyle(.grouped)
         .navigationTitle(isEditing ? "Edit Imported Contact" : "New Imported Contact")
@@ -257,85 +614,6 @@ struct ImportedContactFormView: View {
         }
         .onAppear { loadExisting() }
     }
-
-    // MARK: - Sections
-
-    private var contactSection: some View {
-        Section("Contact") {
-            TextField("Imported Contact Name", text: $importedContactName)
-            TextField("First Name", text: $firstName)
-            TextField("Last Name", text: $lastName)
-            TextField("Email", text: $email)
-                .textContentType(.emailAddress)
-            TextField("Phone", text: $phone)
-                .textContentType(.telephoneNumber)
-            TextField("Mobile Phone", text: $mobilePhone)
-                .textContentType(.telephoneNumber)
-            TextField("Job Title", text: $jobTitle)
-        }
-    }
-
-    private var companySection: some View {
-        Section("Company") {
-            TextField("Company", text: $company)
-            TextField("Industry", text: $companyIndustry)
-            TextField("Company Type", text: $companyType)
-            TextField("Company Size", text: $companySize)
-        }
-    }
-
-    private var classificationSection: some View {
-        Section("Classification") {
-            Picker("Categorization", selection: $categorization) {
-                ForEach(Self.categorizationOptions, id: \.self) { option in
-                    Text(option.isEmpty ? "None" : option).tag(option)
-                }
-            }
-
-            Picker("Onboarding Status", selection: $onboardingStatus) {
-                ForEach(Self.onboardingStatusOptions, id: \.self) { option in
-                    Text(option.isEmpty ? "None" : option).tag(option)
-                }
-            }
-
-            TextField("Import Source", text: $importSource)
-
-            Toggle("Sync to Contacts", isOn: $syncToContacts)
-        }
-    }
-
-    @ViewBuilder
-    private var notesSection: some View {
-        Section("Notes") {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Note")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                TextEditor(text: $note)
-                    .frame(minHeight: 80)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Review Notes")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                TextEditor(text: $reviewNotes)
-                    .frame(minHeight: 80)
-            }
-
-            if onboardingStatus == "Rejected" {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Reason for Rejection")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    TextEditor(text: $reasonForRejection)
-                        .frame(minHeight: 80)
-                }
-            }
-        }
-    }
-
-    // MARK: - Load Existing
 
     private func loadExisting() {
         guard let contact = importedContact else { return }
@@ -359,14 +637,11 @@ struct ImportedContactFormView: View {
         syncToContacts = contact.syncToContacts
     }
 
-    // MARK: - Save
-
     private func save() {
         let trimmedName = importedContactName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return }
 
         if let contact = importedContact {
-            // Edit existing
             contact.importedContactName = trimmedName
             contact.firstName = firstName.nilIfEmpty
             contact.lastName = lastName.nilIfEmpty
@@ -388,7 +663,6 @@ struct ImportedContactFormView: View {
             contact.localModifiedAt = Date()
             contact.isPendingPush = true
         } else {
-            // Create new
             let newContact = ImportedContact(
                 id: "local_\(UUID().uuidString)",
                 importedContactName: trimmedName,
@@ -422,7 +696,6 @@ struct ImportedContactFormView: View {
 // MARK: - String Extension
 
 private extension String {
-    /// Returns nil if the string is empty, otherwise returns self.
     var nilIfEmpty: String? {
         isEmpty ? nil : self
     }

@@ -1,30 +1,20 @@
 import SwiftUI
 import SwiftData
 
-/// Imported Contact detail view — displays key fields from the staging record.
+/// Imported Contact detail view — Email Intelligence detail pane.
 ///
-/// Mirrors the Electron imported contacts detail pane. Takes a non-optional
-/// ImportedContact (parent view resolves selection before presenting).
-///
-/// Sections shown only when they contain non-nil, non-empty data.
-/// The model has ~48 fields — this view surfaces the most important ones
-/// organized into logical sections.
+/// Bento-style layout: hero with action buttons, AI reasoning card,
+/// editable contact info grid, company pairing, email activity stats.
 struct ImportedContactDetailView: View {
     let importedContact: ImportedContact
+    var onShowReviewForm: (() -> Void)?
 
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Environment(SyncEngine.self) private var syncEngine
 
-    // Linked entity queries — fetch all, filter by imported contact's ID arrays
-    @Query(sort: \Specialty.specialty) private var allSpecialties: [Specialty]
-    @Query(sort: \Contact.importedContactName) private var allContacts: [Contact]
+    @Query private var companies: [Company]
 
-    private var linkedSpecialties: [Specialty] {
-        allSpecialties.filter { importedContact.specialtiesIds.contains($0.id) }
-    }
-
-    private var linkedContacts: [Contact] {
-        allContacts.filter { importedContact.relatedCrmContactIds.contains($0.id) }
-    }
+    // MARK: - Computed
 
     private var displayName: String {
         if let name = importedContact.importedContactName, !name.isEmpty {
@@ -33,523 +23,369 @@ struct ImportedContactDetailView: View {
         let first = importedContact.firstName ?? ""
         let last = importedContact.lastName ?? ""
         let combined = "\(first) \(last)".trimmingCharacters(in: .whitespaces)
-        return combined.isEmpty ? "Unknown" : combined
+        return combined.isEmpty ? (importedContact.email ?? "Unknown") : combined
     }
+
+    private var heroSubtitle: String? {
+        let parts = [importedContact.jobTitle, importedContact.company]
+            .compactMap { $0 }
+            .filter { !$0.isEmpty }
+        guard !parts.isEmpty else { return nil }
+        return parts.joined(separator: " \u{00B7} ")
+    }
+
+    private var linkedCompany: Company? {
+        guard let firstId = importedContact.suggestedCompanyLink.first else { return nil }
+        return companies.first(where: { $0.id == firstId })
+    }
+
+    private var timeSpanText: String {
+        guard let first = importedContact.firstSeenDate,
+              let last = importedContact.lastSeenDate else { return "\u{2014}" }
+        let months = Calendar.current.dateComponents([.month], from: first, to: last).month ?? 0
+        if months < 1 { return "< 1 month" }
+        return "\(months) month\(months == 1 ? "" : "s")"
+    }
+
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, yyyy"
+        return f
+    }()
 
     // MARK: - Body
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                headerSection
-                    .padding(.top, 24)
-                    .padding(.bottom, 16)
-
-                Form {
-                    contactInfoSection
-                    importInfoSection
-                    relatedSection
-                    businessSection
-                    companyDetailsSection
-                    notesSection
-                    detailsSection
-                }
-                .formStyle(.grouped)
+            VStack(alignment: .leading, spacing: 12) {
+                heroSection
+                aiReasoningCard
+                contactInfoCard
+                companyPairingCard
+                emailActivityCard
             }
-        }
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Done") { dismiss() }
-            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
     }
 
-    // MARK: - Header
+    // MARK: - Hero Section
 
-    private var headerSection: some View {
-        VStack(spacing: 8) {
+    private var heroSection: some View {
+        HStack(spacing: 14) {
             AvatarView(
                 name: displayName,
-                size: 64,
-                photoURL: importedContact.contactPhotoUrl.flatMap { URL(string: $0) }
+                avatarSize: .xlarge
             )
 
-            Text(displayName)
-                .font(.title2)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(displayName)
+                    .font(.system(size: 20, weight: .bold))
+                    .lineLimit(1)
 
-            if let jobTitle = importedContact.jobTitle, !jobTitle.isEmpty {
-                Text(jobTitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-
-            if let status = importedContact.onboardingStatus, !status.isEmpty {
-                StatusBadge(text: status, color: onboardingStatusColor(status))
-            }
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Contact Info
-
-    @ViewBuilder
-    private var contactInfoSection: some View {
-        let hasEmail = importedContact.email?.isEmpty == false
-        let hasPhone = importedContact.phone?.isEmpty == false
-        let hasMobile = importedContact.mobilePhone?.isEmpty == false
-            && importedContact.mobilePhone != importedContact.phone
-        let hasWorkPhone = importedContact.workPhone?.isEmpty == false
-            && importedContact.workPhone != importedContact.phone
-        let hasOfficePhone = importedContact.officePhone?.isEmpty == false
-            && importedContact.officePhone != importedContact.phone
-        let hasLinkedIn = importedContact.linkedInUrl?.isEmpty == false
-        let hasWebsite = importedContact.website?.isEmpty == false
-
-        if hasEmail || hasPhone || hasMobile || hasWorkPhone || hasOfficePhone
-            || hasLinkedIn || hasWebsite {
-            Section("Contact Info") {
-                if let email = importedContact.email, !email.isEmpty {
-                    linkRow(label: "Email", value: email, urlString: "mailto:\(email)")
+                if let subtitle = heroSubtitle {
+                    Text(subtitle)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
 
-                if let phone = importedContact.phone, !phone.isEmpty {
-                    linkRow(label: "Phone", value: phone, urlString: "tel:\(phone)")
-                }
-
-                if let mobile = importedContact.mobilePhone, !mobile.isEmpty,
-                   mobile != importedContact.phone {
-                    linkRow(label: "Mobile", value: mobile, urlString: "tel:\(mobile)")
-                }
-
-                if let workPhone = importedContact.workPhone, !workPhone.isEmpty,
-                   workPhone != importedContact.phone {
-                    linkRow(label: "Work Phone", value: workPhone, urlString: "tel:\(workPhone)")
-                }
-
-                if let officePhone = importedContact.officePhone, !officePhone.isEmpty,
-                   officePhone != importedContact.phone {
-                    linkRow(label: "Office Phone", value: officePhone, urlString: "tel:\(officePhone)")
-                }
-
-                if let linkedin = importedContact.linkedInUrl, !linkedin.isEmpty {
-                    let url = linkedin.hasPrefix("http") ? linkedin : "https://\(linkedin)"
-                    linkRow(label: "LinkedIn", value: linkedin, urlString: url)
-                }
-
-                if let website = importedContact.website, !website.isEmpty {
-                    let url = website.hasPrefix("http") ? website : "https://\(website)"
-                    linkRow(label: "Website", value: website, urlString: url)
-                }
-            }
-        }
-    }
-
-    // MARK: - Import Info
-
-    @ViewBuilder
-    private var importInfoSection: some View {
-        let hasSource = importedContact.importSource?.isEmpty == false
-        let hasDate = importedContact.importDate != nil
-        let hasCategorization = importedContact.categorization?.isEmpty == false
-        let hasTags = !importedContact.tags.isEmpty
-        let hasEventTags = importedContact.eventTags?.isEmpty == false
-        let hasSyncFlag = importedContact.syncToContacts
-
-        if hasSource || hasDate || hasCategorization || hasTags || hasEventTags || hasSyncFlag {
-            Section("Import Info") {
-                if let source = importedContact.importSource, !source.isEmpty {
-                    FieldRow(label: "Import Source", value: source)
-                }
-
-                if let date = importedContact.importDate {
-                    FieldRow(label: "Import Date", value: date.formatted(date: .abbreviated, time: .omitted))
-                }
-
-                if let categorization = importedContact.categorization, !categorization.isEmpty {
-                    HStack {
-                        Text("Categorization")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        BadgeView(
-                            text: categorization,
-                            color: categorizationColor(categorization)
-                        )
-                    }
-                    .frame(minHeight: 28)
-                }
-
-                if !importedContact.tags.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Tags")
-                            .foregroundStyle(.secondary)
-                        FlowLayout(spacing: 6) {
-                            ForEach(importedContact.tags, id: \.self) { tag in
-                                BadgeView(text: tag, color: .teal)
+                HStack(spacing: 8) {
+                    // Dismiss button
+                    Button {
+                        dismissSuggestion()
+                    } label: {
+                        Text("Dismiss")
+                            .font(.system(size: 12, weight: .semibold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 5)
+                            .background(Color(nsColor: .controlBackgroundColor))
+                            .foregroundStyle(.primary)
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
                             }
+                    }
+                    .buttonStyle(.plain)
+
+                    // Add to CRM button
+                    Button {
+                        onShowReviewForm?()
+                    } label: {
+                        Text("Add to CRM")
+                            .font(.system(size: 12, weight: .semibold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 5)
+                            .background(Color.green)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.top, 2)
+            }
+
+            Spacer(minLength: 8)
+
+            // Confidence badge
+            if let confidence = importedContact.confidenceScore {
+                confidenceCircle(confidence)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    // MARK: - Confidence Circle
+
+    private func confidenceCircle(_ score: Double) -> some View {
+        let percentage = Int(score)
+        let color: Color = {
+            if percentage >= 80 { return .green }
+            if percentage >= 50 { return .yellow }
+            return Color(white: 0.55)
+        }()
+
+        return VStack(spacing: 2) {
+            ZStack {
+                Circle()
+                    .stroke(color.opacity(0.2), lineWidth: 4)
+                    .frame(width: 48, height: 48)
+                Circle()
+                    .trim(from: 0, to: score / 100)
+                    .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .frame(width: 48, height: 48)
+                    .rotationEffect(.degrees(-90))
+                Text("\(percentage)%")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(color)
+            }
+            Text("Confidence")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: - AI Reasoning Card
+
+    @ViewBuilder
+    private var aiReasoningCard: some View {
+        let hasReasoning = importedContact.aiReasoning?.isEmpty == false
+
+        GroupBox {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "brain")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.purple)
+                    Text("AI REASONING")
+                        .font(.system(size: 11, weight: .bold))
+                        .tracking(0.5)
+                        .foregroundStyle(.purple)
+                }
+
+                if hasReasoning, let reasoning = importedContact.aiReasoning {
+                    Text(reasoning)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.primary)
+                        .textSelection(.enabled)
+                } else {
+                    Text(metadataSummary)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(4)
+        }
+        .backgroundStyle(.ultraThinMaterial)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(Color.purple.opacity(0.2), lineWidth: 1)
+        }
+    }
+
+    private var metadataSummary: String {
+        var parts: [String] = []
+
+        if let threads = importedContact.emailThreadCount, threads > 0 {
+            parts.append("Based on \(threads) thread\(threads == 1 ? "" : "s")")
+        }
+
+        if let first = importedContact.firstSeenDate,
+           let last = importedContact.lastSeenDate {
+            let months = Calendar.current.dateComponents([.month], from: first, to: last).month ?? 0
+            if months > 0 {
+                parts.append("over \(months) month\(months == 1 ? "" : "s")")
+            }
+        }
+
+        if let via = importedContact.discoveredVia, !via.isEmpty {
+            parts.append("discovered via \(via)")
+        }
+
+        return parts.isEmpty ? "No metadata available yet." : parts.joined(separator: ", ") + "."
+    }
+
+    // MARK: - Contact Info Card
+
+    private var contactInfoCard: some View {
+        BentoCell(title: "Extracted Contact Info") {
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12)
+            ], spacing: 10) {
+                infoField(label: "First Name", value: importedContact.firstName)
+                infoField(label: "Last Name", value: importedContact.lastName)
+                infoField(label: "Email", value: importedContact.email)
+                infoField(label: "Phone", value: importedContact.phone ?? importedContact.mobilePhone)
+                infoField(label: "Title", value: importedContact.jobTitle)
+                relationshipField
+            }
+        }
+    }
+
+    private func infoField(label: String, value: String?) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+            Text(value?.isEmpty == false ? value! : "\u{2014}")
+                .font(.system(size: 13))
+                .foregroundStyle(value?.isEmpty == false ? .primary : .tertiary)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var relationshipField: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text("Relationship")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+            if let relType = importedContact.relationshipType, !relType.isEmpty {
+                StatusBadge(text: relType, color: relationshipColor(relType))
+            } else {
+                Text("\u{2014}")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Company Pairing Card
+
+    @ViewBuilder
+    private var companyPairingCard: some View {
+        let hasSuggestedCompany = importedContact.suggestedCompanyName?.isEmpty == false
+        let hasLinkedCompany = linkedCompany != nil
+
+        if hasSuggestedCompany || hasLinkedCompany {
+            GroupBox {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "building.2")
+                            .font(.system(size: 12))
+                            .foregroundStyle(hasLinkedCompany ? .blue : .orange)
+                        Text("COMPANY PAIRING")
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(0.5)
+                            .foregroundStyle(hasLinkedCompany ? .blue : .orange)
+                    }
+
+                    if let company = linkedCompany {
+                        HStack(spacing: 8) {
+                            AvatarView(
+                                name: company.companyName ?? "Company",
+                                avatarSize: .small,
+                                shape: .roundedRect
+                            )
+                            Text(company.companyName ?? "Unnamed Company")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(.blue)
+                        }
+                    } else if let name = importedContact.suggestedCompanyName {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(name)
+                                .font(.system(size: 13, weight: .medium))
+                            Text("New company will be created")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
                         }
                     }
-                    .frame(minHeight: 28)
                 }
-
-                if let eventTags = importedContact.eventTags, !eventTags.isEmpty {
-                    FieldRow(label: "Event Tags", value: eventTags)
-                }
-
-                if importedContact.syncToContacts {
-                    HStack {
-                        Text("Sync to Contacts")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                    }
-                    .frame(minHeight: 28)
-                }
-            }
-        }
-    }
-
-    // MARK: - Related (Linked Entities)
-
-    @ViewBuilder
-    private var relatedSection: some View {
-        let hasSpecialties = !linkedSpecialties.isEmpty
-        let hasContacts = !linkedContacts.isEmpty
-
-        if hasSpecialties || hasContacts {
-            Section("Related") {
-                if hasSpecialties {
-                    RelatedRecordRow(
-                        label: "Specialties",
-                        items: linkedSpecialties.compactMap { $0.specialty }
-                    )
-                }
-
-                if hasContacts {
-                    RelatedRecordRow(
-                        label: "CRM Contacts",
-                        items: linkedContacts.compactMap { $0.importedContactName }
-                    )
-                }
-            }
-        }
-    }
-
-    // MARK: - Business
-
-    @ViewBuilder
-    private var businessSection: some View {
-        let hasCompany = importedContact.company?.isEmpty == false
-        let hasIndustry = importedContact.companyIndustry?.isEmpty == false
-        let hasCompanyType = importedContact.companyType?.isEmpty == false
-        let hasCompanySize = importedContact.companySize?.isEmpty == false
-        let hasAddress = hasContactAddressFields
-
-        if hasCompany || hasIndustry || hasCompanyType || hasCompanySize || hasAddress {
-            Section("Business") {
-                if let company = importedContact.company, !company.isEmpty {
-                    FieldRow(label: "Company", value: company)
-                }
-
-                if let industry = importedContact.companyIndustry, !industry.isEmpty {
-                    FieldRow(label: "Industry", value: industry)
-                }
-
-                if let companyType = importedContact.companyType, !companyType.isEmpty {
-                    FieldRow(label: "Company Type", value: companyType)
-                }
-
-                if let companySize = importedContact.companySize, !companySize.isEmpty {
-                    FieldRow(label: "Company Size", value: companySize)
-                }
-
-                if hasContactAddressFields {
-                    FieldRow(label: "Address", value: formattedContactAddress)
-                }
-            }
-        }
-    }
-
-    // MARK: - Company Details
-
-    @ViewBuilder
-    private var companyDetailsSection: some View {
-        let hasRevenue = importedContact.companyAnnualRevenue?.isEmpty == false
-        let hasFoundingYear = importedContact.companyFoundingYear?.isEmpty == false
-        let hasNaics = importedContact.companyNaicsCode?.isEmpty == false
-        let hasDescription = importedContact.companyDescription?.isEmpty == false
-        let hasCompanyAddress = hasCompanyAddressFields
-
-        if hasRevenue || hasFoundingYear || hasNaics || hasDescription || hasCompanyAddress {
-            Section("Company Details") {
-                if let revenue = importedContact.companyAnnualRevenue, !revenue.isEmpty {
-                    FieldRow(label: "Annual Revenue", value: revenue)
-                }
-
-                if let year = importedContact.companyFoundingYear, !year.isEmpty {
-                    FieldRow(label: "Founded", value: year)
-                }
-
-                if let naics = importedContact.companyNaicsCode, !naics.isEmpty {
-                    FieldRow(label: "NAICS Code", value: naics)
-                }
-
-                if hasCompanyAddressFields {
-                    FieldRow(label: "Company Address", value: formattedCompanyAddress)
-                }
-
-                if let description = importedContact.companyDescription, !description.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Description")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(description)
-                            .font(.body)
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Notes
-
-    @ViewBuilder
-    private var notesSection: some View {
-        let hasNote = importedContact.note?.isEmpty == false
-        let hasReviewNotes = importedContact.reviewNotes?.isEmpty == false
-        let hasRejection = importedContact.reasonForRejection?.isEmpty == false
-
-        if hasNote || hasReviewNotes || hasRejection {
-            Section("Notes") {
-                if let note = importedContact.note, !note.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Note")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(note)
-                            .font(.body)
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-
-                if let reviewNotes = importedContact.reviewNotes, !reviewNotes.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Review Notes")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(reviewNotes)
-                            .font(.body)
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-
-                if let reason = importedContact.reasonForRejection, !reason.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Reason for Rejection")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(reason)
-                            .font(.body)
-                            .foregroundStyle(.red)
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Details
-
-    @ViewBuilder
-    private var detailsSection: some View {
-        Section("Details") {
-            if let modified = importedContact.airtableModifiedAt {
-                FieldRow(label: "Last Modified", value: modified.formatted(date: .abbreviated, time: .shortened))
-            }
-
-            if let localMod = importedContact.localModifiedAt {
-                FieldRow(label: "Local Modified", value: localMod.formatted(date: .abbreviated, time: .shortened))
-            }
-
-            if importedContact.isPendingPush {
-                HStack {
-                    Text("Pending Push")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Image(systemName: "arrow.up.circle.fill")
-                        .foregroundStyle(.orange)
-                }
-                .frame(minHeight: 28)
-            }
-
-            // Airtable record ID — small, for debugging
-            Text(importedContact.id)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(4)
+            }
+            .backgroundStyle(hasLinkedCompany ? Color.blue.opacity(0.05) : Color.yellow.opacity(0.08))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(
+                        (hasLinkedCompany ? Color.blue : Color.orange).opacity(0.2),
+                        lineWidth: 1
+                    )
+            }
         }
+    }
+
+    // MARK: - Email Activity Card
+
+    private var emailActivityCard: some View {
+        BentoCell(title: "Email Activity") {
+            HStack(spacing: 0) {
+                statBox(
+                    value: importedContact.emailThreadCount.map { "\($0)" } ?? "\u{2014}",
+                    label: "Threads"
+                )
+                Divider().frame(height: 36)
+                statBox(value: timeSpanText, label: "Time Span")
+                Divider().frame(height: 36)
+                statBox(
+                    value: importedContact.discoveredVia ?? "\u{2014}",
+                    label: "First Seen Via"
+                )
+                Divider().frame(height: 36)
+                statBox(
+                    value: importedContact.lastSeenDate.map { Self.dateFormatter.string(from: $0) } ?? "\u{2014}",
+                    label: "Last Seen"
+                )
+            }
+        }
+    }
+
+    private func statBox(value: String, label: String) -> some View {
+        VStack(spacing: 3) {
+            Text(value)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+            Text(label)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
+    }
+
+    // MARK: - Actions
+
+    private func dismissSuggestion() {
+        importedContact.onboardingStatus = "Dismissed"
+        importedContact.localModifiedAt = Date()
+        importedContact.isPendingPush = true
     }
 
     // MARK: - Helpers
 
-    /// Builds a tappable link row for contact info fields, with URL scheme validation.
-    private func linkRow(label: String, value: String, urlString: String) -> some View {
-        HStack {
-            Text(label)
-                .foregroundStyle(.secondary)
-            Spacer()
-            if let url = URL(string: urlString),
-               let scheme = url.scheme,
-               ["https", "http", "mailto", "tel"].contains(scheme) {
-                Link(value, destination: url)
-                    .foregroundStyle(Color.accentColor)
-            } else {
-                Text(value)
-                    .foregroundStyle(.primary)
-            }
-        }
-        .frame(minHeight: 28)
-    }
-
-    /// Deterministic color for onboarding status badges.
-    private func onboardingStatusColor(_ status: String) -> Color {
-        let lower = status.lowercased()
-        if lower.contains("approved") { return .green }
-        if lower.contains("rejected") { return .red }
-        if lower.contains("pending") { return .orange }
+    private func relationshipColor(_ type: String) -> Color {
+        let lower = type.lowercased()
+        if lower.contains("client")     { return .blue }
+        if lower.contains("vendor")     { return .purple }
+        if lower.contains("employee")   { return .green }
+        if lower.contains("contractor") { return .orange }
+        if lower.contains("partner")    { return .teal }
         return .secondary
     }
-
-    /// Deterministic color for categorization badges.
-    private func categorizationColor(_ value: String) -> Color {
-        let lower = value.lowercased()
-        if lower.contains("client") { return .blue }
-        if lower.contains("lead") { return .orange }
-        if lower.contains("partner") { return .purple }
-        if lower.contains("vendor") { return .green }
-        if lower.contains("prospect") { return .yellow }
-        return .gray
-    }
-
-    // MARK: - Contact Address
-
-    /// Whether any contact address field is populated.
-    private var hasContactAddressFields: Bool {
-        let fields: [String?] = [
-            importedContact.addressLine, importedContact.city,
-            importedContact.state, importedContact.country,
-            importedContact.postalCode
-        ]
-        return fields.contains { $0?.isEmpty == false }
-    }
-
-    /// Formats contact address from available components.
-    private var formattedContactAddress: String {
-        formatAddress(
-            line: importedContact.addressLine,
-            city: importedContact.city,
-            state: importedContact.state,
-            postalCode: importedContact.postalCode,
-            country: importedContact.country
-        )
-    }
-
-    // MARK: - Company Address
-
-    /// Whether any company address field is populated.
-    private var hasCompanyAddressFields: Bool {
-        let fields: [String?] = [
-            importedContact.companyStreetAddress, importedContact.companyCity,
-            importedContact.companyState, importedContact.companyCountry,
-            importedContact.companyPostalCode
-        ]
-        return fields.contains { $0?.isEmpty == false }
-    }
-
-    /// Formats company address from available components.
-    private var formattedCompanyAddress: String {
-        var line = importedContact.companyStreetAddress ?? ""
-        if let line2 = importedContact.companyStreetAddress2, !line2.isEmpty {
-            line = line.isEmpty ? line2 : "\(line), \(line2)"
-        }
-        return formatAddress(
-            line: line.isEmpty ? nil : line,
-            city: importedContact.companyCity,
-            state: importedContact.companyState,
-            postalCode: importedContact.companyPostalCode,
-            country: importedContact.companyCountry
-        )
-    }
-
-    /// Shared address formatter.
-    private func formatAddress(line: String?, city: String?, state: String?,
-                               postalCode: String?, country: String?) -> String {
-        var parts: [String] = []
-
-        if let line = line, !line.isEmpty {
-            parts.append(line)
-        }
-
-        var cityStateParts: [String] = []
-        if let city = city, !city.isEmpty {
-            cityStateParts.append(city)
-        }
-        if let state = state, !state.isEmpty {
-            cityStateParts.append(state)
-        }
-        if !cityStateParts.isEmpty {
-            var cityState = cityStateParts.joined(separator: ", ")
-            if let postal = postalCode, !postal.isEmpty {
-                cityState += " \(postal)"
-            }
-            parts.append(cityState)
-        } else if let postal = postalCode, !postal.isEmpty {
-            parts.append(postal)
-        }
-
-        if let country = country, !country.isEmpty {
-            parts.append(country)
-        }
-
-        return parts.joined(separator: "\n")
-    }
-}
-
-// MARK: - Preview
-
-#Preview {
-    let contact = ImportedContact(
-        id: "recIMPORT123",
-        importedContactName: "John Doe"
-    )
-    contact.firstName = "John"
-    contact.lastName = "Doe"
-    contact.email = "john@example.com"
-    contact.phone = "+1 555-0200"
-    contact.mobilePhone = "+1 555-0201"
-    contact.jobTitle = "Marketing Director"
-    contact.company = "Acme Corp"
-    contact.companyIndustry = "Technology"
-    contact.companyType = "Startup"
-    contact.companySize = "50-100"
-    contact.onboardingStatus = "Approved"
-    contact.importSource = "Conference"
-    contact.importDate = Calendar.current.date(byAdding: .day, value: -5, to: Date())
-    contact.categorization = "Lead"
-    contact.note = "Met at CES 2026. Interested in partnership opportunities."
-    contact.city = "San Francisco"
-    contact.state = "CA"
-    contact.country = "USA"
-
-    return ImportedContactDetailView(importedContact: contact)
-        .frame(width: 500, height: 800)
 }
