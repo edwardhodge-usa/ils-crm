@@ -42,6 +42,7 @@ export default function ByPageView({
 }: ByPageViewProps) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [dirtyPages, setDirtyPages] = useState<Set<string>>(new Set())
+  const [confirmDeletePageId, setConfirmDeletePageId] = useState<string | null>(null)
   const [grantPopover, setGrantPopover] = useState<{ x: number; y: number } | null>(null)
   const [healthMap, setHealthMap] = useState<Map<string, { status: number; ok: boolean; cmsStatus: string }>>(new Map())
   const hasValidatedSlugs = useRef(false)
@@ -253,6 +254,27 @@ export default function ByPageView({
     [reloadAccess],
   )
 
+  const handleDeletePage = useCallback(
+    async (pageId: string) => {
+      const page = pages.find(p => (p.id as string) === pageId)
+      if (!page) return
+      // Cascade: delete all access records for this page
+      const pageAddr = page.page_address as string | null
+      if (pageAddr) {
+        const affected = accessRecords.filter(r => r.page_address === pageAddr)
+        for (const rec of affected) {
+          await window.electronAPI.portalAccess.delete(rec.id as string)
+        }
+      }
+      // Delete the page itself
+      await window.electronAPI.clientPages.delete(pageId)
+      setSelectedPageId(null)
+      reloadPages()
+      reloadAccess()
+    },
+    [pages, accessRecords, reloadPages, reloadAccess],
+  )
+
   const handleGrantAccess = useCallback(() => {
     setGrantPopover({ x: 300, y: 100 })
   }, [])
@@ -331,11 +353,74 @@ export default function ByPageView({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
+            gap: 8,
             padding: '8px 12px',
             borderBottom: '1px solid var(--color-separator)',
             flexShrink: 0,
           }}
         >
+          {selectedPage && confirmDeletePageId === (selectedPage.id as string) ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 'auto' }}>
+              <span style={{ fontSize: 12, color: 'var(--text-primary)' }}>
+                Delete {(selectedPage.client_name as string) || 'this page'} and {pageAccessRecords.length} access record{pageAccessRecords.length !== 1 ? 's' : ''}?
+              </span>
+              <button
+                onClick={() => {
+                  handleDeletePage(selectedPage.id as string)
+                  setConfirmDeletePageId(null)
+                }}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  background: 'var(--color-red)',
+                  color: 'var(--text-on-accent)',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'default',
+                }}
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setConfirmDeletePageId(null)}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  background: 'var(--bg-tertiary)',
+                  color: 'var(--text-secondary)',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'default',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : selectedPage ? (
+            <button
+              onClick={() => setConfirmDeletePageId(selectedPage.id as string)}
+              title="Delete this page and all access records"
+              style={{
+                padding: '5px 12px',
+                fontSize: 12,
+                fontWeight: 500,
+                color: 'var(--color-red)',
+                background: 'rgba(255,59,48,0.08)',
+                border: '1px solid rgba(255,59,48,0.2)',
+                borderRadius: 6,
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                whiteSpace: 'nowrap',
+                marginRight: 'auto',
+              }}
+            >
+              Delete Page
+            </button>
+          ) : null}
           <button
             onClick={() => window.electronAPI?.shell?.openExternal?.('https://framer.com/projects/ImagineLab-Front-Page--qq2NfIkO8OdMKvVMZXJR-8RBFW?node=uzKrlTPBU')}
             title="Open Framer editor to sync and publish changes"

@@ -1,7 +1,7 @@
 # ILS CRM — Feature Parity Tracker
 
 > Electron (primary) vs Swift (shadow build)
-> Updated: 2026-03-30 (Tasks section audit — was stale, Swift well ahead)
+> Updated: 2026-03-31 (Full audit — Dashboard, Contacts, Navigation were done but not tracked)
 
 ## Status Key
 - **Done** — Fully implemented and working
@@ -52,36 +52,36 @@
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Sidebar navigation | Done | Stub | `Sidebar.tsx` → `ContentView.swift` NavigationSplitView |
-| Top bar (title + sync status) | Done | TODO | `TopBar.tsx` — needs toolbar items in Swift |
-| Route config (`routes.ts`) | Done | Stub | Enum-based in `ContentView.NavigationSection` |
-| Dark mode toggle | Done | TODO | Electron: localStorage. Swift: `@AppStorage` + `.preferredColorScheme()` |
-| macOS menu bar | Done | TODO | `menu.ts` — needs SwiftUI `.commands {}` |
-| Window configuration | Done | TODO | Electron: `BrowserWindow`. Swift: `WindowGroup` modifiers |
+| Sidebar navigation | Done | Done | `Sidebar.tsx` → `ContentView.swift` NavigationSplitView with 3 groups |
+| Top bar (title + sync status) | Done | Done | Toolbar with sync status indicator + Cmd+N create button |
+| Route config (`routes.ts`) | Done | Done | `NavItem` enum with all 10 sections |
+| Dark mode toggle | Done | Done | `@AppStorage("appearanceMode")` + `.preferredColorScheme()` in ContentView |
+| macOS menu bar | Done | Done | Go menu (Cmd+1-0), Cmd+N, SidebarCommands in ILSCRMApp.swift |
+| Window configuration | Done | TODO | Electron: `BrowserWindow`. Swift: basic `WindowGroup` — needs min size tuning |
 
 ## Dashboard
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Dashboard page | Done | Stub | `DashboardPage.tsx` → `DashboardView.swift` |
-| Stat cards (contacts, companies, deals, tasks) | Done | TODO | `StatCard.tsx` — needs SwiftUI grid |
-| Pipeline summary widget | Done | TODO | `PipelineWidget.tsx` — bar chart by stage |
-| Follow-up alerts | Done | TODO | `dashboard:getFollowUpAlerts` query |
-| Tasks due today | Done | TODO | `dashboard:getTasksDueToday` query |
-| Colored stat cards | Done | TODO | Post-rebuild: indigo, green, orange, red |
+| Dashboard page | Done | Done | `DashboardPage.tsx` → `DashboardView.swift` (560 lines) |
+| Stat cards (contacts, companies, deals, tasks) | Done | Done | 4 DashStatCards: Tasks Due, Follow-ups, Active Contracts, Open Proposals |
+| Pipeline summary widget | Done | Done | Bar chart with stage colors + deal value totals |
+| Follow-up alerts | Done | Done | Panel with contact list, days-since badge, company name |
+| Tasks due today | Done | Done | Panel with priority dots, type badges, due dates |
+| Colored stat cards | Done | Done | Red, orange, blue, yellow themed with SF Symbols |
 
 ## Contacts
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Contact list with filters | Done | Stub | `ContactListPage.tsx` → `ContactsView.swift` |
-| Contact 360 detail view | Done | Stub | `Contact360Page.tsx` → `Contact360View` |
-| Contact create/edit form | Done | Done | `ContactForm.tsx` → `ContactFormView` |
-| Contact row component | Done | TODO | `ContactRow.tsx` — inline in list for now |
-| Contact stats | Done | TODO | `ContactStats.tsx` |
-| Filter tabs (All/Leads/Clients/etc.) | Done | TODO | `FilterTabs.tsx` — needs SwiftUI picker |
-| Specialty color badges | Done | TODO | Deterministic hash → palette color |
-| Linked record display | Done | TODO | Show companies, opportunities, tasks inline |
+| Contact list with filters | Done | Done | Search + 3 sort modes (Name A-Z, Company, Newest) + categorization filter tabs |
+| Contact 360 detail view | Done | Done | Bento layout (906 lines): hero, overview, timeline, linked records, opportunities, notes, partner |
+| Contact create/edit form | Done | Done | Multi-select categorization, company picker, all fields |
+| Contact row component | Done | Done | Avatar, name, subtitle (title+company), categorization badge |
+| Contact stats | Done | Done | Hero stats: Companies, Open Opps, Lead Score, Days Since |
+| Filter tabs (All/Leads/Clients/etc.) | Done | Done | Horizontal capsule pills with counts for all 13 Airtable categories |
+| Specialty color badges | Done | Done | Deterministic hash-based colors matching Electron palette |
+| Linked record display | Done | Done | Companies + Opportunities pickers with sheet-based detail views |
 
 ## Companies
 
@@ -189,7 +189,7 @@
 | API key input | Done | Done | SecureField + Keychain save/load via KeychainService |
 | Base ID configuration | Done | Done | @AppStorage with default from AirtableConfig.baseId |
 | Sync interval control | Done | Done | Picker: 30s / 60s / 120s / Off — auto-starts/stops polling |
-| Theme toggle | Done | TODO | |
+| Theme toggle | Done | Done | `@AppStorage("appearanceMode")` — System/Light/Dark segmented picker |
 | Force Sync button | Done | Done | Calls syncEngine.forceSync(), disabled while syncing |
 | Last sync display | Done | Done | Shows timestamp or "Never synced" + syncing spinner |
 | Sync error display | Done | Done | Red error text section when syncError is set |
@@ -255,9 +255,9 @@
 |----------|--------------|------------|------------|------------|
 | Architecture | 10 | 12 | 1 | 0 |
 | Data Models | 11 | 11 | 0 | 0 |
-| Navigation | 6 | 0 | 2 | 4 |
-| Dashboard | 6 | 0 | 1 | 5 |
-| Contacts | 8 | 1 | 2 | 5 |
+| Navigation | 6 | 5 | 0 | 1 |
+| Dashboard | 6 | 6 | 0 | 0 |
+| Contacts | 8 | 8 | 0 | 0 |
 | Companies | 4 | 0 | 3 | 1 |
 | Pipeline | 9 | 0 | 3 | 6 |
 | Tasks | 22 | 19 | 0 | 5 |
@@ -266,13 +266,13 @@
 | Interactions | 5 | 0 | 2 | 3 |
 | Imported Contacts | 4 | 0 | 1 | 3 |
 | Portal | 4 | 0 | 2 | 2 |
-| Settings | 6 | 6 | 0 | 1 |
+| Settings | 6 | 7 | 0 | 0 |
 | Shared Components | 14 | 0 | 5 | 9 |
 | Search & Commands | 3 | 0 | 0 | 3 |
 | Data Operations | 10 | 6 | 0 | 4 |
 | Platform | 3 | 0 | 0 | 3 |
-| **TOTAL** | **137** | **55** | **26** | **59** |
+| **TOTAL** | **137** | **74** | **21** | **45** |
 
-Swift now has **55 features done** (39%) — up from 36 after Tasks section audit.
-Key milestones completed: full sync engine (push-first-then-pull), all 11 data models with sync properties + converters, Settings with Keychain API key storage, batch CRUD operations, polling, cross-app sync lock. Tasks feature nearly complete (19/24 done, Swift ahead on sort/bento/overdue).
-**26 stubs** remain with placeholder UI, **59 features** need implementation from scratch.
+Swift now has **74 features done** (54%) — up from 55 after 2026-03-31 audit.
+Key gains: Dashboard fully implemented (stat cards, tasks due today, follow-up alerts, pipeline bar chart). Contacts fully implemented (list with search + 3 sort modes + categorization filter tabs, 360 bento detail with hero/overview/timeline/linked records/opportunities/notes/partner data, specialty color badges). Navigation complete (sidebar, Go menu Cmd+1-0, Cmd+N, SidebarCommands, sync toolbar). Settings now includes Appearance (System/Light/Dark) toggle.
+**21 stubs** remain with placeholder UI, **45 features** need implementation from scratch.

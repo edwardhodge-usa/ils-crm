@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage("airtable_base_id") private var baseId = AirtableConfig.baseId
     @AppStorage("sync_interval_seconds") private var syncInterval: Double = AirtableConfig.defaultSyncIntervalSeconds
     @AppStorage("user_email") private var userEmail = ""
+    @AppStorage("appearanceMode") private var appearanceMode = "system"
     @State private var apiKey = ""
     @State private var licensePAT = ""
     @State private var showSaveConfirmation = false
@@ -16,6 +17,15 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("Appearance") {
+                Picker("Theme", selection: $appearanceMode) {
+                    Text("System").tag("system")
+                    Text("Light").tag("light")
+                    Text("Dark").tag("dark")
+                }
+                .pickerStyle(.segmented)
+            }
+
             Section("User") {
                 TextField("Email Address", text: $userEmail)
                     .textFieldStyle(.roundedBorder)

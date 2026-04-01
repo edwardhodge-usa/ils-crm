@@ -88,6 +88,7 @@ extension Notification.Name {
 struct ContentView: View {
     @SceneStorage("selectedNavItem") private var selectedRawValue: String = "dashboard"
     @State private var sidebarSearchText = ""
+    @AppStorage("appearanceMode") private var appearanceMode = "system"
     @Environment(SyncEngine.self) private var syncEngine
 
     /// Computed selection derived from persisted raw value.
@@ -129,6 +130,7 @@ struct ContentView: View {
         .focusedSceneValue(\.selectedNavItem, selectionBinding)
         .focusedSceneValue(\.currentEntityLabel, entityLabelForSelection)
         .frame(minWidth: 900, minHeight: 600)
+        .preferredColorScheme(appearanceMode == "light" ? .light : appearanceMode == "dark" ? .dark : nil)
         .onAppear {
             // Auto-configure sync from Keychain on launch (matches Electron behavior)
             if let storedKey = KeychainService.read() {

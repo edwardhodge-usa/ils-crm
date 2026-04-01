@@ -45,6 +45,16 @@ const PAGE_FIELDS: EditableField[] = [
   { key: 'thank_you', label: 'Thank You', type: 'text' },
 ]
 
+/** Default values for page fields — shown as pre-filled text instead of ghost placeholders */
+const PAGE_FIELD_DEFAULTS: Record<string, string> = {
+  prepared_for: 'Client contact',
+  thank_you: 'Closing message',
+  deck_url: 'drive.google.com/...',
+}
+
+const DEFAULT_PAGE_TITLE = 'Capabilities Presentation'
+const DEFAULT_PAGE_SUBTITLE = "We've prepared this overview of our capabilities, approach and video examples — please don't hesitate to reach out with any questions."
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function PageDetail({
@@ -219,16 +229,15 @@ export default function PageDetail({
           {/* 4. Page title */}
           <EditableFormRow
             field={{ key: 'page_title', label: 'Page Title', type: 'textarea' }}
-            value={pageTitle || ''}
+            value={pageTitle || DEFAULT_PAGE_TITLE}
             isLast={false}
             onSave={handlePageFieldSave}
-            placeholder="We've prepared this overview of our capabilities, approach and video examples — please don't hesitate to reach out with any questions."
           />
 
           {/* 5. Page subtitle */}
           <EditableFormRow
-            field={{ key: 'page_subtitle', label: 'Subtitle', type: 'text' }}
-            value={subtitle}
+            field={{ key: 'page_subtitle', label: 'Subtitle', type: 'textarea' }}
+            value={subtitle || DEFAULT_PAGE_SUBTITLE}
             isLast={false}
             onSave={handlePageFieldSave}
           />
@@ -244,11 +253,13 @@ export default function PageDetail({
               let val = page[field.key]
               // Sanitize "null" string from SQLite to actual null
               if (val === 'null') val = null
+              // Pre-fill with default value if field is empty
+              const displayVal = val || PAGE_FIELD_DEFAULTS[field.key] || val
               return (
                 <EditableFormRow
                   key={field.key}
                   field={field}
-                  value={val}
+                  value={displayVal}
                   isLast={i === PAGE_FIELDS.length - 1}
                   onSave={handlePageFieldSave}
                 />
@@ -468,6 +479,7 @@ export default function PageDetail({
             logs={logs}
             pageSlug={pageAddress || undefined}
           />
+
         </div>
       </div>
 

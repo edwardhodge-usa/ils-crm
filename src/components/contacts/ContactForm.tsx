@@ -9,7 +9,7 @@ const FIELDS: FormFieldDef[] = [
   { key: 'last_name', label: 'Last Name', type: 'text', section: 'Basic Info' },
   { key: 'job_title', label: 'Job Title', type: 'text', section: 'Basic Info' },
   { key: 'categorization', label: 'Categorization', type: 'multiSelect', section: 'Basic Info',
-    options: ['Lead', 'Customer', 'Partner', 'Vendor', 'Talent', 'Other', 'Unknown', 'VIP', 'Investor', 'Speaker', 'Press', 'Influencer', 'Board Member', 'Advisor'] },
+    options: ['Client', 'Prospect', 'Partner', 'Consultant', 'Talent', 'Vendor Contact', 'Industry Peer', 'Employee', 'Investor', 'Advisor', 'VIP', 'Press', 'Other'] },
   { key: 'companies_ids', label: 'Company', type: 'linkedRecord', section: 'Basic Info',
     entityName: 'companies', labelField: 'company_name' },
 

@@ -268,6 +268,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave, placehol
           ref={inputRef as React.RefObject<HTMLTextAreaElement>}
           value={editValue}
           placeholder={placeholder}
+          spellCheck
           onChange={e => {
             setEditValue(e.target.value)
             // Auto-resize
@@ -338,6 +339,7 @@ export function EditableFormRow({ field, value, isLast = false, onSave, placehol
         ref={inputRef as React.RefObject<HTMLInputElement>}
         type={field.type === 'number' || field.type === 'currency' ? 'number' : 'text'}
         value={editValue}
+        spellCheck={field.type === 'text'}
         onChange={e => setEditValue(e.target.value)}
         onBlur={handleTextSave}
         onKeyDown={handleKeyDown}

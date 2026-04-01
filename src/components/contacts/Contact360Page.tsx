@@ -22,7 +22,7 @@ const ZONE3_DETAIL_FIELDS: EditableField[] = [
 
 const ZONE2_CRM_FIELDS: EditableField[] = [
   { key: 'categorization', label: 'Category', type: 'multiSelect',
-    options: ['Lead', 'Customer', 'Partner', 'Vendor', 'Talent', 'Other', 'Unknown', 'VIP', 'Investor', 'Speaker', 'Press', 'Influencer', 'Board Member', 'Advisor'] },
+    options: ['Client', 'Prospect', 'Partner', 'Consultant', 'Talent', 'Vendor Contact', 'Industry Peer', 'Employee', 'Investor', 'Advisor', 'VIP', 'Press', 'Other'] },
   { key: 'industry', label: 'Industry', type: 'singleSelect',
     options: ['Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing', 'Real Estate', 'Consulting', 'Other', 'Hospitality', 'Logistics', 'Fitness', 'Legal', 'Media', 'Design', 'Venture Capital', 'Retail', 'Entertainment'] },
   { key: 'lead_source', label: 'Lead Source', type: 'singleSelect',
@@ -257,33 +257,11 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
     return () => { cancelled = true }
   }, [id])
 
-  // Empty state when no contact selected
-  if (!id || !contact) {
-    return (
-      <div className="flex-1 flex flex-col overflow-hidden" style={{ background: 'var(--bg-window)', borderLeft: '1px solid var(--separator)' }}>
-        <EmptyState title="Select a contact" subtitle="Choose a contact from the list to view details" />
-      </div>
-    )
-  }
+  /* ── Derived data (must stay above early return — Rules of Hooks) ── */
 
   const openOpps = linkedData.opportunities || []
   const interactions = linkedData.interactions || []
-  const meetingCount = interactions.filter(i => i.type === 'Meeting').length
 
-  let daysSince: number | string = '\u2014'
-  if (contact.last_contact_date) {
-    const lastDate = new Date(contact.last_contact_date as string)
-    if (!isNaN(lastDate.getTime())) {
-      const diffMs = Date.now() - lastDate.getTime()
-      daysSince = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-    }
-  }
-
-  const fullName = (contact.contact_name as string) ||
-    [contact.first_name, contact.last_name].filter(Boolean).join(' ') ||
-    'Unnamed Contact'
-
-  /* ── Build interleaved timeline ── */
   const timelineEntries = useMemo<TimelineEntry[]>(() => {
     const entries: TimelineEntry[] = []
 
@@ -303,12 +281,8 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
     return entries
   }, [openOpps, interactions])
 
-  const totalTimelineCount = timelineEntries.length
-  const visibleTimeline = timelineEntries.slice(0, 10)
-
-  /* ── Parse event tags for pill strip ── */
   const eventTags = useMemo<string[]>(() => {
-    const raw = contact.event_tags
+    const raw = contact?.event_tags
     if (!raw) return []
     if (Array.isArray(raw)) return raw as string[]
     if (typeof raw === 'string') {
@@ -318,7 +292,34 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
       } catch { return [] }
     }
     return []
-  }, [contact.event_tags])
+  }, [contact?.event_tags])
+
+  // Empty state when no contact selected
+  if (!id || !contact) {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden" style={{ background: 'var(--bg-window)', borderLeft: '1px solid var(--separator)' }}>
+        <EmptyState title="Select a contact" subtitle="Choose a contact from the list to view details" />
+      </div>
+    )
+  }
+
+  const meetingCount = interactions.filter(i => i.type === 'Meeting').length
+
+  let daysSince: number | string = '\u2014'
+  if (contact.last_contact_date) {
+    const lastDate = new Date(contact.last_contact_date as string)
+    if (!isNaN(lastDate.getTime())) {
+      const diffMs = Date.now() - lastDate.getTime()
+      daysSince = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    }
+  }
+
+  const fullName = (contact.contact_name as string) ||
+    [contact.first_name, contact.last_name].filter(Boolean).join(' ') ||
+    'Unnamed Contact'
+
+  const totalTimelineCount = timelineEntries.length
+  const visibleTimeline = timelineEntries.slice(0, 10)
 
   /* ── Stat color helpers ── */
   const statColors = {

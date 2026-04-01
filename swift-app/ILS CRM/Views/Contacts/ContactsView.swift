@@ -21,11 +21,20 @@ enum ContactSortMode: String, CaseIterable, CustomStringConvertible {
 struct ContactsView: View {
     @Query(sort: \Contact.contactName) private var contacts: [Contact]
     @Query private var companies: [Company]
+    @Query(sort: \Specialty.specialty) private var specialties: [Specialty]
 
     @State private var searchText = ""
     @State private var selectedContact: Contact?
     @AppStorage("sort-contacts") private var sortMode: ContactSortMode = .nameAZ
+    @State private var categoryFilter: String = "All"
     @State private var showingNewContact = false
+
+    private static let categoryFilterOptions = [
+        "All", "Client", "Prospect", "Partner", "Consultant", "Talent",
+        "Vendor Contact", "Industry Peer", "Employee", "Investor", "Advisor", "VIP", "Press", "Other"
+    ]
+
+    private static let specialtyColors: [Color] = [.indigo, .green, .purple, .orange, .teal, .red, .pink, .blue]
 
     // MARK: - Derived Data
 
@@ -37,14 +46,44 @@ struct ContactsView: View {
         })
     }
 
+    /// Specialty ID → name lookup.
+    private var specialtyNameById: [String: String] {
+        Dictionary(uniqueKeysWithValues: specialties.compactMap { s in
+            guard let name = s.specialty, !name.isEmpty else { return nil }
+            return (s.id, name)
+        })
+    }
+
     private var filteredContacts: [Contact] {
-        guard !searchText.isEmpty else { return contacts }
-        return contacts.filter { contact in
-            (contact.contactName?.localizedCaseInsensitiveContains(searchText) ?? false) ||
-            (contact.email?.localizedCaseInsensitiveContains(searchText) ?? false) ||
-            (contact.companiesIds.compactMap { companyNameById[$0] }.contains { $0.localizedCaseInsensitiveContains(searchText) }) ||
-            (contact.jobTitle?.localizedCaseInsensitiveContains(searchText) ?? false)
+        var result = contacts
+
+        // Category filter
+        if categoryFilter != "All" {
+            result = result.filter { $0.categorization.contains(categoryFilter) }
         }
+
+        // Search filter
+        if !searchText.isEmpty {
+            result = result.filter { contact in
+                (contact.contactName?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (contact.email?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (contact.companiesIds.compactMap { companyNameById[$0] }.contains { $0.localizedCaseInsensitiveContains(searchText) }) ||
+                (contact.jobTitle?.localizedCaseInsensitiveContains(searchText) ?? false)
+            }
+        }
+
+        return result
+    }
+
+    private func categoryCount(_ category: String) -> Int {
+        if category == "All" { return contacts.count }
+        return contacts.filter { $0.categorization.contains(category) }.count
+    }
+
+    private func specialtyColor(for name: String) -> Color {
+        var hash = 0
+        for char in name.unicodeScalars { hash = (hash &* 31 &+ Int(char.value)) & 0xfffff }
+        return Self.specialtyColors[hash % Self.specialtyColors.count]
     }
 
     // MARK: - Grouping
@@ -143,6 +182,47 @@ struct ContactsView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(Color(.controlBackgroundColor))
+
+                Divider()
+
+                // Category filter pills
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 4) {
+                        ForEach(Self.categoryFilterOptions, id: \.self) { option in
+                            let isSelected = categoryFilter == option
+                            let count = categoryCount(option)
+                            Button {
+                                categoryFilter = option
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text(option)
+                                        .font(.system(size: 11, weight: .medium))
+                                    if count > 0 && option != "All" {
+                                        Text("\(count)")
+                                            .font(.system(size: 9, weight: .semibold))
+                                            .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                                    }
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule(style: .continuous)
+                                        .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
+                                )
+                                .foregroundStyle(isSelected ? .white : .primary)
+                                .overlay {
+                                    if !isSelected {
+                                        Capsule(style: .continuous)
+                                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                                    }
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                }
 
                 Divider()
 
@@ -296,6 +376,20 @@ struct ContactsView: View {
 
                 Spacer()
 
+                // Specialty badge
+                if !isSelected,
+                   let firstSpecId = contact.specialtiesIds.first,
+                   let specName = specialtyNameById[firstSpecId] {
+                    let specColor = specialtyColor(for: specName)
+                    Text(specName)
+                        .font(.system(size: 10, weight: .semibold))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(specColor.opacity(0.15))
+                        .foregroundStyle(specColor)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                }
+
                 if let cat = contact.categorization.first, !cat.isEmpty, !isSelected {
                     StatusBadge(
                         text: contact.categorization.joined(separator: ", "),
@@ -372,7 +466,7 @@ struct ContactFormView: View {
     @State private var selectedCompanyIds: Set<String> = []
     @State private var showingCompanyPicker = false
 
-    @State private var categorization: String = ""
+    @State private var categorization: Set<String> = []
     @State private var leadSource: String = ""
     @State private var industry: String = ""
 
@@ -386,7 +480,8 @@ struct ContactFormView: View {
     }
 
     private static let categorizationOptions = [
-        "", "Client", "Lead", "Partner", "Vendor", "Prospect", "Other"
+        "Client", "Prospect", "Partner", "Consultant", "Talent", "Vendor Contact",
+        "Industry Peer", "Employee", "Investor", "Advisor", "VIP", "Press", "Other"
     ]
 
     // MARK: - Body
@@ -483,11 +578,42 @@ struct ContactFormView: View {
 
     private var classificationSection: some View {
         Section("Classification") {
-            Picker("Categorization", selection: $categorization) {
-                ForEach(Self.categorizationOptions, id: \.self) { option in
-                    Text(option.isEmpty ? "None" : option).tag(option)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Categorization")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 6)], spacing: 6) {
+                    ForEach(Self.categorizationOptions, id: \.self) { option in
+                        let isSelected = categorization.contains(option)
+                        Button {
+                            if isSelected {
+                                categorization.remove(option)
+                            } else {
+                                categorization.insert(option)
+                            }
+                        } label: {
+                            Text(option)
+                                .font(.system(size: 12, weight: .medium))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                        .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
+                                )
+                                .foregroundStyle(isSelected ? .white : .primary)
+                                .overlay {
+                                    if !isSelected {
+                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                            .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+                                    }
+                                }
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
+            .padding(.vertical, 4)
             TextField("Lead Source", text: $leadSource)
             TextField("Industry", text: $industry)
         }
@@ -512,7 +638,7 @@ struct ContactFormView: View {
         workPhone = contact.workPhone ?? ""
         jobTitle = contact.jobTitle ?? ""
         selectedCompanyIds = Set(contact.companiesIds)
-        categorization = contact.categorization.first ?? ""
+        categorization = Set(contact.categorization)
         leadSource = contact.leadSource ?? ""
         industry = contact.industry ?? ""
         notes = contact.notes ?? ""
@@ -530,7 +656,7 @@ struct ContactFormView: View {
             contact.workPhone = workPhone.nilIfEmpty
             contact.companiesIds = Array(selectedCompanyIds)
             contact.jobTitle = jobTitle.nilIfEmpty
-            contact.categorization = categorization.isEmpty ? [] : [categorization]
+            contact.categorization = Array(categorization)
             contact.leadSource = leadSource.nilIfEmpty
             contact.industry = industry.nilIfEmpty
             contact.notes = notes.nilIfEmpty
@@ -549,7 +675,7 @@ struct ContactFormView: View {
             newContact.workPhone = workPhone.nilIfEmpty
             newContact.companiesIds = Array(selectedCompanyIds)
             newContact.jobTitle = jobTitle.nilIfEmpty
-            newContact.categorization = categorization.isEmpty ? [] : [categorization]
+            newContact.categorization = Array(categorization)
             newContact.leadSource = leadSource.nilIfEmpty
             newContact.industry = industry.nilIfEmpty
             newContact.notes = notes.nilIfEmpty

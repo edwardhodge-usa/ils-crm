@@ -22,6 +22,7 @@ struct PortalAccessView: View {
     @State private var selectedPage: String?
     @State private var selectedAccessRecord: PortalAccessRecord?
     @State private var showGrantAccess = false
+    @State private var showDeletePageConfirm = false
     @State private var healthService = FramerHealthService()
     @Environment(\.modelContext) private var modelContext
     @Environment(SyncEngine.self) private var syncEngine
@@ -345,12 +346,37 @@ struct PortalAccessView: View {
                 }
 
                 peopleWithAccessCell(pageAddress: pageAddress, pageRecords: pageRecords)
+
+                // Delete page
+                Divider()
+                    .padding(.vertical, 4)
+
+                Button(role: .destructive) {
+                    showDeletePageConfirm = true
+                } label: {
+                    Text("Delete Page…")
+                        .font(.system(size: 13, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.red)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
         .sheet(isPresented: $showGrantAccess) {
             GrantAccessSheet(pageAddress: pageAddress)
+        }
+        .confirmationDialog(
+            "Delete \(pageDisplayName(for: pageAddress, records: pageRecords))?",
+            isPresented: $showDeletePageConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Page and \(pageRecords.count) Access Record\(pageRecords.count == 1 ? "" : "s")", role: .destructive) {
+                deletePage(pageAddress: pageAddress, pageRecords: pageRecords, page: page)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently remove the page and all associated access records from Airtable.")
         }
     }
 
@@ -385,7 +411,8 @@ struct PortalAccessView: View {
 
     // MARK: - Page Field Helpers
 
-    private static let defaultPageTitle = "We've prepared this overview of our capabilities, approach and video examples — please don't hesitate to reach out with any questions."
+    private static let defaultPageTitle = "Capabilities Presentation"
+    private static let defaultPageSubtitle = "We've prepared this overview of our capabilities, approach and video examples — please don't hesitate to reach out with any questions."
 
     private func pageHeroCard(pageAddress: String, pageRecords: [PortalAccessRecord], page: ClientPage?) -> some View {
         HStack(spacing: 14) {
@@ -472,8 +499,7 @@ struct PortalAccessView: View {
                 )
                 BentoTextInput(
                     label: "Subtitle",
-                    value: page.pageSubtitle ?? "",
-                    placeholder: "Add a subtitle...",
+                    value: page.pageSubtitle?.trimmedNilIfEmpty ?? Self.defaultPageSubtitle,
                     onSave: { newValue in
                         page.pageSubtitle = newValue.trimmedNilIfEmpty
                         markPageDirty(page)
@@ -481,8 +507,7 @@ struct PortalAccessView: View {
                 )
                 BentoTextInput(
                     label: "Prepared For",
-                    value: page.preparedFor ?? "",
-                    placeholder: "Client contact",
+                    value: page.preparedFor?.trimmedNilIfEmpty ?? "Client contact",
                     onSave: { newValue in
                         page.preparedFor = newValue.trimmedNilIfEmpty
                         markPageDirty(page)
@@ -490,8 +515,7 @@ struct PortalAccessView: View {
                 )
                 BentoTextInput(
                     label: "Thank You",
-                    value: page.thankYou ?? "",
-                    placeholder: "Closing message",
+                    value: page.thankYou?.trimmedNilIfEmpty ?? "Closing message",
                     onSave: { newValue in
                         page.thankYou = newValue.trimmedNilIfEmpty
                         markPageDirty(page)
@@ -499,8 +523,7 @@ struct PortalAccessView: View {
                 )
                 BentoTextInput(
                     label: "Deck URL",
-                    value: page.deckUrl ?? "",
-                    placeholder: "drive.google.com/...",
+                    value: page.deckUrl?.trimmedNilIfEmpty ?? "drive.google.com/...",
                     onSave: { newValue in
                         page.deckUrl = newValue.trimmedNilIfEmpty
                         markPageDirty(page)
@@ -726,6 +749,20 @@ struct PortalAccessView: View {
     private func revokeAccess(_ record: PortalAccessRecord) {
         syncEngine.trackDeletion(tableId: PortalAccessRecord.airtableTableId, recordId: record.id)
         modelContext.delete(record)
+    }
+
+    private func deletePage(pageAddress: String, pageRecords: [PortalAccessRecord], page: ClientPage?) {
+        // Cascade: delete all access records for this page
+        for record in pageRecords {
+            syncEngine.trackDeletion(tableId: PortalAccessRecord.airtableTableId, recordId: record.id)
+            modelContext.delete(record)
+        }
+        // Delete the page itself
+        if let page {
+            syncEngine.trackDeletion(tableId: ClientPage.airtableTableId, recordId: page.id)
+            modelContext.delete(page)
+        }
+        selectedPage = nil
     }
 
     // MARK: - By Client (Split Pane: list | detail)
