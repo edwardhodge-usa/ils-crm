@@ -55,11 +55,12 @@ function applyFontSize(size: FontSize) {
 // ────────────────────────────────────────────────────────────
 // Section IDs
 // ────────────────────────────────────────────────────────────
-type SectionId = 'general' | 'sync' | 'appearance' | 'about'
+type SectionId = 'general' | 'sync' | 'email' | 'appearance' | 'about'
 
 const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'general', label: 'General' },
   { id: 'sync', label: 'Sync' },
+  { id: 'email', label: 'Email' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'about', label: 'About' },
 ]
@@ -504,6 +505,182 @@ function SyncSection() {
 }
 
 // ────────────────────────────────────────────────────────────
+// Section: Email Intelligence (Gmail)
+// ────────────────────────────────────────────────────────────
+const SCAN_INTERVAL_OPTIONS = [
+  { value: 300000, label: '5 minutes' },
+  { value: 900000, label: '15 minutes' },
+  { value: 1800000, label: '30 minutes' },
+  { value: 3600000, label: '1 hour' },
+  { value: 14400000, label: '4 hours' },
+  { value: 86400000, label: '24 hours' },
+]
+
+function EmailSection() {
+  const [gmailStatus, setGmailStatus] = useState<{ connected: boolean; email?: string }>({ connected: false })
+  const [loading, setLoading] = useState(true)
+  const [connecting, setConnecting] = useState(false)
+  const [scanInterval, setScanInterval] = useState(3600000) // default 1 hour
+  const [statusMessage, setStatusMessage] = useState('')
+
+  useEffect(() => {
+    async function loadStatus() {
+      try {
+        const result = await window.electronAPI.gmail.status()
+        if (result.success && result.data) {
+          setGmailStatus(result.data)
+        }
+      } catch { /* graceful */ }
+      setLoading(false)
+    }
+    loadStatus()
+  }, [])
+
+  const handleConnect = async () => {
+    setConnecting(true)
+    setStatusMessage('')
+    try {
+      const result = await window.electronAPI.gmail.connect()
+      if (result.success) {
+        // Re-fetch status
+        const status = await window.electronAPI.gmail.status()
+        if (status.success && status.data) setGmailStatus(status.data)
+        setStatusMessage('Connected successfully')
+      } else {
+        setStatusMessage(result.error ?? 'Failed to connect')
+      }
+    } catch (err) {
+      setStatusMessage(err instanceof Error ? err.message : 'Connection failed')
+    } finally {
+      setConnecting(false)
+      setTimeout(() => setStatusMessage(''), 3000)
+    }
+  }
+
+  const handleDisconnect = async () => {
+    setConnecting(true)
+    setStatusMessage('')
+    try {
+      await window.electronAPI.gmail.disconnect()
+      setGmailStatus({ connected: false })
+      setStatusMessage('Disconnected')
+    } catch (err) {
+      setStatusMessage(err instanceof Error ? err.message : 'Failed to disconnect')
+    } finally {
+      setConnecting(false)
+      setTimeout(() => setStatusMessage(''), 3000)
+    }
+  }
+
+  const handleIntervalChange = async (ms: number) => {
+    setScanInterval(ms)
+    try {
+      await window.electronAPI.gmail.scanInterval(ms)
+    } catch { /* ignore */ }
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <SectionHeader>Gmail Connection</SectionHeader>
+        <GroupedContainer>
+          <PrefRow label="Status" isLast>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Loading...</span>
+          </PrefRow>
+        </GroupedContainer>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <SectionHeader>Gmail Connection</SectionHeader>
+      <GroupedContainer>
+        {/* Connection status */}
+        <PrefRow label="Status">
+          <div className="flex items-center gap-2">
+            <span style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: gmailStatus.connected ? 'var(--color-green)' : 'var(--color-red)',
+            }} />
+            <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>
+              {gmailStatus.connected ? 'Connected' : 'Not Connected'}
+            </span>
+          </div>
+        </PrefRow>
+
+        {/* Connected email */}
+        {gmailStatus.connected && gmailStatus.email && (
+          <PrefRow label="Account">
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              {gmailStatus.email}
+            </span>
+          </PrefRow>
+        )}
+
+        {/* Connect/Disconnect */}
+        <PrefRow label="Connection" isLast>
+          <button
+            onClick={gmailStatus.connected ? handleDisconnect : handleConnect}
+            disabled={connecting}
+            className="cursor-default disabled:opacity-40"
+            style={{
+              padding: '5px 14px', fontSize: 12, fontWeight: 500,
+              borderRadius: 8, border: 'none', fontFamily: 'inherit',
+              transition: 'background 150ms',
+              background: gmailStatus.connected ? 'var(--color-red)' : 'var(--color-accent)',
+              color: 'var(--text-on-accent)',
+            }}
+          >
+            {connecting
+              ? 'Processing...'
+              : gmailStatus.connected
+                ? 'Disconnect Gmail'
+                : 'Connect Gmail'
+            }
+          </button>
+        </PrefRow>
+      </GroupedContainer>
+
+      {Boolean(statusMessage) && (
+        <p style={{ marginTop: 8, fontSize: 12, color: gmailStatus.connected ? 'var(--color-green)' : 'var(--color-red)' }}>
+          {statusMessage}
+        </p>
+      )}
+
+      {/* Scan settings */}
+      {gmailStatus.connected && (
+        <div style={{ marginTop: 24 }}>
+          <SectionHeader>Scan Settings</SectionHeader>
+          <GroupedContainer>
+            <PrefRow label="Scan Interval" isLast>
+              <select
+                value={scanInterval}
+                onChange={e => handleIntervalChange(Number(e.target.value))}
+                style={{
+                  fontSize: 13, fontWeight: 500,
+                  color: 'var(--text-primary)',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--separator-strong)',
+                  borderRadius: 8,
+                  padding: '4px 8px',
+                  outline: 'none',
+                  cursor: 'default',
+                }}
+              >
+                {SCAN_INTERVAL_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </PrefRow>
+          </GroupedContainer>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────
 // Section: Appearance
 // ────────────────────────────────────────────────────────────
 function AppearanceSection() {
@@ -661,6 +838,7 @@ export default function SettingsPage() {
         <div className="max-w-[600px]">
           {activeSection === 'general' && <GeneralSection />}
           {activeSection === 'sync' && <SyncSection />}
+          {activeSection === 'email' && <EmailSection />}
           {activeSection === 'appearance' && <AppearanceSection />}
           {activeSection === 'about' && <AboutSection />}
         </div>

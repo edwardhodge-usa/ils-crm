@@ -94,6 +94,17 @@ interface ElectronAPI {
     removeRevokedListener: () => void
     removeOfflineLockedListener: () => void
   }
+  gmail: {
+    connect: () => Promise<{ success: boolean; error?: string }>
+    disconnect: () => Promise<{ success: boolean; error?: string }>
+    status: () => Promise<{ success: boolean; data?: { connected: boolean; email?: string }; error?: string }>
+    scanNow: () => Promise<{ success: boolean; error?: string }>
+    scanFull: () => Promise<{ success: boolean; error?: string }>
+    scanStatus: () => Promise<{ success: boolean; data?: { scanning: boolean; lastScan?: string; totalProcessed?: number }; error?: string }>
+    scanInterval: (intervalMs: number) => Promise<{ success: boolean; error?: string }>
+    onScanProgress: (cb: (progress: unknown) => void) => void
+    removeScanProgressListener: () => void
+  }
   framer: {
     checkPageHealth: (slug: string) => Promise<{ status: number; ok: boolean; error?: string }>
   }

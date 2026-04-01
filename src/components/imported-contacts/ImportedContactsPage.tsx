@@ -1,79 +1,90 @@
-import { useState, useMemo } from 'react'
-import StatusBadge from '../shared/StatusBadge'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import ConfirmDialog from '../shared/ConfirmDialog'
 import LoadingSpinner from '../shared/LoadingSpinner'
 import { EmptyState } from '../shared/EmptyState'
+import { Avatar } from '../shared/Avatar'
 import useEntityList from '../../hooks/useEntityList'
-import { parseCollaboratorName } from '../../utils/collaborator'
+import useDarkMode from '../../hooks/useDarkMode'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const STATUS_TABS = ['All', 'Review', 'Approved', 'Rejected', 'Needs Info', 'Duplicate'] as const
-type StatusTab = typeof STATUS_TABS[number]
+const SOURCE_TABS = ['All', 'Email', 'Contacts'] as const
+type SourceTab = typeof SOURCE_TABS[number]
 
-const AVATAR_COLORS = [
-  { bg: 'rgba(0,122,255,0.18)', fg: '#007AFF' },       // systemBlue
-  { bg: 'rgba(52,199,89,0.18)', fg: '#34C759' },        // systemGreen
-  { bg: 'rgba(255,149,0,0.18)', fg: '#FF9500' },        // systemOrange
-  { bg: 'rgba(255,45,85,0.18)', fg: '#FF2D55' },        // systemPink
-  { bg: 'rgba(175,82,222,0.18)', fg: '#AF52DE' },       // systemPurple
-  { bg: 'rgba(88,86,214,0.18)', fg: '#5856D6' },        // systemIndigo
-]
+type SortMode = 'confidence' | 'newest' | 'threads'
 
-function avatarColor(name: string) {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+const RELATIONSHIP_COLORS: Record<string, { text: string; textDark: string; bg: string }> = {
+  'Client':     { text: '#0055B3', textDark: '#409CFF', bg: 'rgba(0,122,255,0.18)' },
+  'Vendor':     { text: '#8944AB', textDark: '#BF5AF2', bg: 'rgba(175,82,222,0.18)' },
+  'Employee':   { text: '#248A3D', textDark: '#30D158', bg: 'rgba(52,199,89,0.18)' },
+  'Contractor': { text: '#C93400', textDark: '#FF9F0A', bg: 'rgba(255,149,0,0.18)' },
+  'Unknown':    { text: '#636366', textDark: '#98989D', bg: 'rgba(142,142,147,0.18)' },
 }
 
-function initials(name: string): string {
-  return name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?'
+const RELATIONSHIP_OPTIONS = ['Client', 'Vendor', 'Employee', 'Contractor', 'Unknown']
+
+function getRelColors(type: string | null, isDark: boolean) {
+  const c = RELATIONSHIP_COLORS[type ?? 'Unknown'] ?? RELATIONSHIP_COLORS['Unknown']
+  return { fg: isDark ? c.textDark : c.text, bg: c.bg }
+}
+
+function confidenceColor(score: number): { fg: string; bg: string } {
+  if (score >= 80) return { fg: '#248A3D', bg: 'rgba(52,199,89,0.18)' }
+  if (score >= 50) return { fg: '#C79800', bg: 'rgba(255,204,0,0.18)' }
+  return { fg: '#636366', bg: 'rgba(142,142,147,0.18)' }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Parse a JSON-encoded multi-select array and return the first value (for display) */
-function parseMultiSelect(raw: unknown): string | null {
-  if (!raw) return null
-  const s = String(raw)
-  if (s.startsWith('[')) {
-    try {
-      const arr = JSON.parse(s)
-      if (Array.isArray(arr) && arr.length > 0) return arr[0]
-    } catch { /* not JSON */ }
-  }
-  return s
-}
-
-/** Build a display name from available fields */
 function getContactName(contact: Record<string, unknown>): string {
-  // Try the primary field first
   const imported = (contact.imported_contact_name as string | null)?.trim()
   if (imported) return imported
-
-  // Try first_name + last_name
   const first = (contact.first_name as string | null)?.trim() ?? ''
   const last = (contact.last_name as string | null)?.trim() ?? ''
   if (first || last) return `${first} ${last}`.trim()
-
-  // Fall back to email
   const email = (contact.email as string | null)?.trim()
   if (email) return email
-
   return 'Unnamed'
+}
+
+function getSubtitle(contact: Record<string, unknown>): string {
+  const title = (contact.job_title as string | null)?.trim() ?? ''
+  const company = (contact.company as string | null)?.trim() ??
+    (contact.suggested_company_name as string | null)?.trim() ?? ''
+  if (title && company) return `${title} at ${company}`
+  if (title) return title
+  if (company) return company
+  return (contact.email as string | null)?.trim() ?? ''
+}
+
+function isEnrichmentRow(contact: Record<string, unknown>): boolean {
+  const relatedIds = contact.related_crm_contact_ids as string | null
+  if (!relatedIds) return false
+  try {
+    const arr = JSON.parse(relatedIds)
+    return Array.isArray(arr) && arr.length > 0
+  } catch { return false }
+}
+
+function timeAgo(dateStr: string | null | undefined): string {
+  if (!dateStr) return 'Never'
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return 'Never'
+  const secs = Math.floor((Date.now() - d.getTime()) / 1000)
+  if (secs < 60) return 'Just now'
+  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`
+  if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`
+  return `${Math.floor(secs / 86400)}d ago`
 }
 
 function formatDate(raw: unknown): string {
   if (!raw) return ''
   const s = String(raw)
-  if (!s) return ''
   const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
   if (!match) return s
   const [, y, m, d] = match.map(Number)
   return new Date(y, m - 1, d).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+    month: 'short', day: 'numeric', year: 'numeric',
   })
 }
 
@@ -86,12 +97,15 @@ interface ListRowProps {
 }
 
 function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
+  const isDark = useDarkMode()
   const name = getContactName(contact)
-  const source = (contact.import_source as string | null) ?? null
-  const status = (contact.onboarding_status as string | null) ?? null
-  const company = (contact.company as string | null) ?? null
-  const email = (contact.email as string | null) ?? null
-  const color = avatarColor(name)
+  const subtitle = getSubtitle(contact)
+  const relType = (contact.relationship_type as string | null) ?? 'Unknown'
+  const confidence = (contact.confidence_score as number | null) ?? 0
+  const threadCount = (contact.email_thread_count as number | null) ?? 0
+  const enrichment = isEnrichmentRow(contact)
+  const relC = getRelColors(relType, isDark)
+  const confC = confidenceColor(confidence)
 
   return (
     <div
@@ -104,20 +118,18 @@ function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
         padding: '9px 12px',
         borderBottom: '1px solid var(--separator)',
         borderLeft: isSelected ? '2.5px solid var(--color-accent)' : '2.5px solid transparent',
-        background: isSelected ? 'var(--color-accent-translucent)' : undefined,
+        background: isSelected
+          ? 'var(--color-accent-translucent)'
+          : enrichment
+            ? (isDark ? 'rgba(52,199,89,0.06)' : 'rgba(52,199,89,0.04)')
+            : undefined,
         transition: 'background 150ms',
       }}
-      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-hover)' }}
-      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = enrichment ? (isDark ? 'rgba(52,199,89,0.10)' : 'rgba(52,199,89,0.08)') : 'var(--bg-hover)' }}
+      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = enrichment ? (isDark ? 'rgba(52,199,89,0.06)' : 'rgba(52,199,89,0.04)') : '' }}
     >
       {/* Avatar */}
-      <div style={{
-        width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 11, fontWeight: 700, background: color.bg, color: color.fg,
-      }}>
-        {initials(name)}
-      </div>
+      <Avatar name={name} size={30} photoUrl={contact.contact_photo_url as string | null} />
 
       {/* Name + subtitle */}
       <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
@@ -128,36 +140,44 @@ function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
         }}>
           {name}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-          {Boolean(status) && <StatusBadge value={status} />}
-          {Boolean(company) && !source && (
+        <div style={{
+          fontSize: 11, color: 'var(--text-secondary)', marginTop: 1,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {subtitle}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
+          {/* Relationship badge */}
+          <span style={{
+            fontSize: 10, fontWeight: 600, padding: '1px 6px',
+            borderRadius: 9999, background: relC.bg, color: relC.fg,
+          }}>
+            {relType}
+          </span>
+
+          {/* Confidence or UPDATE badge */}
+          {enrichment ? (
             <span style={{
-              fontSize: 11, color: 'var(--text-secondary)',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              fontSize: 10, fontWeight: 600, padding: '1px 6px',
+              borderRadius: 9999, background: 'rgba(52,199,89,0.18)', color: '#248A3D',
             }}>
-              {company}
+              UPDATE
             </span>
-          )}
-          {Boolean(email) && !company && !source && (
+          ) : confidence > 0 ? (
             <span style={{
-              fontSize: 11, color: 'var(--text-secondary)',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              fontSize: 10, fontWeight: 600, padding: '1px 6px',
+              borderRadius: 9999, background: confC.bg, color: confC.fg,
             }}>
-              {email}
+              {confidence}%
             </span>
-          )}
-          {Boolean(source) && (
+          ) : null}
+
+          {/* Thread count */}
+          {threadCount > 0 && (
             <span style={{
-              fontSize: 11,
-              padding: '1px 6px',
-              borderRadius: 9999,
-              background: 'rgba(88,86,214,0.10)',
-              color: 'var(--color-accent)',
-              fontWeight: 500,
-              flexShrink: 0,
-              marginLeft: 'auto',
+              fontSize: 10, color: 'var(--text-secondary)', marginLeft: 'auto',
             }}>
-              {source}
+              {threadCount} thread{threadCount !== 1 ? 's' : ''}
             </span>
           )}
         </div>
@@ -168,195 +188,383 @@ function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
 
 // ─── Detail panel ─────────────────────────────────────────────────────────────
 
-interface DetailProps {
-  contact: Record<string, unknown> | null
-  onApprove: () => void
-  onReject: () => void
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <div style={{
+      fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const,
+      letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
+    }}>
+      {children}
+    </div>
+  )
 }
 
-function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
+interface DetailProps {
+  contact: Record<string, unknown> | null
+  onAddToCrm: () => void
+  onDismiss: () => void
+  onReject: () => void
+  editFields: Record<string, string>
+  setEditField: (key: string, val: string) => void
+}
+
+function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject, editFields, setEditField }: DetailProps) {
+  const isDark = useDarkMode()
+
   if (!contact) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
         <EmptyState
           title="Select a contact"
-          subtitle="Choose a contact from the list to review and approve or reject"
+          subtitle="Choose a contact from the list to review their email intelligence data"
         />
       </div>
     )
   }
 
   const name = getContactName(contact)
-  const email = (contact.email as string | null) ?? null
-  const company = (contact.company as string | null) ?? null
-  const jobTitle = (contact.job_title as string | null) ?? null
-  const phone = (contact.phone as string | null) ?? null
-  const source = (contact.import_source as string | null) ?? null
-  const importDate = contact.import_date ?? null
-  const status = (contact.onboarding_status as string | null) ?? null
-  const categorization = parseMultiSelect(contact.categorization)
-  const notes = (contact.note as string | null) ?? null
-  const importedBy = parseCollaboratorName((contact.imported_by as string | null) ?? null)
-  const assignedAdmin = parseCollaboratorName((contact.assigned_admin as string | null) ?? null)
+  const subtitle = getSubtitle(contact)
+  const relType = (contact.relationship_type as string | null) ?? 'Unknown'
+  const confidence = (contact.confidence_score as number | null) ?? 0
+  const aiReasoning = (contact.ai_reasoning as string | null) ?? null
+  const threadCount = (contact.email_thread_count as number | null) ?? 0
+  const firstSeen = contact.first_seen_date as string | null
+  const lastSeen = contact.last_seen_date as string | null
+  const discoveredVia = (contact.discovered_via as string | null) ?? null
+  const suggestedCompany = (contact.suggested_company_name as string | null) ?? null
+  const suggestedCompanyIds = contact.suggested_company_ids as string | null
+  const enrichment = isEnrichmentRow(contact)
+  const onboardingStatus = (contact.onboarding_status as string | null) ?? 'Review'
 
-  const isAlreadyReviewed = status === 'Approved' || status === 'Rejected'
-  const color = avatarColor(name)
+  const relC = getRelColors(relType, isDark)
+  const confC = confidenceColor(confidence)
 
-  const fields: Array<{ label: string; value: string | null }> = [
-    { label: 'Email', value: email },
-    { label: 'Company', value: company },
-    { label: 'Job Title', value: jobTitle },
-    { label: 'Phone', value: phone },
-    { label: 'Source', value: source },
-    { label: 'Imported', value: formatDate(importDate) || null },
-    { label: 'Imported By', value: importedBy },
-    { label: 'Admin', value: assignedAdmin },
-  ]
+  // Determine if already actioned
+  const isDismissed = onboardingStatus === 'Dismissed'
+  const isRejected = onboardingStatus === 'Rejected'
+  const isApproved = onboardingStatus === 'Approved'
+  const isActioned = isDismissed || isRejected || isApproved
+
+  // Company card colors
+  let hasLinkedCompany = false
+  try {
+    if (suggestedCompanyIds) {
+      const arr = JSON.parse(suggestedCompanyIds)
+      hasLinkedCompany = Array.isArray(arr) && arr.length > 0
+    }
+  } catch { /* ignore */ }
+
+  // Time span between first and last seen
+  const timeSpan = (() => {
+    if (!firstSeen || !lastSeen) return null
+    const f = new Date(firstSeen)
+    const l = new Date(lastSeen)
+    if (isNaN(f.getTime()) || isNaN(l.getTime())) return null
+    const days = Math.round((l.getTime() - f.getTime()) / 86400000)
+    if (days < 1) return 'Same day'
+    if (days < 30) return `${days} day${days !== 1 ? 's' : ''}`
+    if (days < 365) return `${Math.round(days / 30)} month${Math.round(days / 30) !== 1 ? 's' : ''}`
+    return `${(days / 365).toFixed(1)} years`
+  })()
+
+  const inputClass = "w-full text-[13px] px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--separator-strong)] text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)] transition-colors"
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
 
-      {/* Top bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 16px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
-      }}>
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{name}</span>
-        {Boolean(status) && <StatusBadge value={status} />}
-      </div>
-
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
 
-        {/* Hero block */}
-        <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--separator)' }}>
+        {/* Hero section */}
+        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--separator)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 17, fontWeight: 700, background: color.bg, color: color.fg,
-            }}>
-              {initials(name)}
-            </div>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+            <Avatar name={name} size={52} photoUrl={contact.contact_photo_url as string | null} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
                 {name}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                {Boolean(categorization) && <StatusBadge value={categorization} />}
-                {Boolean(jobTitle) && !categorization && (
-                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{jobTitle}</span>
-                )}
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>
+                {subtitle}
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Approve / Reject actions */}
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
-          <div style={{
-            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
-          }}>
-            Review Action
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <button
+              onClick={onDismiss}
+              disabled={isDismissed}
+              className="cursor-default disabled:opacity-40"
+              style={{
+                flex: 1, padding: '7px 12px', fontSize: 13, fontWeight: 600,
+                color: 'var(--color-red)',
+                background: 'transparent',
+                border: '1px solid var(--color-red)',
+                borderRadius: 8,
+                fontFamily: 'inherit', transition: 'opacity 150ms',
+              }}
+              onMouseEnter={e => { if (!isDismissed) e.currentTarget.style.opacity = '0.8' }}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              {isDismissed ? 'Dismissed' : 'Dismiss'}
+            </button>
+            <button
+              onClick={onAddToCrm}
+              disabled={isApproved}
+              className="cursor-default disabled:opacity-40"
+              style={{
+                flex: 1, padding: '7px 12px', fontSize: 13, fontWeight: 600,
+                color: 'var(--text-on-accent)',
+                background: 'var(--color-green)',
+                border: 'none',
+                borderRadius: 8,
+                fontFamily: 'inherit', transition: 'opacity 150ms',
+              }}
+              onMouseEnter={e => { if (!isApproved) e.currentTarget.style.opacity = '0.9' }}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              {isApproved ? 'Added to CRM' : enrichment ? 'Update CRM Contact' : 'Add to CRM'}
+            </button>
           </div>
-          {isAlreadyReviewed ? (
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-              Already {status?.toLowerCase()}. Use the buttons below to change the decision.
-            </div>
-          ) : (
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              Review this contact and approve to add them to Contacts, or reject to archive.
+
+          {isActioned && (
+            <div style={{
+              marginTop: 8, fontSize: 12, fontStyle: 'italic',
+              color: 'var(--text-secondary)',
+            }}>
+              Status: {onboardingStatus}
             </div>
           )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            <button
-              onClick={onApprove}
-              className="cursor-default"
-              style={{
-                flex: 1, padding: '7px 12px', fontSize: 13, fontWeight: 600,
-                color: 'var(--text-on-accent)', background: 'var(--color-green)',
-                borderRadius: 8, border: 'none',
-                fontFamily: 'inherit', transition: 'opacity 150ms',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-            >
-              Approve
-            </button>
-            <button
-              onClick={onReject}
-              className="cursor-default"
-              style={{
-                flex: 1, padding: '7px 12px', fontSize: 13, fontWeight: 600,
-                color: 'var(--text-on-accent)', background: 'var(--color-red)',
-                borderRadius: 8, border: 'none',
-                fontFamily: 'inherit', transition: 'opacity 150ms',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-            >
-              Reject
-            </button>
-          </div>
         </div>
 
-        {/* Contact details — grouped container */}
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--separator)' }}>
+        {/* AI Reasoning card */}
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--separator)' }}>
+          <SectionLabel>AI Reasoning</SectionLabel>
           <div style={{
-            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
+            padding: '12px 14px',
+            borderRadius: 10,
+            background: isDark ? 'rgba(175,82,222,0.08)' : 'rgba(175,82,222,0.05)',
+            border: '1px solid rgba(175,82,222,0.20)',
           }}>
-            Details
-          </div>
-          <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden' }}>
-            {fields.filter(f => f.value).map(({ label, value }, i, arr) => (
-              <div
-                key={label}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  minHeight: 36,
-                  padding: '10px 14px',
-                  borderBottom: i < arr.length - 1 ? '1px solid var(--separator)' : 'none',
-                }}
-              >
-                <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-primary)' }}>
-                  {label}
-                </span>
-                <span style={{
-                  fontSize: 13, fontWeight: 400, color: 'var(--text-primary)',
-                  textAlign: 'right', maxWidth: '60%',
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}>
-                  {value}
-                </span>
-              </div>
-            ))}
+            <p style={{
+              fontSize: 13, color: 'var(--text-primary)',
+              lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap',
+            }}>
+              {aiReasoning || `Contact discovered via email scan. ${
+                enrichment
+                  ? 'Already exists in CRM — new data found from email activity.'
+                  : `Appeared in ${threadCount || 0} email thread${threadCount !== 1 ? 's' : ''}.`
+              }`}
+            </p>
           </div>
         </div>
 
-        {/* Notes — grouped container */}
-        {Boolean(notes) && (
-          <div style={{ padding: '14px 16px' }}>
+        {/* Confidence + Relationship row */}
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            {/* Confidence */}
             <div style={{
-              fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8,
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 8,
+              background: confC.bg,
             }}>
-              Notes
+              <span style={{ fontSize: 12, fontWeight: 600, color: confC.fg }}>
+                Confidence
+              </span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: confC.fg }}>
+                {confidence}%
+              </span>
             </div>
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, overflow: 'hidden', padding: '10px 14px' }}>
-              <p style={{
-                fontSize: 13, color: 'var(--text-primary)',
-                lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0,
-              }}>
-                {notes}
-              </p>
+
+            {/* Relationship */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 8,
+              background: relC.bg,
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: relC.fg }}>
+                {relType}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Extracted Contact Info — editable grid */}
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--separator)' }}>
+          <SectionLabel>Extracted Contact Info</SectionLabel>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>
+                First Name
+              </label>
+              <input
+                type="text"
+                className={inputClass}
+                value={editFields.first_name ?? ''}
+                onChange={e => setEditField('first_name', e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>
+                Last Name
+              </label>
+              <input
+                type="text"
+                className={inputClass}
+                value={editFields.last_name ?? ''}
+                onChange={e => setEditField('last_name', e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>
+                Email
+              </label>
+              <input
+                type="text"
+                className={inputClass}
+                value={editFields.email ?? ''}
+                onChange={e => setEditField('email', e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>
+                Phone
+              </label>
+              <input
+                type="text"
+                className={inputClass}
+                value={editFields.phone ?? ''}
+                onChange={e => setEditField('phone', e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>
+                Title
+              </label>
+              <input
+                type="text"
+                className={inputClass}
+                value={editFields.job_title ?? ''}
+                onChange={e => setEditField('job_title', e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>
+                Relationship Type
+              </label>
+              <select
+                className={inputClass}
+                value={editFields.relationship_type ?? 'Unknown'}
+                onChange={e => setEditField('relationship_type', e.target.value)}
+              >
+                {RELATIONSHIP_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Company pairing card */}
+        {suggestedCompany && (
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--separator)' }}>
+            <SectionLabel>Company Pairing</SectionLabel>
+            <div style={{
+              padding: '12px 14px',
+              borderRadius: 10,
+              background: hasLinkedCompany
+                ? (isDark ? 'rgba(0,122,255,0.08)' : 'rgba(0,122,255,0.05)')
+                : (isDark ? 'rgba(255,204,0,0.08)' : 'rgba(255,204,0,0.05)'),
+              border: hasLinkedCompany
+                ? '1px solid rgba(0,122,255,0.20)'
+                : '1px solid rgba(255,204,0,0.20)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+                }}>
+                  {suggestedCompany}
+                </span>
+                {hasLinkedCompany && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 600, padding: '1px 6px',
+                    borderRadius: 9999, background: 'rgba(0,122,255,0.18)', color: '#0055B3',
+                  }}>
+                    Linked
+                  </span>
+                )}
+              </div>
+              {!hasLinkedCompany && (
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+                  Suggested company — not yet linked to CRM
+                </div>
+              )}
             </div>
           </div>
         )}
 
+        {/* Email Activity stats */}
+        <div style={{ padding: '14px 20px' }}>
+          <SectionLabel>Email Activity</SectionLabel>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8,
+          }}>
+            <StatCard label="Threads" value={String(threadCount || 0)} />
+            <StatCard label="Time Span" value={timeSpan || '--'} />
+            <StatCard label="First Seen" value={firstSeen ? formatDate(firstSeen) : '--'} />
+            <StatCard label="Last Seen" value={lastSeen ? formatDate(lastSeen) : '--'} />
+          </div>
+
+          {discoveredVia && (
+            <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+              Discovered via: {discoveredVia}
+            </div>
+          )}
+        </div>
+
+        {/* Reject action at bottom */}
+        {!isRejected && (
+          <div style={{ padding: '0 20px 20px' }}>
+            <button
+              onClick={onReject}
+              className="cursor-default"
+              style={{
+                width: '100%', padding: '7px 12px', fontSize: 12, fontWeight: 500,
+                color: 'var(--text-secondary)',
+                background: 'transparent',
+                border: '1px solid var(--separator-strong)',
+                borderRadius: 8,
+                fontFamily: 'inherit', transition: 'all 150ms',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--color-red)'
+                e.currentTarget.style.borderColor = 'var(--color-red)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--text-secondary)'
+                e.currentTarget.style.borderColor = 'var(--separator-strong)'
+              }}
+            >
+              Reject Permanently
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{
+      background: 'var(--bg-secondary)', borderRadius: 8, padding: '10px 10px',
+      textAlign: 'center',
+    }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+        {value}
+      </div>
+      <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 3 }}>
+        {label}
       </div>
     </div>
   )
@@ -366,24 +574,97 @@ function ImportedContactDetail({ contact, onApprove, onReject }: DetailProps) {
 
 export default function ImportedContactsPage() {
   const { data: contacts, loading, error, reload } = useEntityList(() => window.electronAPI.importedContacts.getAll())
-  const [activeTab, setActiveTab] = useState<StatusTab>('All')
+  const [sourceTab, setSourceTab] = useState<SourceTab>('All')
+  const [sortBy, setSortBy] = useState<SortMode>('confidence')
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [action, setAction] = useState<'approve' | 'reject' | null>(null)
   const [search, setSearch] = useState('')
+  const [action, setAction] = useState<'dismiss' | 'reject' | 'add' | null>(null)
 
+  // Scan state
+  const [isScanning, setIsScanning] = useState(false)
+  const [lastScan, setLastScan] = useState<string | null>(null)
+  const scanListenerRef = useRef(false)
+
+  // Editable fields for selected contact
+  const [editFields, setEditFields] = useState<Record<string, string>>({})
+
+  // Load scan status on mount
+  useEffect(() => {
+    window.electronAPI.gmail.scanStatus().then(res => {
+      if (res.success && res.data) {
+        setIsScanning(res.data.scanning ?? false)
+        setLastScan(res.data.lastScan ?? null)
+      }
+    }).catch(() => {})
+  }, [])
+
+  // Listen for scan progress events
+  useEffect(() => {
+    if (scanListenerRef.current) return
+    scanListenerRef.current = true
+    window.electronAPI.gmail.onScanProgress((progress: unknown) => {
+      const p = progress as Record<string, unknown>
+      if (p.phase === 'complete' || p.phase === 'error') {
+        setIsScanning(false)
+        setLastScan(new Date().toISOString())
+        reload()
+      } else {
+        setIsScanning(true)
+      }
+    })
+    return () => {
+      window.electronAPI.gmail.removeScanProgressListener()
+      scanListenerRef.current = false
+    }
+  }, [reload])
+
+  // Populate edit fields when selection changes
+  useEffect(() => {
+    const selected = contacts.find(c => c.id === selectedId) ?? null
+    if (selected) {
+      setEditFields({
+        first_name: (selected.first_name as string | null) ?? '',
+        last_name: (selected.last_name as string | null) ?? '',
+        email: (selected.email as string | null) ?? '',
+        phone: (selected.phone as string | null) ?? '',
+        job_title: (selected.job_title as string | null) ?? '',
+        relationship_type: (selected.relationship_type as string | null) ?? 'Unknown',
+      })
+    }
+  }, [selectedId, contacts])
+
+  const setEditField = useCallback((key: string, val: string) => {
+    setEditFields(prev => ({ ...prev, [key]: val }))
+  }, [])
+
+  // Tab counts
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = { All: contacts.length }
-    STATUS_TABS.forEach(tab => {
-      if (tab !== 'All') counts[tab] = contacts.filter(c => c.onboarding_status === tab).length
-    })
+    counts['Email'] = contacts.filter(c => (c.source as string | null) === 'email' || (c.import_source as string | null) === 'Email Scan').length
+    counts['Contacts'] = contacts.filter(c => {
+      const src = (c.source as string | null) ?? (c.import_source as string | null) ?? ''
+      return src !== 'email' && src !== 'Email Scan'
+    }).length
     return counts
   }, [contacts])
 
+  // Filtered + sorted contacts
   const filtered = useMemo(() => {
-    let result = activeTab === 'All'
-      ? contacts
-      : contacts.filter(c => c.onboarding_status === activeTab)
+    let result = contacts
 
+    // Source filter
+    if (sourceTab === 'Email') {
+      result = result.filter(c =>
+        (c.source as string | null) === 'email' || (c.import_source as string | null) === 'Email Scan'
+      )
+    } else if (sourceTab === 'Contacts') {
+      result = result.filter(c => {
+        const src = (c.source as string | null) ?? (c.import_source as string | null) ?? ''
+        return src !== 'email' && src !== 'Email Scan'
+      })
+    }
+
+    // Search
     if (search.trim()) {
       const q = search.toLowerCase()
       result = result.filter(c =>
@@ -393,29 +674,72 @@ export default function ImportedContactsPage() {
         String(c.email ?? '').toLowerCase().includes(q) ||
         String(c.company ?? '').toLowerCase().includes(q) ||
         String(c.job_title ?? '').toLowerCase().includes(q) ||
-        String(c.phone ?? '').toLowerCase().includes(q) ||
-        String(c.mobile_phone ?? '').toLowerCase().includes(q) ||
-        String(c.city ?? '').toLowerCase().includes(q) ||
-        String(c.state ?? '').toLowerCase().includes(q) ||
-        String(c.note ?? '').toLowerCase().includes(q) ||
-        String(c.categorization ?? '').toLowerCase().includes(q) ||
-        String(c.import_source ?? '').toLowerCase().includes(q) ||
-        String(c.linkedin_url ?? '').toLowerCase().includes(q)
+        String(c.suggested_company_name ?? '').toLowerCase().includes(q) ||
+        String(c.relationship_type ?? '').toLowerCase().includes(q)
       )
     }
 
-    return result
-  }, [contacts, activeTab, search])
+    // Sort
+    const sorted = [...result]
+    switch (sortBy) {
+      case 'confidence':
+        sorted.sort((a, b) => ((b.confidence_score as number | null) ?? 0) - ((a.confidence_score as number | null) ?? 0))
+        break
+      case 'newest':
+        sorted.sort((a, b) => {
+          const da = (b.last_seen_date as string | null) ?? (b.import_date as string | null) ?? ''
+          const db = (a.last_seen_date as string | null) ?? (a.import_date as string | null) ?? ''
+          return da.localeCompare(db)
+        })
+        break
+      case 'threads':
+        sorted.sort((a, b) => ((b.email_thread_count as number | null) ?? 0) - ((a.email_thread_count as number | null) ?? 0))
+        break
+    }
+    return sorted
+  }, [contacts, sourceTab, search, sortBy])
 
   const selected = filtered.find(c => c.id === selectedId) ?? null
 
+  // Scan handler
+  async function handleScanNow() {
+    setIsScanning(true)
+    try {
+      await window.electronAPI.gmail.scanNow()
+    } catch {
+      setIsScanning(false)
+    }
+  }
+
+  // Action handlers
   async function handleAction() {
     if (!selected || !action) return
     const id = selected.id as string
-    if (action === 'approve') {
-      await window.electronAPI.importedContacts.approve(id)
-    } else {
+
+    if (action === 'dismiss') {
+      await window.electronAPI.importedContacts.reject(id, 'Dismissed via CRM app')
+    } else if (action === 'reject') {
       await window.electronAPI.importedContacts.reject(id, 'Rejected via CRM app')
+    } else if (action === 'add') {
+      // Create contact via IPC using the editable fields
+      const fields: Record<string, unknown> = {
+        first_name: editFields.first_name || null,
+        last_name: editFields.last_name || null,
+        email: editFields.email || null,
+        mobile_phone: editFields.phone || null,
+        job_title: editFields.job_title || null,
+        categorization: editFields.relationship_type
+          ? JSON.stringify([editFields.relationship_type])
+          : null,
+        import_source: 'Email Intelligence',
+        lead_source: 'Email Scan',
+      }
+
+      const result = await window.electronAPI.contacts.create(fields)
+      if (result.success) {
+        // Mark imported contact as approved
+        await window.electronAPI.importedContacts.approve(id)
+      }
     }
     setAction(null)
     reload()
@@ -430,8 +754,8 @@ export default function ImportedContactsPage() {
   return (
     <div className="flex h-full w-full overflow-hidden">
 
-      {/* List pane — 300px fixed */}
-      <div className="w-[300px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
+      {/* List pane — 320px fixed */}
+      <div className="w-[320px] flex-shrink-0 flex flex-col h-full border-r border-[var(--separator)]">
 
         {/* Search */}
         <div className="px-3 py-2.5 border-b border-[var(--separator)] flex-shrink-0">
@@ -439,20 +763,20 @@ export default function ImportedContactsPage() {
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search contacts…"
+            placeholder="Search imported contacts..."
             className="w-full text-[13px] px-3 py-1.5 rounded-full bg-[var(--bg-secondary)] border border-transparent text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)]"
           />
         </div>
 
-        {/* Status tabs */}
+        {/* Source filter tabs */}
         <div style={{ padding: '6px 10px', borderBottom: '1px solid var(--separator)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {STATUS_TABS.map(tab => {
-              const isActive = activeTab === tab
+          <div style={{ display: 'flex', gap: 4 }}>
+            {SOURCE_TABS.map(tab => {
+              const isActive = sourceTab === tab
               return (
                 <button
                   key={tab}
-                  onClick={() => { setActiveTab(tab); setSelectedId(null) }}
+                  onClick={() => { setSourceTab(tab); setSelectedId(null) }}
                   className="cursor-default"
                   style={{
                     padding: '4px 12px',
@@ -461,7 +785,7 @@ export default function ImportedContactsPage() {
                     borderRadius: 9999,
                     border: 'none',
                     fontFamily: 'inherit',
-                    transition: 'background 150ms',
+                    transition: 'background 150ms, color 150ms',
                     background: isActive ? 'var(--color-accent)' : 'var(--bg-tertiary)',
                     color: isActive ? 'var(--text-on-accent)' : 'var(--text-primary)',
                   }}
@@ -473,12 +797,65 @@ export default function ImportedContactsPage() {
                   }}
                 >
                   {tab}
-                  {tabCounts[tab] > 0 && (
-                    <span style={{ marginLeft: 4, fontSize: 10, opacity: 0.8 }}>{tabCounts[tab]}</span>
-                  )}
+                  <span style={{ marginLeft: 4, fontSize: 10, opacity: 0.7 }}>
+                    {tabCounts[tab] ?? 0}
+                  </span>
                 </button>
               )
             })}
+          </div>
+        </div>
+
+        {/* Scan controls + sort bar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '6px 12px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
+          gap: 8,
+        }}>
+          {/* Scan button + status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button
+              onClick={handleScanNow}
+              disabled={isScanning}
+              className="cursor-default disabled:opacity-50"
+              style={{
+                padding: '3px 10px', fontSize: 11, fontWeight: 600,
+                background: 'var(--color-accent)', color: 'var(--text-on-accent)',
+                borderRadius: 6, border: 'none', fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', gap: 4,
+                transition: 'opacity 150ms',
+              }}
+            >
+              {isScanning && (
+                <svg className="w-3 h-3 spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                </svg>
+              )}
+              {isScanning ? 'Scanning...' : 'Scan Now'}
+            </button>
+            <span style={{ fontSize: 10, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+              {lastScan ? timeAgo(lastScan) : ''}
+            </span>
+          </div>
+
+          {/* Sort toggle */}
+          <div style={{ display: 'flex', gap: 2 }}>
+            {(['confidence', 'newest', 'threads'] as SortMode[]).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setSortBy(mode)}
+                className="cursor-default"
+                style={{
+                  padding: '2px 6px', fontSize: 10, fontWeight: 500,
+                  borderRadius: 4, border: 'none', fontFamily: 'inherit',
+                  background: sortBy === mode ? 'var(--color-accent)' : 'transparent',
+                  color: sortBy === mode ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+                  transition: 'all 150ms',
+                }}
+              >
+                {mode === 'confidence' ? 'Conf.' : mode === 'newest' ? 'New' : 'Threads'}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -488,9 +865,9 @@ export default function ImportedContactsPage() {
             <div className="flex items-center justify-center h-full text-[13px] text-[var(--text-secondary)] px-4 text-center">
               {search
                 ? 'No contacts match your search.'
-                : activeTab === 'All'
-                  ? 'No imported contacts.'
-                  : `No ${activeTab.toLowerCase()} contacts.`}
+                : sourceTab === 'All'
+                  ? 'No imported contacts. Run a scan to discover contacts from email.'
+                  : `No ${sourceTab.toLowerCase()} contacts.`}
             </div>
           ) : (
             filtered.map(contact => (
@@ -508,16 +885,33 @@ export default function ImportedContactsPage() {
       {/* Detail panel — flex-1 */}
       <ImportedContactDetail
         contact={selected}
-        onApprove={() => setAction('approve')}
+        onAddToCrm={() => setAction('add')}
+        onDismiss={() => setAction('dismiss')}
         onReject={() => setAction('reject')}
+        editFields={editFields}
+        setEditField={setEditField}
       />
 
       {/* Confirm dialog */}
       <ConfirmDialog
         open={action !== null}
-        title={action === 'approve' ? 'Approve Contact' : 'Reject Contact'}
-        message={`${action === 'approve' ? 'Approve' : 'Reject'} "${selected ? getContactName(selected) : 'this contact'}"?`}
-        confirmLabel={action === 'approve' ? 'Approve' : 'Reject'}
+        title={
+          action === 'add'
+            ? 'Add to CRM'
+            : action === 'dismiss'
+              ? 'Dismiss Contact'
+              : 'Reject Contact'
+        }
+        message={
+          action === 'add'
+            ? `Create a new CRM contact from "${selected ? getContactName(selected) : 'this contact'}"?`
+            : action === 'dismiss'
+              ? `Dismiss "${selected ? getContactName(selected) : 'this contact'}"? You can undo this later.`
+              : `Permanently reject "${selected ? getContactName(selected) : 'this contact'}"?`
+        }
+        confirmLabel={
+          action === 'add' ? 'Add to CRM' : action === 'dismiss' ? 'Dismiss' : 'Reject'
+        }
         destructive={action === 'reject'}
         onConfirm={handleAction}
         onCancel={() => setAction(null)}
