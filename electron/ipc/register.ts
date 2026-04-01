@@ -281,6 +281,13 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
 
   // ─── Enrichment Queue: approve/dismiss ──────────────────────
 
+  // Allowlist of contact fields that enrichment queue items may update
+  const ENRICHMENT_FIELDS = new Set([
+    'email', 'phone', 'mobile_phone', 'work_phone', 'job_title',
+    'first_name', 'last_name', 'linkedin_url', 'address_line',
+    'city', 'state', 'country', 'postal_code',
+  ])
+
   ipcMain.handle('enrichmentQueue:approve', async (_e, id: string) => {
     try {
       // Read the enrichment item
@@ -302,8 +309,8 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
         }
       } catch { /* ignore */ }
 
-      // Apply the suggested value to the CRM contact
-      if (contactId && fieldName && suggestedValue) {
+      // Apply the suggested value to the CRM contact (only if field is in allowlist)
+      if (contactId && fieldName && suggestedValue && ENRICHMENT_FIELDS.has(fieldName)) {
         await updateRecord('contacts', contactId, {
           [fieldName]: suggestedValue,
         })

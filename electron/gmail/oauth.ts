@@ -3,6 +3,7 @@
 
 import { shell, safeStorage } from 'electron'
 import http from 'http'
+import crypto from 'crypto'
 import { URL } from 'url'
 import { getSetting, setSetting } from '../database/queries/entities'
 
@@ -50,6 +51,7 @@ function encryptTokens(tokens: GmailTokens): string {
     return encrypted.toString('base64')
   }
   // Fallback: base64 only (no OS keychain available)
+  console.warn('[Gmail OAuth] WARNING: OS keychain unavailable — tokens stored without encryption')
   return Buffer.from(json).toString('base64')
 }
 
@@ -109,7 +111,7 @@ export async function startOAuthFlow(): Promise<GmailTokens> {
   const clientSecret = getClientSecret()
 
   // Generate state parameter for CSRF protection
-  const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  const state = crypto.randomBytes(24).toString('base64url')
 
   // Build authorization URL
   const authParams = new URLSearchParams({

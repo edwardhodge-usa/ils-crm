@@ -52,6 +52,17 @@ describe('evaluateRules', () => {
     expect(evaluateRules(candidate, DEFAULT_RULES, 'edward@imaginelabstudios.com')).toBe('pass')
   })
 
+  it('does NOT reject emails that merely contain a group prefix substring', () => {
+    // "mainformation@acme.com" contains "info@" but should NOT be rejected —
+    // sender-pattern rules use startsWith, not includes
+    const candidate = makeCandidate({
+      email: 'mainformation@acme.com',
+      normalizedEmail: 'mainformation@acme.com',
+      threadCount: 3,
+    })
+    expect(evaluateRules(candidate, DEFAULT_RULES, 'edward@imaginelabstudios.com')).toBe('pass')
+  })
+
   it('rejects based on header-match rule (List-Unsubscribe)', () => {
     const rules: Rule[] = [{ type: 'header-match', value: 'List-Unsubscribe', action: 'reject' }]
     const candidate = makeCandidate()

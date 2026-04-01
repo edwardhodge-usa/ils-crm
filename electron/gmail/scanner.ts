@@ -33,6 +33,7 @@ interface EnrichedCandidate extends EmailCandidate {
   _extractedTitle?: string
   _extractedPhone?: string
   _extractedCompany?: string
+  _confidence?: number
 }
 
 // ─── Module State ──────────────────────────────────────────────
@@ -267,25 +268,70 @@ function checkCrmDedup(normalizedEmail: string): string | null {
   }
 }
 
+// Fields eligible for enrichment queue updates
+const ENRICHABLE_FIELDS: Array<{ candidateKey: keyof EmailCandidate; dbColumn: string }> = [
+  { candidateKey: 'firstName', dbColumn: 'first_name' },
+  { candidateKey: 'lastName', dbColumn: 'last_name' },
+]
+
 function writeToEnrichmentQueue(
   contactId: string,
   candidate: EmailCandidate,
 ): void {
-  const id = `local_enrich_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
-  upsert('enrichment_queue', id, {
-    field_name: 'email_scan_update',
-    current_value: candidate.email,
-    suggested_value: JSON.stringify({
-      threadCount: candidate.threadCount,
-      lastSeen: candidate.lastSeenDate.toISOString(),
-      displayName: candidate.displayName,
-    }),
-    source_email_date: candidate.lastSeenDate.toISOString().split('T')[0],
-    status: 'Pending',
-    confidence_score: 0,
-    contact_ids: JSON.stringify([contactId]),
-    _pending_push: 1,
-  })
+  // Read the existing contact from SQLite for field comparison
+  let existingContact: Record<string, unknown> | null = null
+  try {
+    existingContact = getById('contacts', contactId) as Record<string, unknown> | null
+  } catch { /* ignore — will skip enrichment if we can't read */ }
+
+  if (!existingContact) return
+
+  // Check standard fields
+  for (const { candidateKey, dbColumn } of ENRICHABLE_FIELDS) {
+    const candidateValue = candidate[candidateKey]
+    if (candidateValue == null || candidateValue === '') continue
+
+    const existingValue = existingContact[dbColumn] as string | null
+    if (existingValue && existingValue === String(candidateValue)) continue // Same value — skip
+
+    const id = `local_enrich_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    upsert('enrichment_queue', id, {
+      field_name: dbColumn,
+      current_value: existingValue || '',
+      suggested_value: String(candidateValue),
+      source_email_date: candidate.lastSeenDate.toISOString().split('T')[0],
+      status: 'Pending',
+      confidence_score: 0,
+      contact_ids: JSON.stringify([contactId]),
+      _pending_push: 1,
+    })
+  }
+
+  // Check enriched fields (phone, job_title) from signature extraction if present
+  const enrichedCandidate = candidate as EnrichedCandidate
+  const extraFields: Array<{ value: string | undefined; dbColumn: string }> = [
+    { value: enrichedCandidate._extractedPhone, dbColumn: 'phone' },
+    { value: enrichedCandidate._extractedTitle, dbColumn: 'job_title' },
+  ]
+
+  for (const { value, dbColumn } of extraFields) {
+    if (!value) continue
+
+    const existingValue = existingContact[dbColumn] as string | null
+    if (existingValue && existingValue === value) continue
+
+    const id = `local_enrich_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    upsert('enrichment_queue', id, {
+      field_name: dbColumn,
+      current_value: existingValue || '',
+      suggested_value: value,
+      source_email_date: candidate.lastSeenDate.toISOString().split('T')[0],
+      status: 'Pending',
+      confidence_score: 0,
+      contact_ids: JSON.stringify([contactId]),
+      _pending_push: 1,
+    })
+  }
 }
 
 // ─── Batch Write to SQLite + Airtable ──────────────────────────
@@ -664,19 +710,16 @@ function processCandidates(
       continue // Already imported
     }
 
-    // Step 4: Classify
-    const { relationshipType, confidence } = classifyCandidate(candidate)
+    // Step 4: Classify and cache confidence
+    const { confidence } = classifyCandidate(candidate)
+    const enriched: EnrichedCandidate = candidate
+    enriched._confidence = confidence
 
-    // Attach classification to candidate for later use (stored during write)
-    survivors.push(candidate)
+    survivors.push(enriched)
   }
 
-  // Sort by confidence (computed from threadCount, ratios, etc.) descending
-  survivors.sort((a, b) => {
-    const scoreA = classifyCandidate(a).confidence
-    const scoreB = classifyCandidate(b).confidence
-    return scoreB - scoreA
-  })
+  // Sort by cached confidence descending
+  survivors.sort((a, b) => (b._confidence ?? 0) - (a._confidence ?? 0))
 
   return survivors
 }

@@ -35,7 +35,7 @@ export function evaluateRules(
     switch (rule.type) {
       case 'sender-pattern': {
         const patterns = rule.value.split(',').map(p => p.trim().toLowerCase())
-        if (patterns.some(p => emailLower.startsWith(p) || emailLower.includes(p))) {
+        if (patterns.some(p => emailLower.startsWith(p))) {
           return rule.action === 'reject' ? 'reject' : 'pass'
         }
         break
