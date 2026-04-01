@@ -203,6 +203,8 @@ final class SyncEngine {
                 try await pushRecords(PortalAccessRecord.self, service: service, context: context)
             case AirtableConfig.Tables.clientPages:
                 try await pushRecords(ClientPage.self, service: service, context: context)
+            case AirtableConfig.Tables.enrichmentQueue:
+                try await pushRecords(EnrichmentQueueItem.self, service: service, context: context)
             default:
                 break
             }
@@ -301,6 +303,12 @@ final class SyncEngine {
             try await pullRecords(PortalLog.self, service: service, context: context)
         case AirtableConfig.Tables.clientPages:
             try await pullRecords(ClientPage.self, service: service, context: context)
+        case AirtableConfig.Tables.emailScanRules:
+            try await pullRecords(EmailScanRule.self, service: service, context: context)
+        case AirtableConfig.Tables.emailScanState:
+            try await pullRecords(EmailScanState.self, service: service, context: context)
+        case AirtableConfig.Tables.enrichmentQueue:
+            try await pullRecords(EnrichmentQueueItem.self, service: service, context: context)
         default:
             Self.logger.warning("Unknown table ID: \(tableId)")
         }

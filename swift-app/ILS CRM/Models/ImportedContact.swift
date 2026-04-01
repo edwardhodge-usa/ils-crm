@@ -76,6 +76,18 @@ final class ImportedContact {
     var specialtiesIds: [String]         // fldlkF1wlCbxBQ3KJ → Specialties
     var relatedCrmContactIds: [String]   // fldDq3cetx5nrVqGo → Contacts
 
+    // Email Intelligence fields
+    var source: String?                  // fldvGMPt6P73gAVcX
+    var relationshipType: String?        // fldzYctwWVqOAOjOa
+    var confidenceScore: Double?         // fldzB1hYo8JFK7KXL
+    var aiReasoning: String?             // flda0hjnGygmCl6L3
+    var emailThreadCount: Int?           // fldhWoDXNTqOsXZ22
+    var firstSeenDate: Date?             // fldA7MZYLyWEJNGVx
+    var lastSeenDate: Date?              // fldS0wOkNWu8SQnSO
+    var discoveredVia: String?           // fldCUcYTkPATWE97N
+    var suggestedCompanyName: String?    // fldSCvoQayABYZqL5
+    var suggestedCompanyLink: [String]   // fldLGvhdrydRxH5EU → Companies (linked record IDs)
+
     // Sync Metadata
     var airtableModifiedAt: Date?
     var localModifiedAt: Date?
@@ -88,6 +100,7 @@ final class ImportedContact {
         self.syncToContacts = false
         self.specialtiesIds = []
         self.relatedCrmContactIds = []
+        self.suggestedCompanyLink = []
         self.isPendingPush = isPendingPush
     }
 }

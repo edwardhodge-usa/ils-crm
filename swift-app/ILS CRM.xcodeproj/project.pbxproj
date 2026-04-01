@@ -11,11 +11,13 @@
 		0754912CF7D6E72BBF046CEC /* OfflineLockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58CE9F45A1B999C143E2F3AA /* OfflineLockView.swift */; };
 		0945ADA4071C21E97B28C933 /* Specialty.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85AC6A57D105A7C7B62A7BD /* Specialty.swift */; };
 		0A5B4B18C437830933FA900E /* UISmokeCRUDTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48F8B3D8F49202EB1F5C7913 /* UISmokeCRUDTests.swift */; };
+		0C68B6CED4D625996A04FCE6 /* EnrichmentQueueItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49C40EDA92AF620E53721593 /* EnrichmentQueueItem.swift */; };
 		106ADEB53369675C780A9283 /* ClientPage+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316C309AD146E8B39E732EC0 /* ClientPage+Airtable.swift */; };
 		141E801CD0E7D895A261D4AD /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F940D1601214B19B51F716 /* TasksView.swift */; };
 		1ACFC5383147C9326C6B6113 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */; };
 		1E022A0BD2BA8760C00B2ED4 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE314248FE2D8796FC6CF433 /* Project.swift */; };
 		21FE99C66A073A46002E9CCF /* BentoComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AA5E8114E123796534ED260 /* BentoComponents.swift */; };
+		226634A2BA1D580839C9183F /* EnrichmentQueueItem+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60D57910CECCCE026753048 /* EnrichmentQueueItem+Airtable.swift */; };
 		2F2B540BE6651C6070BB48A6 /* Project+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C07D862A21FBBB8121DAE0 /* Project+Airtable.swift */; };
 		30901135097226C483D1DEB2 /* LicenseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4441B2730DB9DFA459D4FBA2 /* LicenseService.swift */; };
 		32A37AC7A71BCA3C59781505 /* PortalLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */; };
@@ -51,6 +53,7 @@
 		9249063E8DC1713631C37A1E /* CRMTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89C658F412AEC8BC5883E5EA /* CRMTask.swift */; };
 		9352236A6AD9AE0E2128BF50 /* ContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 931ED47893850975AFBC12A0 /* ContactsView.swift */; };
 		94CC5A9D200156BA3D214F91 /* DetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D57C205199B792B326959B6 /* DetailComponents.swift */; };
+		9E2C3E2D220949F82F056435 /* EmailScanState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B893E899F8978EB8138240BE /* EmailScanState.swift */; };
 		9F0DE1571922F0514486806B /* TaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F502ADB5929B8F24523FF64E /* TaskFormView.swift */; };
 		A696ACC6AA8099D470D104DB /* SyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C683F26915642FCBFD399A /* SyncEngine.swift */; };
 		A733A762B04063FAE09B39D4 /* OpportunityDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B819D1D3D6D5D6224EA6059 /* OpportunityDetailView.swift */; };
@@ -61,6 +64,7 @@
 		B4B487342A3ADC5D920D605A /* AppStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D01AC9627DB2EC046865779 /* AppStateManager.swift */; };
 		BC02322F46633F5E380D68DC /* ILS_CRM_UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C64BA68513C875444438907A /* ILS_CRM_UITests.swift */; };
 		BCC0A608A777C24598E3D7DA /* AirtableConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B1B436042A8E098AF0ABA6 /* AirtableConfig.swift */; };
+		C12FCA7AF480E16E345D349E /* EmailScanRule+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F95308B83FB85C8EA4E85002 /* EmailScanRule+Airtable.swift */; };
 		C459EDE201B5326CB856C837 /* InteractionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D68C7F1FA49E86B89C127B6 /* InteractionDetailView.swift */; };
 		C552F943C9D54741C708C379 /* PortalAccessRecord+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AE64E65874DA7EEAD56BA2C /* PortalAccessRecord+Airtable.swift */; };
 		C5B5C50392B5F43A15EE4217 /* LinkedRecordPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CE5BF78A83434AD89F1FFCD /* LinkedRecordPicker.swift */; };
@@ -75,7 +79,9 @@
 		E5771CEA27AB55A6E7E40925 /* Contact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFC604A95E0A130C6EAFC7C /* Contact.swift */; };
 		ED94318657AEC4D283753738 /* InteractionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46488C4FC77689E54BDF129 /* InteractionsView.swift */; };
 		F63F2BF32F6391A2F68CAA66 /* RevokedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E0C38FCC1781130B2EA6A71 /* RevokedView.swift */; };
+		F9CC88E46E563141C9396386 /* EmailScanState+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97328204D6403F055134FEC /* EmailScanState+Airtable.swift */; };
 		FB6619F611CA54671C544752 /* Opportunity+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794C572B0816746F1F6DD1EF /* Opportunity+Airtable.swift */; };
+		FCAA9D5C61136176C044B90F /* EmailScanRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4448CFFF7E830271CA6BCED5 /* EmailScanRule.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,8 +116,10 @@
 		316C309AD146E8B39E732EC0 /* ClientPage+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ClientPage+Airtable.swift"; sourceTree = "<group>"; };
 		41AEF7B9304DFAE44834536F /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
 		4441B2730DB9DFA459D4FBA2 /* LicenseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseService.swift; sourceTree = "<group>"; };
+		4448CFFF7E830271CA6BCED5 /* EmailScanRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailScanRule.swift; sourceTree = "<group>"; };
 		48DD1C12C88BD4E268591904 /* PortalAccessRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalAccessRecord.swift; sourceTree = "<group>"; };
 		48F8B3D8F49202EB1F5C7913 /* UISmokeCRUDTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UISmokeCRUDTests.swift; sourceTree = "<group>"; };
+		49C40EDA92AF620E53721593 /* EnrichmentQueueItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnrichmentQueueItem.swift; sourceTree = "<group>"; };
 		4A4004166840F7FE3EEA205D /* CRMTask+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CRMTask+Airtable.swift"; sourceTree = "<group>"; };
 		4AE64E65874DA7EEAD56BA2C /* PortalAccessRecord+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PortalAccessRecord+Airtable.swift"; sourceTree = "<group>"; };
 		4CFC604A95E0A130C6EAFC7C /* Contact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Contact.swift; sourceTree = "<group>"; };
@@ -153,9 +161,11 @@
 		B1AB4AC70FDF9110FCC9AC88 /* AirtableCRUDTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirtableCRUDTests.swift; sourceTree = "<group>"; };
 		B46488C4FC77689E54BDF129 /* InteractionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractionsView.swift; sourceTree = "<group>"; };
 		B6A17675D518A087D5687C46 /* Proposal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Proposal.swift; sourceTree = "<group>"; };
+		B893E899F8978EB8138240BE /* EmailScanState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailScanState.swift; sourceTree = "<group>"; };
 		C59EBB89A28F4676116D8A6D /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
 		C64BA68513C875444438907A /* ILS_CRM_UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ILS_CRM_UITests.swift; sourceTree = "<group>"; };
 		C6F940D1601214B19B51F716 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
+		C97328204D6403F055134FEC /* EmailScanState+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EmailScanState+Airtable.swift"; sourceTree = "<group>"; };
 		CDA67E7B40071D4AE31F92F9 /* ClientPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientPage.swift; sourceTree = "<group>"; };
 		D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Company+Airtable.swift"; sourceTree = "<group>"; };
 		D16508BB0F462650F6DA3D4D /* PipelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineView.swift; sourceTree = "<group>"; };
@@ -169,6 +179,8 @@
 		F314F3062428983FA086B791 /* ILS CRM.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "ILS CRM.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F42F3829BAEFC9576877253A /* LinkedRecordResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedRecordResolver.swift; sourceTree = "<group>"; };
 		F502ADB5929B8F24523FF64E /* TaskFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskFormView.swift; sourceTree = "<group>"; };
+		F60D57910CECCCE026753048 /* EnrichmentQueueItem+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EnrichmentQueueItem+Airtable.swift"; sourceTree = "<group>"; };
+		F95308B83FB85C8EA4E85002 /* EmailScanRule+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EmailScanRule+Airtable.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -198,6 +210,9 @@
 				649C44D1AA43D3C6B31DC0B2 /* Company.swift */,
 				4CFC604A95E0A130C6EAFC7C /* Contact.swift */,
 				89C658F412AEC8BC5883E5EA /* CRMTask.swift */,
+				4448CFFF7E830271CA6BCED5 /* EmailScanRule.swift */,
+				B893E899F8978EB8138240BE /* EmailScanState.swift */,
+				49C40EDA92AF620E53721593 /* EnrichmentQueueItem.swift */,
 				7B7890DD79DA9A6657609855 /* ImportedContact.swift */,
 				68503FBF62BB4C58531F734C /* Interaction.swift */,
 				AD5AC5FD0C4B654A1AC21455 /* Opportunity.swift */,
@@ -219,6 +234,9 @@
 				D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */,
 				7C8D1B1FEA4C806594AAE1EA /* Contact+Airtable.swift */,
 				4A4004166840F7FE3EEA205D /* CRMTask+Airtable.swift */,
+				F95308B83FB85C8EA4E85002 /* EmailScanRule+Airtable.swift */,
+				C97328204D6403F055134FEC /* EmailScanState+Airtable.swift */,
+				F60D57910CECCCE026753048 /* EnrichmentQueueItem+Airtable.swift */,
 				91E7DA8774A3960554DDDB99 /* ImportedContact+Airtable.swift */,
 				1251BF67D5DE50CE8268415C /* Interaction+Airtable.swift */,
 				794C572B0816746F1F6DD1EF /* Opportunity+Airtable.swift */,
@@ -588,6 +606,12 @@
 				4BDEC3D95BEB29FA215B7514 /* DashboardView.swift in Sources */,
 				94CC5A9D200156BA3D214F91 /* DetailComponents.swift in Sources */,
 				732B91B8A241E2C88186FD07 /* EditableAvatarView.swift in Sources */,
+				C12FCA7AF480E16E345D349E /* EmailScanRule+Airtable.swift in Sources */,
+				FCAA9D5C61136176C044B90F /* EmailScanRule.swift in Sources */,
+				F9CC88E46E563141C9396386 /* EmailScanState+Airtable.swift in Sources */,
+				9E2C3E2D220949F82F056435 /* EmailScanState.swift in Sources */,
+				226634A2BA1D580839C9183F /* EnrichmentQueueItem+Airtable.swift in Sources */,
+				0C68B6CED4D625996A04FCE6 /* EnrichmentQueueItem.swift in Sources */,
 				CAF50B0278F5C4463A0040BB /* FramerHealthService.swift in Sources */,
 				4D8A7F7ABB4EA5B7DCD2D998 /* GrantAccessSheet.swift in Sources */,
 				77DA98C48FFAC15CB020819D /* ILSCRMApp.swift in Sources */,

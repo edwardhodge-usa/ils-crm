@@ -35,6 +35,9 @@ struct ILSCRMApp: App {
             PortalAccessRecord.self,
             PortalLog.self,
             ClientPage.self,
+            EmailScanRule.self,
+            EmailScanState.self,
+            EnrichmentQueueItem.self,
         ])
 
         let config = ModelConfiguration(

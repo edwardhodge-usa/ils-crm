@@ -61,6 +61,17 @@ private enum F {
     // Collaborator (read-only)
     static let importedBy = "fldWK7U0Qj1dk8Ume"
     static let assignedAdmin = "flds9MpvnwGkYX9Gi"
+    // Email Intelligence
+    static let source = "fldvGMPt6P73gAVcX"
+    static let relationshipType = "fldzYctwWVqOAOjOa"
+    static let confidenceScore = "fldzB1hYo8JFK7KXL"
+    static let aiReasoning = "flda0hjnGygmCl6L3"
+    static let emailThreadCount = "fldhWoDXNTqOsXZ22"
+    static let firstSeenDate = "fldA7MZYLyWEJNGVx"
+    static let lastSeenDate = "fldS0wOkNWu8SQnSO"
+    static let discoveredVia = "fldCUcYTkPATWE97N"
+    static let suggestedCompanyName = "fldSCvoQayABYZqL5"
+    static let suggestedCompanyLink = "fldLGvhdrydRxH5EU"
 }
 
 extension ImportedContact: AirtableConvertible {
@@ -115,6 +126,17 @@ extension ImportedContact: AirtableConvertible {
         model.syncToContacts = f.bool(for: F.syncToContacts)
         model.specialtiesIds = f.stringArray(for: F.specialties)
         model.relatedCrmContactIds = f.stringArray(for: F.relatedCrmContact)
+        // Email Intelligence
+        model.source = f.string(for: F.source)
+        model.relationshipType = f.string(for: F.relationshipType)
+        model.confidenceScore = f.double(for: F.confidenceScore)
+        model.aiReasoning = f.string(for: F.aiReasoning)
+        model.emailThreadCount = f.int(for: F.emailThreadCount)
+        model.firstSeenDate = f.date(for: F.firstSeenDate)
+        model.lastSeenDate = f.date(for: F.lastSeenDate)
+        model.discoveredVia = f.string(for: F.discoveredVia)
+        model.suggestedCompanyName = f.string(for: F.suggestedCompanyName)
+        model.suggestedCompanyLink = f.stringArray(for: F.suggestedCompanyLink)
         return model
     }
 
@@ -166,6 +188,17 @@ extension ImportedContact: AirtableConvertible {
         existing.syncToContacts = f.bool(for: F.syncToContacts)
         existing.specialtiesIds = f.stringArray(for: F.specialties)
         existing.relatedCrmContactIds = f.stringArray(for: F.relatedCrmContact)
+        // Email Intelligence
+        existing.source = f.string(for: F.source)
+        existing.relationshipType = f.string(for: F.relationshipType)
+        existing.confidenceScore = f.double(for: F.confidenceScore)
+        existing.aiReasoning = f.string(for: F.aiReasoning)
+        existing.emailThreadCount = f.int(for: F.emailThreadCount)
+        existing.firstSeenDate = f.date(for: F.firstSeenDate)
+        existing.lastSeenDate = f.date(for: F.lastSeenDate)
+        existing.discoveredVia = f.string(for: F.discoveredVia)
+        existing.suggestedCompanyName = f.string(for: F.suggestedCompanyName)
+        existing.suggestedCompanyLink = f.stringArray(for: F.suggestedCompanyLink)
         existing.isPendingPush = false
     }
 
