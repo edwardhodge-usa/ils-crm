@@ -89,6 +89,10 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - `pollWindow` must be resolved dynamically via getter function — Electron windows are destroyed on close and recreated, stale refs silently drop IPC
 - React Rules of Hooks: `useMemo`/`useCallback` MUST NOT appear after early returns — move all hooks above conditionals. Contact360Page crashed because 2 `useMemo` hooks were below `if (!contact) return`
 - PARITY.md drifts: always verify claimed "Stub/TODO" status by reading actual file line counts before planning work. Dashboard (560 lines) and Contacts (1600 lines) were fully implemented but marked as stubs
+- **2026-04-01** — Gmail OAuth: Electron uses local HTTP server redirect on localhost:48321; Swift uses ASWebAuthenticationSession — implementations share nothing except client ID
+- **2026-04-01** — Gmail history.list historyId expires after ~7 days — must fallback to full re-scan on 404
+- **2026-04-01** — Airtable API cannot create Collaborator fields — must add manually in UI
+- **2026-04-01** — Email scanner sync lock: acquire/release per batch write (10 records), never hold for full scan duration — prevents blocking CRM sync engine
 
 ### UI / HIG
 - `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements

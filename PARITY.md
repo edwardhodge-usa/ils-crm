@@ -1,7 +1,7 @@
 # ILS CRM — Feature Parity Tracker
 
 > Electron (primary) vs Swift (shadow build)
-> Updated: 2026-03-31 (Full audit — Dashboard, Contacts, Navigation were done but not tracked)
+> Updated: 2026-04-01 (Email Intelligence Phase 1 + Imported Contacts completion)
 
 ## Status Key
 - **Done** — Fully implemented and working
@@ -168,10 +168,38 @@
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Imported contacts staging list | Done | Stub | `ImportedContactsPage.tsx` → `ImportedContactsView.swift` |
-| Approve action | Done | TODO | IPC: `importedContacts:approve` |
-| Reject action (with reason) | Done | TODO | IPC: `importedContacts:reject` |
-| Name display | Done | TODO | Fixed: `getContactName()` reads `imported_contact_name`, falls back to `first_name`/`last_name`, then `email` |
+| Imported contacts staging list | Done | Done | `ImportedContactsPage.tsx` → `ImportedContactsView.swift` |
+| Approve action | Done | Done | IPC: `importedContacts:approve` |
+| Reject action (with reason) | Done | Done | IPC: `importedContacts:reject` |
+| Name display | Done | Done | Fixed: `getContactName()` reads `imported_contact_name`, falls back to `first_name`/`last_name`, then `email` |
+
+## Email Intelligence (Phase 1)
+
+| Feature | Electron Status | Swift Status | Notes |
+|---------|----------------|--------------|-------|
+| Gmail OAuth flow | Done | Done | Per-user, gmail.readonly scope, safeStorage/Keychain |
+| Gmail API client | Done | Done | messages.list, history.list, full MIME parsing |
+| Email scanner orchestrator | Done | Done | Full/incremental/on-demand scan modes |
+| Rules engine (8 default rules) | Done | Done | Configurable via Airtable table |
+| Heuristic classifier (0-60) | Done | Done | Thread frequency, From/CC ratio, time span |
+| Signature extraction (regex) | Done | Done | Phone, title, company from email body |
+| Email normalization | Done | Done | Plus-alias stripping, Gmail dot handling |
+| Name parsing from headers | Done | Done | Display name → first/last splitting |
+| Source filter tabs | Done | Done | All / Email / Contacts |
+| Confidence badges | Done | Done | Green ≥80, yellow ≥50, gray <50 |
+| Relationship type badges | Done | Done | Client/Vendor/Employee/Contractor/Unknown |
+| AI Reasoning card | Done | Done | Shows ai_reasoning or fallback metadata |
+| Company pairing card | Done | Done | Yellow for new, blue for existing company |
+| Email Activity stats | Done | Done | Threads, time span, first/last seen via |
+| Scan Now button | Done | Done | Triggers on-demand scan |
+| Background polling | Done | Done | Configurable interval (1m/5m/15m/Off) |
+| Settings: Gmail connection | Done | Done | Connect/disconnect, email display |
+| Settings: Scan interval | Done | Done | Picker with configurable intervals |
+| Approve flow (Add to CRM) | Done | Done | Pre-filled form, creates Contact + Company |
+| Dismiss/Reject flow | Done | Done | State machine transitions |
+| Enrichment queue | Done | Done | Existing contact update suggestions |
+| Airtable schema (3 tables) | Done | Done | Email Scan Rules, State, Enrichment Queue |
+| 11 new Imported Contact fields | Done | Done | Source through Suggested Company |
 
 ## Portal
 
@@ -264,15 +292,16 @@
 | Proposals | 4 | 0 | 2 | 2 |
 | Projects | 5 | 0 | 2 | 3 |
 | Interactions | 5 | 0 | 2 | 3 |
-| Imported Contacts | 4 | 0 | 1 | 3 |
+| Imported Contacts | 4 | 4 | 0 | 0 |
+| Email Intelligence | 23 | 23 | 0 | 0 |
 | Portal | 4 | 0 | 2 | 2 |
 | Settings | 6 | 7 | 0 | 0 |
 | Shared Components | 14 | 0 | 5 | 9 |
 | Search & Commands | 3 | 0 | 0 | 3 |
 | Data Operations | 10 | 6 | 0 | 4 |
 | Platform | 3 | 0 | 0 | 3 |
-| **TOTAL** | **137** | **74** | **21** | **45** |
+| **TOTAL** | **160** | **101** | **20** | **42** |
 
-Swift now has **74 features done** (54%) — up from 55 after 2026-03-31 audit.
-Key gains: Dashboard fully implemented (stat cards, tasks due today, follow-up alerts, pipeline bar chart). Contacts fully implemented (list with search + 3 sort modes + categorization filter tabs, 360 bento detail with hero/overview/timeline/linked records/opportunities/notes/partner data, specialty color badges). Navigation complete (sidebar, Go menu Cmd+1-0, Cmd+N, SidebarCommands, sync toolbar). Settings now includes Appearance (System/Light/Dark) toggle.
-**21 stubs** remain with placeholder UI, **45 features** need implementation from scratch.
+Swift now has **101 features done** (63%) — up from 74 after Email Intelligence Phase 1 + Imported Contacts completion.
+Key gains: Email Intelligence Phase 1 (23 features) — Gmail OAuth, scanning, rules engine, heuristic classifier, signature extraction, approve/dismiss flows, enrichment queue, settings UI. Imported Contacts fully implemented (list, approve, reject, name display).
+**20 stubs** remain with placeholder UI, **42 features** need implementation from scratch.
