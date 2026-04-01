@@ -155,6 +155,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     connect: () => ipcRenderer.invoke('gmail:connect'),
     disconnect: () => ipcRenderer.invoke('gmail:disconnect'),
     status: () => ipcRenderer.invoke('gmail:status'),
+    scanNow: () => ipcRenderer.invoke('gmail:scan-now'),
+    scanFull: () => ipcRenderer.invoke('gmail:scan-full'),
+    scanStatus: () => ipcRenderer.invoke('gmail:scan-status'),
+    scanInterval: (intervalMs: number) => ipcRenderer.invoke('gmail:scan-interval', intervalMs),
+    onScanProgress: (cb: (progress: unknown) => void) => {
+      ipcRenderer.on('emailScan:progress', (_e, data) => cb(data))
+    },
+    removeScanProgressListener: () => {
+      ipcRenderer.removeAllListeners('emailScan:progress')
+    },
   },
 
   // Framer page health

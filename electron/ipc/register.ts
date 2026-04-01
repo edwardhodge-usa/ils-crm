@@ -16,6 +16,7 @@ import {
 import { getDatabase, saveDatabase } from '../database/init'
 import { checkLicense, getLastVerifiedTime, isWithinGracePeriod, handleRevocation } from '../airtable/license-check'
 import { startOAuthFlow, disconnectGmail, isGmailConnected, getConnectedEmail } from '../gmail/oauth'
+import { scanNow, scanFull, getScanProgress, setPollingInterval } from '../gmail/scanner'
 
 // ─── Allowlist: keys the renderer is permitted to write via settings:set ─────
 // Omitted intentionally: license_last_verified, license_status, user_id — main-process only
@@ -626,6 +627,50 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       }
     } catch (error) {
       console.error('[IPC] gmail:status failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  // ─── Gmail Scan ──────────────────────────────────────────────────
+
+  ipcMain.handle('gmail:scan-now', async () => {
+    try {
+      // Fire and forget — scan runs in background, progress via IPC events
+      scanNow().catch(err => console.error('[IPC] gmail:scan-now background error:', String(err)))
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] gmail:scan-now failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('gmail:scan-full', async () => {
+    try {
+      // Fire and forget — scan runs in background, progress via IPC events
+      scanFull().catch(err => console.error('[IPC] gmail:scan-full background error:', String(err)))
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] gmail:scan-full failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('gmail:scan-status', async () => {
+    try {
+      const progress = getScanProgress()
+      return { success: true, data: progress }
+    } catch (error) {
+      console.error('[IPC] gmail:scan-status failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('gmail:scan-interval', async (_e, intervalMs: number) => {
+    try {
+      setPollingInterval(intervalMs)
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] gmail:scan-interval failed:', String(error))
       return { success: false, error: String(error) }
     }
   })
