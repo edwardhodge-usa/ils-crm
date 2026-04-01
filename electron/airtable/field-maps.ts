@@ -16,6 +16,9 @@ export const TABLES = {
   portalAccess: 'tblN1jruT8VeucPKa',
   portalLogs: 'tblj70XPHI7wnUmxO',
   clientPages: 'tblo5TQos1VUGfuaQ',
+  emailScanRules: 'tblU4KmCS24s36r1L',
+  emailScanState: 'tblLxTKPq10pyu4Tc',
+  enrichmentQueue: 'tbliKcirq0FuQloJH',
 } as const
 
 // ─── Contacts (57 fields) ────────────────────────────────────
@@ -293,6 +296,18 @@ export const IMPORTED_CONTACTS = {
   // Collaborator
   importedBy: 'fldWK7U0Qj1dk8Ume',
   assignedAdmin: 'flds9MpvnwGkYX9Gi',
+
+  // Email Intelligence fields
+  source: 'fldvGMPt6P73gAVcX',
+  relationshipType: 'fldzYctwWVqOAOjOa',
+  confidenceScore: 'fldzB1hYo8JFK7KXL',
+  aiReasoning: 'flda0hjnGygmCl6L3',
+  emailThreadCount: 'fldhWoDXNTqOsXZ22',
+  firstSeenDate: 'fldA7MZYLyWEJNGVx',
+  lastSeenDate: 'fldS0wOkNWu8SQnSO',
+  discoveredVia: 'fldCUcYTkPATWE97N',
+  suggestedCompanyName: 'fldSCvoQayABYZqL5',
+  suggestedCompany: 'fldLGvhdrydRxH5EU',
 } as const
 
 // ─── Companies (24 fields) ───────────────────────────────────
@@ -416,6 +431,38 @@ export const CLIENT_PAGES = {
   vFullL:       'fldcOCTCLvx36MV5L',  // checkbox — Full Length video section
 } as const
 
+// ─── Email Scan Rules (5 fields) ─────────────────────────────
+
+export const EMAIL_SCAN_RULES = {
+  ruleName: 'fldwaine7l24qIemY', // primary
+  ruleType: 'fldhAEzf3IpTkpebu',
+  ruleValue: 'fldJJpQphiPXUIwhR',
+  action: 'fldCvZPjvVNBEOp0M',
+  isActive: 'fldlsq8iueIWhMOXd',
+} as const
+
+// ─── Email Scan State (5 fields) ─────────────────────────────
+
+export const EMAIL_SCAN_STATE = {
+  userEmail: 'fldIwjUn6mD8MTCyg', // primary
+  gmailHistoryId: 'fld4omaKICcnHqqon',
+  lastScanDate: 'fldCuCDhj1gL0iZ7s',
+  scanStatus: 'fldIpRB4NQXRcv7TP',
+  totalProcessed: 'fldljrn2FA8yLrrzb',
+} as const
+
+// ─── Enrichment Queue (7 fields) ─────────────────────────────
+
+export const ENRICHMENT_QUEUE = {
+  fieldName: 'fldoUsfLV43KF0n0U', // primary
+  currentValue: 'fld5p9Wdv3mIPbKGT',
+  suggestedValue: 'fldMpA7t7WhXTIUIK',
+  sourceEmailDate: 'fldZ7zeBrsRndA1SY',
+  status: 'fldybd6l0RMMV70qR',
+  confidenceScore: 'fldApRf3M38HZdf8D',
+  contact: 'fldw3AfIZ6WUbMnw0',
+} as const
+
 // ─── Primary field IDs (for display name resolution) ─────────
 
 export const PRIMARY_FIELDS: Record<string, string> = {
@@ -431,4 +478,7 @@ export const PRIMARY_FIELDS: Record<string, string> = {
   [TABLES.portalAccess]: PORTAL_ACCESS.name,
   [TABLES.portalLogs]: PORTAL_LOGS.id,
   [TABLES.clientPages]: CLIENT_PAGES.pageAddress,
+  [TABLES.emailScanRules]: EMAIL_SCAN_RULES.ruleName,
+  [TABLES.emailScanState]: EMAIL_SCAN_STATE.userEmail,
+  [TABLES.enrichmentQueue]: ENRICHMENT_QUEUE.fieldName,
 }

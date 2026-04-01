@@ -271,6 +271,16 @@ export function createSchema(db: SqlJsDatabase): void {
       related_crm_contact_ids TEXT,
       imported_by TEXT,
       assigned_admin TEXT,
+      source TEXT,
+      relationship_type TEXT,
+      confidence_score REAL,
+      ai_reasoning TEXT,
+      email_thread_count INTEGER,
+      first_seen_date TEXT,
+      last_seen_date TEXT,
+      discovered_via TEXT,
+      suggested_company_name TEXT,
+      suggested_company_ids TEXT,
       _airtable_modified_at TEXT,
       _local_modified_at TEXT,
       _pending_push INTEGER DEFAULT 0
@@ -370,6 +380,17 @@ export function createSchema(db: SqlJsDatabase): void {
     'ALTER TABLE companies ADD COLUMN logo_url TEXT',
     'ALTER TABLE companies ADD COLUMN linkedin_url TEXT',
     'ALTER TABLE contacts ADD COLUMN contact_photo_url TEXT',
+    // Email Intelligence fields on imported_contacts
+    'ALTER TABLE imported_contacts ADD COLUMN source TEXT',
+    'ALTER TABLE imported_contacts ADD COLUMN relationship_type TEXT',
+    'ALTER TABLE imported_contacts ADD COLUMN confidence_score REAL',
+    'ALTER TABLE imported_contacts ADD COLUMN ai_reasoning TEXT',
+    'ALTER TABLE imported_contacts ADD COLUMN email_thread_count INTEGER',
+    'ALTER TABLE imported_contacts ADD COLUMN first_seen_date TEXT',
+    'ALTER TABLE imported_contacts ADD COLUMN last_seen_date TEXT',
+    'ALTER TABLE imported_contacts ADD COLUMN discovered_via TEXT',
+    'ALTER TABLE imported_contacts ADD COLUMN suggested_company_name TEXT',
+    'ALTER TABLE imported_contacts ADD COLUMN suggested_company_ids TEXT',
   ]
   for (const sql of fieldAuditMigrations) {
     try { db.run(sql) } catch { /* column already exists */ }
@@ -411,6 +432,49 @@ export function createSchema(db: SqlJsDatabase): void {
       v_highlight INTEGER DEFAULT 0,
       v_360 INTEGER DEFAULT 0,
       v_full_l INTEGER DEFAULT 0,
+      _airtable_modified_at TEXT,
+      _local_modified_at TEXT,
+      _pending_push INTEGER DEFAULT 0
+    )
+  `)
+
+  // ─── Email Scan Rules ──────────────────────────────────
+  db.run(`
+    CREATE TABLE IF NOT EXISTS email_scan_rules (
+      id TEXT PRIMARY KEY,
+      rule_name TEXT,
+      rule_type TEXT,
+      rule_value TEXT,
+      action TEXT,
+      is_active INTEGER DEFAULT 0,
+      _airtable_modified_at TEXT
+    )
+  `)
+
+  // ─── Email Scan State ─────────────────────────────────
+  db.run(`
+    CREATE TABLE IF NOT EXISTS email_scan_state (
+      id TEXT PRIMARY KEY,
+      user_email TEXT,
+      gmail_history_id TEXT,
+      last_scan_date TEXT,
+      scan_status TEXT,
+      total_processed INTEGER,
+      _airtable_modified_at TEXT
+    )
+  `)
+
+  // ─── Enrichment Queue ─────────────────────────────────
+  db.run(`
+    CREATE TABLE IF NOT EXISTS enrichment_queue (
+      id TEXT PRIMARY KEY,
+      field_name TEXT,
+      current_value TEXT,
+      suggested_value TEXT,
+      source_email_date TEXT,
+      status TEXT,
+      confidence_score REAL,
+      contact_ids TEXT,
       _airtable_modified_at TEXT,
       _local_modified_at TEXT,
       _pending_push INTEGER DEFAULT 0
@@ -490,6 +554,7 @@ export function createSchema(db: SqlJsDatabase): void {
     'contacts', 'companies', 'opportunities', 'tasks', 'proposals',
     'projects', 'interactions', 'imported_contacts', 'specialties',
     'portal_access', 'portal_logs', 'client_pages',
+    'email_scan_rules', 'email_scan_state', 'enrichment_queue',
   ]
   for (const name of tableNames) {
     db.run('INSERT OR IGNORE INTO sync_status (table_name) VALUES (?)', [name])

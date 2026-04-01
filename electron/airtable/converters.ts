@@ -6,6 +6,7 @@ import {
   CONTACTS, OPPORTUNITIES, TASKS, PROPOSALS, PROJECTS,
   INTERACTIONS, IMPORTED_CONTACTS, COMPANIES, SPECIALTIES,
   PORTAL_ACCESS, PORTAL_LOGS, CLIENT_PAGES,
+  EMAIL_SCAN_RULES, EMAIL_SCAN_STATE, ENRICHMENT_QUEUE,
 } from './field-maps'
 import type { AirtableRecord } from './client'
 
@@ -428,6 +429,17 @@ const IMPORTED_CONTACT_MAPPINGS: FieldMapping[] = [
   { local: 'related_crm_contact_ids', airtable: IMPORTED_CONTACTS.relatedCrmContact, type: 'linked' },
   { local: 'imported_by', airtable: IMPORTED_CONTACTS.importedBy, type: 'collaborator' },
   { local: 'assigned_admin', airtable: IMPORTED_CONTACTS.assignedAdmin, type: 'collaborator' },
+  // Email Intelligence fields
+  { local: 'source', airtable: IMPORTED_CONTACTS.source, type: 'singleSelect' },
+  { local: 'relationship_type', airtable: IMPORTED_CONTACTS.relationshipType, type: 'singleSelect' },
+  { local: 'confidence_score', airtable: IMPORTED_CONTACTS.confidenceScore, type: 'number' },
+  { local: 'ai_reasoning', airtable: IMPORTED_CONTACTS.aiReasoning, type: 'text' },
+  { local: 'email_thread_count', airtable: IMPORTED_CONTACTS.emailThreadCount, type: 'number' },
+  { local: 'first_seen_date', airtable: IMPORTED_CONTACTS.firstSeenDate, type: 'text' },
+  { local: 'last_seen_date', airtable: IMPORTED_CONTACTS.lastSeenDate, type: 'text' },
+  { local: 'discovered_via', airtable: IMPORTED_CONTACTS.discoveredVia, type: 'singleSelect' },
+  { local: 'suggested_company_name', airtable: IMPORTED_CONTACTS.suggestedCompanyName, type: 'text' },
+  { local: 'suggested_company_ids', airtable: IMPORTED_CONTACTS.suggestedCompany, type: 'linked' },
 ]
 
 // ─── Specialties ─────────────────────────────────────────────
@@ -511,6 +523,38 @@ const CLIENT_PAGES_MAPPINGS: FieldMapping[] = [
   { local: 'v_full_l',      airtable: CLIENT_PAGES.vFullL,       type: 'checkbox' },
 ]
 
+// ─── Email Scan Rules ───────────────────────────────────────
+
+const EMAIL_SCAN_RULES_MAPPINGS: FieldMapping[] = [
+  { local: 'rule_name', airtable: EMAIL_SCAN_RULES.ruleName, type: 'text' },
+  { local: 'rule_type', airtable: EMAIL_SCAN_RULES.ruleType, type: 'singleSelect' },
+  { local: 'rule_value', airtable: EMAIL_SCAN_RULES.ruleValue, type: 'text' },
+  { local: 'action', airtable: EMAIL_SCAN_RULES.action, type: 'singleSelect' },
+  { local: 'is_active', airtable: EMAIL_SCAN_RULES.isActive, type: 'checkbox' },
+]
+
+// ─── Email Scan State ───────────────────────────────────────
+
+const EMAIL_SCAN_STATE_MAPPINGS: FieldMapping[] = [
+  { local: 'user_email', airtable: EMAIL_SCAN_STATE.userEmail, type: 'text' },
+  { local: 'gmail_history_id', airtable: EMAIL_SCAN_STATE.gmailHistoryId, type: 'text' },
+  { local: 'last_scan_date', airtable: EMAIL_SCAN_STATE.lastScanDate, type: 'text' },
+  { local: 'scan_status', airtable: EMAIL_SCAN_STATE.scanStatus, type: 'singleSelect' },
+  { local: 'total_processed', airtable: EMAIL_SCAN_STATE.totalProcessed, type: 'number' },
+]
+
+// ─── Enrichment Queue ───────────────────────────────────────
+
+const ENRICHMENT_QUEUE_MAPPINGS: FieldMapping[] = [
+  { local: 'field_name', airtable: ENRICHMENT_QUEUE.fieldName, type: 'text' },
+  { local: 'current_value', airtable: ENRICHMENT_QUEUE.currentValue, type: 'text' },
+  { local: 'suggested_value', airtable: ENRICHMENT_QUEUE.suggestedValue, type: 'text' },
+  { local: 'source_email_date', airtable: ENRICHMENT_QUEUE.sourceEmailDate, type: 'text' },
+  { local: 'status', airtable: ENRICHMENT_QUEUE.status, type: 'singleSelect' },
+  { local: 'confidence_score', airtable: ENRICHMENT_QUEUE.confidenceScore, type: 'number' },
+  { local: 'contact_ids', airtable: ENRICHMENT_QUEUE.contact, type: 'linked' },
+]
+
 // ─── Exported converter map ──────────────────────────────────
 
 export const TABLE_CONVERTERS: Record<string, {
@@ -532,6 +576,9 @@ const allTables: Array<[string, FieldMapping[]]> = [
   ['portal_access', PORTAL_ACCESS_MAPPINGS],
   ['portal_logs', PORTAL_LOG_MAPPINGS],
   ['client_pages', CLIENT_PAGES_MAPPINGS],
+  ['email_scan_rules', EMAIL_SCAN_RULES_MAPPINGS],
+  ['email_scan_state', EMAIL_SCAN_STATE_MAPPINGS],
+  ['enrichment_queue', ENRICHMENT_QUEUE_MAPPINGS],
 ]
 
 for (const [name, mappings] of allTables) {

@@ -217,6 +217,17 @@ export interface ImportedContact {
   sync_to_contacts: boolean
   specialties_ids: string | null
   related_crm_contact_ids: string | null
+  // Email Intelligence fields
+  source: string | null
+  relationship_type: string | null
+  confidence_score: number | null
+  ai_reasoning: string | null
+  email_thread_count: number | null
+  first_seen_date: string | null
+  last_seen_date: string | null
+  discovered_via: string | null
+  suggested_company_name: string | null
+  suggested_company_ids: string | null // JSON array of record IDs
 }
 
 export interface PortalAccess {
@@ -259,6 +270,35 @@ export interface PortalLog {
   clarity_session: string | null
   page_url: string | null
   timestamp: string | null
+}
+
+export interface EmailScanRule {
+  id: string
+  rule_name: string | null
+  rule_type: string | null
+  rule_value: string | null
+  action: string | null
+  is_active: boolean
+}
+
+export interface EmailScanState {
+  id: string
+  user_email: string | null
+  gmail_history_id: string | null
+  last_scan_date: string | null
+  scan_status: string | null
+  total_processed: number | null
+}
+
+export interface EnrichmentQueueItem {
+  id: string
+  field_name: string | null
+  current_value: string | null
+  suggested_value: string | null
+  source_email_date: string | null
+  status: string | null
+  confidence_score: number | null
+  contact_ids: string | null // JSON array of record IDs
 }
 
 // ─── View/List Types ─────────────────────────────────────────
