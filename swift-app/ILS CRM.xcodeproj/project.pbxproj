@@ -37,6 +37,7 @@
 		4BDEC3D95BEB29FA215B7514 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0AD484B882AECF1ABE3213F /* DashboardView.swift */; };
 		4D8A7F7ABB4EA5B7DCD2D998 /* GrantAccessSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFDA42D74F4FFE80986174F /* GrantAccessSheet.swift */; };
 		4E0EBF0C0D85BCA62C854718 /* SuggestionReviewForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2746020D99157EA5E25E51C /* SuggestionReviewForm.swift */; };
+		F1A2B3C4D5E6F70890123456 /* EnrichmentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F70890ABCDEF /* EnrichmentDetailView.swift */; };
 		4E29CF83F9440DEF732177F2 /* ImportedContact+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91E7DA8774A3960554DDDB99 /* ImportedContact+Airtable.swift */; };
 		51BEE4C3427A703E9EA4DE7E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DD07A3581FA6F5DB4CCD50E /* ContentView.swift */; };
 		5498D0C4CB1B1F07FFD985B3 /* PortalLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96E233D4EA498B4D591789D1 /* PortalLog.swift */; };
@@ -189,6 +190,7 @@
 		DFFDA42D74F4FFE80986174F /* GrantAccessSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrantAccessSheet.swift; sourceTree = "<group>"; };
 		E0AD484B882AECF1ABE3213F /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		E2746020D99157EA5E25E51C /* SuggestionReviewForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestionReviewForm.swift; sourceTree = "<group>"; };
+		F1A2B3C4D5E6F70890ABCDEF /* EnrichmentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnrichmentDetailView.swift; sourceTree = "<group>"; };
 		E33304DE2A8B008C7C3F330F /* FramerHealthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FramerHealthService.swift; sourceTree = "<group>"; };
 		E6073CD44784B64287F728E7 /* ProposalDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProposalDetailView.swift; sourceTree = "<group>"; };
 		ED59216158DF4769EFB6BD74 /* CompaniesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompaniesView.swift; sourceTree = "<group>"; };
@@ -462,6 +464,7 @@
 		D690F441BF7CA5615EEA1105 /* ImportedContacts */ = {
 			isa = PBXGroup;
 			children = (
+				F1A2B3C4D5E6F70890ABCDEF /* EnrichmentDetailView.swift */,
 				80AAFC4F81B96A6478FEDDBA /* ImportedContactDetailView.swift */,
 				A49F9AFC3A3BFE5B1C86EAC7 /* ImportedContactsView.swift */,
 				E2746020D99157EA5E25E51C /* SuggestionReviewForm.swift */,
@@ -684,6 +687,7 @@
 				7476753DF05C0CD03C7076FA /* Specialty+Airtable.swift in Sources */,
 				0945ADA4071C21E97B28C933 /* Specialty.swift in Sources */,
 				4E0EBF0C0D85BCA62C854718 /* SuggestionReviewForm.swift in Sources */,
+				F1A2B3C4D5E6F70890123456 /* EnrichmentDetailView.swift in Sources */,
 				A696ACC6AA8099D470D104DB /* SyncEngine.swift in Sources */,
 				35C3F4BEF1740DA2C7220139 /* TaskDetailView.swift in Sources */,
 				9F0DE1571922F0514486806B /* TaskFormView.swift in Sources */,

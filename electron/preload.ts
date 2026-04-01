@@ -108,11 +108,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
     delete: (id: string) => ipcRenderer.invoke('portalLogs:delete', id),
   },
 
-  // Imported contacts with approve/reject
+  // Imported contacts with approve/dismiss/reject
   importedContacts: {
     ...makeReadOnlyBridge('importedContacts'),
-    approve: (id: string) => ipcRenderer.invoke('importedContacts:approve', id),
+    approve: (id: string, editedFields?: Record<string, unknown>) =>
+      ipcRenderer.invoke('importedContacts:approve', id, editedFields),
+    dismiss: (id: string) => ipcRenderer.invoke('importedContacts:dismiss', id),
     reject: (id: string, reason: string) => ipcRenderer.invoke('importedContacts:reject', id, reason),
+  },
+
+  // Enrichment queue with approve/dismiss
+  enrichmentQueue: {
+    ...makeReadOnlyBridge('enrichmentQueue'),
+    approve: (id: string) => ipcRenderer.invoke('enrichmentQueue:approve', id),
+    dismiss: (id: string) => ipcRenderer.invoke('enrichmentQueue:dismiss', id),
   },
 
   // Dashboard aggregations

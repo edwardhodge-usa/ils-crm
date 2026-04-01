@@ -199,6 +199,152 @@ function SectionLabel({ children }: { children: string }) {
   )
 }
 
+// ─── Enrichment diff detail view ─────────────────────────────
+
+interface EnrichmentDetailProps {
+  item: Record<string, unknown>
+  onAccept: () => void
+  onDismiss: () => void
+}
+
+function EnrichmentDetail({ item, onAccept, onDismiss }: EnrichmentDetailProps) {
+  const isDark = useDarkMode()
+  const fieldName = (item.field_name as string | null) ?? 'Unknown Field'
+  const currentValue = (item.current_value as string | null) ?? ''
+  const suggestedValue = (item.suggested_value as string | null) ?? ''
+  const confidence = (item.confidence_score as number | null) ?? 0
+  const sourceDate = item.source_email_date as string | null
+  const status = (item.status as string | null) ?? 'Pending'
+  const confC = confidenceColor(confidence)
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
+      <div className="flex-1 overflow-y-auto">
+        {/* Header */}
+        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--separator)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: isDark ? 'rgba(52,199,89,0.15)' : 'rgba(52,199,89,0.10)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2L12.5 7.5L18 8.5L14 12.5L15 18L10 15.5L5 18L6 12.5L2 8.5L7.5 7.5L10 2Z"
+                  stroke="rgba(52,199,89,0.8)" strokeWidth="1.5" fill="rgba(52,199,89,0.15)" />
+              </svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+                Field Update
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                Enrichment suggestion from email scan
+              </div>
+            </div>
+            <div style={{
+              padding: '4px 10px', borderRadius: 6,
+              background: confC.bg,
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: confC.fg }}>
+                {confidence}% confidence
+              </span>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={onDismiss}
+              className="cursor-default"
+              style={{
+                flex: 1, padding: '7px 12px', fontSize: 13, fontWeight: 600,
+                color: 'var(--color-red)', background: 'transparent',
+                border: '1px solid var(--color-red)', borderRadius: 8,
+                fontFamily: 'inherit', transition: 'opacity 150ms',
+              }}
+            >
+              Dismiss
+            </button>
+            <button
+              onClick={onAccept}
+              className="cursor-default"
+              style={{
+                flex: 1, padding: '7px 12px', fontSize: 13, fontWeight: 600,
+                color: 'var(--text-on-accent)', background: 'var(--color-green)',
+                border: 'none', borderRadius: 8,
+                fontFamily: 'inherit', transition: 'opacity 150ms',
+              }}
+            >
+              Accept Update
+            </button>
+          </div>
+        </div>
+
+        {/* Diff view */}
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--separator)' }}>
+          <SectionLabel>Proposed Change</SectionLabel>
+          <div style={{
+            padding: '14px 16px', borderRadius: 10,
+            background: isDark ? 'rgba(52,199,89,0.06)' : 'rgba(52,199,89,0.04)',
+            border: '1px solid rgba(52,199,89,0.2)',
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const,
+              letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 10 }}>
+              {fieldName}
+            </div>
+
+            {/* Current value */}
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                CURRENT VALUE
+              </div>
+              <div style={{
+                fontSize: 14, color: 'var(--text-secondary)',
+                textDecoration: 'line-through', opacity: 0.7,
+                padding: '6px 10px', borderRadius: 6,
+                background: isDark ? 'rgba(255,59,48,0.08)' : 'rgba(255,59,48,0.05)',
+              }}>
+                {currentValue || '(empty)'}
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: 16, marginBottom: 6 }}>
+              ↓
+            </div>
+
+            {/* Suggested value */}
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: '#248A3D', marginBottom: 4 }}>
+                SUGGESTED VALUE
+              </div>
+              <div style={{
+                fontSize: 14, fontWeight: 600, color: 'var(--text-primary)',
+                padding: '6px 10px', borderRadius: 6,
+                background: isDark ? 'rgba(52,199,89,0.12)' : 'rgba(52,199,89,0.08)',
+                border: '1px solid rgba(52,199,89,0.25)',
+              }}>
+                {suggestedValue || '(empty)'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Metadata */}
+        <div style={{ padding: '14px 20px' }}>
+          <SectionLabel>Details</SectionLabel>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <StatCard label="Status" value={status} />
+            <StatCard label="Source Date" value={sourceDate ? formatDate(sourceDate) : '--'} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Detail panel ─────────────────────────────────────────────────────────────
+
 interface DetailProps {
   contact: Record<string, unknown> | null
   onAddToCrm: () => void
@@ -574,6 +720,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
 
 export default function ImportedContactsPage() {
   const { data: contacts, loading, error, reload } = useEntityList(() => window.electronAPI.importedContacts.getAll())
+  const { data: enrichmentItems, loading: enrichLoading, reload: reloadEnrichment } = useEntityList(() => window.electronAPI.enrichmentQueue.getAll())
   const [sourceTab, setSourceTab] = useState<SourceTab>('All')
   const [sortBy, setSortBy] = useState<SortMode>('confidence')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -587,6 +734,30 @@ export default function ImportedContactsPage() {
 
   // Editable fields for selected contact
   const [editFields, setEditFields] = useState<Record<string, string>>({})
+
+  // Merge enrichment queue items into the contact list (with _type marker)
+  // Use Record<string, unknown> so all dynamic field access works without type errors
+  type MergedItem = Record<string, unknown> & { _type: 'imported' | 'enrichment' }
+
+  const mergedContacts: MergedItem[] = useMemo(() => {
+    const importedWithType: MergedItem[] = contacts.map(c => ({ ...c, _type: 'imported' as const }))
+    // Only show pending enrichment items (not already approved/dismissed)
+    const pendingEnrichment: MergedItem[] = enrichmentItems
+      .filter(e => {
+        const status = (e.status as string | null)?.toLowerCase() ?? ''
+        return !status.includes('approved') && !status.includes('dismissed')
+      })
+      .map(e => ({
+        ...e,
+        _type: 'enrichment' as const,
+        // Map enrichment fields to match imported contact display pattern
+        imported_contact_name: (e.field_name as string | null) ?? 'Field Update',
+        confidence_score: e.confidence_score ?? 0,
+        relationship_type: 'Update',
+        email_thread_count: 0,
+      }))
+    return [...importedWithType, ...pendingEnrichment]
+  }, [contacts, enrichmentItems])
 
   // Load scan status on mount
   useEffect(() => {
@@ -608,6 +779,7 @@ export default function ImportedContactsPage() {
         setIsScanning(false)
         setLastScan(new Date().toISOString())
         reload()
+        reloadEnrichment()
       } else {
         setIsScanning(true)
       }
@@ -616,7 +788,7 @@ export default function ImportedContactsPage() {
       window.electronAPI.gmail.removeScanProgressListener()
       scanListenerRef.current = false
     }
-  }, [reload])
+  }, [reload, reloadEnrichment])
 
   // Populate edit fields when selection changes
   useEffect(() => {
@@ -639,26 +811,32 @@ export default function ImportedContactsPage() {
 
   // Tab counts
   const tabCounts = useMemo(() => {
-    const counts: Record<string, number> = { All: contacts.length }
-    counts['Email'] = contacts.filter(c => (c.source as string | null) === 'email' || (c.import_source as string | null) === 'Email Scan').length
-    counts['Contacts'] = contacts.filter(c => {
+    const counts: Record<string, number> = { All: mergedContacts.length }
+    counts['Email'] = mergedContacts.filter(c =>
+      c._type === 'enrichment' ||
+      (c.source as string | null) === 'email' || (c.import_source as string | null) === 'Email Scan'
+    ).length
+    counts['Contacts'] = mergedContacts.filter(c => {
+      if (c._type === 'enrichment') return false
       const src = (c.source as string | null) ?? (c.import_source as string | null) ?? ''
       return src !== 'email' && src !== 'Email Scan'
     }).length
     return counts
-  }, [contacts])
+  }, [mergedContacts])
 
   // Filtered + sorted contacts
   const filtered = useMemo(() => {
-    let result = contacts
+    let result = mergedContacts
 
     // Source filter
     if (sourceTab === 'Email') {
       result = result.filter(c =>
+        c._type === 'enrichment' ||
         (c.source as string | null) === 'email' || (c.import_source as string | null) === 'Email Scan'
       )
     } else if (sourceTab === 'Contacts') {
       result = result.filter(c => {
+        if (c._type === 'enrichment') return false
         const src = (c.source as string | null) ?? (c.import_source as string | null) ?? ''
         return src !== 'email' && src !== 'Email Scan'
       })
@@ -675,7 +853,9 @@ export default function ImportedContactsPage() {
         String(c.company ?? '').toLowerCase().includes(q) ||
         String(c.job_title ?? '').toLowerCase().includes(q) ||
         String(c.suggested_company_name ?? '').toLowerCase().includes(q) ||
-        String(c.relationship_type ?? '').toLowerCase().includes(q)
+        String(c.relationship_type ?? '').toLowerCase().includes(q) ||
+        String(c.field_name ?? '').toLowerCase().includes(q) ||
+        String(c.suggested_value ?? '').toLowerCase().includes(q)
       )
     }
 
@@ -687,8 +867,8 @@ export default function ImportedContactsPage() {
         break
       case 'newest':
         sorted.sort((a, b) => {
-          const da = (b.last_seen_date as string | null) ?? (b.import_date as string | null) ?? ''
-          const db = (a.last_seen_date as string | null) ?? (a.import_date as string | null) ?? ''
+          const da = (b.last_seen_date as string | null) ?? (b.source_email_date as string | null) ?? (b.import_date as string | null) ?? ''
+          const db = (a.last_seen_date as string | null) ?? (a.source_email_date as string | null) ?? (a.import_date as string | null) ?? ''
           return da.localeCompare(db)
         })
         break
@@ -697,7 +877,7 @@ export default function ImportedContactsPage() {
         break
     }
     return sorted
-  }, [contacts, sourceTab, search, sortBy])
+  }, [mergedContacts, sourceTab, search, sortBy])
 
   const selected = filtered.find(c => c.id === selectedId) ?? null
 
@@ -715,37 +895,40 @@ export default function ImportedContactsPage() {
   async function handleAction() {
     if (!selected || !action) return
     const id = selected.id as string
+    const isEnrichment = selected._type === 'enrichment'
 
-    if (action === 'dismiss') {
-      await window.electronAPI.importedContacts.reject(id, 'Dismissed via CRM app')
-    } else if (action === 'reject') {
-      await window.electronAPI.importedContacts.reject(id, 'Rejected via CRM app')
-    } else if (action === 'add') {
-      // Create contact via IPC using the editable fields
-      const fields: Record<string, unknown> = {
-        first_name: editFields.first_name || null,
-        last_name: editFields.last_name || null,
-        email: editFields.email || null,
-        mobile_phone: editFields.phone || null,
-        job_title: editFields.job_title || null,
-        categorization: editFields.relationship_type
-          ? JSON.stringify([editFields.relationship_type])
-          : null,
-        import_source: 'Email Intelligence',
-        lead_source: 'Email Scan',
+    if (isEnrichment) {
+      // Enrichment queue actions
+      if (action === 'add') {
+        await window.electronAPI.enrichmentQueue.approve(id)
+      } else if (action === 'dismiss') {
+        await window.electronAPI.enrichmentQueue.dismiss(id)
       }
-
-      const result = await window.electronAPI.contacts.create(fields)
-      if (result.success) {
-        // Mark imported contact as approved
-        await window.electronAPI.importedContacts.approve(id)
+    } else {
+      // Imported contact actions
+      if (action === 'dismiss') {
+        await window.electronAPI.importedContacts.dismiss(id)
+      } else if (action === 'reject') {
+        await window.electronAPI.importedContacts.reject(id, 'Rejected via CRM app')
+      } else if (action === 'add') {
+        // Full approve flow: creates Contact + Company via backend, marks approved
+        await window.electronAPI.importedContacts.approve(id, {
+          first_name: editFields.first_name || null,
+          last_name: editFields.last_name || null,
+          email: editFields.email || null,
+          phone: editFields.phone || null,
+          job_title: editFields.job_title || null,
+          relationship_type: editFields.relationship_type || null,
+          suggested_company_name: selected.suggested_company_name || null,
+        })
       }
     }
     setAction(null)
     reload()
+    reloadEnrichment()
   }
 
-  if (loading) return <LoadingSpinner />
+  if (loading || enrichLoading) return <LoadingSpinner />
 
   if (error) {
     return <div className="flex items-center justify-center h-full text-[var(--color-red)]">{error}</div>
@@ -882,35 +1065,55 @@ export default function ImportedContactsPage() {
         </div>
       </div>
 
-      {/* Detail panel — flex-1 */}
-      <ImportedContactDetail
-        contact={selected}
-        onAddToCrm={() => setAction('add')}
-        onDismiss={() => setAction('dismiss')}
-        onReject={() => setAction('reject')}
-        editFields={editFields}
-        setEditField={setEditField}
-      />
+      {/* Detail panel — flex-1, routes between enrichment diff and imported contact detail */}
+      {selected?._type === 'enrichment' ? (
+        <EnrichmentDetail
+          item={selected}
+          onAccept={() => setAction('add')}
+          onDismiss={() => setAction('dismiss')}
+        />
+      ) : (
+        <ImportedContactDetail
+          contact={selected}
+          onAddToCrm={() => setAction('add')}
+          onDismiss={() => setAction('dismiss')}
+          onReject={() => setAction('reject')}
+          editFields={editFields}
+          setEditField={setEditField}
+        />
+      )}
 
       {/* Confirm dialog */}
       <ConfirmDialog
         open={action !== null}
         title={
-          action === 'add'
-            ? 'Add to CRM'
-            : action === 'dismiss'
-              ? 'Dismiss Contact'
-              : 'Reject Contact'
+          selected?._type === 'enrichment'
+            ? (action === 'add' ? 'Accept Update' : 'Dismiss Update')
+            : action === 'add'
+              ? 'Add to CRM'
+              : action === 'dismiss'
+                ? 'Dismiss Contact'
+                : 'Reject Contact'
         }
         message={
-          action === 'add'
-            ? `Create a new CRM contact from "${selected ? getContactName(selected) : 'this contact'}"?`
-            : action === 'dismiss'
-              ? `Dismiss "${selected ? getContactName(selected) : 'this contact'}"? You can undo this later.`
-              : `Permanently reject "${selected ? getContactName(selected) : 'this contact'}"?`
+          selected?._type === 'enrichment'
+            ? (action === 'add'
+                ? `Apply the suggested "${(selected?.field_name as string) ?? 'field'}" update to the CRM contact?`
+                : `Dismiss this enrichment suggestion?`)
+            : action === 'add'
+              ? `Create a new CRM contact from "${selected ? getContactName(selected) : 'this contact'}"?${
+                  (selected?.suggested_company_name && !selected?.suggested_company_ids)
+                    ? ` A new company "${selected.suggested_company_name}" will also be created.`
+                    : ''
+                }`
+              : action === 'dismiss'
+                ? `Dismiss "${selected ? getContactName(selected) : 'this contact'}"? You can undo this later.`
+                : `Permanently reject "${selected ? getContactName(selected) : 'this contact'}"?`
         }
         confirmLabel={
-          action === 'add' ? 'Add to CRM' : action === 'dismiss' ? 'Dismiss' : 'Reject'
+          selected?._type === 'enrichment'
+            ? (action === 'add' ? 'Accept' : 'Dismiss')
+            : action === 'add' ? 'Add to CRM' : action === 'dismiss' ? 'Dismiss' : 'Reject'
         }
         destructive={action === 'reject'}
         onConfirm={handleAction}

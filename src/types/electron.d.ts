@@ -51,8 +51,13 @@ interface ElectronAPI {
   projects: EntityAPI
   interactions: EntityAPI
   importedContacts: ReadOnlyEntityAPI & {
-    approve: (id: string) => Promise<{ success: boolean; error?: string }>
+    approve: (id: string, editedFields?: Record<string, unknown>) => Promise<{ success: boolean; contactId?: string; error?: string }>
+    dismiss: (id: string) => Promise<{ success: boolean; error?: string }>
     reject: (id: string, reason: string) => Promise<{ success: boolean; error?: string }>
+  }
+  enrichmentQueue: ReadOnlyEntityAPI & {
+    approve: (id: string) => Promise<{ success: boolean; error?: string }>
+    dismiss: (id: string) => Promise<{ success: boolean; error?: string }>
   }
   specialties: ReadOnlyEntityAPI
   portalAccess: EntityAPI

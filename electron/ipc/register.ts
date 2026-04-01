@@ -159,17 +159,105 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
     }
   })
 
-  // Imported contacts (read-only + approve/reject)
+  // Imported contacts (read-only + approve/dismiss/reject)
   registerReadOnly('importedContacts', 'imported_contacts')
 
-  ipcMain.handle('importedContacts:approve', async (_e, id: string) => {
+  // Enrichment queue (read-only + approve/dismiss)
+  registerReadOnly('enrichmentQueue', 'enrichment_queue')
+
+  ipcMain.handle('importedContacts:approve', async (_e, id: string, editedFields?: Record<string, unknown>) => {
     try {
-      const result = await updateRecord('imported_contacts', id, {
+      // 1. Read the imported contact record
+      const imported = getById('imported_contacts', id) as Record<string, unknown> | null
+      if (!imported) {
+        return { success: false, error: 'Imported contact not found' }
+      }
+
+      // 2. Determine company ID — create if suggested but not linked
+      let companyId: string | null = null
+      const suggestedCompanyName = (editedFields?.suggested_company_name ?? imported.suggested_company_name) as string | null
+      const suggestedCompanyIds = imported.suggested_company_ids as string | null
+
+      let hasLinkedCompany = false
+      try {
+        if (suggestedCompanyIds) {
+          const arr = JSON.parse(suggestedCompanyIds)
+          if (Array.isArray(arr) && arr.length > 0) {
+            companyId = arr[0]
+            hasLinkedCompany = true
+          }
+        }
+      } catch { /* ignore parse errors */ }
+
+      if (!hasLinkedCompany && suggestedCompanyName) {
+        // Create a new Company record in Airtable
+        const companyResult = await createRecord('companies', {
+          company_name: suggestedCompanyName,
+        })
+        if (companyResult.success && companyResult.id) {
+          companyId = companyResult.id
+        }
+      }
+
+      // 3. Build Contact fields from imported data (editedFields override)
+      const firstName = (editedFields?.first_name ?? imported.first_name) as string | null
+      const lastName = (editedFields?.last_name ?? imported.last_name) as string | null
+      const email = (editedFields?.email ?? imported.email) as string | null
+      const phone = (editedFields?.phone ?? imported.mobile_phone ?? imported.phone) as string | null
+      const jobTitle = (editedFields?.job_title ?? imported.job_title) as string | null
+      const relationshipType = (editedFields?.relationship_type ?? imported.relationship_type) as string | null
+
+      const contactFields: Record<string, unknown> = {
+        first_name: firstName || null,
+        last_name: lastName || null,
+        contact_name: [firstName, lastName].filter(Boolean).join(' ') || null,
+        email: email || null,
+        mobile_phone: phone || null,
+        job_title: jobTitle || null,
+        categorization: relationshipType ? JSON.stringify([relationshipType]) : null,
+        lead_source: 'Email Intelligence',
+      }
+
+      if (companyId) {
+        contactFields.companies_ids = JSON.stringify([companyId])
+      }
+
+      // 4. Create the Contact record
+      const contactResult = await createRecord('contacts', contactFields)
+
+      // 5. Update imported contact status to Approved
+      const approveResult = await updateRecord('imported_contacts', id, {
         onboarding_status: 'Approved',
+        ...(contactResult.success && contactResult.id
+          ? { related_crm_contact_ids: JSON.stringify([contactResult.id]) }
+          : {}),
       })
-      return result
+
+      // 6. Notify renderer
+      const win = getMainWindow()
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('sync:progress', { phase: 'complete', tablesCompleted: 0, tablesTotal: 0, recordsPulled: 0 })
+      }
+
+      return { success: true, contactId: contactResult.id }
     } catch (error) {
       console.error(`[IPC] importedContacts:approve(${id}) failed:`, String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('importedContacts:dismiss', async (_e, id: string) => {
+    try {
+      const result = await updateRecord('imported_contacts', id, {
+        onboarding_status: 'Dismissed',
+      })
+      const win = getMainWindow()
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('sync:progress', { phase: 'complete', tablesCompleted: 0, tablesTotal: 0, recordsPulled: 0 })
+      }
+      return result
+    } catch (error) {
+      console.error(`[IPC] importedContacts:dismiss(${id}) failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })
@@ -180,9 +268,76 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
         onboarding_status: 'Rejected',
         reason_for_rejection: reason,
       })
+      const win = getMainWindow()
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('sync:progress', { phase: 'complete', tablesCompleted: 0, tablesTotal: 0, recordsPulled: 0 })
+      }
       return result
     } catch (error) {
       console.error(`[IPC] importedContacts:reject(${id}) failed:`, String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  // ─── Enrichment Queue: approve/dismiss ──────────────────────
+
+  ipcMain.handle('enrichmentQueue:approve', async (_e, id: string) => {
+    try {
+      // Read the enrichment item
+      const item = getById('enrichment_queue', id) as Record<string, unknown> | null
+      if (!item) {
+        return { success: false, error: 'Enrichment queue item not found' }
+      }
+
+      const fieldName = item.field_name as string | null
+      const suggestedValue = item.suggested_value as string | null
+      const contactIdsRaw = item.contact_ids as string | null
+
+      // Find linked contact
+      let contactId: string | null = null
+      try {
+        if (contactIdsRaw) {
+          const arr = JSON.parse(contactIdsRaw)
+          if (Array.isArray(arr) && arr.length > 0) contactId = arr[0]
+        }
+      } catch { /* ignore */ }
+
+      // Apply the suggested value to the CRM contact
+      if (contactId && fieldName && suggestedValue) {
+        await updateRecord('contacts', contactId, {
+          [fieldName]: suggestedValue,
+        })
+      }
+
+      // Mark enrichment item as approved
+      const result = await updateRecord('enrichment_queue', id, {
+        status: 'Approved',
+      })
+
+      const win = getMainWindow()
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('sync:progress', { phase: 'complete', tablesCompleted: 0, tablesTotal: 0, recordsPulled: 0 })
+      }
+
+      return result
+    } catch (error) {
+      console.error(`[IPC] enrichmentQueue:approve(${id}) failed:`, String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('enrichmentQueue:dismiss', async (_e, id: string) => {
+    try {
+      const result = await updateRecord('enrichment_queue', id, {
+        status: 'Dismissed',
+      })
+      const win = getMainWindow()
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('sync:progress', { phase: 'complete', tablesCompleted: 0, tablesTotal: 0, recordsPulled: 0 })
+      }
+      return result
+    } catch (error) {
+      console.error(`[IPC] enrichmentQueue:dismiss(${id}) failed:`, String(error))
       return { success: false, error: String(error) }
     }
   })

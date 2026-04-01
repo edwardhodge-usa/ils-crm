@@ -28,12 +28,14 @@ enum ImportedContactSourceFilter: String, CaseIterable {
 /// Right column: inline detail pane for selected suggestion.
 struct ImportedContactsView: View {
     @Query(sort: \ImportedContact.importedContactName) private var allContacts: [ImportedContact]
+    @Query private var allEnrichmentItems: [EnrichmentQueueItem]
     @Query private var companies: [Company]
     @Environment(\.modelContext) private var modelContext
     @Environment(SyncEngine.self) private var syncEngine
 
     @State private var searchText = ""
     @State private var selectedContact: ImportedContact?
+    @State private var selectedEnrichment: EnrichmentQueueItem?
     @State private var sourceFilter: ImportedContactSourceFilter = .all
     @AppStorage("sort-imported") private var sortOrder: ImportedContactSortOrder = .confidence
     @State private var showReviewForm = false
@@ -42,6 +44,14 @@ struct ImportedContactsView: View {
     // Scan engine — created lazily (not injected via environment since App doesn't provide it yet)
     @State private var scanEngine: EmailScanEngine?
     @State private var oAuthService = GmailOAuthService()
+
+    /// Pending enrichment items (not yet approved/dismissed)
+    private var pendingEnrichment: [EnrichmentQueueItem] {
+        allEnrichmentItems.filter { item in
+            let status = item.status?.lowercased() ?? ""
+            return !status.contains("approved") && !status.contains("dismissed")
+        }
+    }
 
     // MARK: - Derived Data
 
@@ -163,7 +173,7 @@ struct ImportedContactsView: View {
                     .font(.system(size: 15, weight: .bold))
                     .tracking(-0.2)
 
-                Text("\(activeContacts.count)")
+                Text("\(activeContacts.count + pendingEnrichment.count)")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 7)
@@ -323,6 +333,15 @@ struct ImportedContactsView: View {
     private var contactList: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
+                // Enrichment queue items (shown first with green styling)
+                if !pendingEnrichment.isEmpty {
+                    ForEach(pendingEnrichment, id: \.id) { item in
+                        enrichmentRow(item)
+                        Divider().padding(.leading, 52)
+                    }
+                }
+
+                // Imported contacts
                 ForEach(filteredContacts, id: \.id) { contact in
                     contactRow(contact)
                     Divider().padding(.leading, 52)
@@ -330,6 +349,85 @@ struct ImportedContactsView: View {
             }
         }
         .scrollIndicators(.hidden)
+    }
+
+    // MARK: - Enrichment Row
+
+    private func enrichmentRow(_ item: EnrichmentQueueItem) -> some View {
+        let isSelected = selectedEnrichment?.id == item.id
+
+        return Button {
+            selectedEnrichment = item
+            selectedContact = nil
+        } label: {
+            HStack(spacing: 10) {
+                // Green star icon
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? Color.white.opacity(0.2) : Color.green.opacity(0.12))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(isSelected ? .white : .green)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.fieldName ?? "Field Update")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(isSelected ? .white : .primary)
+                        .lineLimit(1)
+
+                    if let suggested = item.suggestedValue, !suggested.isEmpty {
+                        Text(suggested)
+                            .font(.caption)
+                            .foregroundStyle(isSelected ? .white.opacity(0.75) : .green)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                if !isSelected {
+                    Text("UPDATE")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.green)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.green.opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                }
+
+                if let confidence = item.confidenceScore, !isSelected {
+                    Text("\(Int(confidence))%")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(confidence >= 80 ? .green : confidence >= 50 ? .yellow : Color(white: 0.55))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background((confidence >= 80 ? Color.green : confidence >= 50 ? Color.yellow : Color.gray).opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(
+                Group {
+                    if isSelected {
+                        Color.accentColor
+                    } else {
+                        Color.green.opacity(0.06)
+                    }
+                }
+            )
+            .overlay(alignment: .leading) {
+                if !isSelected {
+                    Rectangle()
+                        .fill(Color.green)
+                        .frame(width: 2.5)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Contact Row
@@ -340,6 +438,7 @@ struct ImportedContactsView: View {
 
         return Button {
             selectedContact = contact
+            selectedEnrichment = nil
         } label: {
             HStack(spacing: 10) {
                 AvatarView(
@@ -425,7 +524,10 @@ struct ImportedContactsView: View {
 
     private var detailColumn: some View {
         Group {
-            if let contact = selectedContact {
+            if let enrichment = selectedEnrichment {
+                EnrichmentDetailView(item: enrichment)
+                    .id(enrichment.id)
+            } else if let contact = selectedContact {
                 ImportedContactDetailView(
                     importedContact: contact,
                     onShowReviewForm: { showReviewForm = true }
