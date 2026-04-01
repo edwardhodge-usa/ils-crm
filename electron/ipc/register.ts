@@ -15,6 +15,7 @@ import {
 } from '../airtable/logo-service'
 import { getDatabase, saveDatabase } from '../database/init'
 import { checkLicense, getLastVerifiedTime, isWithinGracePeriod, handleRevocation } from '../airtable/license-check'
+import { startOAuthFlow, disconnectGmail, isGmailConnected, getConnectedEmail } from '../gmail/oauth'
 
 // ─── Allowlist: keys the renderer is permitted to write via settings:set ─────
 // Omitted intentionally: license_last_verified, license_status, user_id — main-process only
@@ -27,6 +28,8 @@ const WRITABLE_SETTINGS = new Set([
   'sync_interval_ms',
   'theme',
   'logo_dev_token',
+  'gmail_client_id',
+  'gmail_client_secret',
 ])
 
 // ─── Helper: register CRUD for an entity ─────────────────────
@@ -588,6 +591,43 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
     }
 
     return { status: headStatus, ok: headOk, ...(headError ? { error: headError } : {}) }
+  })
+
+  // ─── Gmail ────────────────────────────────────────────────────
+
+  ipcMain.handle('gmail:connect', async () => {
+    try {
+      const tokens = await startOAuthFlow()
+      return { success: true, data: { email: tokens.email } }
+    } catch (error) {
+      console.error('[IPC] gmail:connect failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('gmail:disconnect', async () => {
+    try {
+      disconnectGmail()
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC] gmail:disconnect failed:', String(error))
+      return { success: false, error: String(error) }
+    }
+  })
+
+  ipcMain.handle('gmail:status', async () => {
+    try {
+      return {
+        success: true,
+        data: {
+          connected: isGmailConnected(),
+          email: getConnectedEmail(),
+        },
+      }
+    } catch (error) {
+      console.error('[IPC] gmail:status failed:', String(error))
+      return { success: false, error: String(error) }
+    }
   })
 
 }

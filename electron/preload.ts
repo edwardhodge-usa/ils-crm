@@ -150,6 +150,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     selectFile: () => ipcRenderer.invoke('contact:select-photo-file'),
   },
 
+  // Gmail integration
+  gmail: {
+    connect: () => ipcRenderer.invoke('gmail:connect'),
+    disconnect: () => ipcRenderer.invoke('gmail:disconnect'),
+    status: () => ipcRenderer.invoke('gmail:status'),
+  },
+
   // Framer page health
   framer: {
     checkPageHealth: (slug: string) => ipcRenderer.invoke('framer:checkPageHealth', slug),
