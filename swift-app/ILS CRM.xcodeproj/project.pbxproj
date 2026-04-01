@@ -12,6 +12,7 @@
 		0945ADA4071C21E97B28C933 /* Specialty.swift in Sources */ = {isa = PBXBuildFile; fileRef = A85AC6A57D105A7C7B62A7BD /* Specialty.swift */; };
 		0A5B4B18C437830933FA900E /* UISmokeCRUDTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48F8B3D8F49202EB1F5C7913 /* UISmokeCRUDTests.swift */; };
 		0C68B6CED4D625996A04FCE6 /* EnrichmentQueueItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49C40EDA92AF620E53721593 /* EnrichmentQueueItem.swift */; };
+		0CD91819A7E31B4616F65628 /* GmailAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D1B5E5FF33E83DA5A5378A5 /* GmailAPIClient.swift */; };
 		106ADEB53369675C780A9283 /* ClientPage+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316C309AD146E8B39E732EC0 /* ClientPage+Airtable.swift */; };
 		141E801CD0E7D895A261D4AD /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F940D1601214B19B51F716 /* TasksView.swift */; };
 		1ACFC5383147C9326C6B6113 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */; };
@@ -64,6 +65,7 @@
 		B4B487342A3ADC5D920D605A /* AppStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D01AC9627DB2EC046865779 /* AppStateManager.swift */; };
 		BC02322F46633F5E380D68DC /* ILS_CRM_UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C64BA68513C875444438907A /* ILS_CRM_UITests.swift */; };
 		BCC0A608A777C24598E3D7DA /* AirtableConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B1B436042A8E098AF0ABA6 /* AirtableConfig.swift */; };
+		BDC869DCC6C1DE44DDD76F31 /* GmailOAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 076BABE0F288BDC4F616814D /* GmailOAuthService.swift */; };
 		C12FCA7AF480E16E345D349E /* EmailScanRule+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F95308B83FB85C8EA4E85002 /* EmailScanRule+Airtable.swift */; };
 		C459EDE201B5326CB856C837 /* InteractionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D68C7F1FA49E86B89C127B6 /* InteractionDetailView.swift */; };
 		C552F943C9D54741C708C379 /* PortalAccessRecord+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AE64E65874DA7EEAD56BA2C /* PortalAccessRecord+Airtable.swift */; };
@@ -103,6 +105,7 @@
 
 /* Begin PBXFileReference section */
 		0626CFBCA68B78CCAE3A5BD7 /* AirtableService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirtableService.swift; sourceTree = "<group>"; };
+		076BABE0F288BDC4F616814D /* GmailOAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GmailOAuthService.swift; sourceTree = "<group>"; };
 		08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalLogsView.swift; sourceTree = "<group>"; };
 		094525C470C3BD376958467D /* ILS CRM.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ILS CRM.entitlements"; sourceTree = "<group>"; };
 		0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
@@ -140,6 +143,7 @@
 		794C572B0816746F1F6DD1EF /* Opportunity+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Opportunity+Airtable.swift"; sourceTree = "<group>"; };
 		7B7890DD79DA9A6657609855 /* ImportedContact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedContact.swift; sourceTree = "<group>"; };
 		7C8D1B1FEA4C806594AAE1EA /* Contact+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Contact+Airtable.swift"; sourceTree = "<group>"; };
+		7D1B5E5FF33E83DA5A5378A5 /* GmailAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GmailAPIClient.swift; sourceTree = "<group>"; };
 		7D57C205199B792B326959B6 /* DetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailComponents.swift; sourceTree = "<group>"; };
 		80AAFC4F81B96A6478FEDDBA /* ImportedContactDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedContactDetailView.swift; sourceTree = "<group>"; };
 		89C658F412AEC8BC5883E5EA /* CRMTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRMTask.swift; sourceTree = "<group>"; };
@@ -327,6 +331,8 @@
 				0626CFBCA68B78CCAE3A5BD7 /* AirtableService.swift */,
 				2D01AC9627DB2EC046865779 /* AppStateManager.swift */,
 				E33304DE2A8B008C7C3F330F /* FramerHealthService.swift */,
+				7D1B5E5FF33E83DA5A5378A5 /* GmailAPIClient.swift */,
+				076BABE0F288BDC4F616814D /* GmailOAuthService.swift */,
 				0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */,
 				4441B2730DB9DFA459D4FBA2 /* LicenseService.swift */,
 				67C683F26915642FCBFD399A /* SyncEngine.swift */,
@@ -613,6 +619,8 @@
 				226634A2BA1D580839C9183F /* EnrichmentQueueItem+Airtable.swift in Sources */,
 				0C68B6CED4D625996A04FCE6 /* EnrichmentQueueItem.swift in Sources */,
 				CAF50B0278F5C4463A0040BB /* FramerHealthService.swift in Sources */,
+				0CD91819A7E31B4616F65628 /* GmailAPIClient.swift in Sources */,
+				BDC869DCC6C1DE44DDD76F31 /* GmailOAuthService.swift in Sources */,
 				4D8A7F7ABB4EA5B7DCD2D998 /* GrantAccessSheet.swift in Sources */,
 				77DA98C48FFAC15CB020819D /* ILSCRMApp.swift in Sources */,
 				4E29CF83F9440DEF732177F2 /* ImportedContact+Airtable.swift in Sources */,
