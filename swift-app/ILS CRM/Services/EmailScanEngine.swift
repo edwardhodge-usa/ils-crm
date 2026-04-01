@@ -52,7 +52,7 @@ final class EmailScanEngine {
     // MARK: - Private
 
     private static let logger = Logger(subsystem: "com.ils-crm", category: "EmailScan")
-    private static let lockFilePath = "/tmp/ils-crm-email-scan.lock"
+    private static let lockFilePath = "/tmp/ils-crm-sync.lock"
     private static let batchSize = 50
 
     private var pollingTask: Task<Void, Never>?
