@@ -6,6 +6,7 @@ import http from 'http'
 import crypto from 'crypto'
 import { URL } from 'url'
 import { getSetting, setSetting } from '../database/queries/entities'
+import { saveDatabase } from '../database/init'
 
 // ─── Types ─────────────────────────────────────────────────────
 
@@ -72,6 +73,7 @@ export function storeTokens(tokens: GmailTokens): void {
   const encrypted = encryptTokens(tokens)
   setSetting(SETTINGS_KEY_TOKENS, encrypted)
   setSetting(SETTINGS_KEY_EMAIL, tokens.email)
+  saveDatabase() // Persist immediately — tokens must survive crashes
 }
 
 export function loadTokens(): GmailTokens | null {

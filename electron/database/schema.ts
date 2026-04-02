@@ -540,6 +540,8 @@ export function createSchema(db: SqlJsDatabase): void {
     ['airtable_base_id', ''], // Never hardcode — user must configure explicitly in Settings
     ['sync_interval_ms', '120000'],
     ['last_full_sync', ''],
+    ['gmail_client_id', process.env.GMAIL_CLIENT_ID || ''],
+    ['gmail_client_secret', process.env.GMAIL_CLIENT_SECRET || ''],
   ]
 
   for (const [key, defaultValue] of defaults) {

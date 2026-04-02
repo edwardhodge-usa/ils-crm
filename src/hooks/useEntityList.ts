@@ -8,13 +8,15 @@ interface UseEntityListResult {
 }
 
 export default function useEntityList(
-  apiFn: () => Promise<{ success: boolean; data?: unknown; error?: string }>
+  apiFn: () => Promise<{ success: boolean; data?: unknown; error?: string }>,
+  options?: { syncReload?: boolean },
 ): UseEntityListResult {
   const [data, setData] = useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const apiFnRef = useRef(apiFn)
   apiFnRef.current = apiFn
+  const syncReload = options?.syncReload ?? true
 
   async function load() {
     setLoading(true)
@@ -40,10 +42,11 @@ export default function useEntityList(
   useEffect(() => { load() }, []) // load() calls apiFnRef.current — stable by design
 
   useEffect(() => {
+    if (!syncReload) return
     const handler = () => { load() }
     window.addEventListener('sync-complete', handler)
     return () => window.removeEventListener('sync-complete', handler)
-  }, [])
+  }, [syncReload])
 
   const reload = useCallback(() => { load() }, [])
 

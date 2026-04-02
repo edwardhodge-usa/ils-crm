@@ -233,12 +233,6 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
           : {}),
       })
 
-      // 6. Notify renderer
-      const win = getMainWindow()
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('sync:progress', { phase: 'complete', tablesCompleted: 0, tablesTotal: 0, recordsPulled: 0 })
-      }
-
       return { success: true, contactId: contactResult.id }
     } catch (error) {
       console.error(`[IPC] importedContacts:approve(${id}) failed:`, String(error))
@@ -251,10 +245,6 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       const result = await updateRecord('imported_contacts', id, {
         onboarding_status: 'Dismissed',
       })
-      const win = getMainWindow()
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('sync:progress', { phase: 'complete', tablesCompleted: 0, tablesTotal: 0, recordsPulled: 0 })
-      }
       return result
     } catch (error) {
       console.error(`[IPC] importedContacts:dismiss(${id}) failed:`, String(error))
@@ -268,10 +258,6 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
         onboarding_status: 'Rejected',
         reason_for_rejection: reason,
       })
-      const win = getMainWindow()
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('sync:progress', { phase: 'complete', tablesCompleted: 0, tablesTotal: 0, recordsPulled: 0 })
-      }
       return result
     } catch (error) {
       console.error(`[IPC] importedContacts:reject(${id}) failed:`, String(error))

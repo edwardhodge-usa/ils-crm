@@ -78,6 +78,7 @@ export class GmailClient {
   async listMessages(
     pageToken?: string,
     maxResults = 100,
+    query?: string,
   ): Promise<{
     messages: Array<{ id: string; threadId: string }>
     nextPageToken?: string
@@ -85,6 +86,7 @@ export class GmailClient {
   }> {
     const params = new URLSearchParams({ maxResults: String(maxResults) })
     if (pageToken) params.set('pageToken', pageToken)
+    if (query) params.set('q', query)
 
     const data = await this.request<GmailMessageListResponse>(
       `/messages?${params.toString()}`,

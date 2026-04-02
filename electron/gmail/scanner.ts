@@ -2,7 +2,7 @@
 // Email Intelligence scan orchestrator — ties OAuth, Gmail API, rules, classifier,
 // and CRM dedup together into full/incremental/manual scan pipelines.
 
-import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'fs'
+import { readFileSync, writeFileSync, unlinkSync, existsSync, appendFileSync } from 'fs'
 import { BrowserWindow } from 'electron'
 import { loadTokens, refreshAccessToken } from './oauth'
 import { GmailClient, TokenExpiredError, HistoryExpiredError } from './client'
@@ -119,7 +119,11 @@ async function withTokenRefresh<T>(fn: (client: GmailClient) => Promise<T>): Pro
 function loadRules(): Rule[] {
   try {
     const ruleRecords = getAll('email_scan_rules')
-    if (ruleRecords.length === 0) return DEFAULT_RULES
+    if (ruleRecords.length === 0) {
+      if (isDev) console.log('[Scanner] No rules in DB, using DEFAULT_RULES')
+      try { appendFileSync('/tmp/ils-crm-scan-diag.log', `\n[Rules] Using DEFAULT_RULES (no DB rules)\n`) } catch { /* */ }
+      return DEFAULT_RULES
+    }
 
     const parsed: Rule[] = []
     for (const record of ruleRecords) {
@@ -127,9 +131,17 @@ function loadRules(): Rule[] {
       if (rule) parsed.push(rule)
     }
 
-    return parsed.length > 0 ? parsed : DEFAULT_RULES
+    const result = parsed.length > 0 ? parsed : DEFAULT_RULES
+    if (isDev) {
+      const source = parsed.length > 0 ? 'Airtable' : 'DEFAULT_RULES (parse failed)'
+      console.log(`[Scanner] Using ${source} rules (${result.length} rules)`)
+      const rulesLog = result.map(r => `  ${r.type}: ${JSON.stringify(r)}`).join('\n')
+      try { appendFileSync('/tmp/ils-crm-scan-diag.log', `\n[Rules] Source: ${source}\n${rulesLog}\n`) } catch { /* */ }
+    }
+    return result
   } catch {
     if (isDev) console.log('[Scanner] Failed to load rules from DB, using defaults')
+    try { appendFileSync('/tmp/ils-crm-scan-diag.log', `\n[Rules] EXCEPTION — using DEFAULT_RULES\n`) } catch { /* */ }
     return DEFAULT_RULES
   }
 }
@@ -358,8 +370,8 @@ async function writeCandidateBatch(
       first_name: candidate.firstName || '',
       last_name: candidate.lastName || '',
       email: candidate.email,
-      onboarding_status: 'Ready',
-      import_source: 'Email Scan',
+      onboarding_status: 'Review',
+      import_source: 'Integration',
       source: 'Email Scan',
       import_date: new Date().toISOString().split('T')[0],
       relationship_type: relationshipType,
@@ -463,8 +475,11 @@ export async function scanFull(): Promise<void> {
     await withTokenRefresh(async (client) => {
       let hasMore = true
 
+      // Only scan emails from May 2025 onward (excludes archived/imported legacy mail)
+      const SCAN_AFTER_DATE = 'after:2025/05/01'
+
       while (hasMore) {
-        const page = await client.listMessages(pageToken, MESSAGES_PER_PAGE)
+        const page = await client.listMessages(pageToken, MESSAGES_PER_PAGE, SCAN_AFTER_DATE)
         const messageStubs = page.messages
         const total = page.resultSizeEstimate || processedCount + messageStubs.length
 
@@ -687,16 +702,25 @@ function processCandidates(
   ownEmail: string,
 ): EnrichedCandidate[] {
   const survivors: EnrichedCandidate[] = []
+  let rejectedByRules = 0
+  let rejectedByCrmDedup = 0
+  let rejectedByImportDedup = 0
+
+  if (isDev) console.log(`[Scanner] Processing ${candidateMap.size} unique email addresses through pipeline`)
 
   for (const candidate of candidateMap.values()) {
     // Step 1: Rule evaluation
     const ruleResult = evaluateRules(candidate, rules, ownEmail)
-    if (ruleResult === 'reject') continue
+    if (ruleResult === 'reject') {
+      rejectedByRules++
+      continue
+    }
 
     // Step 2: CRM dedup — known contacts go to enrichment queue
     const existingContactId = checkCrmDedup(candidate.normalizedEmail)
     if (existingContactId) {
       writeToEnrichmentQueue(existingContactId, candidate)
+      rejectedByCrmDedup++
       continue
     }
 
@@ -707,6 +731,7 @@ function processCandidates(
       [candidate.normalizedEmail],
     )
     if (existingImport.length > 0 && existingImport[0].values.length > 0) {
+      rejectedByImportDedup++
       continue // Already imported
     }
 
@@ -716,6 +741,29 @@ function processCandidates(
     enriched._confidence = confidence
 
     survivors.push(enriched)
+  }
+
+  if (isDev) {
+    const diagLog = `/tmp/ils-crm-scan-diag.log`
+    const lines = [
+      `\n=== Pipeline Results (${new Date().toISOString()}) ===`,
+      `  Total candidates: ${candidateMap.size}`,
+      `  Rejected by rules: ${rejectedByRules}`,
+      `  Existing CRM contacts (enrichment): ${rejectedByCrmDedup}`,
+      `  Already imported: ${rejectedByImportDedup}`,
+      `  Survivors: ${survivors.length}`,
+    ]
+    // Log first 10 rejected candidates with reason for debugging
+    let ruleDebugCount = 0
+    for (const candidate of candidateMap.values()) {
+      if (ruleDebugCount >= 20) break
+      const result = evaluateRules(candidate, rules, ownEmail)
+      lines.push(`  [${result}] ${candidate.email} (threads=${candidate.threadCount}, from=${candidate.fromCount})`)
+      ruleDebugCount++
+    }
+    const output = lines.join('\n')
+    console.log(output)
+    try { appendFileSync(diagLog, output + '\n') } catch { /* ignore */ }
   }
 
   // Sort by cached confidence descending

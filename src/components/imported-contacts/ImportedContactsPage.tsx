@@ -370,7 +370,7 @@ function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject, editF
 
   const name = getContactName(contact)
   const subtitle = getSubtitle(contact)
-  const relType = (contact.relationship_type as string | null) ?? 'Unknown'
+  const relType = editFields.relationship_type || ((contact.relationship_type as string | null) ?? 'Unknown')
   const confidence = (contact.confidence_score as number | null) ?? 0
   const aiReasoning = (contact.ai_reasoning as string | null) ?? null
   const threadCount = (contact.email_thread_count as number | null) ?? 0
@@ -719,8 +719,8 @@ function StatCard({ label, value }: { label: string; value: string }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function ImportedContactsPage() {
-  const { data: contacts, loading, error, reload } = useEntityList(() => window.electronAPI.importedContacts.getAll())
-  const { data: enrichmentItems, loading: enrichLoading, reload: reloadEnrichment } = useEntityList(() => window.electronAPI.enrichmentQueue.getAll())
+  const { data: contacts, loading, error, reload } = useEntityList(() => window.electronAPI.importedContacts.getAll(), { syncReload: false })
+  const { data: enrichmentItems, loading: enrichLoading, reload: reloadEnrichment } = useEntityList(() => window.electronAPI.enrichmentQueue.getAll(), { syncReload: false })
   const [sourceTab, setSourceTab] = useState<SourceTab>('All')
   const [sortBy, setSortBy] = useState<SortMode>('confidence')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -775,7 +775,7 @@ export default function ImportedContactsPage() {
     scanListenerRef.current = true
     window.electronAPI.gmail.onScanProgress((progress: unknown) => {
       const p = progress as Record<string, unknown>
-      if (p.phase === 'complete' || p.phase === 'error') {
+      if (p.status === 'complete' || p.status === 'error') {
         setIsScanning(false)
         setLastScan(new Date().toISOString())
         reload()
@@ -790,9 +790,13 @@ export default function ImportedContactsPage() {
     }
   }, [reload, reloadEnrichment])
 
-  // Populate edit fields when selection changes
+  // Read latest contacts without triggering the effect
+  const contactsRef = useRef(contacts)
+  contactsRef.current = contacts
+
+  // Populate edit fields ONLY when the user clicks a different contact
   useEffect(() => {
-    const selected = contacts.find(c => c.id === selectedId) ?? null
+    const selected = contactsRef.current.find(c => c.id === selectedId) ?? null
     if (selected) {
       setEditFields({
         first_name: (selected.first_name as string | null) ?? '',
@@ -803,7 +807,7 @@ export default function ImportedContactsPage() {
         relationship_type: (selected.relationship_type as string | null) ?? 'Unknown',
       })
     }
-  }, [selectedId, contacts])
+  }, [selectedId]) // Only fires on selection change — sync never triggers this
 
   const setEditField = useCallback((key: string, val: string) => {
     setEditFields(prev => ({ ...prev, [key]: val }))
@@ -814,12 +818,11 @@ export default function ImportedContactsPage() {
     const counts: Record<string, number> = { All: mergedContacts.length }
     counts['Email'] = mergedContacts.filter(c =>
       c._type === 'enrichment' ||
-      (c.source as string | null) === 'email' || (c.import_source as string | null) === 'Email Scan'
+      (c.source as string | null) === 'Email Scan'
     ).length
     counts['Contacts'] = mergedContacts.filter(c => {
       if (c._type === 'enrichment') return false
-      const src = (c.source as string | null) ?? (c.import_source as string | null) ?? ''
-      return src !== 'email' && src !== 'Email Scan'
+      return (c.source as string | null) !== 'Email Scan'
     }).length
     return counts
   }, [mergedContacts])
@@ -832,7 +835,7 @@ export default function ImportedContactsPage() {
     if (sourceTab === 'Email') {
       result = result.filter(c =>
         c._type === 'enrichment' ||
-        (c.source as string | null) === 'email' || (c.import_source as string | null) === 'Email Scan'
+        (c.source as string | null) === 'Email Scan'
       )
     } else if (sourceTab === 'Contacts') {
       result = result.filter(c => {
@@ -924,6 +927,7 @@ export default function ImportedContactsPage() {
       }
     }
     setAction(null)
+    setSelectedId(null) // Clear selection — forces repopulation on next pick
     reload()
     reloadEnrichment()
   }
@@ -1014,7 +1018,7 @@ export default function ImportedContactsPage() {
                   <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
                 </svg>
               )}
-              {isScanning ? 'Scanning...' : 'Scan Now'}
+              {isScanning ? 'Scanning...' : 'Scan Email'}
             </button>
             <span style={{ fontSize: 10, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
               {lastScan ? timeAgo(lastScan) : ''}
@@ -1031,8 +1035,8 @@ export default function ImportedContactsPage() {
                 style={{
                   padding: '2px 6px', fontSize: 10, fontWeight: 500,
                   borderRadius: 4, border: 'none', fontFamily: 'inherit',
-                  background: sortBy === mode ? 'var(--color-accent)' : 'transparent',
-                  color: sortBy === mode ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+                  background: sortBy === mode ? 'var(--bg-tertiary)' : 'transparent',
+                  color: sortBy === mode ? 'var(--text-primary)' : 'var(--text-secondary)',
                   transition: 'all 150ms',
                 }}
               >
