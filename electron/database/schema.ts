@@ -512,6 +512,18 @@ export function createSchema(db: SqlJsDatabase): void {
     try { db.run(sql) } catch { /* ignore */ }
   }
 
+  // ─── Populate contacts.company from linked companies ───
+  // For existing contacts with a companies_ids link, resolve
+  // the first linked company ID to its company_name.
+  try {
+    db.run(`
+      UPDATE contacts SET company = (
+        SELECT c.company_name FROM companies c
+        WHERE c.id = json_extract(contacts.companies_ids, '$[0]')
+      ) WHERE companies_ids IS NOT NULL AND companies_ids != '[]' AND companies_ids != ''
+    `)
+  } catch { /* json_extract not available or no data — safe to skip */ }
+
   // ─── Indexes ───────────────────────────────────────────
   db.run(`CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts(contact_name)`)
   db.run(`CREATE INDEX IF NOT EXISTS idx_contacts_company ON contacts(company)`)
