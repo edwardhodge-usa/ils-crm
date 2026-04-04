@@ -760,7 +760,9 @@ export default function ImportedContactsPage() {
   type MergedItem = Record<string, unknown> & { _type: 'imported' | 'enrichment' }
 
   const mergedContacts: MergedItem[] = useMemo(() => {
-    const importedWithType: MergedItem[] = contacts.map(c => ({ ...c, _type: 'imported' as const }))
+    const importedWithType: MergedItem[] = contacts
+      .filter(c => (c.onboarding_status as string | null) !== 'Approved')
+      .map(c => ({ ...c, _type: 'imported' as const }))
     // Only show pending enrichment items (not already approved/dismissed)
     const pendingEnrichment: MergedItem[] = enrichmentItems
       .filter(e => {
