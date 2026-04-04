@@ -129,6 +129,59 @@ const SYNC_ORDER = [
   'email_scan_rules', 'email_scan_state', 'enrichment_queue',
 ]
 
+// ─── Denormalize company names onto contacts ───────────────
+
+function denormalizeCompanyNames(): void {
+  const db = getDatabase()
+
+  // Build companyNameById map from companies table
+  const companyRows = db.exec('SELECT id, company_name FROM companies')
+  const companyNameById = new Map<string, string>()
+  if (companyRows.length > 0) {
+    for (const row of companyRows[0].values) {
+      const id = row[0] as string
+      const name = row[1] as string
+      if (id && name) companyNameById.set(id, name)
+    }
+  }
+
+  if (isDev) console.log(`[Sync] denormalizeCompanyNames: ${companyNameById.size} companies in lookup`)
+
+  // Read all contacts that have companies_ids
+  const contactRows = db.exec('SELECT id, companies_ids FROM contacts')
+  if (contactRows.length === 0) return
+
+  let updated = 0
+  const stmt = db.prepare('UPDATE contacts SET company = ? WHERE id = ?')
+
+  try {
+    for (const row of contactRows[0].values) {
+      const contactId = row[0] as string
+      const companiesIdsRaw = row[1] as string | null
+
+      let companyName: string | null = null
+
+      if (companiesIdsRaw) {
+        try {
+          const ids = JSON.parse(companiesIdsRaw) as string[]
+          if (Array.isArray(ids) && ids.length > 0) {
+            companyName = companyNameById.get(ids[0]) ?? null
+          }
+        } catch {
+          // Invalid JSON — leave as null
+        }
+      }
+
+      stmt.run([companyName, contactId])
+      updated++
+    }
+  } finally {
+    stmt.free()
+  }
+
+  if (isDev) console.log(`[Sync] denormalizeCompanyNames: updated ${updated} contacts`)
+}
+
 // ─── Pull (Airtable → Local) ────────────────────────────────
 
 async function pullTable(
@@ -303,6 +356,13 @@ export async function fullSync(
 
       // Adaptive stagger between tables
       await new Promise(resolve => setTimeout(resolve, getStaggerMs(300)))
+    }
+
+    // Post-pull: denormalize company names onto contacts
+    try {
+      denormalizeCompanyNames()
+    } catch (dnError) {
+      console.error('[Sync] denormalizeCompanyNames failed:', dnError)
     }
 
     progress.phase = 'complete'
