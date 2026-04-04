@@ -523,12 +523,32 @@ function EmailSection() {
   const [scanInterval, setScanInterval] = useState(3600000) // default 1 hour
   const [statusMessage, setStatusMessage] = useState('')
 
+  // Gmail API credentials
+  const [clientId, setClientId] = useState('')
+  const [clientSecret, setClientSecret] = useState('')
+  const [originalClientId, setOriginalClientId] = useState('')
+  const [originalClientSecret, setOriginalClientSecret] = useState('')
+  const [credsSaveMessage, setCredsSaveMessage] = useState('')
+
   useEffect(() => {
     async function loadStatus() {
       try {
         const result = await window.electronAPI.gmail.status()
         if (result.success && result.data) {
           setGmailStatus(result.data)
+        }
+      } catch { /* graceful */ }
+      // Load Gmail credentials
+      try {
+        const idResult = await window.electronAPI.settings.get('gmail_client_id')
+        if (idResult.success && idResult.data) {
+          setClientId(idResult.data)
+          setOriginalClientId(idResult.data)
+        }
+        const secretResult = await window.electronAPI.settings.get('gmail_client_secret')
+        if (secretResult.success && secretResult.data) {
+          setClientSecret(secretResult.data)
+          setOriginalClientSecret(secretResult.data)
         }
       } catch { /* graceful */ }
       setLoading(false)
@@ -592,8 +612,67 @@ function EmailSection() {
     )
   }
 
+  const hasCredsChanges = clientId !== originalClientId || clientSecret !== originalClientSecret
+
+  const handleCredsSave = async () => {
+    await window.electronAPI.settings.set('gmail_client_id', clientId)
+    await window.electronAPI.settings.set('gmail_client_secret', clientSecret)
+    setOriginalClientId(clientId)
+    setOriginalClientSecret(clientSecret)
+    setCredsSaveMessage('Credentials saved')
+    setTimeout(() => setCredsSaveMessage(''), 2500)
+  }
+
   return (
     <div>
+      {/* Gmail API Credentials */}
+      <div style={{ marginBottom: 24 }}>
+        <SectionHeader>Gmail API Credentials</SectionHeader>
+        <GroupedContainer>
+          <PrefRow label="Client ID">
+            <SettingsInput
+              value={clientId}
+              onChange={setClientId}
+              placeholder="xxxx.apps.googleusercontent.com"
+            />
+          </PrefRow>
+          <PrefRow label="Client Secret" isLast>
+            <SettingsInput
+              type="password"
+              value={clientSecret}
+              onChange={setClientSecret}
+              placeholder="GOCSPX-xxxx"
+            />
+          </PrefRow>
+        </GroupedContainer>
+
+        <div style={{ paddingTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={handleCredsSave}
+            disabled={!hasCredsChanges}
+            className="cursor-default disabled:opacity-40"
+            style={{
+              padding: '6px 16px',
+              background: 'var(--color-accent)',
+              color: 'var(--text-on-accent)',
+              fontSize: 13,
+              fontWeight: 500,
+              borderRadius: 8,
+              border: 'none',
+              fontFamily: 'inherit',
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => { if (hasCredsChanges) e.currentTarget.style.background = 'var(--color-accent-hover)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-accent)' }}
+          >
+            Save Credentials
+          </button>
+          {Boolean(credsSaveMessage) && (
+            <span style={{ fontSize: 12, color: 'var(--color-green)' }}>{credsSaveMessage}</span>
+          )}
+        </div>
+      </div>
+
       <SectionHeader>Gmail Connection</SectionHeader>
       <GroupedContainer>
         {/* Connection status */}
