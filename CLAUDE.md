@@ -41,6 +41,7 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 ### Airtable API Rules
 - API cannot create formula fields, views, or delete fields — document for manual creation in UI
 - Airtable is single source of truth. Every app field MUST map to an Airtable field — no local-only data. New field checklist: (1) check Airtable, (2) create if needed, (3) add to field-maps.ts + converters.ts
+- **Exception: `contacts.company`** is a denormalized column — auto-populated from `companies_ids` after sync pull (see `denormalizeCompanyNames()` in sync-engine.ts). Do NOT add it to CONTACT_MAPPINGS or write to it directly. It exists so `secondaryField: 'company'` works in linked record pickers and search.
 - Adding a new table requires updating VALID_TABLES whitelist in `electron/database/queries/entities.ts` (SQL injection prevention). Full checklist: field-maps → converters → schema → preload → register.ts → sync-engine → entities.ts
 - Always fetch field schema from Airtable metadata API for exact select option names (including emoji prefixes) — never hardcode options from memory
 - Airtable REST API returns field **names** by default; Swift app uses field **IDs** so `fetchAllRecords` must include `returnFieldsByFieldId=true`
