@@ -53,4 +53,10 @@ describe('parseDisplayName', () => {
   it('returns null for email-like names', () => {
     expect(parseDisplayName('sarah@acme.com')).toEqual({ first: 'sarah', last: '' })
   })
+  it('handles "Last, First" format', () => {
+    expect(parseDisplayName('Patel, Ajay')).toEqual({ first: 'Ajay', last: 'Patel' })
+  })
+  it('handles "Last, First Middle" format', () => {
+    expect(parseDisplayName('Chen, Sarah May')).toEqual({ first: 'Sarah May', last: 'Chen' })
+  })
 })

@@ -60,7 +60,18 @@ export function parseDisplayName(name: string): { first: string; last: string } 
     return { first: username, last: '' }
   }
 
-  const parts = name.trim().split(/\s+/)
+  const trimmed = name.trim()
+
+  // Handle "Last, First" format (e.g. "Patel, Ajay" → first: "Ajay", last: "Patel")
+  if (trimmed.includes(',')) {
+    const [last, ...rest] = trimmed.split(',')
+    const first = rest.join(',').trim()
+    if (first && last.trim()) {
+      return { first, last: last.trim() }
+    }
+  }
+
+  const parts = trimmed.split(/\s+/)
   if (parts.length === 1) return { first: parts[0], last: '' }
 
   // First word is first name, rest is last name
