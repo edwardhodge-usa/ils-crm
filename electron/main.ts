@@ -81,12 +81,12 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
   }
 
-  // Open DevTools in dev mode (detached window)
-  mainWindow.webContents.once('did-finish-load', () => {
-    if (isDev) {
-      mainWindow?.webContents.openDevTools({ mode: 'detach' })
-    }
-  })
+  // DevTools: uncomment for debugging, re-comment before release
+  // mainWindow.webContents.once('did-finish-load', () => {
+  //   if (isDev) {
+  //     mainWindow?.webContents.openDevTools({ mode: 'detach' })
+  //   }
+  // })
 
   mainWindow.on('closed', () => {
     mainWindow = null
