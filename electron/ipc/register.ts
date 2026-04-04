@@ -215,7 +215,7 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
         mobile_phone: phone || null,
         job_title: jobTitle || null,
         categorization: relationshipType ? JSON.stringify([relationshipType]) : null,
-        lead_source: 'Email Intelligence',
+        lead_source: 'Other',
       }
 
       if (companyId) {
@@ -225,12 +225,14 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       // 4. Create the Contact record
       const contactResult = await createRecord('contacts', contactFields)
 
-      // 5. Update imported contact status to Approved
-      const approveResult = await updateRecord('imported_contacts', id, {
+      if (!contactResult.success) {
+        return { success: false, error: contactResult.error || 'Failed to create CRM contact' }
+      }
+
+      // 5. Update imported contact status to Approved (only if contact was created)
+      await updateRecord('imported_contacts', id, {
         onboarding_status: 'Approved',
-        ...(contactResult.success && contactResult.id
-          ? { related_crm_contact_ids: JSON.stringify([contactResult.id]) }
-          : {}),
+        related_crm_contact_ids: JSON.stringify([contactResult.id]),
       })
 
       return { success: true, contactId: contactResult.id }

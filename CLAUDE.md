@@ -78,7 +78,9 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - Swift `String(format:)` doesn't support `,` flag for digit grouping → use `NumberFormatter`
 - XCUITest: build-for-testing first, clear xattrs, then test-without-building. SwiftUI launches with 0 windows — open via File menu
 - SwiftData `#Predicate` crashes on macOS 26.4 beta (25E5233c) — use fetch-all + in-memory `.filter {}` as workaround. TODO: revert when fixed
-- `useEntityList` only refreshes on `sync-complete` events — dispatch `sync:progress` with `phase: 'complete'` from IPC handlers after any CRUD mutation. `deleteRemoteRecord` must handle `local_` prefix IDs (skip Airtable, SQLite only)
+- `useEntityList` refreshes on `sync-complete` events. IPC approve/dismiss/reject handlers must NOT send fake `sync:progress` events — they trigger a `sync-complete` cascade that remounts UI and resets form state. Let the component's explicit `reload()` handle it. `deleteRemoteRecord` must handle `local_` prefix IDs (skip Airtable, SQLite only)
+- Airtable singleSelect: always fetch live schema for valid options before writing. 'Ready' doesn't exist on Onboarding Status (valid: Approved, Rejected, Needs Info, Duplicate, Review)
+- Gmail API returns ALL messages in mailbox including imported/forwarded mail from other accounts. Use `after:YYYY/MM/DD` query param to scope scans
 - `ISO8601DateFormatter` with `.withInternetDateTime` requires full datetime — Airtable date-only fields send bare `YYYY-MM-DD`. Use `DateFormatter(dateFormat: "yyyy-MM-dd")` as fallback
 - `Dictionary(uniqueKeysWithValues:)` crashes on duplicate keys — always use `Dictionary(..., uniquingKeysWith: { _, last in last })` for SwiftData fetch results
 - `settings:set` IPC must be restricted to a `WRITABLE_SETTINGS` allowlist — renderer can bypass license grace period by writing `license_last_verified`

@@ -14,17 +14,24 @@ type SourceTab = typeof SOURCE_TABS[number]
 type SortMode = 'confidence' | 'newest' | 'threads'
 
 const RELATIONSHIP_COLORS: Record<string, { text: string; textDark: string; bg: string }> = {
-  'Client':     { text: '#0055B3', textDark: '#409CFF', bg: 'rgba(0,122,255,0.18)' },
-  'Vendor':     { text: '#8944AB', textDark: '#BF5AF2', bg: 'rgba(175,82,222,0.18)' },
-  'Employee':   { text: '#248A3D', textDark: '#30D158', bg: 'rgba(52,199,89,0.18)' },
-  'Contractor': { text: '#C93400', textDark: '#FF9F0A', bg: 'rgba(255,149,0,0.18)' },
-  'Unknown':    { text: '#636366', textDark: '#98989D', bg: 'rgba(142,142,147,0.18)' },
+  'Client':        { text: '#0055B3', textDark: '#409CFF', bg: 'rgba(0,122,255,0.18)' },
+  'Prospect':      { text: '#0055B3', textDark: '#409CFF', bg: 'rgba(0,122,255,0.18)' },
+  'Partner':       { text: '#007A5E', textDark: '#30D158', bg: 'rgba(52,199,89,0.18)' },
+  'Consultant':    { text: '#C79800', textDark: '#FFD60A', bg: 'rgba(255,204,0,0.18)' },
+  'Vendor Contact': { text: '#8944AB', textDark: '#BF5AF2', bg: 'rgba(175,82,222,0.18)' },
+  'Talent':        { text: '#C93400', textDark: '#FF9F0A', bg: 'rgba(255,149,0,0.18)' },
+  'Employee':      { text: '#248A3D', textDark: '#30D158', bg: 'rgba(52,199,89,0.18)' },
+  'Investor':      { text: '#007A5E', textDark: '#64D2FF', bg: 'rgba(100,210,255,0.18)' },
+  'Advisor':       { text: '#007A5E', textDark: '#64D2FF', bg: 'rgba(100,210,255,0.18)' },
+  'Industry Peer': { text: '#8944AB', textDark: '#BF5AF2', bg: 'rgba(175,82,222,0.18)' },
+  'Other':         { text: '#636366', textDark: '#98989D', bg: 'rgba(142,142,147,0.18)' },
 }
 
-const RELATIONSHIP_OPTIONS = ['Client', 'Vendor', 'Employee', 'Contractor', 'Unknown']
+// Must match Airtable Categorization multipleSelects options exactly
+const RELATIONSHIP_OPTIONS = ['Client', 'Prospect', 'Partner', 'Consultant', 'Vendor Contact', 'Talent', 'Employee', 'Investor', 'Advisor', 'Industry Peer', 'Other']
 
 function getRelColors(type: string | null, isDark: boolean) {
-  const c = RELATIONSHIP_COLORS[type ?? 'Unknown'] ?? RELATIONSHIP_COLORS['Unknown']
+  const c = RELATIONSHIP_COLORS[type ?? 'Other'] ?? RELATIONSHIP_COLORS['Other']
   return { fg: isDark ? c.textDark : c.text, bg: c.bg }
 }
 
@@ -100,7 +107,7 @@ function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
   const isDark = useDarkMode()
   const name = getContactName(contact)
   const subtitle = getSubtitle(contact)
-  const relType = (contact.relationship_type as string | null) ?? 'Unknown'
+  const relType = (contact.relationship_type as string | null) ?? 'Other'
   const confidence = (contact.confidence_score as number | null) ?? 0
   const threadCount = (contact.email_thread_count as number | null) ?? 0
   const enrichment = isEnrichmentRow(contact)
@@ -347,15 +354,28 @@ function EnrichmentDetail({ item, onAccept, onDismiss }: EnrichmentDetailProps) 
 
 interface DetailProps {
   contact: Record<string, unknown> | null
-  onAddToCrm: () => void
+  onAddToCrm: (fields: Record<string, string>) => void
   onDismiss: () => void
   onReject: () => void
-  editFields: Record<string, string>
-  setEditField: (key: string, val: string) => void
 }
 
-function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject, editFields, setEditField }: DetailProps) {
+function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject }: DetailProps) {
   const isDark = useDarkMode()
+
+  // Local form state — isolated from parent re-renders.
+  // Parent uses key={selectedId} so this remounts with fresh state per contact.
+  const [editFields, setEditFields] = useState<Record<string, string>>(() => ({
+    first_name: (contact?.first_name as string | null) ?? '',
+    last_name: (contact?.last_name as string | null) ?? '',
+    email: (contact?.email as string | null) ?? '',
+    phone: (contact?.phone as string | null) ?? '',
+    job_title: (contact?.job_title as string | null) ?? '',
+    relationship_type: (contact?.relationship_type as string | null) ?? 'Other',
+  }))
+
+  const setEditField = useCallback((key: string, val: string) => {
+    setEditFields(prev => ({ ...prev, [key]: val }))
+  }, [])
 
   if (!contact) {
     return (
@@ -370,7 +390,7 @@ function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject, editF
 
   const name = getContactName(contact)
   const subtitle = getSubtitle(contact)
-  const relType = editFields.relationship_type || ((contact.relationship_type as string | null) ?? 'Unknown')
+  const relType = editFields.relationship_type || ((contact.relationship_type as string | null) ?? 'Other')
   const confidence = (contact.confidence_score as number | null) ?? 0
   const aiReasoning = (contact.ai_reasoning as string | null) ?? null
   const threadCount = (contact.email_thread_count as number | null) ?? 0
@@ -455,7 +475,7 @@ function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject, editF
               {isDismissed ? 'Dismissed' : 'Dismiss'}
             </button>
             <button
-              onClick={onAddToCrm}
+              onClick={() => onAddToCrm(editFields)}
               disabled={isApproved}
               className="cursor-default disabled:opacity-40"
               style={{
@@ -600,7 +620,7 @@ function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject, editF
               </label>
               <select
                 className={inputClass}
-                value={editFields.relationship_type ?? 'Unknown'}
+                value={editFields.relationship_type ?? 'Other'}
                 onChange={e => setEditField('relationship_type', e.target.value)}
               >
                 {RELATIONSHIP_OPTIONS.map(opt => (
@@ -732,8 +752,8 @@ export default function ImportedContactsPage() {
   const [lastScan, setLastScan] = useState<string | null>(null)
   const scanListenerRef = useRef(false)
 
-  // Editable fields for selected contact
-  const [editFields, setEditFields] = useState<Record<string, string>>({})
+  // Holds edit fields passed up from detail panel for use in approve handler
+  const pendingFieldsRef = useRef<Record<string, string>>({})
 
   // Merge enrichment queue items into the contact list (with _type marker)
   // Use Record<string, unknown> so all dynamic field access works without type errors
@@ -790,28 +810,6 @@ export default function ImportedContactsPage() {
     }
   }, [reload, reloadEnrichment])
 
-  // Read latest contacts without triggering the effect
-  const contactsRef = useRef(contacts)
-  contactsRef.current = contacts
-
-  // Populate edit fields ONLY when the user clicks a different contact
-  useEffect(() => {
-    const selected = contactsRef.current.find(c => c.id === selectedId) ?? null
-    if (selected) {
-      setEditFields({
-        first_name: (selected.first_name as string | null) ?? '',
-        last_name: (selected.last_name as string | null) ?? '',
-        email: (selected.email as string | null) ?? '',
-        phone: (selected.phone as string | null) ?? '',
-        job_title: (selected.job_title as string | null) ?? '',
-        relationship_type: (selected.relationship_type as string | null) ?? 'Unknown',
-      })
-    }
-  }, [selectedId]) // Only fires on selection change — sync never triggers this
-
-  const setEditField = useCallback((key: string, val: string) => {
-    setEditFields(prev => ({ ...prev, [key]: val }))
-  }, [])
 
   // Tab counts
   const tabCounts = useMemo(() => {
@@ -915,13 +913,14 @@ export default function ImportedContactsPage() {
         await window.electronAPI.importedContacts.reject(id, 'Rejected via CRM app')
       } else if (action === 'add') {
         // Full approve flow: creates Contact + Company via backend, marks approved
+        const fields = pendingFieldsRef.current
         await window.electronAPI.importedContacts.approve(id, {
-          first_name: editFields.first_name || null,
-          last_name: editFields.last_name || null,
-          email: editFields.email || null,
-          phone: editFields.phone || null,
-          job_title: editFields.job_title || null,
-          relationship_type: editFields.relationship_type || null,
+          first_name: fields.first_name || null,
+          last_name: fields.last_name || null,
+          email: fields.email || null,
+          phone: fields.phone || null,
+          job_title: fields.job_title || null,
+          relationship_type: fields.relationship_type || null,
           suggested_company_name: selected.suggested_company_name || null,
         })
       }
@@ -1078,12 +1077,11 @@ export default function ImportedContactsPage() {
         />
       ) : (
         <ImportedContactDetail
+          key={selectedId ?? 'none'}
           contact={selected}
-          onAddToCrm={() => setAction('add')}
+          onAddToCrm={(fields) => { pendingFieldsRef.current = fields; setAction('add') }}
           onDismiss={() => setAction('dismiss')}
           onReject={() => setAction('reject')}
-          editFields={editFields}
-          setEditField={setEditField}
         />
       )}
 
