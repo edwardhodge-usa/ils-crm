@@ -88,6 +88,7 @@ extension Notification.Name {
 struct ContentView: View {
     @SceneStorage("selectedNavItem") private var selectedRawValue: String = "dashboard"
     @State private var sidebarSearchText = ""
+    @State private var showCommandPalette = false
     @AppStorage("appearanceMode") private var appearanceMode = "system"
     @Environment(SyncEngine.self) private var syncEngine
 
@@ -142,6 +143,15 @@ struct ContentView: View {
         }
         .toolbar {
             ToolbarItem(placement: .automatic) {
+                Button {
+                    showCommandPalette = true
+                } label: {
+                    Label("Search", systemImage: "magnifyingglass")
+                }
+                .keyboardShortcut("k", modifiers: .command)
+                .help("Search all records (Cmd+K)")
+            }
+            ToolbarItem(placement: .automatic) {
                 syncStatusView
             }
             ToolbarItem(placement: .primaryAction) {
@@ -152,6 +162,11 @@ struct ContentView: View {
                         Label("New \(createEntityLabel)", systemImage: "plus")
                     }
                 }
+            }
+        }
+        .sheet(isPresented: $showCommandPalette) {
+            CommandPaletteView(isPresented: $showCommandPalette) { navItem in
+                selectedRawValue = navItem.rawValue
             }
         }
     }

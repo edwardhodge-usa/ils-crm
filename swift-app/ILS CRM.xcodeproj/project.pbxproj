@@ -86,6 +86,7 @@
 		DF15F7ABE93D042D8A704882 /* PipelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D16508BB0F462650F6DA3D4D /* PipelineView.swift */; };
 		E37235068B78D011C6790273 /* Company.swift in Sources */ = {isa = PBXBuildFile; fileRef = 649C44D1AA43D3C6B31DC0B2 /* Company.swift */; };
 		E5771CEA27AB55A6E7E40925 /* Contact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFC604A95E0A130C6EAFC7C /* Contact.swift */; };
+		E63201E940F208C1803F662A /* CommandPaletteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5D973A49C023D1EE389F0F /* CommandPaletteView.swift */; };
 		ED94318657AEC4D283753738 /* InteractionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46488C4FC77689E54BDF129 /* InteractionsView.swift */; };
 		F63F2BF32F6391A2F68CAA66 /* RevokedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E0C38FCC1781130B2EA6A71 /* RevokedView.swift */; };
 		F9CC88E46E563141C9396386 /* EmailScanState+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97328204D6403F055134FEC /* EmailScanState+Airtable.swift */; };
@@ -172,6 +173,7 @@
 		A85AC6A57D105A7C7B62A7BD /* Specialty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Specialty.swift; sourceTree = "<group>"; };
 		AC5CD50B3294A213BF296FBD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		AD5AC5FD0C4B654A1AC21455 /* Opportunity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Opportunity.swift; sourceTree = "<group>"; };
+		AD5D973A49C023D1EE389F0F /* CommandPaletteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandPaletteView.swift; sourceTree = "<group>"; };
 		AE328CDB7778A8F47EAA9F53 /* GmailSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GmailSettingsSection.swift; sourceTree = "<group>"; };
 		B1AB4AC70FDF9110FCC9AC88 /* AirtableCRUDTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirtableCRUDTests.swift; sourceTree = "<group>"; };
 		B46488C4FC77689E54BDF129 /* InteractionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractionsView.swift; sourceTree = "<group>"; };
@@ -305,6 +307,7 @@
 			isa = PBXGroup;
 			children = (
 				8AA5E8114E123796534ED260 /* BentoComponents.swift */,
+				AD5D973A49C023D1EE389F0F /* CommandPaletteView.swift */,
 				7D57C205199B792B326959B6 /* DetailComponents.swift */,
 				A09B51751718308565E912A8 /* EditableAvatarView.swift */,
 				5CE5BF78A83434AD89F1FFCD /* LinkedRecordPicker.swift */,
@@ -621,6 +624,7 @@
 				9249063E8DC1713631C37A1E /* CRMTask.swift in Sources */,
 				106ADEB53369675C780A9283 /* ClientPage+Airtable.swift in Sources */,
 				B34F2130F324C26103ED67D2 /* ClientPage.swift in Sources */,
+				E63201E940F208C1803F662A /* CommandPaletteView.swift in Sources */,
 				D34B6650FD638F961DC425B6 /* CompaniesView.swift in Sources */,
 				3B9FF2F195EB914F5F66299A /* Company+Airtable.swift in Sources */,
 				E37235068B78D011C6790273 /* Company.swift in Sources */,

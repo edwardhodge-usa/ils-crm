@@ -42,6 +42,14 @@ struct TasksView: View {
     // Sort
     @AppStorage("sort-tasks") private var sortOrder: TaskSortOrder = .dueDate
 
+    // Section expand/collapse state (persisted)
+    @AppStorage("tasks-section-overdue-expanded") private var overdueExpanded = true
+    @AppStorage("tasks-section-today-expanded") private var todayExpanded = true
+    @AppStorage("tasks-section-waiting-expanded") private var waitingExpanded = true
+    @AppStorage("tasks-section-nodate-expanded") private var noDateExpanded = true
+    @AppStorage("tasks-section-scheduled-expanded") private var scheduledExpanded = true
+    @AppStorage("tasks-section-completed-expanded") private var completedExpanded = false
+
     // Sheet
     @State private var showNewTask = false
 
@@ -533,7 +541,8 @@ struct TasksView: View {
                                 tasks: group.tasks,
                                 icon: { AnyView(Image(systemName: "square.fill").font(.system(size: 8)).foregroundStyle(.teal)) },
                                 label: group.name.uppercased(),
-                                labelColor: .teal
+                                labelColor: .teal,
+                                isExpanded: .constant(true)
                             )
                         }
                     }
@@ -545,37 +554,43 @@ struct TasksView: View {
                             tasks: overdueTasks,
                             icon: { AnyView(Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)) },
                             label: "OVERDUE",
-                            labelColor: .red
+                            labelColor: .red,
+                            isExpanded: $overdueExpanded
                         )
                         taskSection(
                             tasks: todayTasks,
                             icon: { AnyView(Circle().fill(Color.orange).frame(width: 8, height: 8)) },
                             label: "TODAY",
-                            labelColor: .orange
+                            labelColor: .orange,
+                            isExpanded: $todayExpanded
                         )
                         taskSection(
                             tasks: waitingTasks,
                             icon: { AnyView(Image(systemName: "diamond.fill").foregroundStyle(.yellow)) },
                             label: "WAITING ON",
-                            labelColor: .yellow
+                            labelColor: .yellow,
+                            isExpanded: $waitingExpanded
                         )
                         taskSection(
                             tasks: noDateTasks,
                             icon: { AnyView(Circle().fill(Color.secondary).frame(width: 8, height: 8)) },
                             label: "NO DATE",
-                            labelColor: .secondary
+                            labelColor: .secondary,
+                            isExpanded: $noDateExpanded
                         )
                         taskSection(
                             tasks: scheduledTasks,
                             icon: { AnyView(Image(systemName: "calendar").foregroundStyle(.blue)) },
                             label: "SCHEDULED",
-                            labelColor: .blue
+                            labelColor: .blue,
+                            isExpanded: $scheduledExpanded
                         )
                         taskSection(
                             tasks: completedTasks,
                             icon: { AnyView(Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)) },
                             label: "COMPLETED",
-                            labelColor: .green
+                            labelColor: .green,
+                            isExpanded: $completedExpanded
                         )
                     }
                 }
@@ -589,15 +604,16 @@ struct TasksView: View {
         tasks: [CRMTask],
         icon: () -> Icon,
         label: String,
-        labelColor: Color
+        labelColor: Color,
+        isExpanded: Binding<Bool>
     ) -> some View {
         if !tasks.isEmpty {
-            Section {
+            DisclosureGroup(isExpanded: isExpanded) {
                 ForEach(tasks) { task in
                     taskRow(task)
                     Divider().padding(.leading, 32)
                 }
-            } header: {
+            } label: {
                 HStack(spacing: 6) {
                     icon()
                         .font(.system(size: 10, weight: .semibold))
@@ -612,7 +628,6 @@ struct TasksView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color(.windowBackgroundColor).opacity(0.95))
             }
         }
     }

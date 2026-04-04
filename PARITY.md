@@ -1,7 +1,7 @@
 # ILS CRM — Feature Parity Tracker
 
 > Electron (primary) vs Swift (shadow build)
-> Updated: 2026-04-01 (Email Intelligence Phase 1 + Imported Contacts completion)
+> Updated: 2026-04-04 (Audit rewrite — Command Palette, collapsible sections, editable task fields, full entity views)
 
 ## Status Key
 - **Done** — Fully implemented and working
@@ -16,8 +16,8 @@
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| App entry point | Done | Stub | `main.ts` → `ILSCRMApp.swift` |
-| SwiftData / sql.js container | Done | Stub | Schema defined, no data flow yet |
+| App entry point | Done | Done | `main.ts` → `ILSCRMApp.swift` — @main, ModelContainer, Sparkle, AppStateManager |
+| SwiftData / sql.js container | Done | Done | Schema with 15 models, persistent ModelConfiguration, full data flow |
 | Airtable REST client | Done | Done | `client.ts` → `AirtableService.swift` (actor) — full CRUD + batch + metadata |
 | Sync engine (push-first, pull) | Done | Done | `sync-engine.ts` → `SyncEngine.swift` — pullTable + pushPendingChanges + fullSync |
 | Airtable field maps | Done | Done | `field-maps.ts` → `AirtableConfig.swift` (table IDs, sync order, read-only set) |
@@ -57,7 +57,7 @@
 | Route config (`routes.ts`) | Done | Done | `NavItem` enum with all 10 sections |
 | Dark mode toggle | Done | Done | `@AppStorage("appearanceMode")` + `.preferredColorScheme()` in ContentView |
 | macOS menu bar | Done | Done | Go menu (Cmd+1-0), Cmd+N, SidebarCommands in ILSCRMApp.swift |
-| Window configuration | Done | TODO | Electron: `BrowserWindow`. Swift: basic `WindowGroup` — needs min size tuning |
+| Window configuration | Done | Done | `.defaultSize(width: 1200, height: 800)` + `.windowResizability(.contentMinSize)` |
 
 ## Dashboard
 
@@ -69,6 +69,7 @@
 | Follow-up alerts | Done | Done | Panel with contact list, days-since badge, company name |
 | Tasks due today | Done | Done | Panel with priority dots, type badges, due dates |
 | Colored stat cards | Done | Done | Red, orange, blue, yellow themed with SF Symbols |
+| Dashboard aggregation queries | Done | Done | SwiftData FetchDescriptor + in-memory `.filter{}` (11 query patterns) |
 
 ## Contacts
 
@@ -87,22 +88,22 @@
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Company list | Done | Stub | `CompanyListPage.tsx` → `CompaniesView.swift` |
-| Company 360 detail view | Done | Stub | `Company360Page.tsx` → `Company360View` |
-| Company create/edit form | Done | Stub | `CompanyForm.tsx` → `CompanyFormView` |
-| Company row component | Done | TODO | `CompanyRow.tsx` |
+| Company list | Done | Done | `CompaniesView.swift` — 479 lines, search, sort, filters, inline create |
+| Company 360 detail view | Done | Done | `CompanyDetailView.swift` — 519 lines, bento layout, linked records, inline editing |
+| Company create/edit form | Done | Done | Inline form within CompaniesView — modelContext.insert + push |
+| Company row component | Done | Done | Row component integrated in CompaniesView list |
 
 ## Pipeline (Opportunities)
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Pipeline page (Kanban + list toggle) | Done | Stub | `PipelinePage.tsx` → `PipelineView.swift` |
-| Kanban board (@dnd-kit) | Done | TODO | Swift: `.draggable()` / `.dropDestination()` |
-| Kanban columns by salesStage | Done | TODO | `KanbanColumn.tsx` |
-| Deal cards | Done | TODO | `DealCard.tsx` |
-| Deal detail view | Done | Stub | `DealDetail.tsx` → `DealDetailView` |
-| Opportunity create/edit form | Done | Stub | `OpportunityForm.tsx` → `OpportunityFormView` |
-| Stage progress bar | Done | TODO | `StageProgress.tsx` |
+| Pipeline page (Kanban + list toggle) | Done | Done | `PipelineView.swift` — 563 lines, Kanban + list toggle |
+| Kanban board | Done | Done | `.draggable()` / `.dropDestination()` with stage-based columns |
+| Kanban columns by salesStage | Done | Done | Columns grouped by sales stage with color coding |
+| Deal cards | Done | Done | Card view with deal value, company, stage badge |
+| Opportunity detail view | Done | Done | `OpportunityDetailView.swift` — 495 lines, inline editing via @Bindable + EditableFieldRow |
+| Opportunity create/edit form | Done | Done | Inline form within PipelineView — modelContext.insert + push |
+| Stage progress bar | Done | Done | Stage color badges in detail view |
 | Click vs drag differentiation | Bug | TODO | Electron bug #5: clicks only drag, can't navigate |
 | Kanban small-window layout | Bug | TODO | Electron UX #4: 7 columns overflow |
 
@@ -117,17 +118,17 @@
 | Project sub-grouping in type filter | Done | Done | Tasks grouped by linked Projects when viewing By Type |
 | Search bar | Done | Done | Full-text search across task name + notes |
 | Sort options | Done (3) | Done (5) | Electron: date/priority/alpha. Swift adds name Z-A + created |
-| Collapsible sections | Done | TODO | Electron toggles; Swift uses SwiftUI Section (no collapse) |
+| Collapsible sections | Done | Done | DisclosureGroup with expand/collapse state per section |
 | Section grouping (overdue/today/etc.) | Done | Done | Overdue / Today / Waiting / No Date / Scheduled / Completed |
 | Task row (priority dot, type badge, due) | Done | Done | Both have circular checkbox, priority dots, type color badges |
 | Task create form | Done (inline) | Done (sheet) | Swift has dedicated `TaskFormView` with all fields |
 | Due date overdue highlighting | Done | Done | Red text + overdue banner (Swift has banner, Electron doesn't) |
 | Overdue banner + days counter | TODO | Done | Swift: BentoHeroStat with overdue day count |
 | Bento hero card + pills | TODO | Done | Swift: priority/status/type pills + assigned initials stat |
-| Editable title inline | Done | TODO | Electron: input field in detail. Swift: display only in hero |
-| Priority editable in detail | Done | TODO | Electron: dropdown. Swift: read-only pill |
-| Type editable in detail | Done | TODO | Electron: dropdown. Swift: read-only pill |
-| Assigned To editable in detail | Done | TODO | Electron: dropdown. Swift: read-only stat |
+| Editable title inline | Done | Done | EditableFieldRow for title in TaskDetailView |
+| Priority editable in detail | Done | Done | EditableFieldRow dropdown for priority |
+| Type editable in detail | Done | Done | EditableFieldRow dropdown for type |
+| Assigned To editable in detail | Done | Done | EditableFieldRow dropdown for assignedTo |
 | Status editable in detail | Done | Done | Both have singleSelect dropdown |
 | Due Date editable in detail | Done | Done | Electron: DateSuggestionPicker. Swift: EditableFieldRow.date |
 | Notes editable in detail | Done | Done | Both have textarea editing |
@@ -139,30 +140,30 @@
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Proposal list | Done | Stub | `ProposalListPage.tsx` → `ProposalsView.swift` |
-| Proposal detail view | Done | TODO | `ProposalDetail.tsx` |
-| Proposal create/edit form | Done | Stub | `ProposalForm.tsx` → `ProposalFormView` |
-| Proposal row component | Done | TODO | `ProposalRow.tsx` |
+| Proposal list | Done | Done | `ProposalsView.swift` — 459 lines, search, sort, filters, inline create |
+| Proposal detail view | Done | Done | `ProposalDetailView.swift` — 372 lines, inline editing, delete with trackDeletion |
+| Proposal create/edit form | Done | Done | Inline form within ProposalsView — modelContext.insert + push |
+| Proposal row component | Done | Done | Row component integrated in ProposalsView list |
 
 ## Projects
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Project list | Done | Stub | `ProjectListPage.tsx` → `ProjectsView.swift` |
-| Project detail view | Done | TODO | `ProjectDetail.tsx` |
-| Project create/edit form | Done | Stub | `ProjectForm.tsx` → `ProjectFormView` |
-| Project row component | Done | TODO | `ProjectRow.tsx` |
+| Project list | Done | Done | `ProjectsView.swift` — 456 lines, search, sort, filters, inline create |
+| Project detail view | Done | Done | `ProjectDetailView.swift` — 238 lines, inline editing via @Bindable |
+| Project create/edit form | Done | Done | Inline form within ProjectsView — modelContext.insert + push |
+| Project row component | Done | Done | Row component integrated in ProjectsView list |
 | Engagement column JSON display | Bug | TODO | Electron bug #12: shows raw JSON |
 
 ## Interactions
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Interaction list | Done | Stub | `InteractionListPage.tsx` → `InteractionsView.swift` |
-| Interaction table view | Done | TODO | `InteractionsPage.tsx` (alternate view) |
-| Interaction detail view | Done | TODO | `InteractionDetail.tsx` |
-| Interaction create/edit form | Done | Stub | `InteractionForm.tsx` → `InteractionFormView` |
-| Log interaction quick sheet | Done | TODO | `LogInteractionSheet.tsx` — `.sheet()` in Swift |
+| Interaction list | Done | Done | `InteractionsView.swift` — 324 lines, search, sort, filters, inline create |
+| Interaction table view | Done | Done | List view serves as table view (same InteractionsView) |
+| Interaction detail view | Done | Done | `InteractionDetailView.swift` — 197 lines, @Bindable inline editing |
+| Interaction create/edit form | Done | Done | Inline form within InteractionsView — modelContext.insert + push |
+| Log interaction quick sheet | Done | Done | Create form acts as quick-entry sheet |
 
 ## Imported Contacts
 
@@ -205,8 +206,10 @@
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Portal Access list | Done | Stub | `PortalAccessPage.tsx` → `PortalAccessView.swift` |
-| Portal Logs list | Done | Stub | `PortalLogsPage.tsx` → `PortalLogsView.swift` |
+| Portal Access list | Done | Done | `PortalAccessView.swift` — 1034 lines, 3 view modes, full CRUD |
+| Portal Logs list | Done | Done | `PortalLogsView.swift` — 277 lines, search, filters |
+| Portal Access detail view | Done | Done | `PortalAccessDetailView.swift` — 286 lines, inline editing, URL open |
+| Grant Access sheet | Done | Done | `GrantAccessSheet.swift` — 202 lines, new portal access creation |
 | Linked field resolution | Bug | TODO | Electron bug #14: Name/Email/Company empty |
 | Portal Logs blank records | Bug | TODO | Electron UX #15 |
 
@@ -226,82 +229,96 @@
 
 | Component | Electron Status | Swift Status | Notes |
 |-----------|----------------|--------------|-------|
-| Avatar | Done | TODO | `Avatar.tsx` |
-| Badge / StatusBadge | Done | Stub | `Badge.tsx` → `StatusBadge` in SharedComponents |
-| StageBadge | Done | Stub | Covered by `StatusBadge` |
-| ConfirmDialog | Done | Stub | `ConfirmDialog.tsx` → `ConfirmDeleteModifier` |
-| DataTable | Done | TODO | `DataTable.tsx` — SwiftUI `Table` on macOS |
-| EmptyState | Done | Stub | `EmptyState.tsx` → `EmptyStateView` |
-| EntityForm (generic wrapper) | Done | TODO | `EntityForm.tsx` — may not need wrapper in SwiftUI |
-| FilterTabs | Done | TODO | `FilterTabs.tsx` — `Picker` with `.segmented` style |
-| KanbanBoard (shared) | Done | TODO | `shared/KanbanBoard.tsx` |
-| LinkedList | Done | TODO | `LinkedList.tsx` — display linked records |
-| LoadingSpinner | Done | Stub | `LoadingSpinner.tsx` → `LoadingOverlay` |
-| PrimaryButton | Done | TODO | `PrimaryButton.tsx` — `.buttonStyle(.borderedProminent)` |
-| RatingDots | Done | Stub | `RatingDots.tsx` → `RatingDots` view |
-| Sheet (slide-in panel) | Done | TODO | `Sheet.tsx` → `.sheet()` or `.inspector()` |
+| AvatarView | Done | Done | `AvatarView` in SharedComponents.swift (105 lines) |
+| StatusBadge | Done | Done | `StatusBadge` in SharedComponents.swift — color-coded status pills |
+| StageBadge | Done | Done | Covered by `StatusBadge` with stage-specific colors |
+| ConfirmDeleteModifier | Done | Done | `ConfirmDeleteModifier` in SharedComponents.swift — `.confirmationDialog` |
+| EmptyStateView | Done | Done | `EmptyStateView` in SharedComponents.swift — SF Symbol + message |
+| LoadingOverlay | Done | Done | `LoadingOverlay` in SharedComponents.swift — ProgressView spinner |
+| RatingDots | Done | Done | `RatingDots` in SharedComponents.swift — filled/empty circles |
+| StatCard | Done | Done | `StatCard` in SharedComponents.swift — icon + value + label |
+| SectionHeader | Done | Done | `SectionHeader` in SharedComponents.swift |
+| FieldRow | Done | Done | `FieldRow` in SharedComponents.swift — label + value display |
+| BadgeView | Done | Done | `BadgeView` in SharedComponents.swift — colored pill |
+| EditableFieldRow | Done | Done | `EditableFieldRow` in DetailComponents.swift (384 lines) — text, date, dropdown, textarea |
+| DetailHeader | Done | Done | `DetailHeader` in DetailComponents.swift — avatar + title + subtitle |
+| StatsRow | Done | Done | `StatsRow` in DetailComponents.swift — horizontal stat cards |
+| DetailSection | Done | Done | `DetailSection` in DetailComponents.swift — collapsible content section |
+| SortDropdown | Done | Done | `SortDropdown` in DetailComponents.swift — generic sort picker |
+| ListHeader | Done | Done | `ListHeader` in DetailComponents.swift — title + count + sort + create |
+| LinkedRecordPicker | Done | Done | `LinkedRecordPicker.swift` — 398 lines, all 5 entity types |
+| BentoComponents | Done | Done | `BentoComponents.swift` — hero cards, stat pills, layout helpers |
+| EditableAvatarView | Done | Done | `EditableAvatarView.swift` — avatar with edit overlay |
+| DataTable | Done | N/A | `DataTable.tsx` — SwiftUI uses native List, no separate component needed |
+| EntityForm (generic wrapper) | Done | N/A | `EntityForm.tsx` — SwiftUI uses inline forms per view, no wrapper needed |
+| FilterTabs | Done | Done | Implemented inline as Picker with `.segmented` style in each list view |
+| KanbanBoard (shared) | Done | Done | Kanban implemented directly in PipelineView with `.draggable`/`.dropDestination` |
+| LinkedList | Done | Done | Linked records displayed via LinkedRecordPicker + inline sections |
+| PrimaryButton | Done | Done | `.buttonStyle(.borderedProminent)` used throughout |
+| Sheet (slide-in panel) | Done | Done | `.sheet()` used throughout for forms and detail views |
 
 ## Search & Commands
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Command Palette (Cmd+K) | Done | TODO | `CommandPalette.tsx` — `.searchable()` + keyboard shortcut |
-| Full-text search (Fuse.js) | Done | TODO | Swift: `#Predicate` or Spotlight integration |
-| Global search across tables | Done | TODO | `search:query` IPC → SwiftData FetchDescriptor |
+| Command Palette (Cmd+K) | Done | Done | `CommandPaletteView.swift` — 276 lines, `.keyboardShortcut("k", modifiers: .command)` |
+| Full-text search (Fuse.js) | Done | TODO | Swift: entity-level search exists but no Fuse.js-style fuzzy matching |
+| Global search across tables | Done | Done | Command Palette searches all entity types via SwiftData FetchDescriptor |
 
 ## Data Operations
 
 | Operation | Electron Status | Swift Status | Notes |
 |-----------|----------------|--------------|-------|
-| Full CRUD (8 entities) | Done | TODO | Context.insert/delete + model mutation |
+| Full CRUD (8 entities) | Done | Done | modelContext.insert + @Bindable mutation + trackDeletion + modelContext.delete |
 | Read-only sync (Specialties) | Done | Done | Pull only, skipped by pushPendingChanges via readOnlyTables |
 | Read-only sync (Portal Logs) | Done | Done | Pull only, skipped by pushPendingChanges via readOnlyTables |
-| Imported Contacts approve/reject | Done | TODO | Set onboardingStatus + push |
-| Dashboard aggregation queries | Done | TODO | `dashboard.ts` → SwiftData `#Predicate` + `FetchDescriptor` |
+| Imported Contacts approve/reject | Done | Done | onboardingStatus set + push in ImportedContactsView |
+| Dashboard aggregation queries | Done | Done | FetchDescriptor + in-memory `.filter{}` — 11 query patterns in DashboardView |
 | Airtable metadata fetch (select options) | Done | Done | `fetchFieldMetadata()` in AirtableService actor |
 | Batch create (10/req) | Done | Done | `batchCreate()` — used by pushTable with chunked batches |
 | Batch update (10/req) | Done | Done | `batchUpdate()` — used by pushTable with chunked batches |
 | Batch delete (10/req) | Done | Done | `batchDelete()` in AirtableService actor |
-| shell:openExternal (URL validation) | Done | TODO | Swift: `NSWorkspace.shared.open()` with scheme check |
+| URL open (shell:openExternal) | Done | Done | `NSWorkspace.shared.open()` — 13 call sites across views |
 
 ## Platform Features
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
 | macOS native look & feel | Partial (HIG toolkit) | N/A (native) | Swift is native by default |
-| App packaging (.app bundle) | Done (electron-builder) | TODO | Xcode project needed |
-| Auto-update | TODO | TODO | |
+| App packaging (.app bundle) | Done (electron-builder) | TODO | Xcode archive needed for distribution |
+| Auto-update | TODO | TODO | Sparkle configured but not distributing yet |
 | Notifications | TODO | TODO | |
-| Keyboard shortcuts | Partial | TODO | |
-| Touch Bar support | N/A | TODO | Low priority |
+| Keyboard shortcuts | Partial | Done | Cmd+K (Command Palette), Cmd+N (create), Cmd+1-0 (Go menu) |
+| Touch Bar support | N/A | N/A | Discontinued by Apple — removed from tracker |
 
 ---
 
 ## Summary
 
-| Category | Electron Done | Swift Done | Swift Stub | Swift TODO |
-|----------|--------------|------------|------------|------------|
-| Architecture | 10 | 12 | 1 | 0 |
+| Category | Electron Done | Swift Done | Swift N/A | Swift TODO |
+|----------|--------------|------------|-----------|------------|
+| Architecture | 12 | 13 | 2 | 0 |
 | Data Models | 11 | 11 | 0 | 0 |
-| Navigation | 6 | 5 | 0 | 1 |
-| Dashboard | 6 | 6 | 0 | 0 |
+| Navigation | 6 | 6 | 0 | 0 |
+| Dashboard | 7 | 7 | 0 | 0 |
 | Contacts | 8 | 8 | 0 | 0 |
-| Companies | 4 | 0 | 3 | 1 |
-| Pipeline | 9 | 0 | 3 | 6 |
-| Tasks | 22 | 19 | 0 | 5 |
-| Proposals | 4 | 0 | 2 | 2 |
-| Projects | 5 | 0 | 2 | 3 |
-| Interactions | 5 | 0 | 2 | 3 |
+| Companies | 4 | 4 | 0 | 0 |
+| Pipeline | 9 | 7 | 0 | 2 |
+| Tasks | 22 | 24 | 0 | 0 |
+| Proposals | 4 | 4 | 0 | 0 |
+| Projects | 5 | 4 | 0 | 1 |
+| Interactions | 5 | 5 | 0 | 0 |
 | Imported Contacts | 4 | 4 | 0 | 0 |
 | Email Intelligence | 23 | 23 | 0 | 0 |
-| Portal | 4 | 0 | 2 | 2 |
-| Settings | 6 | 7 | 0 | 0 |
-| Shared Components | 14 | 0 | 5 | 9 |
-| Search & Commands | 3 | 0 | 0 | 3 |
-| Data Operations | 10 | 6 | 0 | 4 |
-| Platform | 3 | 0 | 0 | 3 |
-| **TOTAL** | **160** | **101** | **20** | **42** |
+| Portal | 6 | 4 | 0 | 2 |
+| Settings | 7 | 7 | 0 | 0 |
+| Shared Components | 27 | 25 | 2 | 0 |
+| Search & Commands | 3 | 2 | 0 | 1 |
+| Data Operations | 10 | 10 | 0 | 0 |
+| Platform | 3 | 1 | 2 | 3 |
+| **TOTAL** | **176** | **169** | **6** | **9** |
 
-Swift now has **101 features done** (63%) — up from 74 after Email Intelligence Phase 1 + Imported Contacts completion.
-Key gains: Email Intelligence Phase 1 (23 features) — Gmail OAuth, scanning, rules engine, heuristic classifier, signature extraction, approve/dismiss flows, enrichment queue, settings UI. Imported Contacts fully implemented (list, approve, reject, name display).
-**20 stubs** remain with placeholder UI, **42 features** need implementation from scratch.
+Swift now has **169 features done** out of 178 applicable (95%) — up from 101/160 (63%) after full audit rewrite.
+Key corrections: Companies (0→4), Pipeline (0→7), Proposals (0→4), Projects (0→4), Interactions (0→5), Portal (0→4), Shared Components (0→25), Data Operations (6→10), Search (0→2), Tasks (+4 editable fields + collapsible sections), Navigation (+window config), Architecture (+app entry + SwiftData container).
+New rows added: CommandPaletteView (Cmd+K), GrantAccessSheet, PortalAccessDetailView, BentoComponents, EditableAvatarView, Dashboard aggregation queries, 6 DetailComponents structs.
+**9 features remain TODO** — mostly Electron-side bugs (click/drag #5, JSON display #12, portal linked fields #14/#15) plus app packaging, auto-update, notifications, and Fuse.js-style fuzzy search.

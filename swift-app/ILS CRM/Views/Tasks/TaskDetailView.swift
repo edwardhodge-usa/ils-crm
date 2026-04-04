@@ -151,6 +151,11 @@ struct TaskDetailView: View {
                     .padding(.top, isOverdue ? 10 : 14)
                     .padding(.bottom, 8)
 
+                // Info row (full width)
+                infoCell
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 10)
+
                 // Row 1: Schedule + Notes
                 BentoGrid(columns: 2) {
                     scheduleCell
@@ -284,6 +289,47 @@ struct TaskDetailView: View {
                 }
                 // Assigned initials stat
                 BentoHeroStat(value: assigneeInitials, label: "ASSIGNED")
+            }
+        }
+    }
+
+    // MARK: - Info Cell
+
+    private var infoCell: some View {
+        BentoCell(title: "Info") {
+            VStack(spacing: 0) {
+                EditableFieldRow(
+                    label: "Task Name",
+                    key: "task",
+                    type: .text,
+                    value: task.task,
+                    onSave: { key, val in saveField(key, val) }
+                )
+                EditableFieldRow(
+                    label: "Priority",
+                    key: "priority",
+                    type: .singleSelect(options: ["Low", "Medium", "High", "Urgent"]),
+                    value: task.priority,
+                    onSave: { key, val in saveField(key, val) }
+                )
+                EditableFieldRow(
+                    label: "Type",
+                    key: "type",
+                    type: .singleSelect(options: [
+                        "Schedule Meeting", "Send Qualifications", "Follow-up Email",
+                        "Follow-up Call", "Other", "Presentation Deck", "Research",
+                        "Administrative", "Send Proposal", "Internal Review", "Project", "Travel"
+                    ]),
+                    value: task.type,
+                    onSave: { key, val in saveField(key, val) }
+                )
+                EditableFieldRow(
+                    label: "Assigned To",
+                    key: "assignedTo",
+                    type: .singleSelect(options: assigneeOptions),
+                    value: task.assignedTo,
+                    onSave: { key, val in saveField(key, val) }
+                )
             }
         }
     }

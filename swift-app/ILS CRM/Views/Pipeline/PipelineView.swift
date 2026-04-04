@@ -391,23 +391,6 @@ private struct KanbanCard: View {
     }
 }
 
-// MARK: - Deal Detail (Wave 2 placeholder)
-
-/// Mirrors src/components/pipeline/DealDetail.tsx
-struct DealDetailView: View {
-    let opportunityId: String
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading) {
-                Text("Deal detail — coming soon")
-            }
-            .padding()
-        }
-        .navigationTitle("Opportunity")
-    }
-}
-
 // MARK: - Opportunity Form
 
 /// Mirrors src/components/pipeline/OpportunityForm.tsx
