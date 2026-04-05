@@ -112,6 +112,10 @@ actor GmailAPIClient {
             URLQueryItem(name: "metadataHeaders", value: "Cc"),
             URLQueryItem(name: "metadataHeaders", value: "Subject"),
             URLQueryItem(name: "metadataHeaders", value: "Date"),
+            URLQueryItem(name: "metadataHeaders", value: "List-Unsubscribe"),
+            URLQueryItem(name: "metadataHeaders", value: "Precedence"),
+            URLQueryItem(name: "metadataHeaders", value: "List-Id"),
+            URLQueryItem(name: "metadataHeaders", value: "X-Mailer"),
         ]
 
         let json = try await authenticatedRequest(url: components.url!)

@@ -87,6 +87,7 @@ final class ImportedContact {
     var discoveredVia: String?           // fldCUcYTkPATWE97N
     var suggestedCompanyName: String?    // fldSCvoQayABYZqL5
     var suggestedCompanyLink: [String]   // fldLGvhdrydRxH5EU → Companies (linked record IDs)
+    var classificationSource: String?    // fldohpW9JHMjYeTS5 — singleSelect: AI, Heuristic
 
     // Sync Metadata
     var airtableModifiedAt: Date?

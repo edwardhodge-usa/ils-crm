@@ -181,4 +181,220 @@ enum EmailUtils {
 
         return SignatureData(phone: phone, title: title, company: company)
     }
+
+    // MARK: - Quoted Content Stripping
+
+    /// Strips HTML quote structures and returns plain text.
+    private static func stripHtmlQuotes(_ html: String) -> String {
+        var result = html
+        // Remove gmail_quote divs and their content
+        result = result.replacingOccurrences(
+            of: #"<div[^>]*class="[^"]*gmail_quote[^"]*"[^>]*>[\s\S]*?</div>"#,
+            with: "", options: .regularExpression
+        )
+        // Remove yahoo_quoted divs
+        result = result.replacingOccurrences(
+            of: #"<div[^>]*class="[^"]*yahoo_quoted[^"]*"[^>]*>[\s\S]*?</div>"#,
+            with: "", options: .regularExpression
+        )
+        // Remove blockquote elements
+        result = result.replacingOccurrences(
+            of: #"<blockquote[\s\S]*?</blockquote>"#,
+            with: "", options: .regularExpression
+        )
+        // Strip remaining tags
+        result = result.replacingOccurrences(
+            of: #"<[^>]+>"#, with: " ", options: .regularExpression
+        )
+        // Decode entities
+        result = result.replacingOccurrences(of: "&nbsp;", with: " ")
+        result = result.replacingOccurrences(of: "&lt;", with: "<")
+        result = result.replacingOccurrences(of: "&gt;", with: ">")
+        result = result.replacingOccurrences(of: "&amp;", with: "&")
+        // Clean whitespace
+        result = result.replacingOccurrences(
+            of: #"\n\s*\n\s*\n"#, with: "\n\n", options: .regularExpression
+        )
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // swiftlint:disable:next force_try
+    private static let outlookFromRegex = try! NSRegularExpression(pattern: #"^From:\s+.+"#)
+    // swiftlint:disable:next force_try
+    private static let outlookSentRegex = try! NSRegularExpression(pattern: #"^Sent:\s+"#)
+    // swiftlint:disable:next force_try
+    private static let onWroteRegex = try! NSRegularExpression(pattern: #"^On .+wrote:\s*$"#, options: .caseInsensitive)
+    // swiftlint:disable:next force_try
+    private static let onPartialRegex = try! NSRegularExpression(pattern: #"^On .+"#, options: .caseInsensitive)
+    // swiftlint:disable:next force_try
+    private static let wroteLineRegex = try! NSRegularExpression(pattern: #"^\s*wrote:\s*$"#, options: .caseInsensitive)
+    // swiftlint:disable:next force_try
+    private static let nameAngleWroteRegex = try! NSRegularExpression(pattern: #"^.+<[^>]+>\s*wrote:\s*$"#, options: .caseInsensitive)
+    // swiftlint:disable:next force_try
+    private static let originalMessageRegex = try! NSRegularExpression(pattern: #"^-----Original Message-----"#)
+    // swiftlint:disable:next force_try
+    private static let forwardedMessageRegex = try! NSRegularExpression(pattern: #"^-{10,}\s*Forwarded message\s*-{10,}"#)
+    // swiftlint:disable:next force_try
+    private static let underscoreDividerRegex = try! NSRegularExpression(pattern: #"^_{5,}"#)
+    // swiftlint:disable:next force_try
+    private static let sentFromIPhoneRegex = try! NSRegularExpression(pattern: #"^Sent from my iP(hone|ad)"#, options: .caseInsensitive)
+    // swiftlint:disable:next force_try
+    private static let getOutlookRegex = try! NSRegularExpression(pattern: #"^Get Outlook for"#, options: .caseInsensitive)
+
+    /// Strips quoted thread content from an email body, returning only the
+    /// sender's own message + signature. Returns nil if the remaining content
+    /// is too short to contain a useful signature (< 3 non-empty lines).
+    ///
+    /// - Parameters:
+    ///   - body: Raw email body text (plain text or HTML)
+    ///   - isHtml: If true, strip HTML quotes before line-by-line processing
+    static func stripQuotedContent(_ body: String, isHtml: Bool = false) -> String? {
+        var text = body
+
+        if isHtml {
+            text = stripHtmlQuotes(text)
+        }
+
+        let lines = text.components(separatedBy: "\n")
+        var cutIndex = lines.count
+
+        for i in 0..<lines.count {
+            let line = lines[i].trimmingCharacters(in: .whitespaces)
+            let lineRange = NSRange(line.startIndex..., in: line)
+
+            // 2+ consecutive > quoted lines
+            if line.hasPrefix("> ") || line == ">" {
+                if i + 1 < lines.count {
+                    let nextLine = lines[i + 1].trimmingCharacters(in: .whitespaces)
+                    if nextLine.hasPrefix("> ") || nextLine == ">" {
+                        cutIndex = i
+                        break
+                    }
+                }
+                continue
+            }
+
+            // Outlook From: + Sent: lookahead
+            if outlookFromRegex.firstMatch(in: line, range: lineRange) != nil {
+                var foundSent = false
+                for j in (i + 1)...min(i + 3, lines.count - 1) {
+                    let nextLine = lines[j].trimmingCharacters(in: .whitespaces)
+                    let nextRange = NSRange(nextLine.startIndex..., in: nextLine)
+                    if outlookSentRegex.firstMatch(in: nextLine, range: nextRange) != nil {
+                        foundSent = true
+                        break
+                    }
+                }
+                if foundSent {
+                    cutIndex = i
+                    break
+                }
+                continue
+            }
+
+            // "On ... wrote:" Gmail pattern (same line)
+            if onWroteRegex.firstMatch(in: line, range: lineRange) != nil {
+                cutIndex = i
+                break
+            }
+
+            // "On ..." on this line, "wrote:" on the next
+            if onPartialRegex.firstMatch(in: line, range: lineRange) != nil,
+               i + 1 < lines.count {
+                let nextLine = lines[i + 1].trimmingCharacters(in: .whitespaces)
+                let nextRange = NSRange(nextLine.startIndex..., in: nextLine)
+                if wroteLineRegex.firstMatch(in: nextLine, range: nextRange) != nil {
+                    cutIndex = i
+                    break
+                }
+            }
+
+            // "{name} <email> wrote:" pattern
+            if nameAngleWroteRegex.firstMatch(in: line, range: lineRange) != nil {
+                cutIndex = i
+                break
+            }
+
+            // Original message dividers
+            if originalMessageRegex.firstMatch(in: line, range: lineRange) != nil { cutIndex = i; break }
+            if forwardedMessageRegex.firstMatch(in: line, range: lineRange) != nil { cutIndex = i; break }
+            if underscoreDividerRegex.firstMatch(in: line, range: lineRange) != nil { cutIndex = i; break }
+
+            // Mobile footers
+            if sentFromIPhoneRegex.firstMatch(in: line, range: lineRange) != nil { cutIndex = i; break }
+            if getOutlookRegex.firstMatch(in: line, range: lineRange) != nil { cutIndex = i; break }
+        }
+
+        var result = Array(lines[0..<cutIndex])
+
+        // Cap at 50 lines
+        if result.count > 50 {
+            result = Array(result[0..<50])
+        }
+
+        // Need at least 3 non-empty lines
+        let nonEmpty = result.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        if nonEmpty.count < 3 { return nil }
+
+        return result.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // MARK: - Message Selection Scoring
+
+    // swiftlint:disable:next force_try
+    private static let scoreTitleRegex = try! NSRegularExpression(
+        pattern: #"\b(?:VP|Director|Manager|President|CEO|CFO|COO|CTO|Partner|Associate|Consultant|Producer|Designer|Engineer|Architect|Counsel|Attorney)\b"#,
+        options: .caseInsensitive
+    )
+
+    // swiftlint:disable:next force_try
+    private static let scoreUrlRegex = try! NSRegularExpression(
+        pattern: #"https?://|www\.|\.com|\.org|\.net"#,
+        options: .caseInsensitive
+    )
+
+    // swiftlint:disable:next force_try
+    private static let scoreMobileFooterRegex = try! NSRegularExpression(
+        pattern: #"^Sent from my iP(hone|ad)"#,
+        options: [.caseInsensitive, .anchorsMatchLines]
+    )
+
+    /// Scores a stripped message body for signature richness.
+    /// Higher score = better candidate for Claude extraction.
+    /// - Parameters:
+    ///   - strippedBody: Message body after `stripQuotedContent` (may be nil)
+    ///   - recencyIndex: 0 = most recent, 1 = second, etc.
+    static func scoreMessageForSignature(_ strippedBody: String?, recencyIndex: Int) -> Int {
+        guard let strippedBody, !strippedBody.isEmpty else { return -10 }
+
+        var score = 0
+        let lines = strippedBody.components(separatedBy: "\n")
+        let nonEmpty = lines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+
+        // Line count
+        if nonEmpty.count >= 10 { score += 2 }
+        if nonEmpty.count < 3 { score -= 10 }
+
+        // Phone number pattern
+        let bodyRange = NSRange(strippedBody.startIndex..., in: strippedBody)
+        if phoneRegex.firstMatch(in: strippedBody, range: bodyRange) != nil { score += 3 }
+
+        // Title keyword
+        if scoreTitleRegex.firstMatch(in: strippedBody, range: bodyRange) != nil { score += 2 }
+
+        // URL or domain
+        if scoreUrlRegex.firstMatch(in: strippedBody, range: bodyRange) != nil { score += 1 }
+
+        // Recency bonus
+        if recencyIndex == 0 { score += 2 }
+        else if recencyIndex == 1 { score += 1 }
+
+        // Mobile-only footer detection
+        if scoreMobileFooterRegex.firstMatch(in: strippedBody, range: bodyRange) != nil,
+           nonEmpty.count <= 2 {
+            score -= 5
+        }
+
+        return score
+    }
 }

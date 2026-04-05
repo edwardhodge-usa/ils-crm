@@ -183,6 +183,25 @@ struct ImportedContactDetailView: View {
                         .font(.system(size: 11, weight: .bold))
                         .tracking(0.5)
                         .foregroundStyle(.purple)
+
+                    Spacer()
+
+                    // Classification source indicator
+                    if let source = importedContact.classificationSource, !source.isEmpty {
+                        let isAI = source.lowercased() == "ai"
+                        HStack(spacing: 3) {
+                            Circle()
+                                .fill(isAI ? Color.green : Color.gray)
+                                .frame(width: 6, height: 6)
+                            Text(isAI ? "AI Classified" : "Heuristic")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(isAI ? .green : .secondary)
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background((isAI ? Color.green : Color.gray).opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                    }
                 }
 
                 if hasReasoning, let reasoning = importedContact.aiReasoning {

@@ -18,6 +18,9 @@ struct GmailSettingsSection: View {
     @State private var clientSecret: String = ""
     @State private var showCredentialsSaved = false
     @State private var showDismissedSheet = false
+    @State private var anthropicApiKey: String = ""
+    @State private var isValidatingKey = false
+    @State private var keyValidationResult: Bool?
     @AppStorage("gmail_scan_interval") private var scanInterval: String = "off"
 
     @Query(sort: \ImportedContact.importedContactName) private var allImported: [ImportedContact]
@@ -112,6 +115,51 @@ struct GmailSettingsSection: View {
 
             Divider()
 
+            // Anthropic API key (for AI classification)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Anthropic API Key")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                Text("Enables AI-powered contact classification during email scans.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.tertiary)
+            }
+
+            HStack(spacing: 8) {
+                SecureField("sk-ant-...", text: $anthropicApiKey)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 320)
+
+                Button {
+                    saveAnthropicKey()
+                } label: {
+                    Text("Save")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .disabled(anthropicApiKey.isEmpty)
+
+                Button {
+                    validateAnthropicKey()
+                } label: {
+                    if isValidatingKey {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Text("Test")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                }
+                .disabled(anthropicApiKey.isEmpty || isValidatingKey)
+
+                if let result = keyValidationResult {
+                    Image(systemName: result ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundStyle(result ? .green : .red)
+                        .font(.system(size: 14))
+                }
+            }
+
+            Divider()
+
             // Scan interval
             Picker("Scan Interval", selection: $scanInterval) {
                 ForEach(Self.intervalOptions, id: \.value) { option in
@@ -192,6 +240,30 @@ struct GmailSettingsSection: View {
     private func loadCredentials() {
         clientId = oAuthService.getClientId() ?? ""
         clientSecret = oAuthService.getClientSecret() ?? ""
+        anthropicApiKey = KeychainService.read(key: ClaudeClient.anthropicApiKeyAccount) ?? ""
+    }
+
+    private func saveAnthropicKey() {
+        do {
+            try KeychainService.save(key: ClaudeClient.anthropicApiKeyAccount, value: anthropicApiKey)
+            keyValidationResult = nil
+        } catch {
+            print("[GmailSettings] Failed to save Anthropic key: \(error.localizedDescription)")
+        }
+    }
+
+    private func validateAnthropicKey() {
+        isValidatingKey = true
+        keyValidationResult = nil
+        Task {
+            let result = await ClaudeClient.validateApiKey(anthropicApiKey)
+            isValidatingKey = false
+            keyValidationResult = result
+            // Auto-clear result after 3 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                keyValidationResult = nil
+            }
+        }
     }
 
     private func saveCredentials() {

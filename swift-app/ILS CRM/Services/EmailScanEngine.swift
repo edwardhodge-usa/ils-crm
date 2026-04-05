@@ -10,6 +10,7 @@ struct ScanProgress: Sendable {
     enum Status: String, Sendable {
         case idle
         case scanning
+        case classifying
         case complete
         case error
     }
@@ -41,7 +42,7 @@ final class EmailScanEngine {
     private(set) var progress = ScanProgress()
 
     /// Whether a scan is currently in progress.
-    var isScanning: Bool { progress.status == .scanning }
+    var isScanning: Bool { progress.status == .scanning || progress.status == .classifying }
 
     // MARK: - Dependencies
 
@@ -54,6 +55,7 @@ final class EmailScanEngine {
     private static let logger = Logger(subsystem: "com.ils-crm", category: "EmailScan")
     private static let lockFilePath = "/tmp/ils-crm-sync.lock"
     private static let batchSize = 50
+    private static let maxBodyFetchCandidates = 200
 
     private var pollingTask: Task<Void, Never>?
 
@@ -106,6 +108,17 @@ final class EmailScanEngine {
                 for msg in result.messages {
                     do {
                         let headers = try await gmailClient.getMessageHeaders(messageId: msg.id)
+
+                        // Skip marketing messages entirely
+                        if isMarketingMessage(headers) {
+                            totalProcessed += 1
+                            if totalProcessed % 50 == 0 {
+                                progress.processed = totalProcessed
+                                progress.candidatesFound = candidateMap.count
+                            }
+                            continue
+                        }
+
                         processCandidatesFromHeaders(
                             headers: headers,
                             threadId: msg.threadId,
@@ -127,12 +140,12 @@ final class EmailScanEngine {
                 try await Task.sleep(for: .milliseconds(50))
             } while pageToken != nil
 
-            // Apply rules, classify, and write candidates
+            // Apply rules, filter, and classify candidates
             let rules = loadRules()
             let candidates = Array(candidateMap.values)
             progress.candidatesFound = candidates.count
 
-            try await writeCandidates(
+            let survivors = try await writeCandidates(
                 candidates: candidates,
                 rules: rules,
                 ownEmail: ownEmail
@@ -142,7 +155,8 @@ final class EmailScanEngine {
             try await updateScanState(ownEmail: ownEmail, totalProcessed: totalProcessed)
 
             progress.status = .complete
-            Self.logger.info("Full scan complete: \(totalProcessed) messages, \(candidates.count) candidates")
+            progress.candidatesFound = survivors
+            Self.logger.info("Full scan complete: \(totalProcessed) messages, \(survivors) candidates")
 
         } catch {
             progress.status = .error
@@ -208,6 +222,13 @@ final class EmailScanEngine {
             for (index, messageId) in messageIds.enumerated() {
                 do {
                     let headers = try await gmailClient.getMessageHeaders(messageId: messageId)
+
+                    // Skip marketing messages entirely
+                    if isMarketingMessage(headers) {
+                        progress.processed = index + 1
+                        continue
+                    }
+
                     processCandidatesFromHeaders(
                         headers: headers,
                         threadId: "", // threadId not available from history
@@ -225,7 +246,7 @@ final class EmailScanEngine {
             let candidates = Array(candidateMap.values)
             progress.candidatesFound = candidates.count
 
-            try await writeCandidates(
+            let survivors = try await writeCandidates(
                 candidates: candidates,
                 rules: rules,
                 ownEmail: ownEmail
@@ -234,7 +255,8 @@ final class EmailScanEngine {
             try await updateScanState(ownEmail: ownEmail, totalProcessed: messageIds.count)
 
             progress.status = .complete
-            Self.logger.info("Incremental scan complete: \(messageIds.count) messages, \(candidates.count) candidates")
+            progress.candidatesFound = survivors
+            Self.logger.info("Incremental scan complete: \(messageIds.count) messages, \(survivors) candidates")
 
         } catch {
             progress.status = .error
@@ -395,13 +417,16 @@ final class EmailScanEngine {
 
     // MARK: - Write Candidates to SwiftData
 
-    /// Evaluates rules, classifies, and writes passing candidates as ImportedContact records.
+    /// Evaluates rules, classifies with Claude + heuristic fallback, and writes
+    /// passing candidates as ImportedContact records.
     /// Checks for CRM dedup against existing Contact records.
+    /// Returns the number of candidates written.
+    @discardableResult
     private func writeCandidates(
         candidates: [EmailCandidateData],
         rules: [ScanRule],
         ownEmail: String
-    ) async throws {
+    ) async throws -> Int {
         let context = modelContainer.mainContext
 
         // Load existing contacts for dedup -- fetch all + filter in memory
@@ -419,7 +444,8 @@ final class EmailScanEngine {
             return EmailUtils.normalizeEmail(email)
         })
 
-        var written = 0
+        // Build survivors list (rules + dedup filtering)
+        var enriched: [EnrichedCandidate] = []
 
         for candidate in candidates {
             // Evaluate rules
@@ -437,10 +463,29 @@ final class EmailScanEngine {
             // ImportedContact dedup: skip if already imported
             guard !existingImportEmails.contains(candidate.normalizedEmail) else { continue }
 
-            // Classify
-            let classification = EmailClassifier.classifyCandidate(candidate)
+            // Pre-classify with heuristic for sorting
+            let heuristic = EmailClassifier.classifyCandidate(candidate)
+            var ec = EnrichedCandidate(candidate: candidate)
+            ec.confidence = heuristic.confidence
+            enriched.append(ec)
+        }
 
-            // Create ImportedContact record
+        // Run Claude classification pipeline (upgrades heuristic results with AI when API key available)
+        let ownDisplayName = ownEmail.split(separator: "@").first.map(String.init)
+        if !enriched.isEmpty {
+            await classifyCandidates(
+                candidates: &enriched,
+                ownEmail: ownEmail,
+                ownDisplayName: ownDisplayName
+            )
+        }
+
+        // Write to SwiftData
+        var written = 0
+
+        for ec in enriched {
+            let candidate = ec.candidate
+
             let localId = "local_\(UUID().uuidString)"
             let imported = ImportedContact(id: localId, isPendingPush: true)
             imported.firstName = candidate.firstName
@@ -451,15 +496,22 @@ final class EmailScanEngine {
                 .joined(separator: " ")
                 .trimmingCharacters(in: .whitespaces)
             imported.importDate = Date()
-            imported.importSource = "Email Scan"
-            imported.onboardingStatus = "Ready"
+            imported.importSource = "Integration"
+            imported.onboardingStatus = "Review"
             imported.source = "Email Scan"
-            imported.relationshipType = classification.relationshipType
-            imported.confidenceScore = Double(classification.confidence)
+            imported.relationshipType = ec.relationshipType
+            imported.confidenceScore = Double(ec.confidence)
             imported.emailThreadCount = candidate.threadCount
             imported.firstSeenDate = candidate.firstSeenDate
             imported.lastSeenDate = candidate.lastSeenDate
             imported.discoveredVia = candidate.discoveredVia
+            imported.classificationSource = ec.classificationSource
+            imported.aiReasoning = ec.aiReasoning
+
+            // Apply signature-extracted fields if present
+            if let title = ec.extractedTitle, !title.isEmpty { imported.jobTitle = title }
+            if let phone = ec.extractedPhone, !phone.isEmpty { imported.phone = phone }
+            if let company = ec.extractedCompany, !company.isEmpty { imported.suggestedCompanyName = company }
 
             context.insert(imported)
             written += 1
@@ -476,6 +528,7 @@ final class EmailScanEngine {
         }
 
         Self.logger.info("Wrote \(written) new imported contacts from email scan")
+        return written
     }
 
     // MARK: - Scan State Management
@@ -536,6 +589,192 @@ final class EmailScanEngine {
         }
 
         return nil
+    }
+
+    // MARK: - Marketing Detection
+
+    /// Known Email Service Provider names for X-Mailer header detection.
+    private static let espNames = ["mailchimp", "hubspot", "constant contact", "brevo", "klaviyo", "sendgrid", "mailgun"]
+
+    /// Checks whether an email is a marketing/bulk message based on headers.
+    /// Port of `isMarketingMessage()` from electron/gmail/scanner.ts.
+    private func isMarketingMessage(_ headers: EmailHeadersData) -> Bool {
+        let raw = headers.rawHeaders
+
+        // Precedence: bulk or list
+        let precedence = (raw["Precedence"] ?? "").lowercased()
+        if precedence == "bulk" || precedence == "list" { return true }
+
+        // List-Id present
+        if raw["List-Id"] != nil { return true }
+
+        // List-Unsubscribe present
+        if raw["List-Unsubscribe"] != nil { return true }
+
+        // X-Mailer matches known ESPs
+        let mailer = (raw["X-Mailer"] ?? "").lowercased()
+        if !mailer.isEmpty, Self.espNames.contains(where: { mailer.contains($0) }) { return true }
+
+        return false
+    }
+
+    // MARK: - Own-Signature Stripping
+
+    /// Strips lines containing the user's own email domain or display name from a body.
+    /// Port of `stripOwnSignatureLines()` from electron/gmail/scanner.ts.
+    private func stripOwnSignatureLines(_ body: String, userEmail: String, userDisplayName: String?) -> String {
+        guard let atIndex = userEmail.firstIndex(of: "@") else { return body }
+        let userDomain = String(userEmail[userEmail.index(after: atIndex)...]).lowercased()
+        guard !userDomain.isEmpty else { return body }
+
+        let nameLower = userDisplayName?.lowercased().trimmingCharacters(in: .whitespaces)
+
+        // Escape domain for regex
+        let escapedDomain = NSRegularExpression.escapedPattern(for: userDomain)
+        let domainPattern = try? NSRegularExpression(
+            pattern: "\\b[a-z0-9._%+-]+@\(escapedDomain)\\b"
+        )
+
+        return body.components(separatedBy: "\n").filter { line in
+            let lineLower = line.lowercased()
+            let lineRange = NSRange(lineLower.startIndex..., in: lineLower)
+
+            // Strip lines containing an email @userDomain
+            if let domainPattern, domainPattern.firstMatch(in: lineLower, range: lineRange) != nil {
+                return false
+            }
+
+            // Strip lines containing the exact full display name (word-boundary match)
+            if let nameLower, nameLower.count > 3 {
+                let escapedName = NSRegularExpression.escapedPattern(for: nameLower)
+                if let namePattern = try? NSRegularExpression(pattern: "\\b\(escapedName)\\b"),
+                   namePattern.firstMatch(in: lineLower, range: lineRange) != nil {
+                    return false
+                }
+            }
+
+            return true
+        }.joined(separator: "\n")
+    }
+
+    // MARK: - Claude Classification Pipeline
+
+    /// Enriched candidate data with fields set during the classification pipeline.
+    private struct EnrichedCandidate {
+        var candidate: EmailCandidateData
+        var extractedTitle: String?
+        var extractedPhone: String?
+        var extractedCompany: String?
+        var confidence: Int = 0
+        var classificationSource: String = "heuristic"
+        var relationshipType: String = "Unknown"
+        var aiReasoning: String?
+    }
+
+    /// Runs Claude classification (with body fetch + scoring) on surviving candidates.
+    /// Falls back to heuristic classification when no API key is available.
+    /// Port of `classifyCandidates()` from electron/gmail/scanner.ts.
+    private func classifyCandidates(
+        candidates: inout [EnrichedCandidate],
+        ownEmail: String,
+        ownDisplayName: String?
+    ) async {
+        let apiKey = KeychainService.read(key: ClaudeClient.anthropicApiKeyAccount)
+        let hasApiKey = apiKey != nil && !(apiKey?.isEmpty ?? true)
+
+        // Sort by heuristic confidence (descending) for top-N body fetch cutoff
+        candidates.sort { $0.confidence > $1.confidence }
+
+        let bodyFetchCount = min(candidates.count, Self.maxBodyFetchCandidates)
+
+        progress.status = .classifying
+        progress.processed = 0
+        progress.total = candidates.count
+
+        for i in 0..<candidates.count {
+            let candidate = candidates[i].candidate
+
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+
+            let meta = CandidateMetadata(
+                email: candidate.email,
+                threadCount: candidate.threadCount,
+                fromCount: candidate.fromCount,
+                toCount: candidate.toCount,
+                ccCount: candidate.ccCount,
+                firstSeen: dateFormatter.string(from: candidate.firstSeenDate),
+                lastSeen: dateFormatter.string(from: candidate.lastSeenDate)
+            )
+
+            var classification: ClaudeClassification?
+
+            if hasApiKey, let key = apiKey, i < bodyFetchCount {
+                // Top-N: fetch bodies, score, pick best, send to Claude with body
+                do {
+                    let searchResult = try await gmailClient.searchMessages(
+                        query: "from:\(candidate.email)", maxResults: 5
+                    )
+
+                    var bestBody: String?
+                    var bestScore = Int.min
+
+                    for (j, msg) in searchResult.enumerated() {
+                        let fullMsg = try await gmailClient.getMessageFull(messageId: msg.id)
+                        let rawBody = fullMsg.bodyPlainText ?? ""
+                        let isHtml = fullMsg.bodyPlainText == nil
+                        let stripped = EmailUtils.stripQuotedContent(rawBody, isHtml: isHtml)
+                        let guardedBody = stripped.map {
+                            stripOwnSignatureLines($0, userEmail: ownEmail, userDisplayName: ownDisplayName)
+                        }
+                        let score = EmailUtils.scoreMessageForSignature(guardedBody, recencyIndex: j)
+
+                        if score > bestScore {
+                            bestScore = score
+                            bestBody = guardedBody
+                        }
+                    }
+
+                    if let bestBody, bestScore >= 0 {
+                        let prompt = ClaudeClient.buildExtractionPrompt(strippedBody: bestBody, meta: meta)
+                        classification = await ClaudeClient.classifyWithClaude(prompt: prompt, apiKey: key)
+                    } else {
+                        // No usable body -- metadata only
+                        let prompt = ClaudeClient.buildMetadataOnlyPrompt(meta: meta)
+                        classification = await ClaudeClient.classifyWithClaude(prompt: prompt, apiKey: key)
+                    }
+                } catch {
+                    Self.logger.warning("Body fetch failed for \(candidate.email): \(error.localizedDescription)")
+                }
+            } else if hasApiKey, let key = apiKey {
+                // Beyond top-N: metadata-only Claude classification
+                let prompt = ClaudeClient.buildMetadataOnlyPrompt(meta: meta)
+                classification = await ClaudeClient.classifyWithClaude(prompt: prompt, apiKey: key)
+            }
+
+            // Apply Claude results or fall back to heuristic
+            if let classification {
+                if let firstName = classification.firstName { candidates[i].candidate.firstName = firstName }
+                if let lastName = classification.lastName { candidates[i].candidate.lastName = lastName }
+                candidates[i].extractedTitle = classification.jobTitle
+                candidates[i].extractedCompany = classification.companyName
+                candidates[i].extractedPhone = classification.phone
+                candidates[i].confidence = classification.confidence
+                candidates[i].classificationSource = "AI"
+                candidates[i].relationshipType = classification.relationshipType
+                candidates[i].aiReasoning = classification.reasoning
+            } else {
+                // Heuristic fallback
+                let result = EmailClassifier.classifyCandidate(candidate)
+                candidates[i].confidence = result.confidence
+                candidates[i].classificationSource = "Heuristic"
+                candidates[i].relationshipType = result.relationshipType
+            }
+
+            if (i + 1) % 10 == 0 || i == candidates.count - 1 {
+                progress.processed = i + 1
+            }
+        }
     }
 
     // MARK: - Scan Lock

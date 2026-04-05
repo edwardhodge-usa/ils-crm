@@ -207,19 +207,32 @@ struct ImportedContactsView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
 
-            // Last scan timestamp
-            if let engine = scanEngine, engine.progress.status == .complete {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.green)
-                    Text("Scan complete — \(engine.progress.candidatesFound) candidates found")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                    Spacer()
+            // Last scan timestamp / classifying status
+            if let engine = scanEngine {
+                if engine.progress.status == .classifying {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                            .controlSize(.mini)
+                        Text("Classifying \(engine.progress.processed)/\(engine.progress.total) candidates...")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.purple)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 6)
+                } else if engine.progress.status == .complete {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.green)
+                        Text("Scan complete — \(engine.progress.candidatesFound) candidates found")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 6)
                 }
-                .padding(.horizontal, 14)
-                .padding(.bottom, 6)
             }
 
             Divider()
@@ -466,6 +479,23 @@ struct ImportedContactsView: View {
                 }
 
                 Spacer()
+
+                // AI classification indicator
+                if !isSelected {
+                    let isAI = contact.classificationSource?.lowercased() == "ai"
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(isAI ? Color.green : Color.gray)
+                            .frame(width: 6, height: 6)
+                        Text(isAI ? "AI" : "Heuristic")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(isAI ? .green : .secondary)
+                    }
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background((isAI ? Color.green : Color.gray).opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                }
 
                 // Thread count
                 if let threads = contact.emailThreadCount, threads > 0, !isSelected {

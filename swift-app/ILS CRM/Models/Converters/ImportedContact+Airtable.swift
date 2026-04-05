@@ -72,6 +72,7 @@ private enum F {
     static let discoveredVia = "fldCUcYTkPATWE97N"
     static let suggestedCompanyName = "fldSCvoQayABYZqL5"
     static let suggestedCompanyLink = "fldLGvhdrydRxH5EU"
+    static let classificationSource = "fldohpW9JHMjYeTS5"
 }
 
 extension ImportedContact: AirtableConvertible {
@@ -137,6 +138,7 @@ extension ImportedContact: AirtableConvertible {
         model.discoveredVia = f.string(for: F.discoveredVia)
         model.suggestedCompanyName = f.string(for: F.suggestedCompanyName)
         model.suggestedCompanyLink = f.stringArray(for: F.suggestedCompanyLink)
+        model.classificationSource = f.string(for: F.classificationSource)
         return model
     }
 
@@ -199,15 +201,35 @@ extension ImportedContact: AirtableConvertible {
         existing.discoveredVia = f.string(for: F.discoveredVia)
         existing.suggestedCompanyName = f.string(for: F.suggestedCompanyName)
         existing.suggestedCompanyLink = f.stringArray(for: F.suggestedCompanyLink)
+        existing.classificationSource = f.string(for: F.classificationSource)
         existing.isPendingPush = false
     }
 
-    /// ImportedContacts uses approve/reject workflow, not general CRUD push.
-    /// Only onboardingStatus and reasonForRejection are pushed.
+    /// Push fields to Airtable. Includes approve/reject fields + Email Intelligence
+    /// fields for new records created by the email scan engine.
     func toAirtableFields() -> [String: Any] {
         var b = AirtableFieldsBuilder()
+        b.set(F.importedContactName, importedContactName)
+        b.set(F.firstName, firstName)
+        b.set(F.lastName, lastName)
+        b.set(F.email, email)
+        b.set(F.jobTitle, jobTitle)
+        b.set(F.phone, phone)
         b.set(F.onboardingStatus, onboardingStatus)
+        b.set(F.importSource, importSource)
         b.set(F.reasonForRejection, reasonForRejection)
+        // Email Intelligence
+        b.set(F.source, source)
+        b.set(F.relationshipType, relationshipType)
+        b.set(F.confidenceScore, confidenceScore)
+        b.set(F.aiReasoning, aiReasoning)
+        b.set(F.emailThreadCount, emailThreadCount.map { Double($0) })
+        b.setDate(F.firstSeenDate, firstSeenDate)
+        b.setDate(F.lastSeenDate, lastSeenDate)
+        b.set(F.discoveredVia, discoveredVia)
+        b.set(F.suggestedCompanyName, suggestedCompanyName)
+        b.set(F.classificationSource, classificationSource)
+        b.setDate(F.importDate, importDate)
         return b.fields
     }
 }
