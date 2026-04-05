@@ -213,11 +213,12 @@ function SectionLabel({ children }: { children: string }) {
 
 interface EnrichmentDetailProps {
   item: Record<string, unknown>
+  crmContacts: Record<string, unknown>[]
   onAccept: () => void
   onDismiss: () => void
 }
 
-function EnrichmentDetail({ item, onAccept, onDismiss }: EnrichmentDetailProps) {
+function EnrichmentDetail({ item, crmContacts, onAccept, onDismiss }: EnrichmentDetailProps) {
   const isDark = useDarkMode()
   const fieldName = (item.field_name as string | null) ?? 'Unknown Field'
   const currentValue = (item.current_value as string | null) ?? ''
@@ -226,6 +227,20 @@ function EnrichmentDetail({ item, onAccept, onDismiss }: EnrichmentDetailProps) 
   const sourceDate = item.source_email_date as string | null
   const status = (item.status as string | null) ?? 'Pending'
   const confC = confidenceColor(confidence)
+
+  // Resolve the linked CRM contact for context
+  let linkedContact: Record<string, unknown> | null = null
+  try {
+    const ids = JSON.parse((item.contact_ids as string) || '[]')
+    if (Array.isArray(ids) && ids.length > 0) {
+      linkedContact = crmContacts.find(c => c.id === ids[0]) as Record<string, unknown> | null ?? null
+    }
+  } catch { /* ignore */ }
+  const contactName = linkedContact
+    ? [linkedContact.first_name, linkedContact.last_name].filter(Boolean).join(' ') || (linkedContact.contact_name as string) || 'Unknown'
+    : (item.imported_contact_name as string) || 'Unknown Contact'
+  const contactEmail = (linkedContact?.email as string | null) ?? null
+  const contactCompany = (linkedContact?.company as string | null) ?? null
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
@@ -287,6 +302,30 @@ function EnrichmentDetail({ item, onAccept, onDismiss }: EnrichmentDetailProps) 
             >
               Accept Update
             </button>
+          </div>
+        </div>
+
+        {/* CRM Contact Context */}
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--separator)' }}>
+          <SectionLabel>CRM Contact</SectionLabel>
+          <div style={{
+            padding: '12px 14px', borderRadius: 10,
+            background: isDark ? 'rgba(0,122,255,0.06)' : 'rgba(0,122,255,0.04)',
+            border: '1px solid rgba(0,122,255,0.15)',
+          }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+              {contactName}
+            </div>
+            {contactEmail && (
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                {contactEmail}
+              </div>
+            )}
+            {contactCompany && (
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                {contactCompany}
+              </div>
+            )}
           </div>
         </div>
 
@@ -1292,6 +1331,7 @@ export default function ImportedContactsPage() {
       {selected?._type === 'enrichment' ? (
         <EnrichmentDetail
           item={selected}
+          crmContacts={crmContacts}
           onAccept={() => setAction('add')}
           onDismiss={() => setAction('dismiss')}
         />
