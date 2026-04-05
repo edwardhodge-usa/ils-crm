@@ -45,7 +45,7 @@ export interface ScanCheckpoint {
 }
 
 export interface ScanProgress {
-  status: 'idle' | 'scanning' | 'complete' | 'error'
+  status: 'idle' | 'scanning' | 'classifying' | 'complete' | 'error'
   processed: number
   total: number
   candidatesFound: number

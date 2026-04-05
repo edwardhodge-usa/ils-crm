@@ -8,7 +8,10 @@ import { loadTokens, refreshAccessToken } from './oauth'
 import { GmailClient, TokenExpiredError, HistoryExpiredError } from './client'
 import { DEFAULT_RULES, evaluateRules, parseAirtableRule } from './rules-engine'
 import { classifyCandidate } from './classifier'
-import { normalizeEmail, parseDisplayName, extractSignature } from './email-utils'
+import { normalizeEmail, parseDisplayName, extractSignature, stripQuotedContent, scoreMessageForSignature } from './email-utils'
+import { classifyWithClaude, buildExtractionPrompt, buildMetadataOnlyPrompt } from './claude-client'
+import type { CandidateMetadata } from './claude-client'
+import { getSecureSetting } from './secure-settings'
 import type {
   EmailCandidate,
   EmailHeaders,
@@ -28,6 +31,7 @@ const SYNC_LOCK_PATH = '/tmp/ils-crm-sync.lock'
 const MESSAGES_PER_PAGE = 500
 const SIGNATURE_FETCH_LIMIT = 50 // max candidates to fetch full body for
 const BATCH_SIZE = 10
+const MAX_BODY_FETCH_CANDIDATES = 200
 
 // Extended candidate with optional signature data (set during enrichment)
 interface EnrichedCandidate extends EmailCandidate {
@@ -35,6 +39,9 @@ interface EnrichedCandidate extends EmailCandidate {
   _extractedPhone?: string
   _extractedCompany?: string
   _confidence?: number
+  _classificationSource?: 'ai' | 'heuristic'
+  _relationshipType?: string
+  _aiReasoning?: string
 }
 
 // ─── Module State ──────────────────────────────────────────────
@@ -105,6 +112,28 @@ function isMarketingMessage(headers: EmailHeaders): boolean {
   if (mailer && ESP_NAMES.some(esp => mailer.includes(esp))) return true
 
   return false
+}
+
+// ─── Own-Email Guard ──────────────────────────────────────
+
+function stripOwnSignatureLines(body: string, userEmail: string, userDisplayName: string | null): string {
+  const userDomain = userEmail.split('@')[1]?.toLowerCase()
+  if (!userDomain) return body
+
+  const nameLower = userDisplayName?.toLowerCase()?.trim() || null
+  const domainPattern = new RegExp(`\\b[a-z0-9._%+-]+@${userDomain.replace(/\./g, '\\.')}\\b`)
+
+  return body.split('\n').filter(line => {
+    const lineLower = line.toLowerCase()
+    // Strip lines containing an email @userDomain
+    if (domainPattern.test(lineLower)) return false
+    // Strip lines containing the exact full display name (word-boundary match)
+    if (nameLower && nameLower.length > 3) {
+      const namePattern = new RegExp(`\\b${nameLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`)
+      if (namePattern.test(lineLower)) return false
+    }
+    return true
+  }).join('\n')
 }
 
 // ─── Token Management ──────────────────────────────────────────
@@ -379,7 +408,6 @@ async function writeCandidateBatch(
   const localRecords: Array<{ id: string; fields: Record<string, unknown> }> = []
 
   for (const candidate of candidates) {
-    const { relationshipType, confidence } = classifyCandidate(candidate)
     const id = `local_scan_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
 
     const fields: Record<string, unknown> = {
@@ -391,12 +419,14 @@ async function writeCandidateBatch(
       import_source: 'Integration',
       source: 'Email Scan',
       import_date: new Date().toISOString().split('T')[0],
-      relationship_type: relationshipType,
-      confidence_score: confidence,
+      relationship_type: candidate._relationshipType || 'Unknown',
+      confidence_score: candidate._confidence ?? 0,
       email_thread_count: candidate.threadCount,
       first_seen_date: candidate.firstSeenDate.toISOString().split('T')[0],
       last_seen_date: candidate.lastSeenDate.toISOString().split('T')[0],
       discovered_via: candidate.discoveredVia,
+      classification_source: candidate._classificationSource || 'heuristic',
+      ai_reasoning: candidate._aiReasoning || null,
     }
 
     // Apply signature-extracted fields if present
@@ -562,9 +592,10 @@ export async function scanFull(): Promise<void> {
 
       updateProgress({ candidatesFound: survivors.length })
 
-      // Signature extraction for top candidates
+      // Claude classification + signature extraction (replaces enrichWithSignatures)
       if (survivors.length > 0) {
-        await enrichWithSignatures(client, survivors)
+        const tokens = loadTokens()
+        await classifyCandidates(client, survivors, ownEmail, tokens?.email?.split('@')[0] ?? null)
       }
 
       // Batch write to SQLite + Airtable
@@ -686,9 +717,10 @@ export async function scanIncremental(): Promise<void> {
 
       updateProgress({ candidatesFound: survivors.length })
 
-      // Signature extraction
+      // Claude classification + signature extraction (replaces enrichWithSignatures)
       if (survivors.length > 0) {
-        await enrichWithSignatures(client, survivors)
+        const tokens = loadTokens()
+        await classifyCandidates(client, survivors, ownEmail, tokens?.email?.split('@')[0] ?? null)
       }
 
       // Batch write
@@ -817,6 +849,103 @@ async function enrichWithSignatures(
     } catch (err) {
       if (err instanceof TokenExpiredError) throw err
       if (isDev) console.log(`[Scanner] Signature extraction failed for ${candidate.email}:`, String(err))
+    }
+  }
+}
+
+// ─── Claude Classification ────────────────────────────────────
+
+async function classifyCandidates(
+  client: GmailClient,
+  candidates: EnrichedCandidate[],
+  ownEmail: string,
+  ownDisplayName: string | null,
+): Promise<void> {
+  const apiKey = getSecureSetting('anthropic_api_key')
+  const hasApiKey = !!apiKey
+
+  // Sort by heuristic confidence (descending) for top-N body fetch cutoff
+  candidates.sort((a, b) => (b._confidence ?? 0) - (a._confidence ?? 0))
+
+  const bodyFetchCount = Math.min(candidates.length, MAX_BODY_FETCH_CANDIDATES)
+
+  updateProgress({ status: 'classifying', processed: 0, total: candidates.length })
+
+  for (let i = 0; i < candidates.length; i++) {
+    const candidate = candidates[i]
+
+    const meta: CandidateMetadata = {
+      email: candidate.email,
+      threadCount: candidate.threadCount,
+      fromCount: candidate.fromCount,
+      toCount: candidate.toCount,
+      ccCount: candidate.ccCount,
+      firstSeen: candidate.firstSeenDate.toISOString().split('T')[0],
+      lastSeen: candidate.lastSeenDate.toISOString().split('T')[0],
+    }
+
+    let classification: import('./claude-client').ClaudeClassification | null = null
+
+    if (hasApiKey && i < bodyFetchCount) {
+      // Top-N: fetch bodies, score, pick best, send to Claude with body
+      try {
+        const searchResult = await client.searchMessages(`from:${candidate.email}`, 5)
+        let bestBody: string | null = null
+        let bestScore = -Infinity
+
+        for (let j = 0; j < searchResult.messages.length; j++) {
+          const fullMsg = await client.getMessageFull(searchResult.messages[j].id)
+          const rawBody = fullMsg.bodyPlainText ?? ''
+          const isHtml = !fullMsg.bodyPlainText
+          const stripped = stripQuotedContent(rawBody, isHtml)
+          const guardedBody = stripped ? stripOwnSignatureLines(stripped, ownEmail, ownDisplayName) : null
+          const score = scoreMessageForSignature(guardedBody, j)
+
+          if (score > bestScore) {
+            bestScore = score
+            bestBody = guardedBody
+          }
+        }
+
+        if (bestBody && bestScore >= 0) {
+          const prompt = buildExtractionPrompt(bestBody, meta)
+          classification = await classifyWithClaude(prompt, apiKey!)
+        } else {
+          // No usable body — metadata only
+          const prompt = buildMetadataOnlyPrompt(meta)
+          classification = await classifyWithClaude(prompt, apiKey!)
+        }
+      } catch (err) {
+        if (err instanceof TokenExpiredError) throw err
+        if (isDev) console.log(`[Scanner] Body fetch failed for ${candidate.email}:`, String(err))
+      }
+    } else if (hasApiKey && apiKey) {
+      // Beyond top-N: metadata-only Claude classification
+      const prompt = buildMetadataOnlyPrompt(meta)
+      classification = await classifyWithClaude(prompt, apiKey)
+    }
+
+    // Apply Claude results or fall back to heuristic
+    if (classification) {
+      if (classification.first_name) candidate.firstName = classification.first_name
+      if (classification.last_name) candidate.lastName = classification.last_name
+      candidate._extractedTitle = classification.job_title ?? undefined
+      candidate._extractedCompany = classification.company_name ?? undefined
+      candidate._extractedPhone = classification.phone ?? undefined
+      candidate._confidence = classification.confidence
+      candidate._classificationSource = 'ai'
+      candidate._relationshipType = classification.relationship_type
+      candidate._aiReasoning = classification.reasoning
+    } else {
+      // Heuristic fallback (existing behavior)
+      const { relationshipType, confidence } = classifyCandidate(candidate)
+      candidate._confidence = confidence
+      candidate._classificationSource = 'heuristic'
+      candidate._relationshipType = relationshipType
+    }
+
+    if ((i + 1) % 10 === 0 || i === candidates.length - 1) {
+      updateProgress({ processed: i + 1 })
     }
   }
 }
