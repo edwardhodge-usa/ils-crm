@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
-import { normalizeEmail, parseFromHeader, parseDisplayName, stripQuotedContent } from '../../electron/gmail/email-utils'
+import { normalizeEmail, parseFromHeader, parseDisplayName, stripQuotedContent, scoreMessageForSignature } from '../../electron/gmail/email-utils'
 
 function loadFixture(name: string): string {
   return readFileSync(resolve(__dirname, '../shared/fixtures', name), 'utf-8')
@@ -118,5 +118,47 @@ describe('stripQuotedContent', () => {
     const result = stripQuotedContent(longBody)
     expect(result).not.toBeNull()
     expect(result!.split('\n').length).toBeLessThanOrEqual(50)
+  })
+})
+
+describe('scoreMessageForSignature', () => {
+  it('scores a rich signature body high', () => {
+    const body = loadFixture('standalone-message.txt')
+    const score = scoreMessageForSignature(body, 0)
+    expect(score).toBeGreaterThan(5)
+  })
+
+  it('scores mobile-only footer negative', () => {
+    const score = scoreMessageForSignature('Sounds good.\n\nSent from my iPad', 0)
+    expect(score).toBeLessThan(0)
+  })
+
+  it('scores bare reply negative', () => {
+    const score = scoreMessageForSignature('Thanks!', 0)
+    expect(score).toBeLessThan(0)
+  })
+
+  it('scores null body as -10', () => {
+    const score = scoreMessageForSignature(null, 0)
+    expect(score).toBe(-10)
+  })
+
+  it('gives recency bonus to first message', () => {
+    const body = loadFixture('standalone-message.txt')
+    const score0 = scoreMessageForSignature(body, 0)
+    const score2 = scoreMessageForSignature(body, 2)
+    expect(score0).toBeGreaterThan(score2)
+  })
+
+  it('detects phone number for bonus', () => {
+    const withPhone = 'Some text\nMore text\nAnother line\n+1-555-123-4567'
+    const withoutPhone = 'Some text\nMore text\nAnother line\nNo phone here'
+    expect(scoreMessageForSignature(withPhone, 0)).toBeGreaterThan(scoreMessageForSignature(withoutPhone, 0))
+  })
+
+  it('detects title keyword for bonus', () => {
+    const withTitle = 'Some text\nMore text\nAnother line\nVP of Operations'
+    const withoutTitle = 'Some text\nMore text\nAnother line\nRegular person'
+    expect(scoreMessageForSignature(withTitle, 0)).toBeGreaterThan(scoreMessageForSignature(withoutTitle, 0))
   })
 })

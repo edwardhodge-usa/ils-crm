@@ -248,3 +248,41 @@ export function stripQuotedContent(body: string, isHtml = false): string | null 
 
   return result.join('\n').trim()
 }
+
+// ─── Message Selection Scoring ─────────────────────────────
+
+/**
+ * Scores a stripped message body for signature richness.
+ * Higher score = better candidate for Claude extraction.
+ * @param strippedBody - Message body after stripQuotedContent (may be null)
+ * @param recencyIndex - 0 = most recent, 1 = second, etc.
+ */
+export function scoreMessageForSignature(strippedBody: string | null, recencyIndex: number): number {
+  if (!strippedBody) return -10
+
+  let score = 0
+  const lines = strippedBody.split('\n')
+  const nonEmpty = lines.filter(l => l.trim().length > 0)
+
+  // Line count
+  if (nonEmpty.length >= 10) score += 2
+  if (nonEmpty.length < 3) score -= 10
+
+  // Phone number pattern
+  if (/(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/.test(strippedBody)) score += 3
+
+  // Title keyword
+  if (/\b(?:VP|Director|Manager|President|CEO|CFO|COO|CTO|Partner|Associate|Consultant|Producer|Designer|Engineer|Architect|Counsel|Attorney)\b/i.test(strippedBody)) score += 2
+
+  // URL or domain
+  if (/https?:\/\/|www\.|\.com|\.org|\.net/i.test(strippedBody)) score += 1
+
+  // Recency bonus
+  if (recencyIndex === 0) score += 2
+  else if (recencyIndex === 1) score += 1
+
+  // Mobile-only footer detection
+  if (/^Sent from my iP(hone|ad)/m.test(strippedBody) && nonEmpty.length <= 2) score -= 5
+
+  return score
+}
