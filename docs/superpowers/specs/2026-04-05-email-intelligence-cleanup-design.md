@@ -25,17 +25,49 @@ Replace heuristic classification and signature extraction with Claude API (Haiku
 
 **Replaces:** `classifier.ts` / `EmailClassifier.swift` (heuristic 0-60 scorer) and `extractSignature()` in `email-utils.ts` / `EmailUtils.swift`.
 
-For each candidate that survives the rules engine + dedup pipeline, send the email body to **Claude Haiku** with a structured extraction prompt:
+For each candidate that survives the rules engine + dedup pipeline, send the email body to **Claude Haiku** with a structured extraction prompt.
 
+### Prompt (canonical — both apps must match)
+
+**With signature body:**
 ```
-Given this email signature/body, extract:
-- first_name, last_name
-- job_title
-- company_name
-- phone
-- relationship_type (Client, Prospect, Partner, Vendor Contact, Talent, Employee, Investor, Advisor, Industry Peer, Other)
-- confidence (0-100)
-- reasoning (one sentence explaining why)
+You are extracting contact information from an email. The email body below belongs to a single person. Extract their details.
+
+Email body:
+---
+{stripped_body}
+---
+
+Candidate metadata:
+- Email: {email}
+- Thread count: {threadCount}
+- From/To/CC: {fromCount}/{toCount}/{ccCount}
+- Time span: {firstSeen} to {lastSeen}
+
+Respond with ONLY a JSON object, no markdown fences, no explanation:
+{"first_name": string|null, "last_name": string|null, "job_title": string|null, "company_name": string|null, "phone": string|null, "relationship_type": string, "confidence": number, "reasoning": string}
+
+relationship_type must be one of: Client, Prospect, Partner, Consultant, Vendor Contact, Talent, Employee, Investor, Advisor, Industry Peer, Other
+confidence is 0-100 reflecting how confident you are this person is a real business contact worth adding to a CRM.
+reasoning is one sentence explaining your classification.
+```
+
+**Metadata-only (no usable signature):**
+```
+You are classifying an email contact for a CRM. No email body is available — classify based on email patterns only.
+
+Candidate metadata:
+- Email: {email}
+- Thread count: {threadCount}
+- From/To/CC: {fromCount}/{toCount}/{ccCount}
+- Time span: {firstSeen} to {lastSeen}
+
+Respond with ONLY a JSON object, no markdown fences, no explanation:
+{"first_name": null, "last_name": null, "job_title": null, "company_name": null, "phone": null, "relationship_type": string, "confidence": number, "reasoning": string}
+
+relationship_type must be one of: Client, Prospect, Partner, Consultant, Vendor Contact, Talent, Employee, Investor, Advisor, Industry Peer, Other
+confidence is 0-100 reflecting how confident you are this person is a real business contact worth adding to a CRM.
+reasoning is one sentence explaining your classification.
 ```
 
 ### Key details
@@ -60,7 +92,16 @@ If the API call fails (network, rate limit, missing key), fall back to existing 
 
 ### Response parsing
 
-Claude API JSON responses may arrive wrapped in ```json fences even when instructed otherwise. Both apps must strip fences before parsing. Implement as `parseClaudeResponse()` / `parseClaudeResponse()` in each app.
+Claude API JSON responses may arrive wrapped in ```json fences even when instructed "no markdown." Both apps must strip fences before `JSON.parse()` / `JSONDecoder`. Implement as `parseClaudeResponse()` in each app:
+
+```
+1. Trim whitespace
+2. If starts with ```json or ```, strip first line
+3. If ends with ```, strip last line
+4. JSON.parse() / JSONDecoder the remainder
+5. Validate: confidence is number 0-100, relationship_type is one of the allowed values
+6. On any parse failure: return null (triggers heuristic fallback for this candidate)
+```
 
 ---
 
@@ -73,6 +114,8 @@ Isolate the candidate's own most-recent reply from thread noise. Applied before 
 1. **Prefer plain text** over HTML. If only HTML available:
    - Check for `<blockquote>`, `class="gmail_quote"`, `class="yahoo_quoted"` — remove those DOM nodes entirely
    - Then strip remaining tags
+   - **Electron:** Use DOMParser or cheerio for structural removal
+   - **Swift:** Regex removal of `<blockquote>...</blockquote>` blocks + divs with gmail_quote class, then simple tag-strip regex. No need for NSAttributedString — overkill for this.
 2. **Cut at reply markers.** Scan line-by-line from top. Truncate at the first line matching:
    - 2+ consecutive lines starting with `> ` (plain text quoting — single `>` line ignored to avoid false positives on "> $50k")
    - `On {date}, {name} wrote:` (Gmail — same or next line for `wrote:`)
@@ -122,9 +165,22 @@ Currently picks one arbitrary message. Replace with score-and-pick.
 4. **Send only the highest-scoring body to Claude.** One API call per candidate.
 5. **If all messages score below 0:** skip signature extraction, but still send metadata to Claude for classification (the "no usable signature" prompt path).
 
+### Throttling: top-200 body fetches
+
+Full body fetches are expensive: 5 messages × N survivors × 5 Gmail quota units each. For 825 survivors that's 4,125 API calls → ~3-5 minutes in Gmail rate limits alone, plus Claude API calls on top.
+
+**Solution:** Sort survivors by thread count (descending) before message selection. Only fetch bodies for the **top 200 candidates** by thread count. The remaining candidates go through the metadata-only Claude prompt path — they get relationship classification and confidence but no signature extraction. This caps the body-fetch phase at ~1,000 Gmail calls (~1 minute) and keeps Claude calls manageable.
+
+The 200 threshold can be adjusted via a constant (`MAX_BODY_FETCH_CANDIDATES`). Users with smaller mailboxes will naturally have fewer survivors and won't hit the cap.
+
+### Progress indication
+
+The extraction phase runs AFTER the scan phase. Show separate progress: "Classifying 200 contacts..." with a progress bar (N/200). This is distinct from the existing "Scanning X messages..." progress during the fetch phase.
+
 ### Rationale
 
-- 5 messages balances coverage vs Gmail API cost (5 × 825 = 4,125 body fetches)
+- 5 messages per candidate balances coverage vs Gmail API cost
+- Top-200 cap prevents the body-fetch phase from dominating scan time
 - Recency bonus ensures a decent recent signature beats a rich old one (handles job changes)
 - Single best body to Claude keeps API cost at one call per candidate
 - Early bail on all-negative saves API cost on contacts with no signatures
@@ -170,7 +226,7 @@ Skip the message for **aggregation purposes** — don't count it toward any cand
 
 ### Validation
 
-On save, hit the Anthropic API with a minimal request to validate the key. Show green checkmark or red "Invalid key" inline. Immediate feedback — don't let users discover a bad key during a scan a week later.
+On save, validate by sending a 1-token completion to Haiku (`max_tokens: 1, messages: [{role: "user", content: "hi"}]`). HTTP 200 = valid key (green checkmark), HTTP 401 = invalid (red "Invalid key"). Cost: ~$0. Immediate feedback — don't let users discover a bad key during a scan a week later.
 
 ### Graceful degradation
 
@@ -198,12 +254,15 @@ On save, hit the Anthropic API with a minimal request to validate the key. Show 
 
 ### Fuzzy matching for auto-suggestion
 
-When Claude extracts a company name, match against existing CRM companies:
-- Exact match (case-insensitive) → auto-link, show state 1
-- Starts-with or contains match → suggest as top result, show state 1 but don't auto-confirm
-- No match → show state 2
+When the user opens the detail panel (not during scan), match Claude's extracted company name against existing CRM companies. On-open computation ensures it always uses current CRM data.
 
-No external fuzzy library. CRM has ~50-100 companies — case-insensitive includes is sufficient.
+Match priority:
+1. **Exact match** (case-insensitive) → auto-link, show state 1
+2. **Starts-with match** (case-insensitive, either direction: CRM name starts with extracted, or extracted starts with CRM name) → suggest as top result, show state 1 but don't auto-confirm
+3. **Contains match** — only if the match covers >50% of the shorter string's length (prevents "Acme" matching "Academy of Motion Picture Arts")
+4. **No match** → show state 2
+
+No external fuzzy library. CRM has ~50-100 companies — this cascade is sufficient.
 
 ### Approve handler data flow
 
@@ -212,7 +271,10 @@ User clicks "Add to CRM"
   → If company_id set:
       Create Contact with companies_ids = [company_id]
   → If create_company_name set:
-      Create Company record first → get new ID → create Contact with companies_ids = [new_id]
+      Create Company record first (defaults: name = create_company_name,
+        type = mapped from relationship_type: Client→Client, Vendor Contact→Vendor,
+        Partner→Partner, all others→null)
+      → get new ID → create Contact with companies_ids = [new_id]
   → If neither:
       Create Contact with no company link
 ```
@@ -258,7 +320,7 @@ The canonical Claude prompt is defined in this spec (Section 1). Both source fil
 1. **Electron first** — faster iteration, hot reload, easier to debug API calls
 2. **Hard gate:** Electron must pass all test fixtures + manual verification with a real scan before starting Swift
 3. **Swift second** — port working logic, same test cases
-4. **Shared test corpus** — `tests/gmail/fixtures/` committed to repo. Each fixture: raw email body, expected stripped output, expected Claude prompt, expected parsed response. Both apps' tests reference the same fixtures.
+4. **Shared test corpus** — `tests/shared/fixtures/` at the repo root (accessible to both Electron and Swift test targets). Each fixture: raw email body, expected stripped output, expected Claude prompt, expected parsed response. Swift tests reference these via relative path from `swift-app/`.
 
 ### What stays separate
 
@@ -268,9 +330,14 @@ The canonical Claude prompt is defined in this spec (Section 1). Both source fil
 
 ---
 
+## Prerequisites (manual, before implementation)
+
+- **Airtable:** Create `classification_source` field on Imported Contacts table — singleSelect with options: `AI`, `Heuristic`. Airtable API cannot create fields; must be done in the Airtable UI.
+
 ## Implementation notes
 
 - Existing `classifier.ts` / `EmailClassifier.swift` are not deleted — they become the fallback path when no API key is configured or when the API call fails
-- The `classification_source` field (`'ai'` or `'heuristic'`) is a new column on imported_contacts — add to field maps, converters, and Airtable schema
+- The `classification_source` field (`'ai'` or `'heuristic'`) is a new column on imported_contacts — add to field maps, converters, and sync. Field must exist in Airtable first (see Prerequisites).
 - Marketing header fields (`Precedence`, `List-Id`, `X-Mailer`) need to be fetched by the Gmail API client in both apps — update `getMessageHeaders()` / `fetchMessageHeaders()`
-- All `confidence_score` values from Claude are 0-100. Existing heuristic scores were 0-60. UI color thresholds may need adjustment (currently: green ≥80, yellow ≥50, gray <50)
+- All `confidence_score` values from Claude are 0-100. Existing heuristic scores were 0-60. UI color thresholds stay as-is (green ≥80, yellow ≥50, gray <50). This means heuristic-classified contacts (capped at 60) can never reach green — **this is intentional**: lower visual trust for heuristic results signals to the user that AI classification would produce better results.
+- Reply marker regexes should be flexible, not format-specific. For "On {date}, {name} wrote:": use `/^On .+wrote:\s*$/i` — we're detecting the marker, not parsing the date.
