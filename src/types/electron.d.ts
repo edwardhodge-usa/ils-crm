@@ -29,6 +29,8 @@ interface ElectronAPI {
   settings: {
     get: (key: string) => Promise<{ success: boolean; data?: string; error?: string }>
     set: (key: string, value: string) => Promise<{ success: boolean; error?: string }>
+    getSecure: (key: string) => Promise<{ success: boolean; data?: string | null; error?: string }>
+    setSecure: (key: string, value: string) => Promise<{ success: boolean; error?: string }>
   }
   sync: {
     start: () => Promise<{ success: boolean; error?: string }>
@@ -107,6 +109,7 @@ interface ElectronAPI {
     scanFull: () => Promise<{ success: boolean; error?: string }>
     scanStatus: () => Promise<{ success: boolean; data?: { scanning: boolean; lastScan?: string; totalProcessed?: number }; error?: string }>
     scanInterval: (intervalMs: number) => Promise<{ success: boolean; error?: string }>
+    validateAnthropicKey: (key: string) => Promise<{ success: boolean; data?: boolean; error?: string }>
     onScanProgress: (cb: (progress: unknown) => void) => void
     removeScanProgressListener: () => void
   }

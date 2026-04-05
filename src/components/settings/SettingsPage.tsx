@@ -530,6 +530,11 @@ function EmailSection() {
   const [originalClientSecret, setOriginalClientSecret] = useState('')
   const [credsSaveMessage, setCredsSaveMessage] = useState('')
 
+  // Anthropic API key
+  const [anthropicKey, setAnthropicKey] = useState('')
+  const [anthropicKeyValid, setAnthropicKeyValid] = useState<boolean | null>(null)
+  const [anthropicKeyValidating, setAnthropicKeyValidating] = useState(false)
+
   useEffect(() => {
     async function loadStatus() {
       try {
@@ -550,6 +555,11 @@ function EmailSection() {
           setClientSecret(secretResult.data)
           setOriginalClientSecret(secretResult.data)
         }
+      } catch { /* graceful */ }
+      // Load Anthropic API key status
+      try {
+        const keyRes = await window.electronAPI.settings.getSecure('anthropic_api_key')
+        if (keyRes?.data) setAnthropicKey('\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022')
       } catch { /* graceful */ }
       setLoading(false)
     }
@@ -597,6 +607,25 @@ function EmailSection() {
     try {
       await window.electronAPI.gmail.scanInterval(ms)
     } catch { /* ignore */ }
+  }
+
+  async function handleAnthropicKeySave() {
+    if (!anthropicKey || anthropicKey === '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022') return
+    setAnthropicKeyValidating(true)
+    try {
+      const validRes = await window.electronAPI.gmail.validateAnthropicKey(anthropicKey)
+      if (validRes.success && validRes.data) {
+        await window.electronAPI.settings.setSecure('anthropic_api_key', anthropicKey)
+        setAnthropicKeyValid(true)
+        setAnthropicKey('\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022')
+      } else {
+        setAnthropicKeyValid(false)
+      }
+    } catch {
+      setAnthropicKeyValid(false)
+    } finally {
+      setAnthropicKeyValidating(false)
+    }
   }
 
   if (loading) {
@@ -671,6 +700,47 @@ function EmailSection() {
             <span style={{ fontSize: 12, color: 'var(--color-green)' }}>{credsSaveMessage}</span>
           )}
         </div>
+      </div>
+
+      {/* AI Classification */}
+      <div style={{ marginBottom: 24 }}>
+        <SectionHeader>AI Classification</SectionHeader>
+        <GroupedContainer>
+          <PrefRow label="Anthropic API Key" isLast>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <SettingsInput
+                  type="password"
+                  value={anthropicKey}
+                  onChange={v => { setAnthropicKey(v); setAnthropicKeyValid(null) }}
+                  placeholder="sk-ant-xxxx"
+                />
+                <button
+                  onClick={handleAnthropicKeySave}
+                  disabled={!anthropicKey || anthropicKey === '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' || anthropicKeyValidating}
+                  className="cursor-default disabled:opacity-40"
+                  style={{
+                    padding: '5px 12px', fontSize: 12, fontWeight: 600,
+                    background: 'var(--color-accent)', color: 'var(--text-on-accent)',
+                    borderRadius: 6, border: 'none', fontFamily: 'inherit',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {anthropicKeyValidating ? 'Validating...' : 'Save'}
+                </button>
+              </div>
+              {anthropicKeyValid === true && (
+                <span style={{ fontSize: 11, color: 'var(--color-green)' }}>Key validated successfully</span>
+              )}
+              {anthropicKeyValid === false && (
+                <span style={{ fontSize: 11, color: 'var(--color-red)' }}>Invalid API key</span>
+              )}
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                Enables AI-powered contact classification. Uses Claude Haiku (~$0.002/contact).
+              </span>
+            </div>
+          </PrefRow>
+        </GroupedContainer>
       </div>
 
       <SectionHeader>Gmail Connection</SectionHeader>

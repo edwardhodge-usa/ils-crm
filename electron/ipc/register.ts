@@ -837,4 +837,10 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
     }
   })
 
+  ipcMain.handle('gmail:validateAnthropicKey', async (_e, key: string) => {
+    const { validateApiKey } = await import('../gmail/claude-client')
+    const valid = await validateApiKey(key)
+    return { success: true, data: valid }
+  })
+
 }
