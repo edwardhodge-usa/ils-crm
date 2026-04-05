@@ -308,6 +308,7 @@ export const IMPORTED_CONTACTS = {
   discoveredVia: 'fldCUcYTkPATWE97N',
   suggestedCompanyName: 'fldSCvoQayABYZqL5',
   suggestedCompany: 'fldLGvhdrydRxH5EU',
+  classificationSource: 'fldohpW9JHMjYeTS5', // singleSelect: AI, Heuristic
 } as const
 
 // ─── Companies (24 fields) ───────────────────────────────────

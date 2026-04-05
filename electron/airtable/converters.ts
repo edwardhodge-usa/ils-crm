@@ -440,6 +440,7 @@ const IMPORTED_CONTACT_MAPPINGS: FieldMapping[] = [
   { local: 'discovered_via', airtable: IMPORTED_CONTACTS.discoveredVia, type: 'singleSelect' },
   { local: 'suggested_company_name', airtable: IMPORTED_CONTACTS.suggestedCompanyName, type: 'text' },
   { local: 'suggested_company_ids', airtable: IMPORTED_CONTACTS.suggestedCompany, type: 'linked' },
+  { local: 'classification_source', airtable: IMPORTED_CONTACTS.classificationSource, type: 'singleSelect' },
 ]
 
 // ─── Specialties ─────────────────────────────────────────────
