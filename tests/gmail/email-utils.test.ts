@@ -1,6 +1,12 @@
 // tests/gmail/email-utils.test.ts
 import { describe, it, expect } from 'vitest'
-import { normalizeEmail, parseFromHeader, parseDisplayName } from '../../electron/gmail/email-utils'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+import { normalizeEmail, parseFromHeader, parseDisplayName, stripQuotedContent } from '../../electron/gmail/email-utils'
+
+function loadFixture(name: string): string {
+  return readFileSync(resolve(__dirname, '../shared/fixtures', name), 'utf-8')
+}
 
 describe('normalizeEmail', () => {
   it('strips plus aliases', () => {
@@ -58,5 +64,59 @@ describe('parseDisplayName', () => {
   })
   it('handles "Last, First Middle" format', () => {
     expect(parseDisplayName('Chen, Sarah May')).toEqual({ first: 'Sarah May', last: 'Chen' })
+  })
+})
+
+describe('stripQuotedContent', () => {
+  it('strips > quoted Gmail thread', () => {
+    const result = stripQuotedContent(loadFixture('gmail-thread-quoted.txt'))
+    expect(result).toContain('VP of Operations | Acme Corp')
+    expect(result).not.toContain('ImagineLab Studios')
+    expect(result).not.toContain('sarah@imaginelabstudios.com')
+  })
+
+  it('strips Outlook From:/Sent: thread', () => {
+    const result = stripQuotedContent(loadFixture('outlook-thread.txt'))
+    expect(result).toContain('Director of Business Development')
+    expect(result).not.toContain('edward@imaginelabstudios.com')
+  })
+
+  it('returns null for bare thanks reply (< 3 lines)', () => {
+    const result = stripQuotedContent(loadFixture('bare-thanks-reply.txt'))
+    expect(result).toBeNull()
+  })
+
+  it('returns full body for standalone message', () => {
+    const result = stripQuotedContent(loadFixture('standalone-message.txt'))
+    expect(result).toContain('Senior Producer | Great Wolf Resorts')
+    expect(result).toContain('maria.lopez@greatwolf.com')
+  })
+
+  it('strips forwarded message content', () => {
+    const result = stripQuotedContent(loadFixture('forwarded-message.txt'))
+    // Only "FYI — see below." remains, which is < 3 lines
+    expect(result).toBeNull()
+    // result is null so forwarded body is not present
+    expect(result ?? '').not.toContain('newsletter@industryconf.com')
+  })
+
+  it('strips mobile footer and quoted content below', () => {
+    const result = stripQuotedContent(loadFixture('mobile-footer.txt'))
+    // "Sounds good..." is 1 line after stripping footer — < 3 lines
+    expect(result).toBeNull()
+  })
+
+  it('strips HTML blockquote content', () => {
+    const result = stripQuotedContent(loadFixture('html-blockquote.html'), true)
+    expect(result).toContain('CFO')
+    expect(result).toContain('Riverside Entertainment')
+    expect(result).not.toContain('ImagineLab Studios')
+  })
+
+  it('caps output at 50 lines', () => {
+    const longBody = Array(100).fill('Line of text').join('\n')
+    const result = stripQuotedContent(longBody)
+    expect(result).not.toBeNull()
+    expect(result!.split('\n').length).toBeLessThanOrEqual(50)
   })
 })

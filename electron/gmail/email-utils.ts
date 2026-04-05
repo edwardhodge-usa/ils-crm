@@ -139,3 +139,112 @@ export function extractSignature(bodyText: string | null): SignatureData {
 
   return { phone, title, company }
 }
+
+// ─── Quoted Content Stripping ──────────────────────────────
+
+function stripHtmlQuotes(html: string): string {
+  let result = html
+  // Remove gmail_quote divs and their content
+  result = result.replace(/<div[^>]*class="[^"]*gmail_quote[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '')
+  // Remove yahoo_quoted divs
+  result = result.replace(/<div[^>]*class="[^"]*yahoo_quoted[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '')
+  // Remove blockquote elements
+  result = result.replace(/<blockquote[\s\S]*?<\/blockquote>/gi, '')
+  // Strip remaining tags
+  result = result.replace(/<[^>]+>/g, ' ')
+  // Decode entities
+  result = result.replace(/&nbsp;/g, ' ')
+  result = result.replace(/&lt;/g, '<')
+  result = result.replace(/&gt;/g, '>')
+  result = result.replace(/&amp;/g, '&')
+  // Clean whitespace
+  result = result.replace(/\n\s*\n\s*\n/g, '\n\n')
+  return result.trim()
+}
+
+/**
+ * Strips quoted thread content from an email body, returning only the
+ * sender's own message + signature. Returns null if the remaining content
+ * is too short to contain a useful signature (< 3 non-empty lines).
+ *
+ * @param body - Raw email body text (plain text or HTML)
+ * @param isHtml - If true, strip HTML quotes before line-by-line processing
+ */
+export function stripQuotedContent(body: string, isHtml = false): string | null {
+  let text = body
+
+  if (isHtml) {
+    text = stripHtmlQuotes(text)
+  }
+
+  const lines = text.split('\n')
+  let cutIndex = lines.length
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+
+    // 2+ consecutive > quoted lines
+    if (line.startsWith('> ') || line === '>') {
+      if (i + 1 < lines.length && (lines[i + 1].trim().startsWith('> ') || lines[i + 1].trim() === '>')) {
+        cutIndex = i
+        break
+      }
+      continue
+    }
+
+    // Outlook From: + Sent: lookahead
+    if (/^From:\s+.+/.test(line)) {
+      let foundSent = false
+      for (let j = i + 1; j <= Math.min(i + 3, lines.length - 1); j++) {
+        if (/^Sent:\s+/.test(lines[j].trim())) {
+          foundSent = true
+          break
+        }
+      }
+      if (foundSent) {
+        cutIndex = i
+        break
+      }
+      continue
+    }
+
+    // "On ... wrote:" Gmail pattern (same line or next line)
+    if (/^On .+wrote:\s*$/i.test(line)) {
+      cutIndex = i
+      break
+    }
+    // "wrote:" might be on the next line
+    if (/^On .+/i.test(line) && i + 1 < lines.length && /^\s*wrote:\s*$/i.test(lines[i + 1])) {
+      cutIndex = i
+      break
+    }
+
+    // "{name} <email> wrote:" pattern
+    if (/^.+<[^>]+>\s*wrote:\s*$/i.test(line)) {
+      cutIndex = i
+      break
+    }
+
+    // Original message dividers
+    if (/^-----Original Message-----/.test(line)) { cutIndex = i; break }
+    if (/^-{10,}\s*Forwarded message\s*-{10,}/.test(line)) { cutIndex = i; break }
+    if (/^_{5,}/.test(line)) { cutIndex = i; break }
+
+    // Mobile footers
+    if (/^Sent from my iP(hone|ad)/i.test(line)) { cutIndex = i; break }
+    if (/^Get Outlook for/i.test(line)) { cutIndex = i; break }
+  }
+
+  let result = lines.slice(0, cutIndex)
+
+  // Cap at 50 lines
+  if (result.length > 50) {
+    result = result.slice(0, 50)
+  }
+
+  // Need at least 3 non-empty lines
+  const nonEmpty = result.filter(l => l.trim().length > 0)
+  if (nonEmpty.length < 3) return null
+
+  return result.join('\n').trim()
+}
