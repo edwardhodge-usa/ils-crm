@@ -5,6 +5,27 @@
         <description>ILS CRM+ macOS App Updates</description>
         <language>en</language>
         <item>
+            <title>Version 1.3.1</title>
+            <sparkle:version>14</sparkle:version>
+            <sparkle:shortVersionString>1.3.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <pubDate>Fri, 04 Apr 2026 00:00:00 +0000</pubDate>
+            <description><![CDATA[
+                <ul>
+                    <li>Command Palette (Cmd+K) — global search across all CRM records</li>
+                    <li>Editable task fields — title, priority, type, assigned to now inline-editable</li>
+                    <li>Collapsible task sections with remembered expand/collapse state</li>
+                    <li>95% feature parity with Electron (169/178 features)</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/edwardhodge-usa/ils-crm/releases/download/swift-v1.3.1/ILS-CRM-1.3.1-x86_64+arm64.dmg"
+                length="4549953"
+                type="application/octet-stream"
+                sparkle:edSignature="io2qzAnf4v/WMve67FYk3uRw+32y5kScklGQtprNqrbcR1elbkZd4fQ40lxp5cX1kovrtPJi15/+QGMgilK1DA=="
+            />
+        </item>
+        <item>
             <title>Version 1.1.1</title>
             <sparkle:version>10</sparkle:version>
             <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
