@@ -11,6 +11,7 @@ import { classifyCandidate } from './classifier'
 import { normalizeEmail, parseDisplayName, extractSignature } from './email-utils'
 import type {
   EmailCandidate,
+  EmailHeaders,
   DiscoveryMethod,
   Rule,
   ScanProgress,
@@ -84,6 +85,26 @@ function acquireSyncLock(): boolean {
 
 function releaseSyncLock(): void {
   try { unlinkSync(SYNC_LOCK_PATH) } catch { /* ignore */ }
+}
+
+// ─── Marketing Detection ──────────────────────────────────────
+
+const ESP_NAMES = ['mailchimp', 'hubspot', 'constant contact', 'brevo', 'klaviyo', 'sendgrid', 'mailgun']
+
+function isMarketingMessage(headers: EmailHeaders): boolean {
+  const raw = headers.rawHeaders
+
+  const precedence = (raw['Precedence'] ?? '').toLowerCase()
+  if (precedence === 'bulk' || precedence === 'list') return true
+
+  if (raw['List-Id']) return true
+
+  if (raw['List-Unsubscribe']) return true
+
+  const mailer = (raw['X-Mailer'] ?? '').toLowerCase()
+  if (mailer && ESP_NAMES.some(esp => mailer.includes(esp))) return true
+
+  return false
 }
 
 // ─── Token Management ──────────────────────────────────────────
@@ -486,24 +507,30 @@ export async function scanFull(): Promise<void> {
           try {
             const headers = await client.getMessageHeaders(stub.id)
 
-            // Check for List-Unsubscribe header (rule: reject bulk mail)
-            const hasUnsubscribe = !!headers.rawHeaders['List-Unsubscribe']
+            // Skip marketing messages entirely
+            if (isMarketingMessage(headers)) {
+              processedCount++
+              if (processedCount % 50 === 0) {
+                updateProgress({ processed: processedCount, candidatesFound: candidateMap.size })
+              }
+              continue
+            }
 
             // Aggregate From
-            if (headers.from.email && !hasUnsubscribe) {
+            if (headers.from.email) {
               aggregateCandidate(candidateMap, headers.from.email, headers.from.name, headers.date, 'From', stub.threadId)
             }
 
             // Aggregate To
             for (const to of headers.to) {
-              if (to.email && !hasUnsubscribe) {
+              if (to.email) {
                 aggregateCandidate(candidateMap, to.email, to.name, headers.date, 'To', stub.threadId)
               }
             }
 
             // Aggregate CC
             for (const cc of headers.cc) {
-              if (cc.email && !hasUnsubscribe) {
+              if (cc.email) {
                 aggregateCandidate(candidateMap, cc.email, cc.name, headers.date, 'CC', stub.threadId)
               }
             }
@@ -618,20 +645,28 @@ export async function scanIncremental(): Promise<void> {
       for (const msgId of messageIds) {
         try {
           const headers = await client.getMessageHeaders(msgId)
-          const hasUnsubscribe = !!headers.rawHeaders['List-Unsubscribe']
 
-          if (headers.from.email && !hasUnsubscribe) {
+          // Skip marketing messages entirely
+          if (isMarketingMessage(headers)) {
+            processedCount++
+            if (processedCount % 20 === 0) {
+              updateProgress({ processed: processedCount, candidatesFound: candidateMap.size })
+            }
+            continue
+          }
+
+          if (headers.from.email) {
             aggregateCandidate(candidateMap, headers.from.email, headers.from.name, headers.date, 'From', '')
           }
 
           for (const to of headers.to) {
-            if (to.email && !hasUnsubscribe) {
+            if (to.email) {
               aggregateCandidate(candidateMap, to.email, to.name, headers.date, 'To', '')
             }
           }
 
           for (const cc of headers.cc) {
-            if (cc.email && !hasUnsubscribe) {
+            if (cc.email) {
               aggregateCandidate(candidateMap, cc.email, cc.name, headers.date, 'CC', '')
             }
           }

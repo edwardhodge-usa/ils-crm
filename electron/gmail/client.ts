@@ -125,7 +125,7 @@ export class GmailClient {
 
   async getMessageHeaders(messageId: string): Promise<EmailHeaders> {
     const data = await this.request<GmailMessageResource>(
-      `/messages/${messageId}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Date&metadataHeaders=Subject&metadataHeaders=List-Unsubscribe`,
+      `/messages/${messageId}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Date&metadataHeaders=Subject&metadataHeaders=List-Unsubscribe&metadataHeaders=Precedence&metadataHeaders=List-Id&metadataHeaders=X-Mailer`,
     )
 
     return parseMessageHeaders(data)
