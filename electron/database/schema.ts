@@ -2,6 +2,20 @@
 // Linked record IDs stored as JSON arrays
 
 import type { Database as SqlJsDatabase } from 'sql.js'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+
+/** Read a value from .env file in project root (no dotenv dependency needed) */
+function loadEnvVar(key: string): string {
+  try {
+    const envPath = resolve(__dirname, '..', '.env')
+    const content = readFileSync(envPath, 'utf-8')
+    const match = content.match(new RegExp(`^${key}=(.*)$`, 'm'))
+    return match?.[1]?.trim() || ''
+  } catch {
+    return ''
+  }
+}
 
 export function createSchema(db: SqlJsDatabase): void {
   // ─── Contacts ──────────────────────────────────────────
@@ -552,14 +566,17 @@ export function createSchema(db: SqlJsDatabase): void {
     ['airtable_base_id', ''], // Never hardcode — user must configure explicitly in Settings
     ['sync_interval_ms', '120000'],
     ['last_full_sync', ''],
-    ['gmail_client_id', process.env.GMAIL_CLIENT_ID || ''],
-    ['gmail_client_secret', process.env.GMAIL_CLIENT_SECRET || ''],
+    ['gmail_client_id', process.env.GMAIL_CLIENT_ID || loadEnvVar('GMAIL_CLIENT_ID')],
+    ['gmail_client_secret', process.env.GMAIL_CLIENT_SECRET || loadEnvVar('GMAIL_CLIENT_SECRET')],
   ]
 
   for (const [key, defaultValue] of defaults) {
     const result = db.exec(`SELECT value FROM settings WHERE key = '${key.replace(/'/g, "''")}'`)
     if (result.length === 0 || result[0].values.length === 0) {
       db.run('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', [key, defaultValue])
+    } else if (defaultValue && !result[0].values[0][0]) {
+      // Update empty values with non-empty defaults (e.g. env var populated after initial setup)
+      db.run('UPDATE settings SET value = ? WHERE key = ?', [defaultValue, key])
     }
   }
 
