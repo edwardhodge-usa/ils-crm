@@ -96,6 +96,8 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - **2026-04-01** — Gmail history.list historyId expires after ~7 days — must fallback to full re-scan on 404
 - **2026-04-01** — Airtable API cannot create Collaborator fields — must add manually in UI
 - **2026-04-01** — Email scanner sync lock: acquire/release per batch write (10 records), never hold for full scan duration — prevents blocking CRM sync engine
+- **2026-04-05** — Electron sql.js saves in-memory DB to disk on exit, overwriting external changes. To modify the DB: kill app first (wait 5s), modify on disk, then restart. Never modify while app is running.
+- **2026-04-05** — Enrichment queue items must show the linked CRM contact name + email, not just the field name — users need identity context to evaluate suggestions
 
 ### UI / HIG
 - `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements
