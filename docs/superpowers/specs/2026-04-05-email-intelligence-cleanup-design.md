@@ -44,8 +44,13 @@ Candidate metadata:
 - From/To/CC: {fromCount}/{toCount}/{ccCount}
 - Time span: {firstSeen} to {lastSeen}
 
-Respond with ONLY a JSON object, no markdown fences, no explanation:
-{"first_name": string|null, "last_name": string|null, "job_title": string|null, "company_name": string|null, "phone": string|null, "relationship_type": string, "confidence": number, "reasoning": string}
+Respond with ONLY a JSON object, no markdown fences, no explanation. Use JSON null for unknown fields.
+
+Example response:
+{"first_name": "Sarah", "last_name": "Chen", "job_title": "VP Marketing", "company_name": "Acme Corp", "phone": "+1-555-867-5309", "relationship_type": "Client", "confidence": 78, "reasoning": "Frequent direct correspondent over 6 months with professional signature."}
+
+Example with missing fields:
+{"first_name": "James", "last_name": null, "job_title": null, "company_name": null, "phone": null, "relationship_type": "Prospect", "confidence": 35, "reasoning": "Appeared in 2 threads as CC, no signature data available."}
 
 relationship_type must be one of: Client, Prospect, Partner, Consultant, Vendor Contact, Talent, Employee, Investor, Advisor, Industry Peer, Other
 confidence is 0-100 reflecting how confident you are this person is a real business contact worth adding to a CRM.
@@ -62,8 +67,10 @@ Candidate metadata:
 - From/To/CC: {fromCount}/{toCount}/{ccCount}
 - Time span: {firstSeen} to {lastSeen}
 
-Respond with ONLY a JSON object, no markdown fences, no explanation:
-{"first_name": null, "last_name": null, "job_title": null, "company_name": null, "phone": null, "relationship_type": string, "confidence": number, "reasoning": string}
+Respond with ONLY a JSON object, no markdown fences, no explanation. Use JSON null for unknown fields.
+
+Example response:
+{"first_name": null, "last_name": null, "job_title": null, "company_name": null, "phone": null, "relationship_type": "Prospect", "confidence": 42, "reasoning": "Direct correspondent in 5 threads over 3 months, likely business contact."}
 
 relationship_type must be one of: Client, Prospect, Partner, Consultant, Vendor Contact, Talent, Employee, Investor, Advisor, Industry Peer, Other
 confidence is 0-100 reflecting how confident you are this person is a real business contact worth adding to a CRM.
@@ -74,7 +81,7 @@ reasoning is one sentence explaining your classification.
 
 - **Model:** Claude Haiku (`claude-haiku-4-5-20251001`)
 - **Input:** Only the candidate's own message text — quoted thread content stripped first (Section 1a)
-- **Own-email guard:** Before sending to Claude, strip lines matching the authenticated Gmail user's domain + display name (dynamic, not hardcoded to `imaginelabstudios.com`)
+- **Own-email guard:** Before sending to Claude, strip lines that contain an email address `@{user_domain}` or contain the user's full display name (case-insensitive, exact full-name match only — not partial word matches). Do not strip lines that merely mention the domain in prose. Domain and display name are read dynamically from the authenticated Gmail profile, not hardcoded.
 - **Cost:** ~$0.002/candidate. Full scan of 825 contacts ≈ $1.65. Incremental scans much less.
 - **Confidence range:** 0-100 (upgraded from heuristic 0-60 cap)
 - **Relationship type:** Actually classified by Claude instead of always returning "Unknown"
@@ -134,7 +141,7 @@ Isolate the candidate's own most-recent reply from thread noise. Applied before 
 - Cap at first 50 lines after stripping — signatures live in the first screenful, not line 180
 - Multi-part MIME: prefer `text/plain`, fall back to `text/html` → structural strip → tag strip
 
-### Test cases (committed to `tests/gmail/fixtures/`)
+### Test cases (committed to `tests/shared/fixtures/`)
 
 - Gmail thread with `>` quoting
 - Outlook thread with `From:/Sent:` block
@@ -152,7 +159,7 @@ Currently picks one arbitrary message. Replace with score-and-pick.
 
 ### Algorithm per candidate
 
-1. **Fetch up to 5 recent messages** via `from:${candidate.email}`, newest first
+1. **Fetch up to 5 recent messages** via `from:${candidate.email}` (Gmail `messages.list` with `q` param), newest first. **Note:** these queries appear in the user's Gmail search history — this is a known side effect of the Gmail API, not avoidable without switching to a different lookup method.
 2. **Strip quoted content** from each (Section 1a algorithm)
 3. **Score each stripped body:**
    - 10+ lines remaining → +2
@@ -169,7 +176,7 @@ Currently picks one arbitrary message. Replace with score-and-pick.
 
 Full body fetches are expensive: 5 messages × N survivors × 5 Gmail quota units each. For 825 survivors that's 4,125 API calls → ~3-5 minutes in Gmail rate limits alone, plus Claude API calls on top.
 
-**Solution:** Sort survivors by thread count (descending) before message selection. Only fetch bodies for the **top 200 candidates** by thread count. The remaining candidates go through the metadata-only Claude prompt path — they get relationship classification and confidence but no signature extraction. This caps the body-fetch phase at ~1,000 Gmail calls (~1 minute) and keeps Claude calls manageable.
+**Solution:** Sort survivors by heuristic confidence score (descending) before message selection — this factors in thread count, From/To/CC ratio, and time span, so it ranks candidate quality better than thread count alone. Only fetch bodies for the **top 200 candidates** by heuristic confidence. The remaining candidates go through the metadata-only Claude prompt path — they get relationship classification and confidence but no signature extraction. This caps the body-fetch phase at ~1,000 Gmail calls (~1 minute) and keeps Claude calls manageable.
 
 The 200 threshold can be adjusted via a constant (`MAX_BODY_FETCH_CANDIDATES`). Users with smaller mailboxes will naturally have fewer survivors and won't hit the cap.
 
@@ -258,8 +265,8 @@ When the user opens the detail panel (not during scan), match Claude's extracted
 
 Match priority:
 1. **Exact match** (case-insensitive) → auto-link, show state 1
-2. **Starts-with match** (case-insensitive, either direction: CRM name starts with extracted, or extracted starts with CRM name) → suggest as top result, show state 1 but don't auto-confirm
-3. **Contains match** — only if the match covers >50% of the shorter string's length (prevents "Acme" matching "Academy of Motion Picture Arts")
+2. **Starts-with match** (case-insensitive: CRM company name starts with extracted name) → suggest as top result, show state 1 but don't auto-confirm
+3. **Contains match** — only if the match covers >50% of the shorter string's length (prevents "Acme" matching "Academy of Motion Picture Arts"). If multiple companies match, show all as suggestions.
 4. **No match** → show state 2
 
 No external fuzzy library. CRM has ~50-100 companies — this cascade is sufficient.
