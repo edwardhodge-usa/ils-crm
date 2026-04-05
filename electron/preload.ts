@@ -43,6 +43,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   settings: {
     get: (key: string) => ipcRenderer.invoke('settings:get', key),
     set: (key: string, value: string) => ipcRenderer.invoke('settings:set', key, value),
+    getSecure: (key: string) => ipcRenderer.invoke('settings:getSecure', key),
+    setSecure: (key: string, value: string) => ipcRenderer.invoke('settings:setSecure', key, value),
   },
 
   // Sync engine

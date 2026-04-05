@@ -363,6 +363,18 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
     }
   })
 
+  // Secure settings (encrypted via safeStorage)
+  ipcMain.handle('settings:getSecure', async (_e, key: string) => {
+    const { getSecureSetting } = await import('../gmail/secure-settings')
+    return { success: true, data: getSecureSetting(key) }
+  })
+
+  ipcMain.handle('settings:setSecure', async (_e, key: string, value: string) => {
+    const { setSecureSetting } = await import('../gmail/secure-settings')
+    setSecureSetting(key, value)
+    return { success: true }
+  })
+
   // ─── Sync ────────────────────────────────────────────────
 
   ipcMain.handle('sync:start', async () => {
