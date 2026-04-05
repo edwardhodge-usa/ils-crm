@@ -106,7 +106,10 @@ interface ListRowProps {
 function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
   const isDark = useDarkMode()
   const name = getContactName(contact)
-  const subtitle = getSubtitle(contact)
+  const enrichmentField = (contact._enrichment_field as string | null)
+  const subtitle = enrichmentField
+    ? `Update ${enrichmentField.replace(/_/g, ' ')}: ${(contact.current_value as string) ?? ''} → ${(contact.suggested_value as string) ?? ''}`
+    : getSubtitle(contact)
   const relType = (contact.relationship_type as string | null) ?? 'Other'
   const confidence = (contact.confidence_score as number | null) ?? 0
   const threadCount = (contact.email_thread_count as number | null) ?? 0
@@ -242,10 +245,10 @@ function EnrichmentDetail({ item, onAccept, onDismiss }: EnrichmentDetailProps) 
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
-                Field Update
+                {(item.imported_contact_name as string) || 'Field Update'}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                Enrichment suggestion from email scan
+                Update {fieldName.replace(/_/g, ' ')} from email scan
               </div>
             </div>
             <div style={{
@@ -913,6 +916,7 @@ export default function ImportedContactsPage() {
   const { data: contacts, loading, error, reload } = useEntityList(() => window.electronAPI.importedContacts.getAll(), { syncReload: false })
   const { data: enrichmentItems, loading: enrichLoading, reload: reloadEnrichment } = useEntityList(() => window.electronAPI.enrichmentQueue.getAll(), { syncReload: false })
   const { data: companiesList } = useEntityList(() => window.electronAPI.companies.getAll(), { syncReload: true })
+  const { data: crmContacts } = useEntityList(() => window.electronAPI.contacts.getAll(), { syncReload: false })
   const [sourceTab, setSourceTab] = useState<SourceTab>('All')
   const [sortBy, setSortBy] = useState<SortMode>('confidence')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -944,22 +948,41 @@ export default function ImportedContactsPage() {
       .filter(c => (c.onboarding_status as string | null) !== 'Approved')
       .map(c => ({ ...c, _type: 'imported' as const }))
     // Only show pending enrichment items (not already approved/dismissed)
+    // Build contact name lookup from CRM contacts
+    const contactNameMap = new Map<string, string>()
+    for (const c of crmContacts) {
+      const id = c.id as string
+      const name = [c.first_name, c.last_name].filter(Boolean).join(' ') || (c.contact_name as string) || (c.email as string) || 'Unknown'
+      contactNameMap.set(id, String(name))
+    }
+
     const pendingEnrichment: MergedItem[] = enrichmentItems
       .filter(e => {
         const status = (e.status as string | null)?.toLowerCase() ?? ''
         return !status.includes('approved') && !status.includes('dismissed')
       })
-      .map(e => ({
-        ...e,
-        _type: 'enrichment' as const,
-        // Map enrichment fields to match imported contact display pattern
-        imported_contact_name: (e.field_name as string | null) ?? 'Field Update',
-        confidence_score: e.confidence_score ?? 0,
-        relationship_type: 'Update',
-        email_thread_count: 0,
-      }))
+      .map(e => {
+        // Resolve the linked contact name
+        let contactName = 'Unknown Contact'
+        try {
+          const ids = JSON.parse((e.contact_ids as string) || '[]')
+          if (Array.isArray(ids) && ids.length > 0) {
+            contactName = contactNameMap.get(ids[0]) || 'Unknown Contact'
+          }
+        } catch { /* ignore */ }
+
+        return {
+          ...e,
+          _type: 'enrichment' as const,
+          imported_contact_name: contactName,
+          _enrichment_field: (e.field_name as string | null) ?? 'field',
+          confidence_score: e.confidence_score ?? 0,
+          relationship_type: 'Update',
+          email_thread_count: 0,
+        }
+      })
     return [...importedWithType, ...pendingEnrichment]
-  }, [contacts, enrichmentItems])
+  }, [contacts, enrichmentItems, crmContacts])
 
   // Load scan status on mount
   useEffect(() => {
