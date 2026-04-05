@@ -350,16 +350,211 @@ function EnrichmentDetail({ item, onAccept, onDismiss }: EnrichmentDetailProps) 
   )
 }
 
+// ─── Company fuzzy matching ──────────────────────────────────────────────────
+
+interface CompanyMatch {
+  id: string
+  name: string
+  type: string | null
+  matchType: 'exact' | 'starts-with' | 'contains'
+}
+
+function findCompanyMatches(extracted: string, companies: Record<string, unknown>[]): CompanyMatch[] {
+  if (!extracted || extracted.trim().length === 0) return []
+  const query = extracted.toLowerCase().trim()
+  const matches: CompanyMatch[] = []
+
+  for (const company of companies) {
+    const name = (company.company_name as string | null)?.trim()
+    if (!name) continue
+    const nameLower = name.toLowerCase()
+    const id = company.id as string
+    const companyType = (company.company_type as string | null) ?? null
+
+    if (nameLower === query) {
+      matches.push({ id, name, type: companyType, matchType: 'exact' })
+    } else if (nameLower.startsWith(query)) {
+      matches.push({ id, name, type: companyType, matchType: 'starts-with' })
+    } else {
+      const shorter = Math.min(query.length, nameLower.length)
+      if (nameLower.includes(query) && query.length > shorter * 0.5) {
+        matches.push({ id, name, type: companyType, matchType: 'contains' })
+      }
+    }
+  }
+
+  const priority: Record<string, number> = { exact: 0, 'starts-with': 1, contains: 2 }
+  matches.sort((a, b) => priority[a.matchType] - priority[b.matchType])
+  return matches
+}
+
+// ─── Company Picker ──────────────────────────────────────────────────────────
+
+interface CompanyPickerProps {
+  suggestedName: string | null
+  companies: Record<string, unknown>[]
+  onSelect: (id: string, name: string) => void
+  onCreateNew: (name: string) => void
+  onClear: () => void
+  selectedId: string | null
+  selectedName: string | null
+}
+
+function CompanyPicker({ suggestedName, companies, onSelect, onCreateNew, onClear, selectedId, selectedName }: CompanyPickerProps) {
+  const [searchText, setSearchText] = useState('')
+  const [showDropdown, setShowDropdown] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Auto-match on mount
+  useEffect(() => {
+    if (suggestedName && !selectedId) {
+      const matches = findCompanyMatches(suggestedName, companies)
+      const exact = matches.find(m => m.matchType === 'exact')
+      if (exact) {
+        onSelect(exact.id, exact.name)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only on mount
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const query = searchText || suggestedName || ''
+  const matches = useMemo(() => {
+    if (!query.trim()) return companies.slice(0, 20).map(c => ({
+      id: c.id as string,
+      name: (c.company_name as string | null) ?? '',
+      type: (c.company_type as string | null) ?? null,
+      matchType: 'contains' as const,
+    }))
+    return findCompanyMatches(query, companies)
+  }, [query, companies])
+
+  // Selected state — show linked company
+  if (selectedId && selectedName) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '8px 12px', borderRadius: 8,
+        background: 'rgba(0,122,255,0.08)',
+        border: '1px solid rgba(0,122,255,0.20)',
+      }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', flex: 1 }}>
+          {selectedName}
+        </span>
+        <span style={{
+          fontSize: 10, fontWeight: 600, padding: '1px 6px',
+          borderRadius: 9999, background: 'rgba(0,122,255,0.18)', color: '#0055B3',
+        }}>
+          Linked
+        </span>
+        <button
+          onClick={onClear}
+          className="cursor-default"
+          style={{
+            width: 18, height: 18, borderRadius: '50%',
+            background: 'var(--bg-tertiary)', border: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'inherit',
+            lineHeight: 1, padding: 0,
+          }}
+          title="Clear company selection"
+        >
+          ×
+        </button>
+      </div>
+    )
+  }
+
+  // Search / dropdown state
+  return (
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      <input
+        type="text"
+        value={searchText}
+        onChange={e => { setSearchText(e.target.value); setShowDropdown(true) }}
+        onFocus={() => setShowDropdown(true)}
+        placeholder={suggestedName || 'Search companies...'}
+        className="cursor-default w-full text-[13px] px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--separator-strong)] text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:border-[var(--color-accent)] transition-colors"
+      />
+      {showDropdown && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0,
+          marginTop: 4, maxHeight: 200, overflowY: 'auto',
+          background: 'var(--bg-popover, var(--bg-window))',
+          border: '1px solid var(--separator-strong)',
+          borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+          zIndex: 10,
+        }}>
+          {matches.slice(0, 15).map(m => (
+            <div
+              key={m.id}
+              onClick={() => { onSelect(m.id, m.name); setShowDropdown(false); setSearchText('') }}
+              className="cursor-default"
+              style={{
+                padding: '6px 12px', fontSize: 13, color: 'var(--text-primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                transition: 'background 100ms',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = ''}
+            >
+              <span>{m.name}</span>
+              {m.type && (
+                <span style={{ fontSize: 10, color: 'var(--text-secondary)', marginLeft: 8 }}>
+                  {m.type}
+                </span>
+              )}
+            </div>
+          ))}
+          {/* Create new option */}
+          {query.trim() && (
+            <div
+              onClick={() => { onCreateNew(query.trim()); setShowDropdown(false); setSearchText('') }}
+              className="cursor-default"
+              style={{
+                padding: '6px 12px', fontSize: 13, fontWeight: 600,
+                color: 'var(--color-accent)',
+                borderTop: '1px solid var(--separator)',
+                transition: 'background 100ms',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = ''}
+            >
+              + Create "{query.trim()}"
+            </div>
+          )}
+          {matches.length === 0 && !query.trim() && (
+            <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-secondary)' }}>
+              No companies found
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Detail panel ─────────────────────────────────────────────────────────────
 
 interface DetailProps {
   contact: Record<string, unknown> | null
-  onAddToCrm: (fields: Record<string, string>) => void
+  onAddToCrm: (fields: Record<string, unknown>) => void
   onDismiss: () => void
   onReject: () => void
+  companies: Record<string, unknown>[]
 }
 
-function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject }: DetailProps) {
+function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject, companies }: DetailProps) {
   const isDark = useDarkMode()
 
   // Local form state — isolated from parent re-renders.
@@ -372,6 +567,11 @@ function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject }: Det
     job_title: (contact?.job_title as string | null) ?? '',
     relationship_type: (contact?.relationship_type as string | null) ?? 'Other',
   }))
+
+  // Company picker state
+  const [companyId, setCompanyId] = useState<string | null>(null)
+  const [companyName, setCompanyName] = useState<string | null>(null)
+  const [createCompanyName, setCreateCompanyName] = useState<string | null>(null)
 
   const setEditField = useCallback((key: string, val: string) => {
     setEditFields(prev => ({ ...prev, [key]: val }))
@@ -398,7 +598,6 @@ function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject }: Det
   const lastSeen = contact.last_seen_date as string | null
   const discoveredVia = (contact.discovered_via as string | null) ?? null
   const suggestedCompany = (contact.suggested_company_name as string | null) ?? null
-  const suggestedCompanyIds = contact.suggested_company_ids as string | null
   const enrichment = isEnrichmentRow(contact)
   const onboardingStatus = (contact.onboarding_status as string | null) ?? 'Review'
 
@@ -410,15 +609,6 @@ function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject }: Det
   const isRejected = onboardingStatus === 'Rejected'
   const isApproved = onboardingStatus === 'Approved'
   const isActioned = isDismissed || isRejected || isApproved
-
-  // Company card colors
-  let hasLinkedCompany = false
-  try {
-    if (suggestedCompanyIds) {
-      const arr = JSON.parse(suggestedCompanyIds)
-      hasLinkedCompany = Array.isArray(arr) && arr.length > 0
-    }
-  } catch { /* ignore */ }
 
   // Time span between first and last seen
   const timeSpan = (() => {
@@ -475,7 +665,7 @@ function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject }: Det
               {isDismissed ? 'Dismissed' : 'Dismiss'}
             </button>
             <button
-              onClick={() => onAddToCrm(editFields)}
+              onClick={() => onAddToCrm({ ...editFields, ...(companyId ? { company_id: companyId } : {}), ...(createCompanyName ? { create_company_name: createCompanyName } : {}) })}
               disabled={isApproved}
               className="cursor-default disabled:opacity-40"
               style={{
@@ -631,43 +821,24 @@ function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject }: Det
           </div>
         </div>
 
-        {/* Company pairing card */}
-        {suggestedCompany && (
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--separator)' }}>
-            <SectionLabel>Company Pairing</SectionLabel>
-            <div style={{
-              padding: '12px 14px',
-              borderRadius: 10,
-              background: hasLinkedCompany
-                ? (isDark ? 'rgba(0,122,255,0.08)' : 'rgba(0,122,255,0.05)')
-                : (isDark ? 'rgba(255,204,0,0.08)' : 'rgba(255,204,0,0.05)'),
-              border: hasLinkedCompany
-                ? '1px solid rgba(0,122,255,0.20)'
-                : '1px solid rgba(255,204,0,0.20)',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{
-                  fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
-                }}>
-                  {suggestedCompany}
-                </span>
-                {hasLinkedCompany && (
-                  <span style={{
-                    fontSize: 10, fontWeight: 600, padding: '1px 6px',
-                    borderRadius: 9999, background: 'rgba(0,122,255,0.18)', color: '#0055B3',
-                  }}>
-                    Linked
-                  </span>
-                )}
-              </div>
-              {!hasLinkedCompany && (
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
-                  Suggested company — not yet linked to CRM
-                </div>
-              )}
+        {/* Company pairing — picker replaces static card */}
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--separator)' }}>
+          <SectionLabel>Company Pairing</SectionLabel>
+          <CompanyPicker
+            suggestedName={suggestedCompany}
+            companies={companies}
+            selectedId={companyId}
+            selectedName={companyName ?? (createCompanyName ? `${createCompanyName} (new)` : null)}
+            onSelect={(id, name) => { setCompanyId(id); setCompanyName(name); setCreateCompanyName(null) }}
+            onCreateNew={(name) => { setCreateCompanyName(name); setCompanyId(null); setCompanyName(null) }}
+            onClear={() => { setCompanyId(null); setCompanyName(null); setCreateCompanyName(null) }}
+          />
+          {suggestedCompany && !companyId && !createCompanyName && (
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>
+              AI suggested: {suggestedCompany}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Email Activity stats */}
         <div style={{ padding: '14px 20px' }}>
@@ -741,11 +912,20 @@ function StatCard({ label, value }: { label: string; value: string }) {
 export default function ImportedContactsPage() {
   const { data: contacts, loading, error, reload } = useEntityList(() => window.electronAPI.importedContacts.getAll(), { syncReload: false })
   const { data: enrichmentItems, loading: enrichLoading, reload: reloadEnrichment } = useEntityList(() => window.electronAPI.enrichmentQueue.getAll(), { syncReload: false })
+  const { data: companiesList } = useEntityList(() => window.electronAPI.companies.getAll(), { syncReload: true })
   const [sourceTab, setSourceTab] = useState<SourceTab>('All')
   const [sortBy, setSortBy] = useState<SortMode>('confidence')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [action, setAction] = useState<'dismiss' | 'reject' | 'add' | null>(null)
+
+  // AI classification indicator
+  const [hasApiKey, setHasApiKey] = useState(false)
+  useEffect(() => {
+    window.electronAPI.settings.getSecure('anthropic_api_key').then(res => {
+      setHasApiKey(!!res?.data)
+    }).catch(() => {})
+  }, [])
 
   // Scan state
   const [isScanning, setIsScanning] = useState(false)
@@ -924,6 +1104,8 @@ export default function ImportedContactsPage() {
           job_title: fields.job_title || null,
           relationship_type: fields.relationship_type || null,
           suggested_company_name: selected.suggested_company_name || null,
+          ...(fields.company_id ? { company_id: fields.company_id } : {}),
+          ...(fields.create_company_name ? { create_company_name: fields.create_company_name } : {}),
         })
       }
     }
@@ -1047,6 +1229,19 @@ export default function ImportedContactsPage() {
           </div>
         </div>
 
+        {/* AI classification status */}
+        <div style={{
+          padding: '4px 12px', borderBottom: '1px solid var(--separator)', flexShrink: 0,
+          fontSize: 10, color: 'var(--text-secondary)',
+          display: 'flex', alignItems: 'center', gap: 4,
+        }}>
+          <span style={{
+            width: 6, height: 6, borderRadius: '50%',
+            background: hasApiKey ? 'var(--color-green)' : 'var(--text-secondary)',
+          }} />
+          {hasApiKey ? 'AI classification active' : 'AI classification off \u2014 add API key in Settings'}
+        </div>
+
         {/* List */}
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
@@ -1081,7 +1276,8 @@ export default function ImportedContactsPage() {
         <ImportedContactDetail
           key={selectedId ?? 'none'}
           contact={selected}
-          onAddToCrm={(fields) => { pendingFieldsRef.current = fields; setAction('add') }}
+          companies={companiesList}
+          onAddToCrm={(fields) => { pendingFieldsRef.current = fields as Record<string, string>; setAction('add') }}
           onDismiss={() => setAction('dismiss')}
           onReject={() => setAction('reject')}
         />
@@ -1106,9 +1302,13 @@ export default function ImportedContactsPage() {
                 : `Dismiss this enrichment suggestion?`)
             : action === 'add'
               ? `Create a new CRM contact from "${selected ? getContactName(selected) : 'this contact'}"?${
-                  (selected?.suggested_company_name && !selected?.suggested_company_ids)
-                    ? ` A new company "${selected.suggested_company_name}" will also be created.`
-                    : ''
+                  pendingFieldsRef.current.company_id
+                    ? ''
+                    : pendingFieldsRef.current.create_company_name
+                      ? ` A new company "${pendingFieldsRef.current.create_company_name}" will also be created.`
+                      : (selected?.suggested_company_name && !selected?.suggested_company_ids)
+                        ? ` A new company "${selected.suggested_company_name}" will also be created.`
+                        : ''
                 }`
               : action === 'dismiss'
                 ? `Dismiss "${selected ? getContactName(selected) : 'this contact'}"? You can undo this later.`

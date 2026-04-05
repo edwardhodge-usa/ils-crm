@@ -173,29 +173,48 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
         return { success: false, error: 'Imported contact not found' }
       }
 
-      // 2. Determine company ID — create if suggested but not linked
-      let companyId: string | null = null
-      const suggestedCompanyName = (editedFields?.suggested_company_name ?? imported.suggested_company_name) as string | null
-      const suggestedCompanyIds = imported.suggested_company_ids as string | null
+      // 2. Determine company ID
+      let companyId: string | null = (editedFields?.company_id as string | null) ?? null
 
-      let hasLinkedCompany = false
-      try {
-        if (suggestedCompanyIds) {
-          const arr = JSON.parse(suggestedCompanyIds)
-          if (Array.isArray(arr) && arr.length > 0) {
-            companyId = arr[0]
-            hasLinkedCompany = true
+      if (!companyId) {
+        // Check if the imported record already has a linked company
+        const suggestedCompanyIds = imported.suggested_company_ids as string | null
+        try {
+          if (suggestedCompanyIds) {
+            const arr = JSON.parse(suggestedCompanyIds)
+            if (Array.isArray(arr) && arr.length > 0) {
+              companyId = arr[0]
+            }
           }
-        }
-      } catch { /* ignore parse errors */ }
+        } catch { /* ignore */ }
+      }
 
-      if (!hasLinkedCompany && suggestedCompanyName) {
-        // Create a new Company record in Airtable
+      // Create new company if requested via picker
+      const createCompanyName = (editedFields?.create_company_name as string | null)
+      if (!companyId && createCompanyName) {
+        const relationshipType = (editedFields?.relationship_type ?? imported.relationship_type) as string | null
+        const typeMap: Record<string, string> = { 'Client': 'Client', 'Vendor Contact': 'Vendor', 'Partner': 'Partner' }
+        const companyType = (relationshipType && typeMap[relationshipType]) || null
+
         const companyResult = await createRecord('companies', {
-          company_name: suggestedCompanyName,
+          company_name: createCompanyName,
+          ...(companyType ? { company_type: companyType } : {}),
         })
         if (companyResult.success && companyResult.id) {
           companyId = companyResult.id
+        }
+      }
+
+      // Fallback: create from suggested company name (legacy path)
+      if (!companyId && !createCompanyName) {
+        const suggestedCompanyName = (editedFields?.suggested_company_name ?? imported.suggested_company_name) as string | null
+        if (suggestedCompanyName) {
+          const companyResult = await createRecord('companies', {
+            company_name: suggestedCompanyName,
+          })
+          if (companyResult.success && companyResult.id) {
+            companyId = companyResult.id
+          }
         }
       }
 
