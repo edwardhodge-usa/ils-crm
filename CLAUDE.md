@@ -3,7 +3,7 @@
 ## Quick Context
 - **What**: Master CRM — Airtable schema management, API integrations, Electron desktop app + Swift app
 - **Stack**: Electron + React + TypeScript + Vite + Tailwind (app), Swift/SwiftUI (swift-app/), Airtable API (backend)
-- **Status**: v3.5.1 / Swift v1.3.0 — On main
+- **Status**: v3.6.0 / Swift v1.3.0 — On main
 - **Repo**: edwardhodge-usa/ils-crm | **Base ID**: appYXbUdcmSwBoPFU
 
 ## Project Scope
@@ -78,6 +78,12 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - Use `.system(size:)` fonts, not semantic SwiftUI fonts (.title2, .headline) — unpredictable sizes
 - Swift `String(format:)` doesn't support `,` flag for digit grouping → use `NumberFormatter`
 - XCUITest: build-for-testing first, clear xattrs, then test-without-building. SwiftUI launches with 0 windows — open via File menu
+
+### Email Intelligence Pipeline
+- Enrichment comparison MUST run after Claude classification — phone/title fields only exist after Claude extraction. Pipeline ordering: rules → collect known contacts → classify new contacts → write new contacts → enrich known contacts.
+- Company excluded from enrichment comparison — text-vs-linked-record matching produces constant false diffs (same 3NF problem)
+- Phone normalization for comparison: strip non-digits except leading +, 10 bare digits → prepend +1
+- Enrichment dedup: query enrichment_queue for existing Pending row with same contact+field+value before writing
 - SwiftData `#Predicate` crashes on macOS 26.4 beta (25E5233c) — use fetch-all + in-memory `.filter {}` as workaround. TODO: revert when fixed
 - `useEntityList` refreshes on `sync-complete` events. IPC approve/dismiss/reject handlers must NOT send fake `sync:progress` events — they trigger a `sync-complete` cascade that remounts UI and resets form state. Let the component's explicit `reload()` handle it. `deleteRemoteRecord` must handle `local_` prefix IDs (skip Airtable, SQLite only)
 - Airtable singleSelect: always fetch live schema for valid options before writing. 'Ready' doesn't exist on Onboarding Status (valid: Approved, Rejected, Needs Info, Duplicate, Review)
