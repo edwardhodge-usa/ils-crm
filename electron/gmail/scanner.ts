@@ -1010,11 +1010,10 @@ async function classifyCandidates(
     let classification: import('./claude-client').ClaudeClassification | null = null
 
     if (hasApiKey && i < bodyFetchCount) {
-      // Top-N: fetch bodies, score, pick best, send to Claude with body
+      // Top-N: fetch bodies, score, pick top 3, send to Claude
       try {
         const searchResult = await client.searchMessages(`from:${candidate.email}`, 5)
-        let bestBody: string | null = null
-        let bestScore = -Infinity
+        const scoredBodies: Array<{ body: string; score: number }> = []
 
         for (let j = 0; j < searchResult.messages.length; j++) {
           const fullMsg = await client.getMessageFull(searchResult.messages[j].id)
@@ -1023,15 +1022,16 @@ async function classifyCandidates(
           const stripped = stripQuotedContent(rawBody, isHtml)
           const guardedBody = stripped ? stripOwnSignatureLines(stripped, ownEmail, ownDisplayName) : null
           const score = scoreMessageForSignature(guardedBody, j)
-
-          if (score > bestScore) {
-            bestScore = score
-            bestBody = guardedBody
+          if (guardedBody && score >= 0) {
+            scoredBodies.push({ body: guardedBody, score })
           }
         }
 
-        if (bestBody && bestScore >= 0) {
-          const prompt = buildExtractionPrompt(bestBody, meta)
+        scoredBodies.sort((a, b) => b.score - a.score)
+        const topBodies = scoredBodies.slice(0, 3).map(s => s.body)
+
+        if (topBodies.length > 0) {
+          const prompt = buildExtractionPrompt(topBodies, meta)
           classification = await classifyWithClaude(prompt, apiKey!)
         } else {
           // No usable body — metadata only
