@@ -96,6 +96,7 @@ struct ILSCRMApp: App {
                 }
             }
             .task { await appStateManager.performLicenseCheck() }
+            .frame(minWidth: 900, minHeight: 600)
         }
         .modelContainer(container)
         .defaultSize(width: 1200, height: 800)
