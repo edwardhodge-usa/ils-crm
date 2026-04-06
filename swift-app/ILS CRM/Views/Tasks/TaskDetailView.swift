@@ -308,7 +308,7 @@ struct TaskDetailView: View {
                 EditableFieldRow(
                     label: "Priority",
                     key: "priority",
-                    type: .singleSelect(options: ["Low", "Medium", "High", "Urgent"]),
+                    type: .singleSelect(options: ["🟢 Low", "🟡 Medium", "🔴 High"]),
                     value: task.priority,
                     onSave: { key, val in saveField(key, val) }
                 )
