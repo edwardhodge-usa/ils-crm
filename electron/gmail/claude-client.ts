@@ -33,13 +33,15 @@ export interface CandidateMetadata {
 
 // ─── Prompt Builders ──────────────────────────────────────────
 
-export function buildExtractionPrompt(strippedBody: string, meta: CandidateMetadata): string {
-  return `You are extracting contact information from an email. The email body below belongs to a single person. Extract their details.
+export function buildExtractionPrompt(bodies: string | string[], meta: CandidateMetadata): string {
+  const bodyArray = Array.isArray(bodies) ? bodies : [bodies]
+  const bodySection = bodyArray.length === 1
+    ? `Email body:\n---\n${bodyArray[0]}\n---`
+    : bodyArray.map((b, i) => `Email ${i + 1}${i === 0 ? ' (most recent)' : ''}:\n---\n${b}\n---`).join('\n\n')
 
-Email body:
----
-${strippedBody}
----
+  return `You are extracting contact information from email${bodyArray.length > 1 ? 's' : ''}. The email bod${bodyArray.length > 1 ? 'ies below are from the same person, ordered newest to oldest. Extract their most current details' : 'y below belongs to a single person. Extract their details'}.
+
+${bodySection}
 
 Candidate metadata:
 - Email: ${meta.email}

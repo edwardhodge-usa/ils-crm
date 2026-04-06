@@ -16,7 +16,7 @@ import {
 import { getDatabase, saveDatabase } from '../database/init'
 import { checkLicense, getLastVerifiedTime, isWithinGracePeriod, handleRevocation } from '../airtable/license-check'
 import { startOAuthFlow, disconnectGmail, isGmailConnected, getConnectedEmail } from '../gmail/oauth'
-import { scanNow, scanFull, getScanProgress, setPollingInterval } from '../gmail/scanner'
+import { scanNow, scanFull, getScanProgress, setPollingInterval, reclassifyContact } from '../gmail/scanner'
 
 // ─── Allowlist: keys the renderer is permitted to write via settings:set ─────
 // Omitted intentionally: license_last_verified, license_status, user_id — main-process only
@@ -860,6 +860,15 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
     const { validateApiKey } = await import('../gmail/claude-client')
     const valid = await validateApiKey(key)
     return { success: true, data: valid }
+  })
+
+  ipcMain.handle('gmail:reclassify', async (_e, contactId: string) => {
+    try {
+      return await reclassifyContact(contactId)
+    } catch (error) {
+      console.error(`[IPC] gmail:reclassify(${contactId}) failed:`, String(error))
+      return { success: false, error: String(error) }
+    }
   })
 
 }

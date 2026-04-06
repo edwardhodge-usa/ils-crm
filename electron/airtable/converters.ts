@@ -250,6 +250,7 @@ const CONTACT_MAPPINGS: FieldMapping[] = [
   { local: 'portal_access_ids', airtable: CONTACTS.portalAccess, type: 'linked' },
   { local: 'last_interaction_date', airtable: CONTACTS.lastInteractionDate, type: 'readonly' },
   { local: 'contact_photo_url', airtable: CONTACTS.contactPhoto, type: 'attachment' },
+  { local: 'last_enrichment_check', airtable: CONTACTS.lastEnrichmentCheck, type: 'text' },
 ]
 
 // ─── Companies ───────────────────────────────────────────────

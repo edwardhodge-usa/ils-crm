@@ -8,7 +8,7 @@ import { loadTokens, refreshAccessToken } from './oauth'
 import { GmailClient, TokenExpiredError, HistoryExpiredError } from './client'
 import { DEFAULT_RULES, evaluateRules, parseAirtableRule } from './rules-engine'
 import { classifyCandidate } from './classifier'
-import { normalizeEmail, parseDisplayName, extractSignature, stripQuotedContent, scoreMessageForSignature } from './email-utils'
+import { normalizeEmail, parseDisplayName, extractSignature, stripQuotedContent, scoreMessageForSignature, normalizePhone } from './email-utils'
 import { classifyWithClaude, buildExtractionPrompt, buildMetadataOnlyPrompt } from './claude-client'
 import type { CandidateMetadata } from './claude-client'
 import { getSecureSetting } from './secure-settings'
@@ -19,6 +19,7 @@ import type {
   Rule,
   ScanProgress,
   ScanCheckpoint,
+  KnownContact,
 } from './types'
 import { getAll, getById, upsert, getSetting, setSetting } from '../database/queries/entities'
 import { getDatabase, saveDatabase } from '../database/init'
@@ -326,70 +327,181 @@ function checkCrmDedup(normalizedEmail: string): string | null {
   }
 }
 
-// Fields eligible for enrichment queue updates
-const ENRICHABLE_FIELDS: Array<{ candidateKey: keyof EmailCandidate; dbColumn: string }> = [
-  { candidateKey: 'firstName', dbColumn: 'first_name' },
-  { candidateKey: 'lastName', dbColumn: 'last_name' },
-]
+// ─── Enrichment Diff Writer (with dedup + normalization) ─────
 
-function writeToEnrichmentQueue(
+function writeEnrichmentDiffs(
   contactId: string,
+  classification: import('./claude-client').ClaudeClassification,
   candidate: EmailCandidate,
+  discoveredBy: string,
 ): void {
-  // Read the existing contact from SQLite for field comparison
   let existingContact: Record<string, unknown> | null = null
   try {
     existingContact = getById('contacts', contactId) as Record<string, unknown> | null
-  } catch { /* ignore — will skip enrichment if we can't read */ }
-
+  } catch { return }
   if (!existingContact) return
 
-  // Check standard fields
-  for (const { candidateKey, dbColumn } of ENRICHABLE_FIELDS) {
-    const candidateValue = candidate[candidateKey]
-    if (candidateValue == null || candidateValue === '') continue
+  const db = getDatabase()
+  const diffs: Array<{ field: string; current: string; suggested: string }> = []
 
-    const existingValue = existingContact[dbColumn] as string | null
-    if (existingValue && existingValue === String(candidateValue)) continue // Same value — skip
+  // Phone comparison (normalized)
+  if (classification.phone) {
+    const crmPhone = normalizePhone(existingContact.phone as string | null)
+    const claudePhone = normalizePhone(classification.phone)
+    if (claudePhone && crmPhone !== claudePhone) {
+      diffs.push({ field: 'phone', current: (existingContact.phone as string) || '', suggested: classification.phone })
+    }
+  }
+
+  // Job title comparison (case-insensitive)
+  if (classification.job_title) {
+    const crmTitle = ((existingContact.job_title as string) || '').trim().toLowerCase()
+    const claudeTitle = classification.job_title.trim().toLowerCase()
+    if (claudeTitle && crmTitle !== claudeTitle) {
+      diffs.push({ field: 'job_title', current: (existingContact.job_title as string) || '', suggested: classification.job_title })
+    }
+  }
+
+  for (const diff of diffs) {
+    // Dedup: check if a Pending row already exists for same contact + field + value
+    const existing = db.exec(
+      `SELECT id FROM enrichment_queue WHERE contact_ids LIKE ? AND field_name = ? AND suggested_value = ? AND LOWER(status) = 'pending' LIMIT 1`,
+      [`%${contactId}%`, diff.field, diff.suggested],
+    )
+    if (existing.length > 0 && existing[0].values.length > 0) {
+      if (isDev) console.log(`[Scanner] Dedup: skipping enrichment for ${diff.field} on ${contactId}`)
+      continue
+    }
 
     const id = `local_enrich_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
     upsert('enrichment_queue', id, {
-      field_name: dbColumn,
-      current_value: existingValue || '',
-      suggested_value: String(candidateValue),
+      field_name: diff.field,
+      current_value: diff.current,
+      suggested_value: diff.suggested,
       source_email_date: candidate.lastSeenDate.toISOString().split('T')[0],
       status: 'Pending',
-      confidence_score: 0,
+      confidence_score: classification.confidence,
       contact_ids: JSON.stringify([contactId]),
       _pending_push: 1,
     })
+
+    if (isDev) console.log(`[Scanner] Enrichment diff: ${diff.field} for ${contactId} — "${diff.current}" → "${diff.suggested}" (${classification.confidence}%)`)
+  }
+}
+
+// ─── Enrichment Phase (known contacts) ───────────────────────
+
+const MAX_ENRICHMENT_CANDIDATES = 100
+const ENRICHMENT_COOLDOWN_DAYS = 7
+
+async function enrichKnownContacts(
+  client: GmailClient,
+  knownContacts: KnownContact[],
+  ownEmail: string,
+  ownDisplayName: string | null,
+  discoveredBy: string,
+): Promise<void> {
+  const apiKey = getSecureSetting('anthropic_api_key')
+  if (!apiKey) {
+    if (isDev) console.log('[Scanner] No API key — skipping enrichment phase')
+    return
   }
 
-  // Check enriched fields (phone, job_title) from signature extraction if present
-  const enrichedCandidate = candidate as EnrichedCandidate
-  const extraFields: Array<{ value: string | undefined; dbColumn: string }> = [
-    { value: enrichedCandidate._extractedPhone, dbColumn: 'phone' },
-    { value: enrichedCandidate._extractedTitle, dbColumn: 'job_title' },
-  ]
+  // Cooldown filter: skip contacts checked recently
+  const cooldownDate = new Date()
+  cooldownDate.setDate(cooldownDate.getDate() - ENRICHMENT_COOLDOWN_DAYS)
+  const cooldownStr = cooldownDate.toISOString().split('T')[0]
 
-  for (const { value, dbColumn } of extraFields) {
-    if (!value) continue
+  const eligible = knownContacts.filter(({ contactId }) => {
+    try {
+      const contact = getById('contacts', contactId) as Record<string, unknown> | null
+      if (!contact) return false
+      const lastCheck = contact.last_enrichment_check as string | null
+      if (!lastCheck) return true // never checked
+      return lastCheck < cooldownStr
+    } catch {
+      return false
+    }
+  })
 
-    const existingValue = existingContact[dbColumn] as string | null
-    if (existingValue && existingValue === value) continue
+  const toProcess = eligible.slice(0, MAX_ENRICHMENT_CANDIDATES)
 
-    const id = `local_enrich_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
-    upsert('enrichment_queue', id, {
-      field_name: dbColumn,
-      current_value: existingValue || '',
-      suggested_value: value,
-      source_email_date: candidate.lastSeenDate.toISOString().split('T')[0],
-      status: 'Pending',
-      confidence_score: 0,
-      contact_ids: JSON.stringify([contactId]),
-      _pending_push: 1,
-    })
+  if (toProcess.length === 0) {
+    if (isDev) console.log('[Scanner] No contacts eligible for enrichment (all within cooldown)')
+    return
   }
+
+  if (isDev) console.log(`[Scanner] Enrichment phase: ${toProcess.length} contacts (${knownContacts.length} known, ${eligible.length} eligible after cooldown)`)
+
+  updateProgress({ status: 'enriching', processed: 0, total: toProcess.length })
+
+  for (let i = 0; i < toProcess.length; i++) {
+    const { candidate, contactId } = toProcess[i]
+
+    try {
+      const meta: CandidateMetadata = {
+        email: candidate.email,
+        threadCount: candidate.threadCount,
+        fromCount: candidate.fromCount,
+        toCount: candidate.toCount,
+        ccCount: candidate.ccCount,
+        firstSeen: candidate.firstSeenDate.toISOString().split('T')[0],
+        lastSeen: candidate.lastSeenDate.toISOString().split('T')[0],
+      }
+
+      // Fetch message bodies, score, pick best
+      const searchResult = await client.searchMessages(`from:${candidate.email}`, 5)
+      let bestBody: string | null = null
+      let bestScore = -Infinity
+
+      for (let j = 0; j < searchResult.messages.length; j++) {
+        const fullMsg = await client.getMessageFull(searchResult.messages[j].id)
+        const rawBody = fullMsg.bodyPlainText ?? ''
+        const isHtml = !fullMsg.bodyPlainText
+        const stripped = stripQuotedContent(rawBody, isHtml)
+        const guardedBody = stripped ? stripOwnSignatureLines(stripped, ownEmail, ownDisplayName) : null
+        const score = scoreMessageForSignature(guardedBody, j)
+        if (score > bestScore) {
+          bestScore = score
+          bestBody = guardedBody
+        }
+      }
+
+      let classification: import('./claude-client').ClaudeClassification | null = null
+
+      if (bestBody && bestScore >= 0) {
+        const prompt = buildExtractionPrompt(bestBody, meta)
+        classification = await classifyWithClaude(prompt, apiKey)
+      } else {
+        const prompt = buildMetadataOnlyPrompt(meta)
+        classification = await classifyWithClaude(prompt, apiKey)
+      }
+
+      if (classification) {
+        writeEnrichmentDiffs(contactId, classification, candidate, discoveredBy)
+      }
+
+      // Update last_enrichment_check on contact
+      try {
+        const db = getDatabase()
+        db.run(
+          `UPDATE contacts SET last_enrichment_check = ? WHERE id = ?`,
+          [new Date().toISOString().split('T')[0], contactId],
+        )
+      } catch { /* non-fatal */ }
+
+    } catch (err) {
+      if (err instanceof TokenExpiredError) throw err
+      if (isDev) console.log(`[Scanner] Enrichment failed for ${candidate.email}:`, String(err))
+    }
+
+    if ((i + 1) % 5 === 0 || i === toProcess.length - 1) {
+      updateProgress({ processed: i + 1 })
+    }
+  }
+
+  saveDatabase()
+  if (isDev) console.log(`[Scanner] Enrichment phase complete: ${toProcess.length} contacts checked`)
 }
 
 // ─── Batch Write to SQLite + Airtable ──────────────────────────
@@ -588,7 +700,7 @@ export async function scanFull(): Promise<void> {
       const profile = await client.getProfile()
 
       // --- Pipeline: rules → dedup → classify → signatures → write ---
-      const survivors = processCandidates(candidateMap, rules, ownEmail)
+      const { survivors, knownContacts } = processCandidates(candidateMap, rules, ownEmail)
 
       updateProgress({ candidatesFound: survivors.length })
 
@@ -601,6 +713,12 @@ export async function scanFull(): Promise<void> {
       // Batch write to SQLite + Airtable
       if (survivors.length > 0 && config) {
         await writeCandidateBatch(survivors, config.apiKey, config.baseId)
+      }
+
+      // Enrichment phase — process known contacts after Claude classification
+      if (knownContacts.length > 0) {
+        const tkns = loadTokens()
+        await enrichKnownContacts(client, knownContacts, ownEmail, tkns?.email?.split('@')[0] ?? null, tkns?.email ?? 'unknown')
       }
 
       // Save scan state
@@ -713,7 +831,7 @@ export async function scanIncremental(): Promise<void> {
       }
 
       // Pipeline
-      const survivors = processCandidates(candidateMap, rules, ownEmail)
+      const { survivors, knownContacts } = processCandidates(candidateMap, rules, ownEmail)
 
       updateProgress({ candidatesFound: survivors.length })
 
@@ -726,6 +844,12 @@ export async function scanIncremental(): Promise<void> {
       // Batch write
       if (survivors.length > 0 && config) {
         await writeCandidateBatch(survivors, config.apiKey, config.baseId)
+      }
+
+      // Enrichment phase — process known contacts after Claude classification
+      if (knownContacts.length > 0) {
+        const tkns = loadTokens()
+        await enrichKnownContacts(client, knownContacts, ownEmail, tkns?.email?.split('@')[0] ?? null, tkns?.email ?? 'unknown')
       }
 
       saveScanState(latestHistoryId, processedCount)
@@ -763,10 +887,10 @@ function processCandidates(
   candidateMap: Map<string, EmailCandidate>,
   rules: Rule[],
   ownEmail: string,
-): EnrichedCandidate[] {
+): { survivors: EnrichedCandidate[]; knownContacts: KnownContact[] } {
   const survivors: EnrichedCandidate[] = []
+  const knownContacts: KnownContact[] = []
   let rejectedByRules = 0
-  let rejectedByCrmDedup = 0
   let rejectedByImportDedup = 0
 
   if (isDev) console.log(`[Scanner] Processing ${candidateMap.size} unique email addresses through pipeline`)
@@ -779,11 +903,10 @@ function processCandidates(
       continue
     }
 
-    // Step 2: CRM dedup — known contacts go to enrichment queue
+    // Step 2: CRM dedup — collect known contacts for post-classification enrichment
     const existingContactId = checkCrmDedup(candidate.normalizedEmail)
     if (existingContactId) {
-      writeToEnrichmentQueue(existingContactId, candidate)
-      rejectedByCrmDedup++
+      knownContacts.push({ candidate, contactId: existingContactId })
       continue
     }
 
@@ -807,13 +930,13 @@ function processCandidates(
   }
 
   if (isDev) {
-    console.log(`[Scanner] Pipeline: ${candidateMap.size} candidates → ${rejectedByRules} rejected by rules, ${rejectedByCrmDedup} CRM dedup, ${rejectedByImportDedup} import dedup → ${survivors.length} survivors`)
+    console.log(`[Scanner] Pipeline: ${candidateMap.size} candidates → ${rejectedByRules} rejected by rules, ${knownContacts.length} known (enrichment), ${rejectedByImportDedup} import dedup → ${survivors.length} survivors`)
   }
 
   // Sort by cached confidence descending
   survivors.sort((a, b) => (b._confidence ?? 0) - (a._confidence ?? 0))
 
-  return survivors
+  return { survivors, knownContacts }
 }
 
 // ─── Signature Enrichment ──────────────────────────────────────
@@ -887,11 +1010,10 @@ async function classifyCandidates(
     let classification: import('./claude-client').ClaudeClassification | null = null
 
     if (hasApiKey && i < bodyFetchCount) {
-      // Top-N: fetch bodies, score, pick best, send to Claude with body
+      // Top-N: fetch bodies, score, pick top 3, send to Claude
       try {
         const searchResult = await client.searchMessages(`from:${candidate.email}`, 5)
-        let bestBody: string | null = null
-        let bestScore = -Infinity
+        const scoredBodies: Array<{ body: string; score: number }> = []
 
         for (let j = 0; j < searchResult.messages.length; j++) {
           const fullMsg = await client.getMessageFull(searchResult.messages[j].id)
@@ -900,15 +1022,16 @@ async function classifyCandidates(
           const stripped = stripQuotedContent(rawBody, isHtml)
           const guardedBody = stripped ? stripOwnSignatureLines(stripped, ownEmail, ownDisplayName) : null
           const score = scoreMessageForSignature(guardedBody, j)
-
-          if (score > bestScore) {
-            bestScore = score
-            bestBody = guardedBody
+          if (guardedBody && score >= 0) {
+            scoredBodies.push({ body: guardedBody, score })
           }
         }
 
-        if (bestBody && bestScore >= 0) {
-          const prompt = buildExtractionPrompt(bestBody, meta)
+        scoredBodies.sort((a, b) => b.score - a.score)
+        const topBodies = scoredBodies.slice(0, 3).map(s => s.body)
+
+        if (topBodies.length > 0) {
+          const prompt = buildExtractionPrompt(topBodies, meta)
           classification = await classifyWithClaude(prompt, apiKey!)
         } else {
           // No usable body — metadata only
@@ -947,6 +1070,94 @@ async function classifyCandidates(
     if ((i + 1) % 10 === 0 || i === candidates.length - 1) {
       updateProgress({ processed: i + 1 })
     }
+  }
+}
+
+// ─── Single Contact Reclassify ───────────────────────────────
+
+export async function reclassifyContact(importedContactId: string): Promise<{ success: boolean; error?: string; changes?: Record<string, { old: unknown; new: unknown }> }> {
+  const apiKey = getSecureSetting('anthropic_api_key')
+  if (!apiKey) return { success: false, error: 'No API key configured' }
+
+  const imported = getById('imported_contacts', importedContactId) as Record<string, unknown> | null
+  if (!imported) return { success: false, error: 'Contact not found' }
+
+  const email = imported.email as string
+  if (!email) return { success: false, error: 'No email address' }
+
+  try {
+    const client = await getValidClient()
+    const tokens = loadTokens()
+    const ownEmail = tokens?.email ?? ''
+    const ownDisplayName = tokens?.email?.split('@')[0] ?? null
+
+    const meta: CandidateMetadata = {
+      email,
+      threadCount: (imported.email_thread_count as number) || 0,
+      fromCount: 0, toCount: 0, ccCount: 0,
+      firstSeen: (imported.first_seen_date as string) || new Date().toISOString().split('T')[0],
+      lastSeen: (imported.last_seen_date as string) || new Date().toISOString().split('T')[0],
+    }
+
+    const searchResult = await client.searchMessages(`from:${email}`, 5)
+    const scoredBodies: Array<{ body: string; score: number }> = []
+
+    for (let j = 0; j < searchResult.messages.length; j++) {
+      const fullMsg = await client.getMessageFull(searchResult.messages[j].id)
+      const rawBody = fullMsg.bodyPlainText ?? ''
+      const isHtml = !fullMsg.bodyPlainText
+      const stripped = stripQuotedContent(rawBody, isHtml)
+      const guardedBody = stripped ? stripOwnSignatureLines(stripped, ownEmail, ownDisplayName) : null
+      const score = scoreMessageForSignature(guardedBody, j)
+      if (guardedBody && score >= 0) {
+        scoredBodies.push({ body: guardedBody, score })
+      }
+    }
+
+    scoredBodies.sort((a, b) => b.score - a.score)
+    const topBodies = scoredBodies.slice(0, 3).map(s => s.body)
+
+    let classification: import('./claude-client').ClaudeClassification | null = null
+    if (topBodies.length > 0) {
+      const prompt = buildExtractionPrompt(topBodies, meta)
+      classification = await classifyWithClaude(prompt, apiKey)
+    } else {
+      const prompt = buildMetadataOnlyPrompt(meta)
+      classification = await classifyWithClaude(prompt, apiKey)
+    }
+
+    if (!classification) return { success: false, error: 'Claude classification returned null' }
+
+    const changes: Record<string, { old: unknown; new: unknown }> = {}
+    const updates: Record<string, unknown> = { classification_source: 'ai' }
+
+    if (classification.confidence !== imported.confidence_score) {
+      changes.confidence_score = { old: imported.confidence_score, new: classification.confidence }
+      updates.confidence_score = classification.confidence
+    }
+    if (classification.relationship_type !== imported.relationship_type) {
+      changes.relationship_type = { old: imported.relationship_type, new: classification.relationship_type }
+      updates.relationship_type = classification.relationship_type
+    }
+    if (classification.reasoning) updates.ai_reasoning = classification.reasoning
+    if (classification.first_name && classification.first_name !== imported.first_name) {
+      changes.first_name = { old: imported.first_name, new: classification.first_name }
+      updates.first_name = classification.first_name
+    }
+    if (classification.last_name && classification.last_name !== imported.last_name) {
+      changes.last_name = { old: imported.last_name, new: classification.last_name }
+      updates.last_name = classification.last_name
+    }
+    if (classification.job_title) updates.job_title = classification.job_title
+    if (classification.phone) updates.phone = classification.phone
+    if (classification.company_name) updates.suggested_company_name = classification.company_name
+
+    upsert('imported_contacts', importedContactId, updates)
+    saveDatabase()
+
+    return { success: true, changes }
+  } catch (err) {
+    return { success: false, error: String(err) }
   }
 }
 

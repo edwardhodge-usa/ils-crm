@@ -110,6 +110,7 @@ interface ElectronAPI {
     scanStatus: () => Promise<{ success: boolean; data?: { scanning: boolean; lastScan?: string; totalProcessed?: number }; error?: string }>
     scanInterval: (intervalMs: number) => Promise<{ success: boolean; error?: string }>
     validateAnthropicKey: (key: string) => Promise<{ success: boolean; data?: boolean; error?: string }>
+    reclassify: (contactId: string) => Promise<{ success: boolean; error?: string; changes?: Record<string, { old: unknown; new: unknown }> }>
     onScanProgress: (cb: (progress: unknown) => void) => void
     removeScanProgressListener: () => void
   }

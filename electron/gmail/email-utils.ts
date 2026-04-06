@@ -20,6 +20,23 @@ export function normalizeEmail(email: string): string {
   return `${normalized}@${domain}`
 }
 
+// ─── Phone Normalization ───────────────────────────────────
+
+/**
+ * Normalize a phone number for comparison.
+ * Strips formatting, assumes US (+1) if 10 bare digits.
+ * Returns empty string for null/empty input.
+ */
+export function normalizePhone(phone: string | null | undefined): string {
+  if (!phone) return ''
+  const hasPlus = phone.trim().startsWith('+')
+  const digits = phone.replace(/\D/g, '')
+  if (!digits) return ''
+  if (!hasPlus && digits.length === 10) return `+1${digits}`
+  if (hasPlus) return `+${digits}`
+  return `+${digits}`
+}
+
 // ─── From Header Parsing ────────────────────────────────────
 
 // "Name" <email> or Name <email>

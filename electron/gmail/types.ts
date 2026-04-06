@@ -45,7 +45,7 @@ export interface ScanCheckpoint {
 }
 
 export interface ScanProgress {
-  status: 'idle' | 'scanning' | 'classifying' | 'complete' | 'error'
+  status: 'idle' | 'scanning' | 'classifying' | 'enriching' | 'complete' | 'error'
   processed: number
   total: number
   candidatesFound: number
@@ -66,4 +66,10 @@ export interface EmailCandidate {
   fromCount: number
   toCount: number
   ccCount: number
+}
+
+// ─── Known Contact (for enrichment pipeline) ───────────────
+export interface KnownContact {
+  candidate: EmailCandidate
+  contactId: string
 }

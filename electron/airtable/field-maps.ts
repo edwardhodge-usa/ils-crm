@@ -106,6 +106,9 @@ export const CONTACTS = {
   contactPhoto: 'fldl1WOfz7vHNSOUd',
   companyLogo: 'flduN4Ne23EIGSBS0',
   portfolioSamples: 'fldbhgP4g3zAoHnSR',
+
+  // Date
+  lastEnrichmentCheck: 'fldflU8h2aMXlHaU9', // last enrichment pipeline check
 } as const
 
 // ─── Opportunities (23 fields) ───────────────────────────────
