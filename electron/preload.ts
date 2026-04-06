@@ -171,6 +171,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     scanStatus: () => ipcRenderer.invoke('gmail:scan-status'),
     scanInterval: (intervalMs: number) => ipcRenderer.invoke('gmail:scan-interval', intervalMs),
     validateAnthropicKey: (key: string) => ipcRenderer.invoke('gmail:validateAnthropicKey', key),
+    reclassify: (contactId: string) => ipcRenderer.invoke('gmail:reclassify', contactId),
     onScanProgress: (cb: (progress: unknown) => void) => {
       ipcRenderer.on('emailScan:progress', (_e, data) => cb(data))
     },

@@ -272,6 +272,10 @@ function EnrichmentDetail({ item, crmContacts, onAccept, onDismiss }: Enrichment
   const contactEmail = (linkedContact?.email as string | null) ?? null
   const contactCompany = (linkedContact?.company as string | null) ?? null
 
+  // Live current_value: re-read from CRM contact, auto-detect if already applied
+  const liveCurrentValue = linkedContact ? ((linkedContact[fieldName] as string) ?? '') : currentValue
+  const alreadyApplied = suggestedValue && liveCurrentValue && liveCurrentValue.toLowerCase().trim() === suggestedValue.toLowerCase().trim()
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-window)] border-l border-[var(--separator)]">
       <div className="flex-1 overflow-y-auto">
@@ -372,18 +376,20 @@ function EnrichmentDetail({ item, crmContacts, onAccept, onDismiss }: Enrichment
               {fieldName}
             </div>
 
-            {/* Current value */}
+            {/* Current value (live from CRM) */}
             <div style={{ marginBottom: 10 }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                CURRENT VALUE
+                CURRENT VALUE {liveCurrentValue !== currentValue ? '(live)' : ''}
               </div>
               <div style={{
                 fontSize: 14, color: 'var(--text-secondary)',
-                textDecoration: 'line-through', opacity: 0.7,
+                textDecoration: alreadyApplied ? 'none' : 'line-through', opacity: alreadyApplied ? 1 : 0.7,
                 padding: '6px 10px', borderRadius: 6,
-                background: isDark ? 'rgba(255,59,48,0.08)' : 'rgba(255,59,48,0.05)',
+                background: alreadyApplied
+                  ? (isDark ? 'rgba(52,199,89,0.12)' : 'rgba(52,199,89,0.08)')
+                  : (isDark ? 'rgba(255,59,48,0.08)' : 'rgba(255,59,48,0.05)'),
               }}>
-                {currentValue || '(empty)'}
+                {alreadyApplied ? `✓ Already applied: ${liveCurrentValue}` : (liveCurrentValue || '(empty)')}
               </div>
             </div>
 
@@ -645,6 +651,10 @@ function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject, compa
   const [companyName, setCompanyName] = useState<string | null>(null)
   const [createCompanyName, setCreateCompanyName] = useState<string | null>(null)
 
+  // Reclassify state
+  const [reclassifying, setReclassifying] = useState(false)
+  const [reclassifyResult, setReclassifyResult] = useState<Record<string, { old: unknown; new: unknown }> | null>(null)
+
   const setEditField = useCallback((key: string, val: string) => {
     setEditFields(prev => ({ ...prev, [key]: val }))
   }, [])
@@ -754,6 +764,46 @@ function ImportedContactDetail({ contact, onAddToCrm, onDismiss, onReject, compa
               {isApproved ? 'Added to CRM' : enrichment ? 'Update CRM Contact' : 'Add to CRM'}
             </button>
           </div>
+
+          {/* Re-scan button */}
+          {!enrichment && !isApproved && (
+            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button
+                disabled={reclassifying}
+                onClick={async () => {
+                  setReclassifying(true)
+                  setReclassifyResult(null)
+                  try {
+                    const result = await window.electronAPI.gmail.reclassify(contact.id as string)
+                    if (result.success && result.changes && Object.keys(result.changes).length > 0) {
+                      setReclassifyResult(result.changes)
+                    }
+                  } catch (err) {
+                    console.error('Reclassify failed:', err)
+                  } finally {
+                    setReclassifying(false)
+                  }
+                }}
+                style={{
+                  fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 6,
+                  background: 'transparent', border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-secondary)', cursor: reclassifying ? 'wait' : 'pointer',
+                  opacity: reclassifying ? 0.6 : 1, fontFamily: 'inherit',
+                }}
+              >
+                {reclassifying ? 'Scanning...' : 'Re-scan'}
+              </button>
+              {reclassifyResult && (
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                  {Object.entries(reclassifyResult).map(([field, { old: oldVal, new: newVal }]) => (
+                    <span key={field} style={{ marginRight: 8 }}>
+                      {field.replace(/_/g, ' ')}: <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{String(oldVal ?? 'none')}</span> → <strong>{String(newVal)}</strong>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {isActioned && (
             <div style={{

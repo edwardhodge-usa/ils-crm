@@ -1073,6 +1073,94 @@ async function classifyCandidates(
   }
 }
 
+// ─── Single Contact Reclassify ───────────────────────────────
+
+export async function reclassifyContact(importedContactId: string): Promise<{ success: boolean; error?: string; changes?: Record<string, { old: unknown; new: unknown }> }> {
+  const apiKey = getSecureSetting('anthropic_api_key')
+  if (!apiKey) return { success: false, error: 'No API key configured' }
+
+  const imported = getById('imported_contacts', importedContactId) as Record<string, unknown> | null
+  if (!imported) return { success: false, error: 'Contact not found' }
+
+  const email = imported.email as string
+  if (!email) return { success: false, error: 'No email address' }
+
+  try {
+    const client = await getValidClient()
+    const tokens = loadTokens()
+    const ownEmail = tokens?.email ?? ''
+    const ownDisplayName = tokens?.email?.split('@')[0] ?? null
+
+    const meta: CandidateMetadata = {
+      email,
+      threadCount: (imported.email_thread_count as number) || 0,
+      fromCount: 0, toCount: 0, ccCount: 0,
+      firstSeen: (imported.first_seen_date as string) || new Date().toISOString().split('T')[0],
+      lastSeen: (imported.last_seen_date as string) || new Date().toISOString().split('T')[0],
+    }
+
+    const searchResult = await client.searchMessages(`from:${email}`, 5)
+    const scoredBodies: Array<{ body: string; score: number }> = []
+
+    for (let j = 0; j < searchResult.messages.length; j++) {
+      const fullMsg = await client.getMessageFull(searchResult.messages[j].id)
+      const rawBody = fullMsg.bodyPlainText ?? ''
+      const isHtml = !fullMsg.bodyPlainText
+      const stripped = stripQuotedContent(rawBody, isHtml)
+      const guardedBody = stripped ? stripOwnSignatureLines(stripped, ownEmail, ownDisplayName) : null
+      const score = scoreMessageForSignature(guardedBody, j)
+      if (guardedBody && score >= 0) {
+        scoredBodies.push({ body: guardedBody, score })
+      }
+    }
+
+    scoredBodies.sort((a, b) => b.score - a.score)
+    const topBodies = scoredBodies.slice(0, 3).map(s => s.body)
+
+    let classification: import('./claude-client').ClaudeClassification | null = null
+    if (topBodies.length > 0) {
+      const prompt = buildExtractionPrompt(topBodies, meta)
+      classification = await classifyWithClaude(prompt, apiKey)
+    } else {
+      const prompt = buildMetadataOnlyPrompt(meta)
+      classification = await classifyWithClaude(prompt, apiKey)
+    }
+
+    if (!classification) return { success: false, error: 'Claude classification returned null' }
+
+    const changes: Record<string, { old: unknown; new: unknown }> = {}
+    const updates: Record<string, unknown> = { classification_source: 'ai' }
+
+    if (classification.confidence !== imported.confidence_score) {
+      changes.confidence_score = { old: imported.confidence_score, new: classification.confidence }
+      updates.confidence_score = classification.confidence
+    }
+    if (classification.relationship_type !== imported.relationship_type) {
+      changes.relationship_type = { old: imported.relationship_type, new: classification.relationship_type }
+      updates.relationship_type = classification.relationship_type
+    }
+    if (classification.reasoning) updates.ai_reasoning = classification.reasoning
+    if (classification.first_name && classification.first_name !== imported.first_name) {
+      changes.first_name = { old: imported.first_name, new: classification.first_name }
+      updates.first_name = classification.first_name
+    }
+    if (classification.last_name && classification.last_name !== imported.last_name) {
+      changes.last_name = { old: imported.last_name, new: classification.last_name }
+      updates.last_name = classification.last_name
+    }
+    if (classification.job_title) updates.job_title = classification.job_title
+    if (classification.phone) updates.phone = classification.phone
+    if (classification.company_name) updates.suggested_company_name = classification.company_name
+
+    upsert('imported_contacts', importedContactId, updates)
+    saveDatabase()
+
+    return { success: true, changes }
+  } catch (err) {
+    return { success: false, error: String(err) }
+  }
+}
+
 // ─── Polling ───────────────────────────────────────────────────
 
 export function startPolling(
