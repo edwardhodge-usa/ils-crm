@@ -1,7 +1,7 @@
 # ILS CRM — Feature Parity Tracker
 
 > Electron (primary) vs Swift (shadow build)
-> Updated: 2026-04-04 (Audit rewrite — Command Palette, collapsible sections, editable task fields, full entity views)
+> Updated: 2026-04-05 (Full source audit — licensing, enrichment detail, auto-update, app packaging, ClientPage model, 15 converters)
 
 ## Status Key
 - **Done** — Fully implemented and working
@@ -20,19 +20,21 @@
 | SwiftData / sql.js container | Done | Done | Schema with 15 models, persistent ModelConfiguration, full data flow |
 | Airtable REST client | Done | Done | `client.ts` → `AirtableService.swift` (actor) — full CRUD + batch + metadata |
 | Sync engine (push-first, pull) | Done | Done | `sync-engine.ts` → `SyncEngine.swift` — pullTable + pushPendingChanges + fullSync |
-| Airtable field maps | Done | Done | `field-maps.ts` → `AirtableConfig.swift` (table IDs, sync order, read-only set) |
-| Bidirectional converters | Done | Done | `converters.ts` → `AirtableConvertible` protocol + 11 converter extensions |
+| Airtable field maps | Done | Done | `field-maps.ts` → `AirtableConfig.swift` (15 table IDs, sync order, read-only set) |
+| Bidirectional converters | Done | Done | `converters.ts` → `AirtableConvertible` protocol + 15 converter extensions |
 | AirtableSyncable protocol | N/A | Done | Generic sync via `pullTable<T>` / `pushTable<T>` with type-safe model access |
-| Model sync properties | Done | Done | All 11 models have `isPendingPush: Bool` + `airtableModifiedAt: Date?` |
+| Model sync properties | Done | Done | All 15 models have `isPendingPush: Bool` + `airtableModifiedAt: Date?` |
 | Polling (60s interval) | Done | Done | `startPolling()` / `stopPolling()` — configurable interval |
 | isSyncing mutex | Done | Done | `syncLock` flag + cross-app lock guard |
 | Cross-app sync lock (/tmp) | Done | Done | Both apps check `/tmp/ils-crm-sync.lock` before syncing |
 | Keychain API key storage | N/A | Done | Electron uses SQLite; Swift uses macOS Keychain (security improvement) |
 | Xcode project (xcodegen) | N/A | Done | `project.yml` → `ILS CRM.xcodeproj` via xcodegen |
+| License validation service | Done | Done | `LicenseService.swift` (193 lines) — Airtable licensing base, grace period, check-in |
+| App state management | Done | Done | `AppStateManager.swift` (98 lines) — @Observable, license check, periodic re-check |
 | IPC bridge (contextBridge) | Done | N/A | No process boundary in native app |
 | Preload security (contextIsolation) | Done | N/A | |
 
-## Data Models (11 tables)
+## Data Models (15 tables)
 
 | Table | Electron Status | Swift Status | Notes |
 |-------|----------------|--------------|-------|
@@ -47,6 +49,22 @@
 | Specialties (3 fields) | Done | Done | Read-only (never pushes), has isPendingPush for protocol |
 | Portal Access (37 fields) | Done | Done | 12 lookup + 1 formula marked read-only |
 | Portal Logs (12 fields) | Done | Done | Read-only (never pushes), has isPendingPush for protocol |
+| Client Pages (12 fields) | Done | Done | `ClientPage.swift` (42 lines) + converter — page config, video section toggles |
+| Email Scan Rules | Done | Done | `EmailScanRule.swift` (30 lines) + converter — configurable scan rules |
+| Email Scan State | Done | Done | `EmailScanState.swift` (29 lines) + converter — last scan date, status, history ID |
+| Enrichment Queue | Done | Done | `EnrichmentQueueItem.swift` (32 lines) + converter — field update suggestions |
+
+## Auth & Licensing
+
+| Feature | Electron Status | Swift Status | Notes |
+|---------|----------------|--------------|-------|
+| Offline lock screen | Done | Done | `OfflineLockPage.tsx` → `OfflineLockView.swift` (60 lines) — grace period expired |
+| Revoked access screen | Done | Done | `RevokedPage.tsx` → `RevokedView.swift` (75 lines) — license revoked/suspended |
+| License check against Airtable | Done | Done | Separate PAT + base, email+app formula lookup, status validation |
+| Grace period (24h offline) | Done | Done | `saveLastVerified()` / `isWithinGracePeriod()` in LicenseService |
+| Periodic re-check (2h) | Done | Done | Background Task in AppStateManager, checks every 2 hours |
+| Check-in (version + device) | Done | Done | Fire-and-forget PATCH with version, device info, timestamp |
+| Local store deletion on revoke | Done | Done | Deletes SwiftData `.store` files on license revocation |
 
 ## Navigation & Layout
 
@@ -169,21 +187,25 @@
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
-| Imported contacts staging list | Done | Done | `ImportedContactsPage.tsx` → `ImportedContactsView.swift` |
-| Approve action | Done | Done | IPC: `importedContacts:approve` |
-| Reject action (with reason) | Done | Done | IPC: `importedContacts:reject` |
-| Name display | Done | Done | Fixed: `getContactName()` reads `imported_contact_name`, falls back to `first_name`/`last_name`, then `email` |
+| Imported contacts staging list | Done | Done | `ImportedContactsPage.tsx` → `ImportedContactsView.swift` (834 lines) |
+| Imported contact detail view | Done | Done | `ImportedContactDetailView.swift` (410 lines) — bento hero, AI reasoning, contact info, company pairing, email activity |
+| Suggestion review form (Add to CRM) | Done | Done | `SuggestionReviewForm.swift` (208 lines) — pre-filled form, creates Contact + Company |
+| Enrichment detail view | Done | Done | `EnrichmentDetailView.swift` (361 lines) — current vs suggested diff, accept/dismiss |
+| Approve action | Done | Done | Sets onboardingStatus="Approved", creates Contact + Company records |
+| Reject/Dismiss action | Done | Done | Sets onboardingStatus="Dismissed", push to Airtable |
+| Name display | Done | Done | `getContactName()` reads `imported_contact_name`, falls back to `first_name`/`last_name`, then `email` |
 
 ## Email Intelligence (Phase 1)
 
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
 | Gmail OAuth flow | Done | Done | Per-user, gmail.readonly scope, safeStorage/Keychain |
-| Gmail API client | Done | Done | messages.list, history.list, full MIME parsing |
-| Email scanner orchestrator | Done | Done | Full/incremental/on-demand scan modes |
-| Rules engine (8 default rules) | Done | Done | Configurable via Airtable table |
-| Heuristic classifier (0-60) | Done | Done | Thread frequency, From/CC ratio, time span |
-| Signature extraction (regex) | Done | Done | Phone, title, company from email body |
+| Gmail API client | Done | Done | `GmailAPIClient.swift` (448 lines) — messages.list, history.list, full MIME parsing |
+| Email scanner orchestrator | Done | Done | `EmailScanEngine.swift` (809 lines) — Full/incremental/on-demand scan modes |
+| Rules engine (8 default rules) | Done | Done | `EmailRulesEngine.swift` (152 lines) — configurable via Airtable table |
+| Heuristic classifier (0-60) | Done | Done | `EmailClassifier.swift` (78 lines) — thread frequency, From/CC ratio, time span |
+| Claude AI classification | Done | Done | `ClaudeClient.swift` (232 lines) — Haiku extraction prompts, JSON fence stripping, validation |
+| Signature extraction (regex) | Done | Done | `EmailUtils.swift` (400 lines) — phone, title, company from email body |
 | Email normalization | Done | Done | Plus-alias stripping, Gmail dot handling |
 | Name parsing from headers | Done | Done | Display name → first/last splitting |
 | Source filter tabs | Done | Done | All / Email / Contacts |
@@ -194,8 +216,10 @@
 | Email Activity stats | Done | Done | Threads, time span, first/last seen via |
 | Scan Now button | Done | Done | Triggers on-demand scan |
 | Background polling | Done | Done | Configurable interval (1m/5m/15m/Off) |
-| Settings: Gmail connection | Done | Done | Connect/disconnect, email display |
+| Settings: Gmail connection | Done | Done | `GmailSettingsSection.swift` (359 lines) — connect/disconnect, email display |
 | Settings: Scan interval | Done | Done | Picker with configurable intervals |
+| Settings: Anthropic API key | Done | Done | SecureField + Keychain save + validation probe |
+| Settings: Dismissed suggestions mgmt | Done | Done | Sheet with restore action for dismissed contacts |
 | Approve flow (Add to CRM) | Done | Done | Pre-filled form, creates Contact + Company |
 | Dismiss/Reject flow | Done | Done | State machine transitions |
 | Enrichment queue | Done | Done | Existing contact update suggestions |
@@ -210,6 +234,8 @@
 | Portal Logs list | Done | Done | `PortalLogsView.swift` — 277 lines, search, filters |
 | Portal Access detail view | Done | Done | `PortalAccessDetailView.swift` — 286 lines, inline editing, URL open |
 | Grant Access sheet | Done | Done | `GrantAccessSheet.swift` — 202 lines, new portal access creation |
+| Client Pages integration | Done | Done | `ClientPage` model + converter, used by PortalAccessView for page config |
+| Framer health checks | Done | Done | `FramerHealthService.swift` (70 lines) — HEAD requests, live/error status, staggered 200ms |
 | Linked field resolution | Bug | TODO | Electron bug #14: Name/Email/Company empty |
 | Portal Logs blank records | Bug | TODO | Electron UX #15 |
 
@@ -247,6 +273,7 @@
 | SortDropdown | Done | Done | `SortDropdown` in DetailComponents.swift — generic sort picker |
 | ListHeader | Done | Done | `ListHeader` in DetailComponents.swift — title + count + sort + create |
 | LinkedRecordPicker | Done | Done | `LinkedRecordPicker.swift` — 398 lines, all 5 entity types |
+| LinkedRecordResolver | Done | Done | `LinkedRecordResolver.swift` (55 lines) — resolves record IDs to names for 7 entity types |
 | BentoComponents | Done | Done | `BentoComponents.swift` — hero cards, stat pills, layout helpers |
 | EditableAvatarView | Done | Done | `EditableAvatarView.swift` — avatar with edit overlay |
 | DataTable | Done | N/A | `DataTable.tsx` — SwiftUI uses native List, no separate component needed |
@@ -273,6 +300,7 @@
 | Read-only sync (Specialties) | Done | Done | Pull only, skipped by pushPendingChanges via readOnlyTables |
 | Read-only sync (Portal Logs) | Done | Done | Pull only, skipped by pushPendingChanges via readOnlyTables |
 | Imported Contacts approve/reject | Done | Done | onboardingStatus set + push in ImportedContactsView |
+| Enrichment queue approve/dismiss | Done | Done | Status set + contact field update in EnrichmentDetailView |
 | Dashboard aggregation queries | Done | Done | FetchDescriptor + in-memory `.filter{}` — 11 query patterns in DashboardView |
 | Airtable metadata fetch (select options) | Done | Done | `fetchFieldMetadata()` in AirtableService actor |
 | Batch create (10/req) | Done | Done | `batchCreate()` — used by pushTable with chunked batches |
@@ -285,8 +313,8 @@
 | Feature | Electron Status | Swift Status | Notes |
 |---------|----------------|--------------|-------|
 | macOS native look & feel | Partial (HIG toolkit) | N/A (native) | Swift is native by default |
-| App packaging (.app bundle) | Done (electron-builder) | TODO | Xcode archive needed for distribution |
-| Auto-update | TODO | TODO | Sparkle configured but not distributing yet |
+| App packaging (.app bundle) | Done (electron-builder) | Done | XcodeGen project, Developer ID signing (8RHA62T6FQ), 3 DMG releases published |
+| Auto-update (Sparkle) | Done (electron-updater) | Done | Sparkle integrated: SUFeedURL, Ed25519 key, appcast.xml with 3 signed releases |
 | Notifications | TODO | TODO | |
 | Keyboard shortcuts | Partial | Done | Cmd+K (Command Palette), Cmd+N (create), Cmd+1-0 (Go menu) |
 | Touch Bar support | N/A | N/A | Discontinued by Apple — removed from tracker |
@@ -297,8 +325,9 @@
 
 | Category | Electron Done | Swift Done | Swift N/A | Swift TODO |
 |----------|--------------|------------|-----------|------------|
-| Architecture | 12 | 13 | 2 | 0 |
-| Data Models | 11 | 11 | 0 | 0 |
+| Architecture | 14 | 15 | 2 | 0 |
+| Data Models | 15 | 15 | 0 | 0 |
+| Auth & Licensing | 7 | 7 | 0 | 0 |
 | Navigation | 6 | 6 | 0 | 0 |
 | Dashboard | 7 | 7 | 0 | 0 |
 | Contacts | 8 | 8 | 0 | 0 |
@@ -308,17 +337,33 @@
 | Proposals | 4 | 4 | 0 | 0 |
 | Projects | 5 | 4 | 0 | 1 |
 | Interactions | 5 | 5 | 0 | 0 |
-| Imported Contacts | 4 | 4 | 0 | 0 |
-| Email Intelligence | 23 | 23 | 0 | 0 |
-| Portal | 6 | 4 | 0 | 2 |
+| Imported Contacts | 7 | 7 | 0 | 0 |
+| Email Intelligence | 26 | 26 | 0 | 0 |
+| Portal | 8 | 6 | 0 | 2 |
 | Settings | 7 | 7 | 0 | 0 |
-| Shared Components | 27 | 25 | 2 | 0 |
+| Shared Components | 28 | 26 | 2 | 0 |
 | Search & Commands | 3 | 2 | 0 | 1 |
-| Data Operations | 10 | 10 | 0 | 0 |
-| Platform | 3 | 1 | 2 | 3 |
-| **TOTAL** | **176** | **169** | **6** | **9** |
+| Data Operations | 11 | 11 | 0 | 0 |
+| Platform | 4 | 3 | 2 | 1 |
+| **TOTAL** | **200** | **194** | **6** | **7** |
 
-Swift now has **169 features done** out of 178 applicable (95%) — up from 101/160 (63%) after full audit rewrite.
-Key corrections: Companies (0→4), Pipeline (0→7), Proposals (0→4), Projects (0→4), Interactions (0→5), Portal (0→4), Shared Components (0→25), Data Operations (6→10), Search (0→2), Tasks (+4 editable fields + collapsible sections), Navigation (+window config), Architecture (+app entry + SwiftData container).
-New rows added: CommandPaletteView (Cmd+K), GrantAccessSheet, PortalAccessDetailView, BentoComponents, EditableAvatarView, Dashboard aggregation queries, 6 DetailComponents structs.
-**9 features remain TODO** — mostly Electron-side bugs (click/drag #5, JSON display #12, portal linked fields #14/#15) plus app packaging, auto-update, notifications, and Fuse.js-style fuzzy search.
+Swift now has **194 features done** out of 201 applicable (96.5%) — up from 169/178 (95%) after full source audit.
+
+**Changes in this audit:**
+- **Platform: App packaging** TODO→Done — XcodeGen project, Developer ID signing, 3 DMG releases published to GitHub
+- **Platform: Auto-update** TODO→Done — Sparkle fully integrated with Ed25519 signatures, appcast.xml serving 3 releases
+- **New section: Auth & Licensing** (7 items) — OfflineLockView, RevokedView, LicenseService, AppStateManager, grace period, periodic re-check, check-in
+- **Data Models** 11→15 tables — added ClientPage, EmailScanRule, EmailScanState, EnrichmentQueueItem
+- **Imported Contacts** 4→7 items — added ImportedContactDetailView (410 lines), SuggestionReviewForm (208 lines), EnrichmentDetailView (361 lines)
+- **Email Intelligence** 23→25 items — added Anthropic API key settings, dismissed suggestions management, ClaudeClient service
+- **Portal** 6→8 items — added ClientPage integration, FramerHealthService health checks
+- **Shared Components** 27→28 — added LinkedRecordResolver (55 lines, 7 entity types)
+- **Data Operations** 10→11 — added enrichment queue approve/dismiss
+- **Architecture** 12→14 — added LicenseService, AppStateManager; updated converter count to 15
+
+**7 features remain TODO:**
+- Pipeline: click vs drag (#5), Kanban small-window (#4) — Electron-side bugs
+- Projects: Engagement column JSON display (#12) — Electron-side bug
+- Portal: Linked field resolution (#14), Portal Logs blank records (#15) — Electron-side bugs
+- Search: Fuse.js-style fuzzy matching — Swift uses contains-based search, no fuzzy
+- Platform: Notifications — TODO on both Electron and Swift
