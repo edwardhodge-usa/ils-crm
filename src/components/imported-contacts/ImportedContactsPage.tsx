@@ -97,13 +97,33 @@ function formatDate(raw: unknown): string {
 
 // ─── List row ─────────────────────────────────────────────────────────────────
 
+function SectionDivider({ label, count }: { label: string; count: number }) {
+  return (
+    <div style={{
+      padding: '6px 12px',
+      fontSize: 11,
+      fontWeight: 600,
+      color: 'var(--text-secondary)',
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.05em',
+      borderBottom: '1px solid var(--border-subtle)',
+      background: 'var(--bg-secondary)',
+      userSelect: 'none' as const,
+    }}>
+      {label} ({count})
+    </div>
+  )
+}
+
 interface ListRowProps {
   contact: Record<string, unknown>
   isSelected: boolean
+  isChecked?: boolean
   onClick: () => void
+  onToggleCheck?: () => void
 }
 
-function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
+function ImportedContactRow({ contact, isSelected, isChecked, onClick, onToggleCheck }: ListRowProps) {
   const isDark = useDarkMode()
   const name = getContactName(contact)
   const enrichmentField = (contact._enrichment_field as string | null)
@@ -138,6 +158,16 @@ function ImportedContactRow({ contact, isSelected, onClick }: ListRowProps) {
       onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = enrichment ? (isDark ? 'rgba(52,199,89,0.10)' : 'rgba(52,199,89,0.08)') : 'var(--bg-hover)' }}
       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = enrichment ? (isDark ? 'rgba(52,199,89,0.06)' : 'rgba(52,199,89,0.04)') : '' }}
     >
+      {/* Batch checkbox */}
+      {onToggleCheck && (
+        <input
+          type="checkbox"
+          checked={isChecked ?? false}
+          onChange={(e) => { e.stopPropagation(); onToggleCheck() }}
+          onClick={(e) => e.stopPropagation()}
+          style={{ width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
+        />
+      )}
       {/* Avatar */}
       <Avatar name={name} size={30} photoUrl={contact.contact_photo_url as string | null} />
 
@@ -962,6 +992,18 @@ export default function ImportedContactsPage() {
   const [search, setSearch] = useState('')
   const [action, setAction] = useState<'dismiss' | 'reject' | 'add' | null>(null)
 
+  // Batch selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), [])
+
   // AI classification indicator
   const [hasApiKey, setHasApiKey] = useState(false)
   useEffect(() => {
@@ -1020,7 +1062,8 @@ export default function ImportedContactsPage() {
           email_thread_count: 0,
         }
       })
-    return [...importedWithType, ...pendingEnrichment]
+    // Enrichment items sort first (section divider added in render)
+    return [...pendingEnrichment, ...importedWithType]
   }, [contacts, enrichmentItems, crmContacts])
 
   // Load scan status on mount
@@ -1315,14 +1358,117 @@ export default function ImportedContactsPage() {
                   : `No ${sourceTab.toLowerCase()} contacts.`}
             </div>
           ) : (
-            filtered.map(contact => (
-              <ImportedContactRow
-                key={contact.id as string}
-                contact={contact}
-                isSelected={selectedId === (contact.id as string)}
-                onClick={() => setSelectedId(contact.id as string)}
-              />
-            ))
+            (() => {
+              const enrichmentRows = filtered.filter(c => c._type === 'enrichment')
+              const importedRows = filtered.filter(c => c._type === 'imported')
+              return (
+                <>
+                  {/* Batch action bar */}
+                  {selectedIds.size > 0 && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '6px 12px',
+                      background: 'var(--bg-elevated)',
+                      backdropFilter: 'blur(20px)',
+                      borderBottom: '1px solid var(--border-subtle)',
+                    }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginRight: 8 }}>
+                        {selectedIds.size} selected
+                      </span>
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Approve ${selectedIds.size} items? Enrichment updates will be applied immediately.`)) return
+                          for (const id of selectedIds) {
+                            const item = filtered.find(c => (c.id as string) === id)
+                            if (!item) continue
+                            try {
+                              if (item._type === 'enrichment') {
+                                await window.electronAPI.enrichmentQueue.approve(id)
+                              } else {
+                                await window.electronAPI.importedContacts.approve(id)
+                              }
+                            } catch (err) {
+                              console.error(`Batch approve failed for ${id}:`, err)
+                            }
+                          }
+                          clearSelection()
+                          reload()
+                          reloadEnrichment()
+                        }}
+                        style={{
+                          fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 6,
+                          background: 'var(--color-accent)', color: 'white', border: 'none', cursor: 'pointer',
+                        }}
+                      >
+                        Approve All
+                      </button>
+                      <button
+                        onClick={async () => {
+                          for (const id of selectedIds) {
+                            const item = filtered.find(c => (c.id as string) === id)
+                            if (!item) continue
+                            try {
+                              if (item._type === 'enrichment') {
+                                await window.electronAPI.enrichmentQueue.dismiss(id)
+                              } else {
+                                await window.electronAPI.importedContacts.dismiss(id)
+                              }
+                            } catch (err) {
+                              console.error(`Batch dismiss failed for ${id}:`, err)
+                            }
+                          }
+                          clearSelection()
+                          reload()
+                          reloadEnrichment()
+                        }}
+                        style={{
+                          fontSize: 12, fontWeight: 500, padding: '4px 12px', borderRadius: 6,
+                          background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', cursor: 'pointer',
+                        }}
+                      >
+                        Dismiss All
+                      </button>
+                      <button onClick={clearSelection} style={{
+                        fontSize: 14, fontWeight: 500, padding: '2px 8px', marginLeft: 'auto',
+                        background: 'transparent', color: 'var(--text-secondary)', border: 'none', cursor: 'pointer',
+                      }}>
+                        ×
+                      </button>
+                    </div>
+                  )}
+                  {enrichmentRows.length > 0 && (
+                    <>
+                      <SectionDivider label="Updates for existing contacts" count={enrichmentRows.length} />
+                      {enrichmentRows.map(contact => (
+                        <ImportedContactRow
+                          key={contact.id as string}
+                          contact={contact}
+                          isSelected={selectedId === (contact.id as string)}
+                          isChecked={selectedIds.has(contact.id as string)}
+                          onClick={() => setSelectedId(contact.id as string)}
+                          onToggleCheck={() => toggleSelect(contact.id as string)}
+                        />
+                      ))}
+                    </>
+                  )}
+                  {importedRows.length > 0 && (
+                    <>
+                      {enrichmentRows.length > 0 && <SectionDivider label="New contact suggestions" count={importedRows.length} />}
+                      {importedRows.map(contact => (
+                        <ImportedContactRow
+                          key={contact.id as string}
+                          contact={contact}
+                          isSelected={selectedId === (contact.id as string)}
+                          isChecked={selectedIds.has(contact.id as string)}
+                          onClick={() => setSelectedId(contact.id as string)}
+                          onToggleCheck={() => toggleSelect(contact.id as string)}
+                        />
+                      ))}
+                    </>
+                  )}
+                </>
+              )
+            })()
           )}
         </div>
       </div>
