@@ -14,9 +14,6 @@ struct GmailSettingsSection: View {
 
     @State private var oAuthService = GmailOAuthService()
     @State private var scanEngine: EmailScanEngine?
-    @State private var clientId: String = ""
-    @State private var clientSecret: String = ""
-    @State private var showCredentialsSaved = false
     @State private var showDismissedSheet = false
     @State private var anthropicApiKey: String = ""
     @State private var isValidatingKey = false
@@ -43,27 +40,6 @@ struct GmailSettingsSection: View {
 
     var body: some View {
         Section("Gmail / Email Intelligence") {
-            // OAuth credentials
-            SecureField("Google Client ID", text: $clientId)
-                .textFieldStyle(.roundedBorder)
-            SecureField("Google Client Secret", text: $clientSecret)
-                .textFieldStyle(.roundedBorder)
-
-            HStack {
-                Button("Save Credentials") {
-                    saveCredentials()
-                }
-                .disabled(clientId.isEmpty || clientSecret.isEmpty)
-
-                if showCredentialsSaved {
-                    Text("Saved")
-                        .font(.caption)
-                        .foregroundStyle(.green)
-                }
-            }
-
-            Divider()
-
             // Connection status
             if oAuthService.isConnected {
                 HStack {
@@ -238,8 +214,6 @@ struct GmailSettingsSection: View {
     // MARK: - Helpers
 
     private func loadCredentials() {
-        clientId = oAuthService.getClientId() ?? ""
-        clientSecret = oAuthService.getClientSecret() ?? ""
         anthropicApiKey = KeychainService.read(key: ClaudeClient.anthropicApiKeyAccount) ?? ""
     }
 
@@ -263,18 +237,6 @@ struct GmailSettingsSection: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 keyValidationResult = nil
             }
-        }
-    }
-
-    private func saveCredentials() {
-        do {
-            try oAuthService.saveClientCredentials(clientId: clientId, clientSecret: clientSecret)
-            showCredentialsSaved = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                showCredentialsSaved = false
-            }
-        } catch {
-            print("[GmailSettings] Failed to save credentials: \(error.localizedDescription)")
         }
     }
 

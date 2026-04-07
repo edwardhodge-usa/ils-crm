@@ -50,7 +50,14 @@ final class GmailOAuthService: NSObject {
     private static let authEndpoint = "https://accounts.google.com/o/oauth2/v2/auth"
     private static let tokenEndpoint = "https://oauth2.googleapis.com/token"
     private static let profileEndpoint = "https://www.googleapis.com/gmail/v1/users/me/profile"
-    private static let callbackScheme = "com.imaginelabstudios.ils-crm"
+
+    /// iOS OAuth client ID — registered in Google Cloud Console as iOS type
+    /// with bundle ID com.imaginelabstudios.ils-crm and Team ID 8RHA62T6FQ.
+    /// iOS clients don't require a client secret for token exchange.
+    private static let iosClientId = "614505184101-45565nqdbiijtuehcp7rno3k1aqmnmhe.apps.googleusercontent.com"
+
+    /// Callback scheme is the reversed iOS client ID (Google's standard for iOS OAuth).
+    private static let callbackScheme = "com.googleusercontent.apps.614505184101-45565nqdbiijtuehcp7rno3k1aqmnmhe"
 
     // MARK: - Init
 
@@ -67,18 +74,14 @@ final class GmailOAuthService: NSObject {
     func connect() async throws {
         guard !isAuthenticating else { return }
 
-        guard let clientId = getClientId() else {
-            throw GmailOAuthError.missingCredentials("Client ID not configured. Set it in Settings.")
-        }
-
         isAuthenticating = true
         lastError = nil
         defer { isAuthenticating = false }
 
-        // Build authorization URL
+        // Build authorization URL — uses hardcoded iOS client ID (no secret needed)
         var components = URLComponents(string: Self.authEndpoint)!
         components.queryItems = [
-            URLQueryItem(name: "client_id", value: clientId),
+            URLQueryItem(name: "client_id", value: Self.iosClientId),
             URLQueryItem(name: "redirect_uri", value: "\(Self.callbackScheme):/oauth/callback"),
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "scope", value: Self.scope),
@@ -186,12 +189,8 @@ final class GmailOAuthService: NSObject {
     // MARK: - Private: Token Exchange
 
     /// Exchanges an authorization code for access + refresh tokens.
+    /// iOS OAuth clients don't require client_secret.
     private func exchangeCodeForTokens(code: String) async throws {
-        guard let clientId = getClientId(),
-              let clientSecret = getClientSecret() else {
-            throw GmailOAuthError.missingCredentials("Client ID or secret not configured.")
-        }
-
         let url = URL(string: Self.tokenEndpoint)!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -199,8 +198,7 @@ final class GmailOAuthService: NSObject {
 
         let body = [
             "code": code,
-            "client_id": clientId,
-            "client_secret": clientSecret,
+            "client_id": Self.iosClientId,
             "redirect_uri": "\(Self.callbackScheme):/oauth/callback",
             "grant_type": "authorization_code",
         ]
@@ -239,12 +237,8 @@ final class GmailOAuthService: NSObject {
     // MARK: - Private: Token Refresh
 
     /// Refreshes the access token using the stored refresh token.
+    /// iOS OAuth clients don't require client_secret.
     private func refreshAccessToken(refreshToken: String) async throws -> String {
-        guard let clientId = getClientId(),
-              let clientSecret = getClientSecret() else {
-            throw GmailOAuthError.missingCredentials("Client ID or secret not configured.")
-        }
-
         let url = URL(string: Self.tokenEndpoint)!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -252,8 +246,7 @@ final class GmailOAuthService: NSObject {
 
         let body = [
             "refresh_token": refreshToken,
-            "client_id": clientId,
-            "client_secret": clientSecret,
+            "client_id": Self.iosClientId,
             "grant_type": "refresh_token",
         ]
         request.httpBody = body

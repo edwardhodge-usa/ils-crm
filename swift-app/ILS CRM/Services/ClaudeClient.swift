@@ -86,6 +86,7 @@ enum ClaudeClient {
         {"first_name": "James", "last_name": null, "job_title": null, "company_name": null, "phone": null, "relationship_type": "Prospect", "confidence": 35, "reasoning": "Appeared in 2 threads as CC, no signature data available."}
 
         relationship_type must be one of: Client, Prospect, Partner, Consultant, Vendor Contact, Talent, Employee, Investor, Advisor, Industry Peer, Other
+        IMPORTANT: "Employee" means an employee of ImagineLab Studios (ILS) ONLY — the company that owns this CRM. People who work at client companies, vendors, or any other external organization are NOT employees. Use "Client" for contacts at client organizations, "Vendor Contact" for vendor staff, "Partner" for business partners, "Industry Peer" for industry colleagues.
         confidence is 0-100 reflecting how confident you are this person is a real business contact worth adding to a CRM.
         reasoning is one sentence explaining your classification.
         """
@@ -109,6 +110,7 @@ enum ClaudeClient {
         {"first_name": null, "last_name": null, "job_title": null, "company_name": null, "phone": null, "relationship_type": "Prospect", "confidence": 42, "reasoning": "Direct correspondent in 5 threads over 3 months, likely business contact."}
 
         relationship_type must be one of: Client, Prospect, Partner, Consultant, Vendor Contact, Talent, Employee, Investor, Advisor, Industry Peer, Other
+        IMPORTANT: "Employee" means an employee of ImagineLab Studios (ILS) ONLY — the company that owns this CRM. People who work at client companies, vendors, or any other external organization are NOT employees. Use "Client" for contacts at client organizations, "Vendor Contact" for vendor staff, "Partner" for business partners, "Industry Peer" for industry colleagues.
         confidence is 0-100 reflecting how confident you are this person is a real business contact worth adding to a CRM.
         reasoning is one sentence explaining your classification.
         """
