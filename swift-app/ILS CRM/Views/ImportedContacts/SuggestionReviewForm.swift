@@ -26,6 +26,8 @@ struct SuggestionReviewForm: View {
     @State private var jobTitle: String = ""
     @State private var relationshipType: String = "Client"
     @State private var companyName: String = ""
+    @State private var selectedExistingCompany: Company?
+    @State private var isCompanyPickerExpanded = false
     @State private var isSaving = false
 
     private static let relationshipOptions = [
@@ -34,12 +36,23 @@ struct SuggestionReviewForm: View {
     ]
 
     private var linkedCompany: Company? {
+        if let selected = selectedExistingCompany { return selected }
         guard let firstId = importedContact.suggestedCompanyLink.first else { return nil }
         return companies.first(where: { $0.id == firstId })
     }
 
     private var willCreateCompany: Bool {
         linkedCompany == nil && !companyName.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    private var matchingCompanies: [Company] {
+        let query = companyName.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !query.isEmpty else { return [] }
+        return companies
+            .filter { ($0.companyName ?? "").lowercased().contains(query) }
+            .sorted { ($0.companyName ?? "") < ($1.companyName ?? "") }
+            .prefix(8)
+            .map { $0 }
     }
 
     private var contactDisplayName: String {
@@ -103,9 +116,59 @@ struct SuggestionReviewForm: View {
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                     }
+                    Spacer()
+                    Button {
+                        selectedExistingCompany = nil
+                        companyName = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Remove company link")
                 }
             } else {
-                TextField("Company Name", text: $companyName)
+                TextField("Search or enter company name", text: $companyName)
+                    .onChange(of: companyName) { _, _ in
+                        isCompanyPickerExpanded = !companyName.trimmingCharacters(in: .whitespaces).isEmpty
+                    }
+
+                if isCompanyPickerExpanded && !matchingCompanies.isEmpty {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(matchingCompanies, id: \.id) { company in
+                            Button {
+                                selectedExistingCompany = company
+                                companyName = company.companyName ?? ""
+                                isCompanyPickerExpanded = false
+                            } label: {
+                                HStack(spacing: 8) {
+                                    AvatarView(
+                                        name: company.companyName ?? "Company",
+                                        avatarSize: .small,
+                                        shape: .roundedRect
+                                    )
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(company.companyName ?? "Unnamed")
+                                            .font(.system(size: 13, weight: .medium))
+                                        if let industry = company.industry, !industry.isEmpty {
+                                            Text(industry)
+                                                .font(.system(size: 11))
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    Spacer()
+                                    Image(systemName: "checkmark.circle")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(.green)
+                                }
+                                .padding(.vertical, 4)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
 
                 if willCreateCompany {
                     HStack(spacing: 6) {
@@ -148,7 +211,7 @@ struct SuggestionReviewForm: View {
     private func saveToCRM() {
         isSaving = true
 
-        // Determine company ID
+        // Determine company ID — prefer user-selected existing company, then AI-linked
         var companyId: String?
 
         if let existing = linkedCompany {
@@ -201,6 +264,9 @@ struct SuggestionReviewForm: View {
         importedContact.relatedCrmContactIds = [newContact.id]
         importedContact.localModifiedAt = Date()
         importedContact.isPendingPush = true
+
+        // Explicit save — SwiftData autosave can miss newly inserted records
+        try? modelContext.save()
 
         isSaving = false
         dismiss()

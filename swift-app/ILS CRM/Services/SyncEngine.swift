@@ -242,17 +242,34 @@ final class SyncEngine {
                 records: fieldsArray
             )
 
-            // Update local records with real Airtable IDs
-            // batchCreate returns records in the same order as the input
+            // Replace local_ records with real Airtable IDs.
+            // Since SwiftData IDs are read-only, we delete the old record and
+            // recreate using the LOCAL field data (not the Airtable response,
+            // which may use field names instead of IDs despite returnFieldsByFieldId).
+            var idReplacements: [(old: String, new: String)] = []
             for (index, airtableRecord) in createdRecords.enumerated() where index < creates.count {
-                if airtableRecord["id"] as? String != nil {
-                    // Delete old local record and insert fresh from Airtable response
+                if let newId = airtableRecord["id"] as? String {
+                    let oldId = creates[index].id
+                    idReplacements.append((old: oldId, new: newId))
+
+                    // Capture local fields BEFORE deleting — strip NSNull values
+                    // since toAirtableFields() uses NSNull for empty fields (for Airtable API),
+                    // but AirtableRecord/from(record:) reads NSNull as nil.
+                    let rawFields = creates[index].toAirtableFields()
+                    let localFields = rawFields.filter { !($0.value is NSNull) }
                     context.delete(creates[index])
-                    if let record = AirtableRecord(json: airtableRecord) {
-                        let model = T.from(record: record, context: context)
-                        context.insert(model)
-                    }
+
+                    // Recreate with real Airtable ID + local field data
+                    let record = AirtableRecord(id: newId, fields: localFields)
+                    let model = T.from(record: record, context: context)
+                    model.isPendingPush = false
+                    context.insert(model)
                 }
+            }
+
+            // Update linked record references that point to old local_ IDs
+            if !idReplacements.isEmpty {
+                try replaceLocalIds(idReplacements, in: context)
             }
         }
 
@@ -271,6 +288,42 @@ final class SyncEngine {
         }
 
         Self.logger.info("Pushed \(creates.count) creates + \(updates.count) updates for \(typeName)")
+    }
+
+    // MARK: - Local ID Replacement
+
+    /// After pushing local_ records and receiving real Airtable IDs, update all linked
+    /// record fields across models that may reference the old local_ IDs.
+    @MainActor
+    private func replaceLocalIds(_ replacements: [(old: String, new: String)], in context: ModelContext) throws {
+        guard !replacements.isEmpty else { return }
+
+        let idMap = Dictionary(replacements.map { ($0.old, $0.new) }, uniquingKeysWith: { _, last in last })
+
+        // Contacts → companiesIds
+        let contacts = try context.fetch(FetchDescriptor<Contact>())
+        for contact in contacts {
+            let updated = contact.companiesIds.map { idMap[$0] ?? $0 }
+            if updated != contact.companiesIds {
+                contact.companiesIds = updated
+                Self.logger.info("Replaced local company ID in contact \(contact.contactName ?? contact.id, privacy: .public)")
+            }
+        }
+
+        // ImportedContacts → relatedCrmContactIds, suggestedCompanyLink
+        let imported = try context.fetch(FetchDescriptor<ImportedContact>())
+        for ic in imported {
+            let updatedCrm = ic.relatedCrmContactIds.map { idMap[$0] ?? $0 }
+            if updatedCrm != ic.relatedCrmContactIds {
+                ic.relatedCrmContactIds = updatedCrm
+            }
+            let updatedCompany = ic.suggestedCompanyLink.map { idMap[$0] ?? $0 }
+            if updatedCompany != ic.suggestedCompanyLink {
+                ic.suggestedCompanyLink = updatedCompany
+            }
+        }
+
+        try context.save()
     }
 
     // MARK: - Pull

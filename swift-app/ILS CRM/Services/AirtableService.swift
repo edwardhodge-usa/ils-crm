@@ -282,9 +282,14 @@ actor AirtableService {
     // MARK: - Private Helpers
 
     private func postRequest(tableId: String, body: [String: Any]) async throws -> [String: Any] {
-        let url = AirtableConfig.apiBaseURL
+        let baseURL = AirtableConfig.apiBaseURL
             .appendingPathComponent(baseId)
             .appendingPathComponent(tableId)
+
+        // Response must use field IDs (not names) to match converters
+        var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "returnFieldsByFieldId", value: "true")]
+        let url = components.url!
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -304,9 +309,13 @@ actor AirtableService {
     }
 
     private func patchRequest(tableId: String, body: [String: Any]) async throws -> [String: Any] {
-        let url = AirtableConfig.apiBaseURL
+        let baseURL = AirtableConfig.apiBaseURL
             .appendingPathComponent(baseId)
             .appendingPathComponent(tableId)
+
+        var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "returnFieldsByFieldId", value: "true")]
+        let url = components.url!
 
         var request = URLRequest(url: url)
         request.httpMethod = "PATCH"
