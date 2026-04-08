@@ -104,6 +104,11 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - **2026-04-01** — Email scanner sync lock: acquire/release per batch write (10 records), never hold for full scan duration — prevents blocking CRM sync engine
 - **2026-04-05** — Electron sql.js saves in-memory DB to disk on exit, overwriting external changes. To modify the DB: kill app first (wait 5s), modify on disk, then restart. Never modify while app is running.
 - **2026-04-05** — Enrichment queue items must show the linked CRM contact name + email, not just the field name — users need identity context to evaluate suggestions
+- **2026-04-07** — Gmail OAuth: Swift app needs iOS-type OAuth client (not Desktop) for ASWebAuthenticationSession. iOS clients don't require client_secret. Callback scheme = reversed client ID.
+- **2026-04-07** — AirtableService `postRequest`/`patchRequest` must include `returnFieldsByFieldId=true` — without it, create/update responses use field names, but converters expect field IDs
+- **2026-04-07** — SyncEngine push: when replacing local_ records with Airtable IDs, use `toAirtableFields()` to capture local data (strip NSNull), not the Airtable response — response may use wrong field key format
+- **2026-04-07** — Never set SwiftData Transformable array columns to SQL NULL directly — use the encoded empty-array bplist. NULL causes `transformDecodeValue` crash on @Query access
+- **2026-04-07** — SyncEngine must replace local_ IDs in linked fields (companiesIds, relatedCrmContactIds) after push assigns real Airtable IDs — otherwise dangling references
 
 ### UI / HIG
 - `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements
