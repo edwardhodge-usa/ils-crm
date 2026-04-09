@@ -93,12 +93,19 @@ struct ILSCRMApp: App {
                 case .offlineLocked:
                     OfflineLockView()
                 case .onboarding, .ready:
+                    #if os(macOS)
                     ContentView()
                         .environment(syncEngine)
+                    #else
+                    iOSContentView()
+                        .environment(syncEngine)
+                    #endif
                 }
             }
             .task { await appStateManager.performLicenseCheck() }
+            #if os(macOS)
             .frame(minWidth: 900, minHeight: 600)
+            #endif
         }
         .modelContainer(container)
         .defaultSize(width: 1200, height: 800)
