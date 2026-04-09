@@ -251,6 +251,7 @@ struct ContactDetailView: View {
 
     private var heroSection: some View {
         HStack(spacing: 14) {
+            #if os(macOS)
             EditableAvatarView(
                 name: contactName,
                 size: 56,
@@ -261,6 +262,9 @@ struct ContactDetailView: View {
                 onPhotoRemoved: { removeContactPhoto() }
             )
             .id(contact.contactPhotoUrl)
+            #else
+            AvatarView(name: contactName, size: 56, photoURL: contact.contactPhotoUrl.flatMap(URL.init(string:)), shape: .circle)
+            #endif
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(contactName)

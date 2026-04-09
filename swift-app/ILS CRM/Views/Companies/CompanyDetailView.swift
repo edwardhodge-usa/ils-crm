@@ -90,6 +90,7 @@ struct CompanyDetailView: View {
 
                 // MARK: Hero Card
                 HStack(spacing: 14) {
+                    #if os(macOS)
                     EditableAvatarView(
                         name: company.companyName ?? "?",
                         size: 56,
@@ -101,6 +102,9 @@ struct CompanyDetailView: View {
                         onPhotoRemoved: { removeCompanyLogo() }
                     )
                     .id(company.logoUrl)
+                    #else
+                    AvatarView(name: company.companyName ?? "?", size: 56, photoURL: company.logoUrl.flatMap { URL(string: $0) }, shape: .roundedRect)
+                    #endif
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(company.companyName ?? "Unknown")

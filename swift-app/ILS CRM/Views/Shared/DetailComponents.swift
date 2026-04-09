@@ -25,6 +25,7 @@ struct DetailHeader: View {
 
     var body: some View {
         VStack(spacing: 8) {
+            #if os(macOS)
             if onPhotoSelected != nil {
                 EditableAvatarView(
                     name: name,
@@ -39,6 +40,9 @@ struct DetailHeader: View {
             } else {
                 AvatarView(name: name, size: AvatarSize.xxlarge.dimension, photoURL: photoURL, shape: isCompany ? .roundedRect : .circle)
             }
+            #else
+            AvatarView(name: name, size: AvatarSize.xxlarge.dimension, photoURL: photoURL, shape: isCompany ? .roundedRect : .circle)
+            #endif
 
             Text(name)
                 .font(.title2)

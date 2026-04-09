@@ -1,6 +1,8 @@
 import SwiftUI
 import PhotosUI
 
+#if os(macOS)
+
 /// Editable avatar with Apple Contacts-style photo editing.
 ///
 /// - Hover: pencil overlay appears
@@ -678,3 +680,5 @@ struct PhotoCropView: View {
         onConfirm(jpegData)
     }
 }
+
+#endif
