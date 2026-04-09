@@ -66,6 +66,7 @@ targets:
           CODE_SIGN_STYLE: Automatic
           CODE_SIGNING_REQUIRED: YES
           CODE_SIGNING_ALLOWED: YES
+          CODE_SIGN_ENTITLEMENTS: "ILS CRM/ILS CRM.entitlements"
         Release:
           CODE_SIGN_IDENTITY: "Developer ID Application: Imaginelab Studios (8RHA62T6FQ)"
           CODE_SIGN_STYLE: Manual
