@@ -691,7 +691,7 @@ struct PortalAccessView: View {
         let encoded = pageAddress.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? pageAddress
         guard let url = URL(string: "https://imaginelabstudios.com/ils-clients/\(encoded)"),
               url.scheme == "https", url.host == "imaginelabstudios.com" else { return }
-        NSWorkspace.shared.open(url)
+        openURL(url)
     }
 
     private func pageHealthLabel(for pageAddress: String) -> String {

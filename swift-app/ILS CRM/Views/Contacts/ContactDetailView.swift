@@ -295,7 +295,7 @@ struct ContactDetailView: View {
 
                     if let linkedIn = contact.linkedInUrl, !linkedIn.isEmpty {
                         Button {
-                            openURL(linkedIn)
+                            openRawURL(linkedIn)
                         } label: {
                             BentoPill(text: "LinkedIn", color: Color(red: 0.0, green: 0.47, blue: 0.71))
                         }
@@ -795,19 +795,19 @@ struct ContactDetailView: View {
 
     private func openEmail(_ email: String) {
         guard let url = URL(string: "mailto:\(email)") else { return }
-        NSWorkspace.shared.open(url)
+        openURL(url)
     }
 
     private func openPhone(_ phone: String) {
         let digits = phone.filter { $0.isNumber || $0 == "+" }
         guard let url = URL(string: "tel:\(digits)") else { return }
-        NSWorkspace.shared.open(url)
+        openURL(url)
     }
 
-    private func openURL(_ rawValue: String) {
+    private func openRawURL(_ rawValue: String) {
         let value = resolvedURL(value: rawValue, prefix: nil)
         guard let url = URL(string: value) else { return }
-        NSWorkspace.shared.open(url)
+        openURL(url)
     }
 
     private func formattedCurrency(_ value: Double) -> String {

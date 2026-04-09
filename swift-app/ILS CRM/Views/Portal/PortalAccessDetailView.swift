@@ -96,7 +96,7 @@ struct PortalAccessDetailView: View {
                     Button {
                         let urlStr = pageUrl.hasPrefix("http") ? pageUrl : "https://\(pageUrl)"
                         if let url = URL(string: urlStr) {
-                            NSWorkspace.shared.open(url)
+                            openURL(url)
                         }
                     } label: {
                         BentoPill(text: "View Portal", color: .blue)
@@ -141,7 +141,7 @@ struct PortalAccessDetailView: View {
 
                 if let portalPageURL {
                     Button {
-                        openURL(portalPageURL)
+                        openRawURL(portalPageURL)
                     } label: {
                         Label("Open Portal Page", systemImage: "arrow.up.right.square")
                             .font(.system(size: 12, weight: .semibold))
@@ -224,9 +224,9 @@ struct PortalAccessDetailView: View {
         }
     }
 
-    private func openURL(_ rawValue: String) {
+    private func openRawURL(_ rawValue: String) {
         guard let url = URL(string: rawValue) else { return }
-        NSWorkspace.shared.open(url)
+        openURL(url)
     }
 }
 

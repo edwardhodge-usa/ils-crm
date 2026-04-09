@@ -119,7 +119,7 @@ struct CompanyDetailView: View {
                             if let url = websiteURL, let displayWeb = company.website {
                                 Button {
                                     if let u = URL(string: url) {
-                                        NSWorkspace.shared.open(u)
+                                        openURL(u)
                                     }
                                 } label: {
                                     BentoPill(text: "Website", color: .blue)
@@ -133,7 +133,7 @@ struct CompanyDetailView: View {
                                 Button {
                                     let digits = phone.filter { $0.isNumber || $0 == "+" }
                                     if let telURL = URL(string: "tel:\(digits)") {
-                                        NSWorkspace.shared.open(telURL)
+                                        openURL(telURL)
                                     }
                                 } label: {
                                     BentoPill(text: "Call", color: .green)

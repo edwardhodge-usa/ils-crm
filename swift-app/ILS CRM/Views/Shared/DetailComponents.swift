@@ -57,7 +57,7 @@ struct DetailHeader: View {
                let scheme = url.scheme,
                ["https", "http", "mailto", "tel"].contains(scheme) {
                 Button {
-                    NSWorkspace.shared.open(url)
+                    openURL(url)
                 } label: {
                     Text(actionLabel)
                         .font(.subheadline)
@@ -163,7 +163,7 @@ struct DetailFieldRow: View {
            let scheme = url.scheme,
            ["https", "http", "mailto", "tel"].contains(scheme) {
             Button {
-                NSWorkspace.shared.open(url)
+                openURL(url)
             } label: {
                 HStack(spacing: 4) {
                     Text(value)
@@ -480,7 +480,7 @@ struct EditableFieldRow: View {
             } else {
                 url = URL(string: "https://\(val)")
             }
-            if let url { NSWorkspace.shared.open(url) }
+            if let url { openURL(url) }
         } label: {
             Text(val)
                 .font(.system(size: 13))
