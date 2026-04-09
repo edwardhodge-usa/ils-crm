@@ -24,4 +24,15 @@ extension Color {
         Color(uiColor: .secondarySystemGroupedBackground)
         #endif
     }
+
+    /// Window background color for full-bleed surfaces.
+    /// macOS: NSColor.windowBackgroundColor
+    /// iOS: UIColor.systemBackground
+    static var platformWindowBackground: Color {
+        #if os(macOS)
+        Color(nsColor: .windowBackgroundColor)
+        #else
+        Color(uiColor: .systemBackground)
+        #endif
+    }
 }

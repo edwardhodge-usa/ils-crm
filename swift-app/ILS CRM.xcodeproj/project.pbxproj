@@ -25,7 +25,7 @@
 		32A37AC7A71BCA3C59781505 /* PortalLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */; };
 		35C3F4BEF1740DA2C7220139 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668D676CC891E3198DACD13B /* TaskDetailView.swift */; };
 		36EBBB07DE34F8F950564A28 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AEF7B9304DFAE44834536F /* ProjectDetailView.swift */; };
-		38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4FAD464BE3689BD2B1578A74 /* Sparkle */; };
+		38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; platformFilters = (macos, ); productRef = 4FAD464BE3689BD2B1578A74 /* Sparkle */; };
 		38AC88CA3F769FD350136A46 /* Proposal+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */; };
 		3B9FF2F195EB914F5F66299A /* Company+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */; };
 		3BA9C65768304F0629CA653C /* PortalLog+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */; };
@@ -36,6 +36,7 @@
 		44A07D8E2FAE7E100C551056 /* ClaudeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 696DE13DE7B99602E39BA2F6 /* ClaudeClient.swift */; };
 		46290C16304DB96B19157EB4 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59EBB89A28F4676116D8A6D /* ProjectsView.swift */; };
 		4871C164B27F914BCC72CC9C /* PortalAccessRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48DD1C12C88BD4E268591904 /* PortalAccessRecord.swift */; };
+		4995EE71A952D25C4D9CDFC7 /* PlatformHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96F0EDB8CA3140A4F57B090F /* PlatformHelpers.swift */; };
 		4BDEC3D95BEB29FA215B7514 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0AD484B882AECF1ABE3213F /* DashboardView.swift */; };
 		4D8A7F7ABB4EA5B7DCD2D998 /* GrantAccessSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFDA42D74F4FFE80986174F /* GrantAccessSheet.swift */; };
 		4E0EBF0C0D85BCA62C854718 /* SuggestionReviewForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2746020D99157EA5E25E51C /* SuggestionReviewForm.swift */; };
@@ -167,6 +168,7 @@
 		93139863B859A2E429AC26CE /* ILSCRMApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ILSCRMApp.swift; sourceTree = "<group>"; };
 		931ED47893850975AFBC12A0 /* ContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsView.swift; sourceTree = "<group>"; };
 		96E233D4EA498B4D591789D1 /* PortalLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalLog.swift; sourceTree = "<group>"; };
+		96F0EDB8CA3140A4F57B090F /* PlatformHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelpers.swift; sourceTree = "<group>"; };
 		99535FE1159A16F2D4297A81 /* ContactDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactDetailView.swift; sourceTree = "<group>"; };
 		A09B51751718308565E912A8 /* EditableAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAvatarView.swift; sourceTree = "<group>"; };
 		A1A161B8DCBD0CDF39AAA10C /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
@@ -454,6 +456,7 @@
 			isa = PBXGroup;
 			children = (
 				F42F3829BAEFC9576877253A /* LinkedRecordResolver.swift */,
+				96F0EDB8CA3140A4F57B090F /* PlatformHelpers.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -675,6 +678,7 @@
 				024D905AD69C70469BB2802B /* Opportunity.swift in Sources */,
 				A733A762B04063FAE09B39D4 /* OpportunityDetailView.swift in Sources */,
 				DF15F7ABE93D042D8A704882 /* PipelineView.swift in Sources */,
+				4995EE71A952D25C4D9CDFC7 /* PlatformHelpers.swift in Sources */,
 				8022F098EA4F19DB36D03C07 /* PortalAccessDetailView.swift in Sources */,
 				C552F943C9D54741C708C379 /* PortalAccessRecord+Airtable.swift in Sources */,
 				4871C164B27F914BCC72CC9C /* PortalAccessRecord.swift in Sources */,
@@ -1026,6 +1030,7 @@
 		4FAD464BE3689BD2B1578A74 /* Sparkle */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 309EFC05ECD2925FCB1802DF /* XCRemoteSwiftPackageReference "Sparkle" */;
+			platformFilters = (macos, );
 			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */

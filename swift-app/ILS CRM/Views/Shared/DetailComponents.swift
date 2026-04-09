@@ -424,7 +424,9 @@ struct EditableFieldRow: View {
         case .checkbox:
             Toggle("", isOn: checkBinding)
                 .labelsHidden()
+                #if os(macOS)
                 .toggleStyle(.checkbox)
+                #endif
         }
     }
 

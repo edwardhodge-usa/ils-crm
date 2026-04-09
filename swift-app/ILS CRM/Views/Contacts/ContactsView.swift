@@ -342,7 +342,7 @@ struct ContactsView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 5)
-        .background(Color(.windowBackgroundColor).opacity(0.95))
+        .background(Color.platformWindowBackground.opacity(0.95))
     }
 
     // MARK: - Contact Row
