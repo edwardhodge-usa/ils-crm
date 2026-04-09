@@ -3,36 +3,35 @@ import Security
 
 /// Keychain wrapper for storing the Airtable API key securely.
 ///
-/// Security improvement over Electron build (which uses SQLite settings table).
-/// Uses macOS Keychain Services API with service "ils-crm-airtable".
-///
-/// Lesson from Electron: Never hardcode API keys. This stores the PAT
-/// the user enters in Settings, same token used by the Electron app.
+/// Uses a shared Keychain access group + iCloud Keychain sync so the API key
+/// entered on macOS is automatically available on iPhone (same Team ID).
 enum KeychainService {
     static let service = "ils-crm-airtable"
     static let apiKeyAccount = "airtable-pat"
+    static let accessGroup = "8RHA62T6FQ.com.imaginelabstudios.shared"
 
     // MARK: - Save
 
-    /// Saves a value to the Keychain. Overwrites if it already exists.
     static func save(key: String = apiKeyAccount, value: String) throws {
         guard let data = value.data(using: .utf8) else {
             throw KeychainError.encodingFailed
         }
 
-        // Delete existing item first (update pattern)
         let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: key,
+            kSecAttrAccessGroup as String: accessGroup,
+            kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
         ]
         SecItemDelete(deleteQuery as CFDictionary)
 
-        // Add new item
         let addQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: key,
+            kSecAttrAccessGroup as String: accessGroup,
+            kSecAttrSynchronizable as String: true,
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked,
         ]
@@ -45,12 +44,13 @@ enum KeychainService {
 
     // MARK: - Read
 
-    /// Reads the API key from the Keychain. Returns nil if not found.
     static func read(key: String = apiKeyAccount) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: key,
+            kSecAttrAccessGroup as String: accessGroup,
+            kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
@@ -69,18 +69,53 @@ enum KeychainService {
 
     // MARK: - Delete
 
-    /// Deletes the API key from the Keychain.
     static func delete(key: String = apiKeyAccount) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: key,
+            kSecAttrAccessGroup as String: accessGroup,
+            kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
         ]
         SecItemDelete(query as CFDictionary)
     }
-}
 
-// MARK: - Errors
+    // MARK: - Migration
+
+    static func migrateToSharedGroupIfNeeded() {
+        if read() != nil { return }
+
+        let oldQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: apiKeyAccount,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(oldQuery as CFDictionary, &result)
+
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let value = String(data: data, encoding: .utf8) else {
+            return
+        }
+
+        do {
+            try save(value: value)
+            let deleteOld: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: apiKeyAccount,
+            ]
+            SecItemDelete(deleteOld as CFDictionary)
+            print("[Keychain] Migrated API key to shared access group")
+        } catch {
+            print("[Keychain] Migration failed: \(error)")
+        }
+    }
+}
 
 enum KeychainError: LocalizedError {
     case encodingFailed

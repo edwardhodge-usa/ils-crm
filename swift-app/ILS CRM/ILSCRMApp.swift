@@ -70,6 +70,8 @@ struct ILSCRMApp: App {
             }
         }
 
+        KeychainService.migrateToSharedGroupIfNeeded()
+
         #if os(macOS)
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
