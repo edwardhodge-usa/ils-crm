@@ -97,7 +97,7 @@ struct PortalAccessView: View {
                         .padding(.vertical, 6)
                         .background(
                             Capsule(style: .continuous)
-                                .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
+                                .fill(isSelected ? Color.accentColor : Color.platformControlBackground)
                         )
                         .overlay {
                             if !isSelected {
@@ -112,7 +112,7 @@ struct PortalAccessView: View {
         .padding(4)
         .background(
             Capsule(style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor))
+                .fill(Color.platformControlBackground)
         )
     }
 
@@ -233,7 +233,7 @@ struct PortalAccessView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(Color(nsColor: .controlBackgroundColor))
+            .background(Color.platformControlBackground)
 
             Divider()
 
@@ -298,7 +298,7 @@ struct PortalAccessView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
         }
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(Color.platformControlBackground)
     }
 
     // MARK: - Page Detail Pane

@@ -99,7 +99,7 @@ struct ImportedContactDetailView: View {
                             .font(.system(size: 12, weight: .semibold))
                             .padding(.horizontal, 12)
                             .padding(.vertical, 5)
-                            .background(Color(nsColor: .controlBackgroundColor))
+                            .background(Color.platformControlBackground)
                             .foregroundStyle(.primary)
                             .clipShape(RoundedRectangle(cornerRadius: 6))
                             .overlay {

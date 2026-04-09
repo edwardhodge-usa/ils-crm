@@ -503,7 +503,7 @@ struct TasksView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
-            .background(Color(.controlBackgroundColor))
+            .background(Color.platformControlBackground)
 
             Divider()
 

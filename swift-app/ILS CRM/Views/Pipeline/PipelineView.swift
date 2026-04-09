@@ -282,7 +282,7 @@ struct PipelineView: View {
         }
         .frame(width: 220)
         .frame(maxHeight: .infinity, alignment: .top)
-        .background(Color(.controlBackgroundColor).opacity(0.5))
+        .background(Color.platformControlBackground.opacity(0.5))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
             RoundedRectangle(cornerRadius: 10)
@@ -382,7 +382,7 @@ private struct KanbanCard: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.controlBackgroundColor))
+        .background(Color.platformControlBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)

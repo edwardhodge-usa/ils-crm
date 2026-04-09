@@ -180,7 +180,7 @@ struct CompaniesView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
-            .background(Color(.controlBackgroundColor))
+            .background(Color.platformControlBackground)
 
             Divider()
 
@@ -237,7 +237,7 @@ struct CompaniesView: View {
         .padding(.vertical, 4)
         .background(
             Capsule(style: .continuous)
-                .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
+                .fill(isSelected ? Color.accentColor : Color.platformControlBackground)
         )
         .overlay {
             if !isSelected {

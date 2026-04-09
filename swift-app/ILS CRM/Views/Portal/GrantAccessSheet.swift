@@ -97,7 +97,7 @@ struct GrantAccessSheet: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
-            .background(Color(.controlBackgroundColor))
+            .background(Color.platformControlBackground)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .padding(.horizontal, 12)
             .padding(.vertical, 8)

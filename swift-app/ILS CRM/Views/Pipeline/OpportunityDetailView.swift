@@ -125,7 +125,7 @@ struct OpportunityDetailView: View {
                             onSave: saveField
                         )
                     }
-                    .background(Color(.controlBackgroundColor))
+                    .background(Color.platformControlBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .padding(.horizontal, 16)
@@ -153,7 +153,7 @@ struct OpportunityDetailView: View {
                                 onSave: saveField
                             )
                         }
-                        .background(Color(.controlBackgroundColor))
+                        .background(Color.platformControlBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .padding(.horizontal, 16)
@@ -170,7 +170,7 @@ struct OpportunityDetailView: View {
                             onSave: saveField
                         )
                     }
-                    .background(Color(.controlBackgroundColor))
+                    .background(Color.platformControlBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .padding(.horizontal, 16)
@@ -187,7 +187,7 @@ struct OpportunityDetailView: View {
                                 onSave: saveField
                             )
                         }
-                        .background(Color(.controlBackgroundColor))
+                        .background(Color.platformControlBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .padding(.horizontal, 16)
@@ -424,7 +424,7 @@ struct OpportunityDetailView: View {
                 .padding(.horizontal, 12)
                 .frame(minHeight: 28)
             }
-            .background(Color(.controlBackgroundColor))
+            .background(Color.platformControlBackground)
             .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }

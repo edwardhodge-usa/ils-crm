@@ -135,7 +135,7 @@ struct ProposalsView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color(.controlBackgroundColor))
+                .background(Color.platformControlBackground)
 
                 Divider()
 
@@ -178,7 +178,7 @@ struct ProposalsView: View {
                 }
             }
             .frame(width: 380)
-            .background(Color(.controlBackgroundColor))
+            .background(Color.platformControlBackground)
 
             Divider()
 
@@ -220,7 +220,7 @@ struct ProposalsView: View {
         .padding(.vertical, 4)
         .background(
             Capsule(style: .continuous)
-                .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
+                .fill(isSelected ? Color.accentColor : Color.platformControlBackground)
         )
         .overlay {
             if !isSelected {

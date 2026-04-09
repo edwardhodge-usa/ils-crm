@@ -107,7 +107,7 @@ struct StatsRow: View {
                 .padding(.vertical, 10)
             }
         }
-        .background(Color(.controlBackgroundColor))
+        .background(Color.platformControlBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
@@ -611,7 +611,7 @@ struct SortDropdown<T: Hashable & CustomStringConvertible>: View {
                 .padding(.vertical, 4)
                 .background(
                     Capsule(style: .continuous)
-                        .fill(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
+                        .fill(isSelected ? Color.accentColor : Color.platformControlBackground)
                 )
                 .overlay {
                     if !isSelected {

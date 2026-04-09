@@ -208,7 +208,7 @@ struct DashboardView: View {
                 }
             }
         }
-        .background(Color(.controlBackgroundColor))
+        .background(Color.platformControlBackground)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .frame(maxWidth: .infinity)
     }
@@ -247,7 +247,7 @@ struct DashboardView: View {
                 }
             }
         }
-        .background(Color(.controlBackgroundColor))
+        .background(Color.platformControlBackground)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .frame(maxWidth: .infinity)
     }
@@ -296,7 +296,7 @@ struct DashboardView: View {
                 .padding(.bottom, 4)
             }
         }
-        .background(Color(.controlBackgroundColor))
+        .background(Color.platformControlBackground)
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
@@ -359,7 +359,7 @@ private struct DashStatCard: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.controlBackgroundColor))
+        .background(Color.platformControlBackground)
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
