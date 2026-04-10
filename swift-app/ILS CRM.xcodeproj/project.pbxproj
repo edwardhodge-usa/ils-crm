@@ -34,6 +34,7 @@
 		43DC7BE3CE7479FF375655DA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D766042D9087DFD6757ACB42 /* SettingsView.swift */; };
 		449038EC80DE762E7082426D /* AirtableService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0626CFBCA68B78CCAE3A5BD7 /* AirtableService.swift */; };
 		44A07D8E2FAE7E100C551056 /* ClaudeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 696DE13DE7B99602E39BA2F6 /* ClaudeClient.swift */; };
+		450032A049ABDD89A3DE0BA7 /* iOSTasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AA4CE6B7DD263E94CF89FE4 /* iOSTasksView.swift */; };
 		46290C16304DB96B19157EB4 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59EBB89A28F4676116D8A6D /* ProjectsView.swift */; };
 		4871C164B27F914BCC72CC9C /* PortalAccessRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48DD1C12C88BD4E268591904 /* PortalAccessRecord.swift */; };
 		4995EE71A952D25C4D9CDFC7 /* PlatformHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96F0EDB8CA3140A4F57B090F /* PlatformHelpers.swift */; };
@@ -67,6 +68,7 @@
 		A6B42BD46880906393A2564A /* EmailClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D96D2BC1E800E6DDB53467B /* EmailClassifier.swift */; };
 		A733A762B04063FAE09B39D4 /* OpportunityDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B819D1D3D6D5D6224EA6059 /* OpportunityDetailView.swift */; };
 		A80F73C436A8B1584A4AFD15 /* ContactDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99535FE1159A16F2D4297A81 /* ContactDetailView.swift */; };
+		A9BE2148A3ECC502D2CF2691 /* iOSSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0601ACB05655FA5DD47D538 /* iOSSettingsView.swift */; };
 		ABB8E1147F5AF5C7CCE4BFA4 /* CompanyDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D7C2ED321ED09895486FDF /* CompanyDetailView.swift */; };
 		B129FFFF82792485422F535E /* ImportedContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49F9AFC3A3BFE5B1C86EAC7 /* ImportedContactsView.swift */; };
 		B34F2130F324C26103ED67D2 /* ClientPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA67E7B40071D4AE31F92F9 /* ClientPage.swift */; };
@@ -81,15 +83,18 @@
 		C5F8BD8560EF6CAA970BE5F2 /* Contact+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8D1B1FEA4C806594AAE1EA /* Contact+Airtable.swift */; };
 		CAF50B0278F5C4463A0040BB /* FramerHealthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E33304DE2A8B008C7C3F330F /* FramerHealthService.swift */; };
 		D34B6650FD638F961DC425B6 /* CompaniesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED59216158DF4769EFB6BD74 /* CompaniesView.swift */; };
+		D410C3B2749F903DB6078C21 /* iOSTaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A75252E01322E065A8492CA /* iOSTaskDetailView.swift */; };
 		D419FF8EC2A4CE310A6A5FD8 /* Proposal.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A17675D518A087D5687C46 /* Proposal.swift */; };
 		D456DB1C39A4368CBFC3FD11 /* CRMTask+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4004166840F7FE3EEA205D /* CRMTask+Airtable.swift */; };
 		D6E02ADF58BE1D2947790F72 /* EmailRulesEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE6980BAD6222D0345E524CD /* EmailRulesEngine.swift */; };
+		D8293516902E4DDAAFF8E29A /* iOSTaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85950CF9B09800B62F3CDD4D /* iOSTaskFormView.swift */; };
 		DA660DAB95967BFA6D23BFD6 /* PortalAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F65F8E51ACDA30BB96E73 /* PortalAccessView.swift */; };
 		DF15F7ABE93D042D8A704882 /* PipelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D16508BB0F462650F6DA3D4D /* PipelineView.swift */; };
 		E37235068B78D011C6790273 /* Company.swift in Sources */ = {isa = PBXBuildFile; fileRef = 649C44D1AA43D3C6B31DC0B2 /* Company.swift */; };
 		E5771CEA27AB55A6E7E40925 /* Contact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFC604A95E0A130C6EAFC7C /* Contact.swift */; };
 		E63201E940F208C1803F662A /* CommandPaletteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5D973A49C023D1EE389F0F /* CommandPaletteView.swift */; };
 		ED94318657AEC4D283753738 /* InteractionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46488C4FC77689E54BDF129 /* InteractionsView.swift */; };
+		F62D67B452DA861BCB0A1585 /* iOSContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC11BC24156F91A74A9D5038 /* iOSContentView.swift */; };
 		F63F2BF32F6391A2F68CAA66 /* RevokedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E0C38FCC1781130B2EA6A71 /* RevokedView.swift */; };
 		F9CC88E46E563141C9396386 /* EmailScanState+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97328204D6403F055134FEC /* EmailScanState+Airtable.swift */; };
 		FB6619F611CA54671C544752 /* Opportunity+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794C572B0816746F1F6DD1EF /* Opportunity+Airtable.swift */; };
@@ -118,6 +123,7 @@
 		076BABE0F288BDC4F616814D /* GmailOAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GmailOAuthService.swift; sourceTree = "<group>"; };
 		08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalLogsView.swift; sourceTree = "<group>"; };
 		094525C470C3BD376958467D /* ILS CRM.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ILS CRM.entitlements"; sourceTree = "<group>"; };
+		0AA4CE6B7DD263E94CF89FE4 /* iOSTasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSTasksView.swift; sourceTree = "<group>"; };
 		0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		115F65F8E51ACDA30BB96E73 /* PortalAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalAccessView.swift; sourceTree = "<group>"; };
 		1251BF67D5DE50CE8268415C /* Interaction+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Interaction+Airtable.swift"; sourceTree = "<group>"; };
@@ -159,6 +165,7 @@
 		7D1B5E5FF33E83DA5A5378A5 /* GmailAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GmailAPIClient.swift; sourceTree = "<group>"; };
 		7D57C205199B792B326959B6 /* DetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailComponents.swift; sourceTree = "<group>"; };
 		80AAFC4F81B96A6478FEDDBA /* ImportedContactDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedContactDetailView.swift; sourceTree = "<group>"; };
+		85950CF9B09800B62F3CDD4D /* iOSTaskFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSTaskFormView.swift; sourceTree = "<group>"; };
 		89C658F412AEC8BC5883E5EA /* CRMTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRMTask.swift; sourceTree = "<group>"; };
 		8AA5E8114E123796534ED260 /* BentoComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoComponents.swift; sourceTree = "<group>"; };
 		8D68C7F1FA49E86B89C127B6 /* InteractionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractionDetailView.swift; sourceTree = "<group>"; };
@@ -170,6 +177,7 @@
 		96E233D4EA498B4D591789D1 /* PortalLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalLog.swift; sourceTree = "<group>"; };
 		96F0EDB8CA3140A4F57B090F /* PlatformHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelpers.swift; sourceTree = "<group>"; };
 		99535FE1159A16F2D4297A81 /* ContactDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactDetailView.swift; sourceTree = "<group>"; };
+		9A75252E01322E065A8492CA /* iOSTaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSTaskDetailView.swift; sourceTree = "<group>"; };
 		A09B51751718308565E912A8 /* EditableAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAvatarView.swift; sourceTree = "<group>"; };
 		A1A161B8DCBD0CDF39AAA10C /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
 		A49F9AFC3A3BFE5B1C86EAC7 /* ImportedContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedContactsView.swift; sourceTree = "<group>"; };
@@ -200,11 +208,13 @@
 		E33304DE2A8B008C7C3F330F /* FramerHealthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FramerHealthService.swift; sourceTree = "<group>"; };
 		E6073CD44784B64287F728E7 /* ProposalDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProposalDetailView.swift; sourceTree = "<group>"; };
 		ED59216158DF4769EFB6BD74 /* CompaniesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompaniesView.swift; sourceTree = "<group>"; };
+		F0601ACB05655FA5DD47D538 /* iOSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSSettingsView.swift; sourceTree = "<group>"; };
 		F314F3062428983FA086B791 /* ILS CRM.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "ILS CRM.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F42F3829BAEFC9576877253A /* LinkedRecordResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedRecordResolver.swift; sourceTree = "<group>"; };
 		F502ADB5929B8F24523FF64E /* TaskFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskFormView.swift; sourceTree = "<group>"; };
 		F60D57910CECCCE026753048 /* EnrichmentQueueItem+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EnrichmentQueueItem+Airtable.swift"; sourceTree = "<group>"; };
 		F95308B83FB85C8EA4E85002 /* EmailScanRule+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EmailScanRule+Airtable.swift"; sourceTree = "<group>"; };
+		FC11BC24156F91A74A9D5038 /* iOSContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -377,6 +387,7 @@
 				4DF14430D84B883019A56BB0 /* Dashboard */,
 				D690F441BF7CA5615EEA1105 /* ImportedContacts */,
 				813D021CA84C3CF558E5976A /* Interactions */,
+				C3D389AD805912322F1761C7 /* iOS */,
 				5B036022E3871792F64A1134 /* Pipeline */,
 				F79B3624DB335DE732BBD914 /* Portal */,
 				6A233D1FFAD3C43BDFCEAB8C /* Projects */,
@@ -450,6 +461,18 @@
 				F314F3062428983FA086B791 /* ILS CRM.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C3D389AD805912322F1761C7 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				FC11BC24156F91A74A9D5038 /* iOSContentView.swift */,
+				F0601ACB05655FA5DD47D538 /* iOSSettingsView.swift */,
+				9A75252E01322E065A8492CA /* iOSTaskDetailView.swift */,
+				85950CF9B09800B62F3CDD4D /* iOSTaskFormView.swift */,
+				0AA4CE6B7DD263E94CF89FE4 /* iOSTasksView.swift */,
+			);
+			path = iOS;
 			sourceTree = "<group>";
 		};
 		C54A7FDFC621CF7A40A3E4E0 /* Utils */ = {
@@ -704,6 +727,11 @@
 				35C3F4BEF1740DA2C7220139 /* TaskDetailView.swift in Sources */,
 				9F0DE1571922F0514486806B /* TaskFormView.swift in Sources */,
 				141E801CD0E7D895A261D4AD /* TasksView.swift in Sources */,
+				F62D67B452DA861BCB0A1585 /* iOSContentView.swift in Sources */,
+				A9BE2148A3ECC502D2CF2691 /* iOSSettingsView.swift in Sources */,
+				D410C3B2749F903DB6078C21 /* iOSTaskDetailView.swift in Sources */,
+				D8293516902E4DDAAFF8E29A /* iOSTaskFormView.swift in Sources */,
+				450032A049ABDD89A3DE0BA7 /* iOSTasksView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
