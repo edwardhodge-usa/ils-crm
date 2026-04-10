@@ -2,10 +2,9 @@
 import SwiftUI
 import SwiftData
 
-/// iPhone settings — Form-based, covers API key, sync, theme, license.
+/// iPhone settings — native Form layout with API key, sync, license, about.
 struct iOSSettingsView: View {
     @Environment(SyncEngine.self) private var syncEngine
-    @AppStorage("appearanceMode") private var appearanceMode = "System"
     @AppStorage("syncIntervalSeconds") private var syncInterval: Double = 60
 
     @State private var apiKey: String = ""
@@ -13,6 +12,8 @@ struct iOSSettingsView: View {
     @State private var showApiKey = false
     @State private var keychainSource: String = ""
     @State private var saveConfirmation: String = ""
+    @State private var saveIsError = false
+    @State private var hapticTrigger = false
 
     private let intervalOptions: [(String, Double)] = [
         ("30 seconds", 30),
@@ -21,140 +22,115 @@ struct iOSSettingsView: View {
         ("Off", 0),
     ]
 
-    private let themeOptions = ["System", "Light", "Dark"]
-
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 16) {
-                // Airtable
-                GroupBox("Airtable") {
-                    VStack(spacing: 12) {
-                        HStack {
-                            if showApiKey {
-                                TextField("API Key", text: $apiKey)
-                                    .textContentType(.password)
-                                    .autocorrectionDisabled()
-                                    .textFieldStyle(.roundedBorder)
-                            } else {
-                                SecureField("API Key", text: $apiKey)
-                                    .textFieldStyle(.roundedBorder)
-                            }
-                            Button {
-                                showApiKey.toggle()
-                            } label: {
-                                Image(systemName: showApiKey ? "eye.slash" : "eye")
-                            }
-                        }
-
-                        if !keychainSource.isEmpty {
-                            Text(keychainSource)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-
-                        if !saveConfirmation.isEmpty {
-                            Text(saveConfirmation)
-                                .font(.caption)
-                                .foregroundStyle(.green)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-
-                        Button("Save API Key") {
-                            guard !apiKey.isEmpty else { return }
-                            do {
-                                try KeychainService.save(value: apiKey)
-                                saveConfirmation = "API Key saved to Keychain"
-                                keychainSource = "Saved to Keychain"
-                                Task {
-                                    try? await Task.sleep(for: .seconds(3))
-                                    saveConfirmation = ""
-                                }
-                            } catch {
-                                saveConfirmation = "Save failed: \(error.localizedDescription)"
-                            }
-                        }
-                        .disabled(apiKey.isEmpty)
-
-                        TextField("Base ID", text: $baseId)
+        Form {
+            // Airtable
+            Section("Airtable") {
+                HStack {
+                    if showApiKey {
+                        TextField("API Key", text: $apiKey)
+                            .textContentType(.password)
                             .autocorrectionDisabled()
-                            .textFieldStyle(.roundedBorder)
+                    } else {
+                        SecureField("API Key", text: $apiKey)
                     }
-                    .padding(.vertical, 4)
+                    Button {
+                        showApiKey.toggle()
+                    } label: {
+                        Image(systemName: showApiKey ? "eye.slash" : "eye")
+                    }
+                    .accessibilityLabel(showApiKey ? "Hide API key" : "Show API key")
                 }
 
-                // Sync
-                GroupBox("Sync") {
-                    VStack(spacing: 12) {
-                        Picker("Sync Interval", selection: $syncInterval) {
-                            ForEach(intervalOptions, id: \.1) { option in
-                                Text(option.0).tag(option.1)
-                            }
-                        }
-
-                        Button {
-                            Task { await syncEngine.forceSync() }
-                        } label: {
-                            HStack {
-                                Text("Sync Now")
-                                Spacer()
-                                if syncEngine.isSyncing {
-                                    ProgressView()
-                                }
-                            }
-                        }
-                        .disabled(syncEngine.isSyncing)
-
-                        if let lastSync = syncEngine.lastSyncDate {
-                            LabeledContent("Last Sync") {
-                                Text(lastSync, style: .relative)
-                            }
-                        }
-
-                        if let error = syncEngine.syncError {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                        }
-                    }
-                    .padding(.vertical, 4)
+                if !keychainSource.isEmpty {
+                    Text(keychainSource)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
-                // Appearance
-                GroupBox("Appearance") {
-                    Picker("Theme", selection: $appearanceMode) {
-                        ForEach(themeOptions, id: \.self) { Text($0).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.vertical, 4)
+                if !saveConfirmation.isEmpty {
+                    Label(saveConfirmation, systemImage: saveIsError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(saveIsError ? .red : .green)
                 }
 
-                // License
-                GroupBox("License") {
-                    LabeledContent("Status") {
-                        Text("Active")
-                            .foregroundStyle(.green)
+                Button("Save API Key") {
+                    guard !apiKey.isEmpty else { return }
+                    do {
+                        try KeychainService.save(value: apiKey)
+                        saveConfirmation = "API Key saved to Keychain"
+                        saveIsError = false
+                        keychainSource = "Saved to Keychain"
+                        hapticTrigger.toggle()
+                        Task {
+                            try? await Task.sleep(for: .seconds(3))
+                            saveConfirmation = ""
+                        }
+                    } catch {
+                        saveConfirmation = "Save failed: \(error.localizedDescription)"
+                        saveIsError = true
                     }
-                    .padding(.vertical, 4)
+                }
+                .disabled(apiKey.isEmpty)
+
+                TextField("Base ID", text: $baseId)
+                    .autocorrectionDisabled()
+            }
+
+            // Sync
+            Section("Sync") {
+                Picker("Sync Interval", selection: $syncInterval) {
+                    ForEach(intervalOptions, id: \.1) { option in
+                        Text(option.0).tag(option.1)
+                    }
                 }
 
-                // About
-                GroupBox("About") {
-                    VStack(spacing: 8) {
-                        LabeledContent("Version") {
-                            Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
-                        }
-                        LabeledContent("Build") {
-                            Text(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—")
+                Button {
+                    Task { await syncEngine.forceSync() }
+                } label: {
+                    HStack {
+                        Text("Sync Now")
+                        Spacer()
+                        if syncEngine.isSyncing {
+                            ProgressView()
                         }
                     }
-                    .padding(.vertical, 4)
+                }
+                .disabled(syncEngine.isSyncing)
+                .sensoryFeedback(.impact, trigger: syncEngine.isSyncing)
+
+                if let lastSync = syncEngine.lastSyncDate {
+                    LabeledContent("Last Sync") {
+                        Text(lastSync, style: .relative)
+                    }
+                }
+
+                if let error = syncEngine.syncError {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.red)
                 }
             }
-            .padding(.horizontal)
-            .padding(.top)
-            .padding(.bottom, 120)
+
+            // License
+            Section("License") {
+                LabeledContent("Status") {
+                    Label("Active", systemImage: "checkmark.seal.fill")
+                        .foregroundStyle(.green)
+                }
+            }
+
+            // About
+            Section("About") {
+                LabeledContent("Version") {
+                    Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
+                }
+                LabeledContent("Build") {
+                    Text(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—")
+                }
+            }
         }
+        .sensoryFeedback(.success, trigger: hapticTrigger)
         .navigationTitle("Settings")
         .onAppear {
             if let stored = KeychainService.read() {

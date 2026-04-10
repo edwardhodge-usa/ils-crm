@@ -39,30 +39,20 @@ struct LinkedRecordPicker: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Search field
-                TextField("Search...", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-
-                Divider()
-
-                // Entity-specific list
-                Group {
-                    switch entityType {
-                    case .contacts:
-                        ContactPickerList(selectedIds: $selectedIds, searchText: searchText)
-                    case .companies:
-                        CompanyPickerList(selectedIds: $selectedIds, searchText: searchText)
-                    case .opportunities:
-                        OpportunityPickerList(selectedIds: $selectedIds, searchText: searchText)
-                    case .projects:
-                        ProjectPickerList(selectedIds: $selectedIds, searchText: searchText)
-                    case .proposals:
-                        ProposalPickerList(selectedIds: $selectedIds, searchText: searchText)
-                    }
+            Group {
+                #if os(macOS)
+                VStack(spacing: 0) {
+                    TextField("Search...", text: $searchText)
+                        .textFieldStyle(.roundedBorder)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                    Divider()
+                    entityList
                 }
+                #else
+                entityList
+                    .searchable(text: $searchText, prompt: "Search...")
+                #endif
             }
             .navigationTitle(title)
             .toolbar {
@@ -77,7 +67,27 @@ struct LinkedRecordPicker: View {
                 }
             }
         }
+        #if os(macOS)
         .frame(width: 400, height: 480)
+        #else
+        .presentationDetents([.medium, .large])
+        #endif
+    }
+
+    @ViewBuilder
+    private var entityList: some View {
+        switch entityType {
+        case .contacts:
+            ContactPickerList(selectedIds: $selectedIds, searchText: searchText)
+        case .companies:
+            CompanyPickerList(selectedIds: $selectedIds, searchText: searchText)
+        case .opportunities:
+            OpportunityPickerList(selectedIds: $selectedIds, searchText: searchText)
+        case .projects:
+            ProjectPickerList(selectedIds: $selectedIds, searchText: searchText)
+        case .proposals:
+            ProposalPickerList(selectedIds: $selectedIds, searchText: searchText)
+        }
     }
 }
 
@@ -119,7 +129,7 @@ private struct ContactPickerList: View {
         VStack(spacing: 8) {
             Spacer()
             Text(searchText.isEmpty ? "No contacts available" : "No contacts match \"\(searchText)\"")
-                .font(.system(size: 13))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             Spacer()
         }
@@ -173,7 +183,7 @@ private struct CompanyPickerList: View {
         VStack(spacing: 8) {
             Spacer()
             Text(searchText.isEmpty ? "No companies available" : "No companies match \"\(searchText)\"")
-                .font(.system(size: 13))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             Spacer()
         }
@@ -227,7 +237,7 @@ private struct OpportunityPickerList: View {
         VStack(spacing: 8) {
             Spacer()
             Text(searchText.isEmpty ? "No opportunities available" : "No opportunities match \"\(searchText)\"")
-                .font(.system(size: 13))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             Spacer()
         }
@@ -281,7 +291,7 @@ private struct ProjectPickerList: View {
         VStack(spacing: 8) {
             Spacer()
             Text(searchText.isEmpty ? "No projects available" : "No projects match \"\(searchText)\"")
-                .font(.system(size: 13))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             Spacer()
         }
@@ -335,7 +345,7 @@ private struct ProposalPickerList: View {
         VStack(spacing: 8) {
             Spacer()
             Text(searchText.isEmpty ? "No proposals available" : "No proposals match \"\(searchText)\"")
-                .font(.system(size: 13))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             Spacer()
         }
@@ -367,13 +377,13 @@ private struct PickerRow: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 18))
+                    .imageScale(.large)
                     .foregroundStyle(isSelected ? Color.accentColor : .secondary)
 
                 AvatarView(name: name, avatarSize: .small, photoURL: photoURL, shape: shape)
 
                 Text(name)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
@@ -382,6 +392,8 @@ private struct PickerRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(name)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

@@ -9,11 +9,14 @@ struct iOSTasksView: View {
     @Query(sort: \CRMTask.dueDate) private var tasks: [CRMTask]
     @Environment(\.modelContext) private var modelContext
     @Environment(SyncEngine.self) private var syncEngine
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var searchText = ""
     @State private var sortOrder: TaskSortOrder = .dueDate
     @State private var showNewTask = false
     @State private var filterMode: TaskFilterMode = .allTasks
+    @State private var completionHaptic = false
+    @State private var taskToDelete: CRMTask?
 
     // MARK: - Filter Mode
 
@@ -153,6 +156,37 @@ struct iOSTasksView: View {
         return .gray
     }
 
+    private func prioritySymbol(_ priority: String?) -> String {
+        guard let p = priority else { return "circle" }
+        if p.localizedCaseInsensitiveContains("high")   { return "exclamationmark.circle.fill" }
+        if p.localizedCaseInsensitiveContains("medium") { return "minus.circle.fill" }
+        if p.localizedCaseInsensitiveContains("low")    { return "arrow.down.circle.fill" }
+        return "circle"
+    }
+
+    private func priorityAccessibilityLabel(_ priority: String?) -> String {
+        guard let p = priority else { return "No priority" }
+        if p.localizedCaseInsensitiveContains("high")   { return "High priority" }
+        if p.localizedCaseInsensitiveContains("medium") { return "Medium priority" }
+        if p.localizedCaseInsensitiveContains("low")    { return "Low priority" }
+        return "No priority"
+    }
+
+    private func taskAccessibilityLabel(_ task: CRMTask) -> String {
+        var parts: [String] = []
+        parts.append(task.task ?? "Untitled")
+        parts.append(priorityAccessibilityLabel(task.priority))
+        if isOverdue(task) { parts.append("Overdue") }
+        if let due = task.dueDate {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            parts.append("Due \(formatter.string(from: due))")
+        }
+        if let type = task.type, !type.isEmpty { parts.append(type) }
+        if isCompleted(task) { parts.append("Completed") }
+        return parts.joined(separator: ", ")
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -180,6 +214,7 @@ struct iOSTasksView: View {
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                     }
+                    .accessibilityLabel("Filter tasks")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -191,6 +226,7 @@ struct iOSTasksView: View {
                     } label: {
                         Image(systemName: "arrow.up.arrow.down")
                     }
+                    .accessibilityLabel("Sort tasks")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -198,12 +234,30 @@ struct iOSTasksView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
+                    .accessibilityLabel("Add new task")
                 }
             }
             .sheet(isPresented: $showNewTask) {
                 NavigationStack {
                     iOSTaskFormView()
                 }
+            }
+            .sensoryFeedback(.success, trigger: completionHaptic)
+            .confirmationDialog("Delete this task?", isPresented: Binding(
+                get: { taskToDelete != nil },
+                set: { if !$0 { taskToDelete = nil } }
+            ), titleVisibility: .visible) {
+                Button("Delete", role: .destructive) {
+                    if let task = taskToDelete {
+                        deleteTask(task)
+                        taskToDelete = nil
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    taskToDelete = nil
+                }
+            } message: {
+                Text("This action cannot be undone.")
             }
         }
     }
@@ -266,7 +320,6 @@ struct iOSTasksView: View {
             } header: {
                 Label(title, systemImage: icon)
                     .foregroundStyle(color)
-                    .font(.subheadline.weight(.semibold))
             }
         }
     }
@@ -277,10 +330,10 @@ struct iOSTasksView: View {
     private func taskRow(_ task: CRMTask) -> some View {
         NavigationLink(value: task.id) {
             HStack(spacing: 12) {
-                // Priority dot
-                Circle()
-                    .fill(priorityColor(task.priority))
-                    .frame(width: 10, height: 10)
+                // Priority indicator
+                Image(systemName: prioritySymbol(task.priority))
+                    .foregroundStyle(priorityColor(task.priority))
+                    .imageScale(.small)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(task.task ?? "Untitled")
@@ -307,6 +360,7 @@ struct iOSTasksView: View {
                 }
             }
         }
+        .accessibilityLabel(taskAccessibilityLabel(task))
         .swipeActions(edge: .leading) {
             Button {
                 toggleComplete(task)
@@ -320,7 +374,7 @@ struct iOSTasksView: View {
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: .destructive) {
-                deleteTask(task)
+                taskToDelete = task
             } label: {
                 Label("Delete", systemImage: "trash")
             }
@@ -335,6 +389,7 @@ struct iOSTasksView: View {
         task.completedDate = wasCompleted ? nil : Date()
         task.localModifiedAt = Date()
         task.isPendingPush = true
+        completionHaptic.toggle()
     }
 
     private func deleteTask(_ task: CRMTask) {

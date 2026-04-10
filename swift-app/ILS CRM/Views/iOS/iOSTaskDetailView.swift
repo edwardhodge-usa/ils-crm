@@ -8,8 +8,10 @@ struct iOSTaskDetailView: View {
     @Bindable var task: CRMTask
     @Environment(\.modelContext) private var modelContext
     @Environment(SyncEngine.self) private var syncEngine
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var showDeleteConfirm = false
+    @State private var completionHaptic = false
     @State private var showingContactsPicker = false
     @State private var showingOpportunitiesPicker = false
     @State private var showingProjectsPicker = false
@@ -18,7 +20,7 @@ struct iOSTaskDetailView: View {
     // MARK: - Options
 
     private let statusOptions = ["To Do", "In Progress", "Waiting", "Completed", "Cancelled"]
-    private let priorityOptions = ["🟢 Low", "🟡 Medium", "🔴 High"]
+    private let priorityOptions = ["🔴 High", "🟡 Medium", "🟢 Low"]
     private let typeOptions = [
         "Schedule Meeting", "Send Qualifications", "Follow-up Email",
         "Follow-up Call", "Other", "Presentation Deck", "Research",
@@ -46,6 +48,19 @@ struct iOSTaskDetailView: View {
     private func markModified() {
         task.localModifiedAt = Date()
         task.isPendingPush = true
+    }
+
+    @ViewBuilder
+    private func priorityLabel(_ raw: String) -> some View {
+        if raw.contains("High") {
+            Label("High", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red)
+        } else if raw.contains("Medium") {
+            Label("Medium", systemImage: "minus.circle.fill").foregroundStyle(.orange)
+        } else if raw.contains("Low") {
+            Label("Low", systemImage: "arrow.down.circle.fill").foregroundStyle(.green)
+        } else {
+            Text(raw)
+        }
     }
 
     // MARK: - Linked Record Labels
@@ -90,7 +105,9 @@ struct iOSTaskDetailView: View {
                     set: { task.priority = $0.isEmpty ? nil : $0; markModified() }
                 )) {
                     Text("None").tag("")
-                    ForEach(priorityOptions, id: \.self) { Text($0).tag($0) }
+                    ForEach(priorityOptions, id: \.self) { option in
+                        priorityLabel(option).tag(option)
+                    }
                 }
 
                 Picker("Type", selection: Binding(
@@ -167,6 +184,7 @@ struct iOSTaskDetailView: View {
                     task.status = wasCompleted ? "To Do" : "Completed"
                     task.completedDate = wasCompleted ? nil : Date()
                     markModified()
+                    completionHaptic.toggle()
                 } label: {
                     Label(
                         isComplete ? "Mark Incomplete" : "Mark Complete",
@@ -181,6 +199,8 @@ struct iOSTaskDetailView: View {
                 }
             }
         }
+        .sensoryFeedback(.success, trigger: completionHaptic)
+        .sensoryFeedback(.warning, trigger: showDeleteConfirm)
         .navigationTitle(task.task ?? "Task")
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("Delete this task?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
@@ -229,7 +249,10 @@ struct iOSTaskDetailView: View {
                 Spacer()
                 Button { onAdd() } label: {
                     Image(systemName: "plus.circle")
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
+                .accessibilityLabel("Add \(label)")
             }
             if !items.isEmpty {
                 ForEach(items, id: \.self) { item in

@@ -18,6 +18,7 @@ struct iOSTaskFormView: View {
     @State private var dueDate = Date()
     @State private var hasDueDate = false
     @State private var notes = ""
+    @State private var saveHaptic = false
 
     private let statusOptions = ["To Do", "In Progress", "Waiting", "Completed"]
     private let priorityOptions = ["🔴 High", "🟡 Medium", "🟢 Low"]
@@ -52,7 +53,9 @@ struct iOSTaskFormView: View {
                 }
                 Picker("Priority", selection: $priority) {
                     Text("None").tag("")
-                    ForEach(priorityOptions, id: \.self) { Text($0).tag($0) }
+                    ForEach(priorityOptions, id: \.self) { option in
+                        priorityLabel(option).tag(option)
+                    }
                 }
                 Picker("Type", selection: $type) {
                     Text("None").tag("")
@@ -76,6 +79,7 @@ struct iOSTaskFormView: View {
                     .frame(minHeight: 80)
             }
         }
+        .sensoryFeedback(.success, trigger: saveHaptic)
         .navigationTitle("New Task")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -83,9 +87,22 @@ struct iOSTaskFormView: View {
                 Button("Cancel") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { save() }
+                Button("Save") { save(); saveHaptic.toggle() }
                     .disabled(taskName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func priorityLabel(_ raw: String) -> some View {
+        if raw.contains("High") {
+            Label("High", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red)
+        } else if raw.contains("Medium") {
+            Label("Medium", systemImage: "minus.circle.fill").foregroundStyle(.orange)
+        } else if raw.contains("Low") {
+            Label("Low", systemImage: "arrow.down.circle.fill").foregroundStyle(.green)
+        } else {
+            Text(raw)
         }
     }
 
