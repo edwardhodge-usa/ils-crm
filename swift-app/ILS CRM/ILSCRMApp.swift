@@ -72,6 +72,12 @@ struct ILSCRMApp: App {
 
         KeychainService.migrateToSharedGroupIfNeeded()
 
+        #if os(iOS)
+        // Set window background to match content — eliminates black behind Liquid Glass nav bar
+        UINavigationBar.appearance().backgroundColor = .systemGroupedBackground
+        UIWindow.appearance().backgroundColor = .systemGroupedBackground
+        #endif
+
         #if os(macOS)
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,

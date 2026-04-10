@@ -174,31 +174,29 @@ struct iOSTasksView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Bento summary cards — Reminders-style 2x2 grid
+            List {
+                // Bento summary cards — Reminders-style 2x2 grid
+                Section {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         bentoCard(count: activeCount, label: "All", color: .gray, icon: "tray.fill")
                         bentoCard(count: overdueCount, label: "Overdue", color: .red, icon: "exclamationmark.circle.fill")
                         bentoCard(count: todayCount, label: "Today", color: .blue, icon: "calendar.circle.fill")
                         bentoCard(count: scheduledCount, label: "Scheduled", color: .purple, icon: "calendar.badge.clock")
                     }
-                    .padding(.horizontal, 16)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowBackground(Color.clear)
+                }
 
-                    // Task list sections
-                    if hasAnyTasks {
-                        VStack(spacing: 0) {
-                            taskListSection("Overdue", tasks: overdueTasks, color: .red, icon: "exclamationmark.triangle.fill")
-                            taskListSection("Today", tasks: todayTasks, color: .orange, icon: "sun.max.fill")
-                            taskListSection("Waiting", tasks: waitingTasks, color: .yellow, icon: "hourglass")
-                            taskListSection("No Date", tasks: noDateTasks, color: .secondary, icon: "calendar.badge.minus")
-                            taskListSection("Scheduled", tasks: scheduledTasks, color: .blue, icon: "calendar")
-                        }
-                        .background(Color(uiColor: .secondarySystemGroupedBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .padding(.horizontal, 16)
-                    } else {
-                        // Empty state card
+                // Task sections
+                taskSection("Overdue", tasks: overdueTasks, color: .red, icon: "exclamationmark.triangle.fill")
+                taskSection("Today", tasks: todayTasks, color: .orange, icon: "sun.max.fill")
+                taskSection("Waiting", tasks: waitingTasks, color: .yellow, icon: "hourglass")
+                taskSection("No Date", tasks: noDateTasks, color: .secondary, icon: "calendar.badge.minus")
+                taskSection("Scheduled", tasks: scheduledTasks, color: .blue, icon: "calendar")
+
+                // Empty state
+                if !hasAnyTasks {
+                    Section {
                         VStack(spacing: 12) {
                             Image(systemName: "checklist")
                                 .font(.system(size: 32))
@@ -221,16 +219,11 @@ struct iOSTasksView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 32)
-                        .background(Color(uiColor: .secondarySystemGroupedBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .padding(.horizontal, 16)
+                        .padding(.vertical, 16)
                     }
                 }
-                .padding(.top, 8)
-                .padding(.bottom, 100) // Clear the tab bar
             }
-            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+            .listStyle(.insetGrouped)
             .navigationTitle("Tasks")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Search tasks")
@@ -314,13 +307,16 @@ struct iOSTasksView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    // MARK: - Task List Section (inside card)
+    // MARK: - Section
 
     @ViewBuilder
-    private func taskListSection(_ title: String, tasks: [CRMTask], color: Color, icon: String) -> some View {
+    private func taskSection(_ title: String, tasks: [CRMTask], color: Color, icon: String) -> some View {
         if !tasks.isEmpty {
-            VStack(alignment: .leading, spacing: 0) {
-                // Section header
+            Section {
+                ForEach(tasks) { task in
+                    taskRow(task)
+                }
+            } header: {
                 HStack(spacing: 6) {
                     Image(systemName: icon)
                         .font(.system(size: 10, weight: .semibold))
@@ -329,103 +325,83 @@ struct iOSTasksView: View {
                         .font(.system(size: 11, weight: .bold))
                         .tracking(0.5)
                         .foregroundStyle(color)
-                    Text("\(tasks.count)")
+                    Text("(\(tasks.count))")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-
-                // Task rows
-                ForEach(tasks) { task in
-                    NavigationLink(value: task.id) {
-                        taskRowContent(task)
-                    }
-                    .buttonStyle(.plain)
-                    .swipeActions(edge: .leading) {
-                        Button { toggleComplete(task) } label: {
-                            Label(isCompleted(task) ? "Undo" : "Done",
-                                  systemImage: isCompleted(task) ? "arrow.uturn.backward" : "checkmark")
-                        }
-                        .tint(isCompleted(task) ? .orange : .green)
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) { taskToDelete = task } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-
-                    if task.id != tasks.last?.id {
-                        Divider().padding(.leading, 52)
-                    }
                 }
             }
         }
     }
 
-    // MARK: - Task Row Content
+    // MARK: - Task Row
 
-    private func taskRowContent(_ task: CRMTask) -> some View {
+    @ViewBuilder
+    private func taskRow(_ task: CRMTask) -> some View {
         let completed = isCompleted(task)
-        return HStack(spacing: 10) {
-            // Circular checkbox
-            ZStack {
-                Circle()
-                    .stroke(checkboxBorderColor(task), lineWidth: 1.5)
-                    .frame(width: 22, height: 22)
-                if completed {
+        NavigationLink(value: task.id) {
+            HStack(spacing: 10) {
+                // Circular checkbox
+                ZStack {
                     Circle()
-                        .fill(Color.green)
+                        .stroke(checkboxBorderColor(task), lineWidth: 1.5)
                         .frame(width: 22, height: 22)
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(.white)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 4) {
-                    Text(task.task ?? "Untitled")
-                        .font(.system(size: 15, weight: .medium))
-                        .strikethrough(completed)
-                        .foregroundStyle(completed ? .tertiary : .primary)
-                        .lineLimit(2)
-                    if let p = task.priority, !completed {
+                    if completed {
                         Circle()
-                            .fill(priorityColor(p))
-                            .frame(width: 7, height: 7)
+                            .fill(Color.green)
+                            .frame(width: 22, height: 22)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.white)
                     }
                 }
 
-                HStack(spacing: 5) {
-                    if let due = task.dueDate {
-                        Text(Self.dueDateFormatter.string(from: due))
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(isOverdue(task) ? .red : .secondary)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 4) {
+                        Text(task.task ?? "Untitled")
+                            .font(.system(size: 15, weight: .medium))
+                            .strikethrough(completed)
+                            .foregroundStyle(completed ? .tertiary : .primary)
+                            .lineLimit(2)
+                        if let p = task.priority, !completed {
+                            Circle()
+                                .fill(priorityColor(p))
+                                .frame(width: 7, height: 7)
+                        }
                     }
-                    if let type = task.type, !type.isEmpty {
-                        let colors = Self.typeBadgeColors[type]
-                        Text(type)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(colorScheme == .dark ? (colors?.fgDark ?? .secondary) : (colors?.fg ?? .secondary))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(colors?.bg ?? Color.secondary.opacity(0.22))
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
+
+                    HStack(spacing: 5) {
+                        if let due = task.dueDate {
+                            Text(Self.dueDateFormatter.string(from: due))
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(isOverdue(task) ? .red : .secondary)
+                        }
+                        if let type = task.type, !type.isEmpty {
+                            let colors = Self.typeBadgeColors[type]
+                            Text(type)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(colorScheme == .dark ? (colors?.fgDark ?? .secondary) : (colors?.fg ?? .secondary))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(colors?.bg ?? Color.secondary.opacity(0.22))
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                        }
                     }
                 }
             }
-
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.tertiary)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
         .accessibilityLabel(taskAccessibilityLabel(task))
+        .swipeActions(edge: .leading) {
+            Button { toggleComplete(task) } label: {
+                Label(isCompleted(task) ? "Undo" : "Done",
+                      systemImage: isCompleted(task) ? "arrow.uturn.backward" : "checkmark")
+            }
+            .tint(isCompleted(task) ? .orange : .green)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(role: .destructive) { taskToDelete = task } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
     }
 
     // MARK: - Actions
