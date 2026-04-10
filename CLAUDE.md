@@ -109,6 +109,10 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - **2026-04-07** — SyncEngine push: when replacing local_ records with Airtable IDs, use `toAirtableFields()` to capture local data (strip NSNull), not the Airtable response — response may use wrong field key format
 - **2026-04-07** — Never set SwiftData Transformable array columns to SQL NULL directly — use the encoded empty-array bplist. NULL causes `transformDecodeValue` crash on @Query access
 - **2026-04-07** — SyncEngine must replace local_ IDs in linked fields (companiesIds, relatedCrmContactIds) after push assigns real Airtable IDs — otherwise dangling references
+- **2026-04-09** — XcodeGen `platformFilter: macos` on SPM deps silently ignored for multi-destination targets — must manually patch pbxproj with `platformFilters = (macos, )` on Sparkle entries after each `xcodegen generate`
+- **2026-04-09** — iOS Simulator Keychain requires code signing — build without `CODE_SIGNING_ALLOWED=NO` or get errSecMissingEntitlement (-34018)
+- **2026-04-09** — iOS 26 Liquid Glass tab bar floats over content — ScrollView needs explicit bottom padding (~120pt) to ensure all content is reachable
+- **2026-04-09** — Universal target: ALL Swift files compile for both macOS and iOS — wrap platform-specific code in `#if os()`, use PlatformHelpers for cross-platform APIs
 
 ### UI / HIG
 - `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements
