@@ -2,7 +2,8 @@
 import SwiftUI
 import SwiftData
 
-/// iPhone settings — native Form layout with API key, sync, license, about.
+/// iPhone settings — native Form layout matching desktop design language.
+/// Section headers use uppercase tracked text consistent with macOS SettingsView.
 struct iOSSettingsView: View {
     @Environment(SyncEngine.self) private var syncEngine
     @AppStorage("syncIntervalSeconds") private var syncInterval: Double = 60
@@ -24,8 +25,8 @@ struct iOSSettingsView: View {
 
     var body: some View {
         Form {
-            // Airtable
-            Section("Airtable") {
+            // Airtable Connection
+            Section {
                 HStack {
                     if showApiKey {
                         TextField("API Key", text: $apiKey)
@@ -54,7 +55,7 @@ struct iOSSettingsView: View {
                         .foregroundStyle(saveIsError ? .red : .green)
                 }
 
-                Button("Save API Key") {
+                Button("Save Connection") {
                     guard !apiKey.isEmpty else { return }
                     do {
                         try KeychainService.save(value: apiKey)
@@ -75,59 +76,72 @@ struct iOSSettingsView: View {
 
                 TextField("Base ID", text: $baseId)
                     .autocorrectionDisabled()
+            } header: {
+                sectionHeader("Airtable Connection")
             }
 
             // Sync
-            Section("Sync") {
+            Section {
                 Picker("Sync Interval", selection: $syncInterval) {
                     ForEach(intervalOptions, id: \.1) { option in
                         Text(option.0).tag(option.1)
                     }
                 }
 
+                LabeledContent("Status") {
+                    if syncEngine.isSyncing {
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Syncing…")
+                                .foregroundStyle(.secondary)
+                        }
+                    } else if let lastSync = syncEngine.lastSyncDate {
+                        Text(lastSync, style: .relative)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Never synced")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
                 Button {
                     Task { await syncEngine.forceSync() }
                 } label: {
-                    HStack {
-                        Text("Sync Now")
-                        Spacer()
-                        if syncEngine.isSyncing {
-                            ProgressView()
-                        }
-                    }
+                    Text("Force Sync")
                 }
                 .disabled(syncEngine.isSyncing)
                 .sensoryFeedback(.impact, trigger: syncEngine.isSyncing)
-
-                if let lastSync = syncEngine.lastSyncDate {
-                    LabeledContent("Last Sync") {
-                        Text(lastSync, style: .relative)
-                    }
-                }
 
                 if let error = syncEngine.syncError {
                     Label(error, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
                         .foregroundStyle(.red)
                 }
+            } header: {
+                sectionHeader("Sync")
             }
 
             // License
-            Section("License") {
+            Section {
                 LabeledContent("Status") {
                     Label("Active", systemImage: "checkmark.seal.fill")
                         .foregroundStyle(.green)
                 }
+            } header: {
+                sectionHeader("License")
             }
 
             // About
-            Section("About") {
+            Section {
                 LabeledContent("Version") {
                     Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
                 }
                 LabeledContent("Build") {
                     Text(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—")
                 }
+            } header: {
+                sectionHeader("About")
             }
         }
         .sensoryFeedback(.success, trigger: hapticTrigger)
@@ -138,6 +152,16 @@ struct iOSSettingsView: View {
                 keychainSource = "Shared via iCloud Keychain"
             }
         }
+    }
+
+    // MARK: - Design Language
+
+    /// Uppercase tracked section header matching desktop DetailSection style
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title.uppercased())
+            .font(.system(size: 11, weight: .bold))
+            .tracking(0.5)
+            .foregroundStyle(.secondary)
     }
 }
 #endif

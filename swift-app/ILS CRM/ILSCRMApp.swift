@@ -108,9 +108,9 @@ struct ILSCRMApp: App {
             #endif
         }
         .modelContainer(container)
+        #if os(macOS)
         .defaultSize(width: 1200, height: 800)
         .windowResizability(.contentMinSize)
-        #if os(macOS)
         .windowToolbarStyle(.unified)
         #endif
         #if os(macOS)

@@ -20,6 +20,7 @@ struct iOSContentView: View {
                 Label("Settings", systemImage: "gear")
             }
         }
+        .tint(.accentColor)
         .task {
             let interval = UserDefaults.standard.double(forKey: "syncIntervalSeconds")
             syncEngine.startPolling(intervalSeconds: interval > 0 ? interval : AirtableConfig.defaultSyncIntervalSeconds)

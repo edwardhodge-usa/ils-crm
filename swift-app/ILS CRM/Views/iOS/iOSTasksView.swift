@@ -2,31 +2,19 @@
 import SwiftUI
 import SwiftData
 
-/// iPhone task list — NavigationStack with grouped sections.
-/// Reuses the same grouping logic as macOS TasksView but with iPhone-native patterns:
-/// NavigationStack, .searchable, swipe actions, pull-to-refresh.
+/// iPhone task list — Apple Reminders-style design.
+/// Full-screen grouped background, bento summary cards, sectioned task lists.
 struct iOSTasksView: View {
     @Query(sort: \CRMTask.dueDate) private var tasks: [CRMTask]
     @Environment(\.modelContext) private var modelContext
     @Environment(SyncEngine.self) private var syncEngine
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var searchText = ""
     @State private var sortOrder: TaskSortOrder = .dueDate
     @State private var showNewTask = false
-    @State private var filterMode: TaskFilterMode = .allTasks
     @State private var completionHaptic = false
     @State private var taskToDelete: CRMTask?
-
-    // MARK: - Filter Mode
-
-    enum TaskFilterMode: String, CaseIterable {
-        case allTasks = "All"
-        case overdue = "Overdue"
-        case today = "Today"
-        case scheduled = "Scheduled"
-        case completed = "Completed"
-    }
 
     // MARK: - Date Helpers
 
@@ -56,32 +44,7 @@ struct iOSTasksView: View {
         task.status?.localizedCaseInsensitiveContains("waiting") ?? false
     }
 
-    // MARK: - Filtered + Sorted Tasks
-
-    private var filteredTasks: [CRMTask] {
-        var result = Array(tasks)
-
-        // Filter mode
-        switch filterMode {
-        case .allTasks:  result = result.filter { !isCompleted($0) }
-        case .overdue:   result = result.filter { isOverdue($0) }
-        case .today:     result = result.filter { isToday($0) && !isOverdue($0) }
-        case .scheduled: result = result.filter { isScheduled($0) && !isWaiting($0) }
-        case .completed: result = result.filter { isCompleted($0) }
-        }
-
-        // Search
-        if !searchText.isEmpty {
-            result = result.filter { task in
-                (task.task?.localizedCaseInsensitiveContains(searchText) ?? false) ||
-                (task.notes?.localizedCaseInsensitiveContains(searchText) ?? false)
-            }
-        }
-
-        return sortTasks(result)
-    }
-
-    // MARK: - Grouped Sections (for All Tasks mode)
+    // MARK: - Grouped Sections
 
     private var overdueTasks: [CRMTask] {
         sortTasks(tasks.filter { isOverdue($0) && matchesSearch($0) })
@@ -105,6 +68,17 @@ struct iOSTasksView: View {
                (task.notes?.localizedCaseInsensitiveContains(searchText) ?? false)
     }
 
+    // MARK: - Counts
+
+    private var activeCount: Int { tasks.filter { !isCompleted($0) }.count }
+    private var overdueCount: Int { tasks.filter { isOverdue($0) }.count }
+    private var todayCount: Int { tasks.filter { isToday($0) && !isOverdue($0) && !isCompleted($0) }.count }
+    private var scheduledCount: Int { tasks.filter { isScheduled($0) && !isWaiting($0) }.count }
+    private var hasAnyTasks: Bool {
+        !overdueTasks.isEmpty || !todayTasks.isEmpty || !waitingTasks.isEmpty ||
+        !noDateTasks.isEmpty || !scheduledTasks.isEmpty
+    }
+
     // MARK: - Sort
 
     private func sortTasks(_ tasks: [CRMTask]) -> [CRMTask] {
@@ -119,13 +93,9 @@ struct iOSTasksView: View {
                 }
             }
         case .nameAZ:
-            return tasks.sorted {
-                ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedAscending
-            }
+            return tasks.sorted { ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedAscending }
         case .nameZA:
-            return tasks.sorted {
-                ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedDescending
-            }
+            return tasks.sorted { ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedDescending }
         case .priorityHighLow:
             return tasks.sorted { priorityRank($0.priority) < priorityRank($1.priority) }
         case .dateCreated:
@@ -161,7 +131,24 @@ struct iOSTasksView: View {
         return priorityColor(task.priority) == .gray ? Color(white: 0.5) : priorityColor(task.priority)
     }
 
-    /// Per-type badge colors matching the desktop app (bg at 22% opacity, distinct fg per light/dark)
+    private func priorityAccessibilityLabel(_ priority: String?) -> String {
+        guard let p = priority else { return "No priority" }
+        if p.localizedCaseInsensitiveContains("high")   { return "High priority" }
+        if p.localizedCaseInsensitiveContains("medium") { return "Medium priority" }
+        if p.localizedCaseInsensitiveContains("low")    { return "Low priority" }
+        return "No priority"
+    }
+
+    private func taskAccessibilityLabel(_ task: CRMTask) -> String {
+        var parts: [String] = [task.task ?? "Untitled", priorityAccessibilityLabel(task.priority)]
+        if isOverdue(task) { parts.append("Overdue") }
+        if let due = task.dueDate { parts.append("Due \(Self.dueDateFormatter.string(from: due))") }
+        if let type = task.type, !type.isEmpty { parts.append(type) }
+        if isCompleted(task) { parts.append("Completed") }
+        return parts.joined(separator: ", ")
+    }
+
+    /// Per-type badge colors matching desktop
     private static let typeBadgeColors: [String: (bg: Color, fg: Color, fgDark: Color)] = [
         "Schedule Meeting":     (Color(red: 0.188, green: 0.690, blue: 0.780).opacity(0.22), Color(red: 0.055, green: 0.478, blue: 0.553), Color(red: 0.251, green: 0.796, blue: 0.878)),
         "Send Qualifications":  (Color(red: 0.0, green: 0.478, blue: 1.0).opacity(0.22), Color(red: 0.0, green: 0.333, blue: 0.702), Color(red: 0.251, green: 0.612, blue: 1.0)),
@@ -177,59 +164,81 @@ struct iOSTasksView: View {
         "Travel":               (Color(red: 1.0, green: 0.231, blue: 0.188).opacity(0.22), Color(red: 0.839, green: 0.0, blue: 0.082), Color(red: 1.0, green: 0.271, blue: 0.227)),
     ]
 
-    private func priorityAccessibilityLabel(_ priority: String?) -> String {
-        guard let p = priority else { return "No priority" }
-        if p.localizedCaseInsensitiveContains("high")   { return "High priority" }
-        if p.localizedCaseInsensitiveContains("medium") { return "Medium priority" }
-        if p.localizedCaseInsensitiveContains("low")    { return "Low priority" }
-        return "No priority"
-    }
-
-    private func taskAccessibilityLabel(_ task: CRMTask) -> String {
-        var parts: [String] = []
-        parts.append(task.task ?? "Untitled")
-        parts.append(priorityAccessibilityLabel(task.priority))
-        if isOverdue(task) { parts.append("Overdue") }
-        if let due = task.dueDate {
-            let formatter = DateFormatter()
-            formatter.dateStyle = .medium
-            parts.append("Due \(formatter.string(from: due))")
-        }
-        if let type = task.type, !type.isEmpty { parts.append(type) }
-        if isCompleted(task) { parts.append("Completed") }
-        return parts.joined(separator: ", ")
-    }
+    private static let dueDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return f
+    }()
 
     // MARK: - Body
 
     var body: some View {
         NavigationStack {
-            Group {
-                if filterMode == .allTasks && searchText.isEmpty {
-                    groupedListView
-                } else {
-                    flatListView
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Bento summary cards — Reminders-style 2x2 grid
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        bentoCard(count: activeCount, label: "All", color: .gray, icon: "tray.fill")
+                        bentoCard(count: overdueCount, label: "Overdue", color: .red, icon: "exclamationmark.circle.fill")
+                        bentoCard(count: todayCount, label: "Today", color: .blue, icon: "calendar.circle.fill")
+                        bentoCard(count: scheduledCount, label: "Scheduled", color: .purple, icon: "calendar.badge.clock")
+                    }
+                    .padding(.horizontal, 16)
+
+                    // Task list sections
+                    if hasAnyTasks {
+                        VStack(spacing: 0) {
+                            taskListSection("Overdue", tasks: overdueTasks, color: .red, icon: "exclamationmark.triangle.fill")
+                            taskListSection("Today", tasks: todayTasks, color: .orange, icon: "sun.max.fill")
+                            taskListSection("Waiting", tasks: waitingTasks, color: .yellow, icon: "hourglass")
+                            taskListSection("No Date", tasks: noDateTasks, color: .secondary, icon: "calendar.badge.minus")
+                            taskListSection("Scheduled", tasks: scheduledTasks, color: .blue, icon: "calendar")
+                        }
+                        .background(Color(uiColor: .secondarySystemGroupedBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal, 16)
+                    } else {
+                        // Empty state card
+                        VStack(spacing: 12) {
+                            Image(systemName: "checklist")
+                                .font(.system(size: 32))
+                                .foregroundStyle(.tertiary)
+                            Text("No Tasks")
+                                .font(.system(size: 15, weight: .semibold))
+                            Text("All caught up!")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.secondary)
+                            Button {
+                                showNewTask = true
+                            } label: {
+                                Text("New Task")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 8)
+                                    .background(Color.accentColor)
+                                    .foregroundStyle(.white)
+                                    .clipShape(Capsule())
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 32)
+                        .background(Color(uiColor: .secondarySystemGroupedBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal, 16)
+                    }
                 }
+                .padding(.top, 8)
+                .padding(.bottom, 100) // Clear the tab bar
             }
+            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("Tasks")
+            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Search tasks")
             .refreshable {
                 await syncEngine.forceSync()
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Menu {
-                        Picker("Filter", selection: $filterMode) {
-                            ForEach(TaskFilterMode.allCases, id: \.self) { mode in
-                                Text(mode.rawValue).tag(mode)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                    }
-                    .accessibilityLabel("Filter tasks")
-                }
-                ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Picker("Sort", selection: $sortOrder) {
                             ForEach(TaskSortOrder.allCases, id: \.self) { order in
@@ -266,71 +275,52 @@ struct iOSTasksView: View {
                         taskToDelete = nil
                     }
                 }
-                Button("Cancel", role: .cancel) {
-                    taskToDelete = nil
-                }
+                Button("Cancel", role: .cancel) { taskToDelete = nil }
             } message: {
                 Text("This action cannot be undone.")
             }
-        }
-    }
-
-    // MARK: - Grouped List (default All Tasks view)
-
-    private var groupedListView: some View {
-        List {
-            taskSection("Overdue", tasks: overdueTasks, color: .red, icon: "exclamationmark.triangle.fill")
-            taskSection("Today", tasks: todayTasks, color: .orange, icon: "sun.max.fill")
-            taskSection("Waiting", tasks: waitingTasks, color: .yellow, icon: "hourglass")
-            taskSection("No Date", tasks: noDateTasks, color: .secondary, icon: "calendar.badge.minus")
-            taskSection("Scheduled", tasks: scheduledTasks, color: .blue, icon: "calendar")
-        }
-        .listStyle(.insetGrouped)
-        .navigationDestination(for: String.self) { taskId in
-            if let task = tasks.first(where: { $0.id == taskId }) {
-                iOSTaskDetailView(task: task)
-            }
-        }
-        .overlay {
-            if overdueTasks.isEmpty && todayTasks.isEmpty && waitingTasks.isEmpty &&
-               noDateTasks.isEmpty && scheduledTasks.isEmpty {
-                ContentUnavailableView("No Tasks", systemImage: "checklist",
-                    description: Text("All caught up!"))
+            .navigationDestination(for: String.self) { taskId in
+                if let task = tasks.first(where: { $0.id == taskId }) {
+                    iOSTaskDetailView(task: task)
+                }
             }
         }
     }
 
-    // MARK: - Flat List (filtered/searched view)
+    // MARK: - Bento Card (Reminders-style)
 
-    private var flatListView: some View {
-        List {
-            ForEach(filteredTasks) { task in
-                taskRow(task)
+    private func bentoCard(count: Int, label: String, color: Color, icon: String) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Image(systemName: icon)
+                    .font(.system(size: 22))
+                    .foregroundStyle(.white)
+                    .frame(width: 32, height: 32)
+                    .background(color.gradient)
+                    .clipShape(Circle())
+                Spacer()
+                Text(label)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.secondary)
             }
+            Spacer()
+            Text("\(count)")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
         }
-        .listStyle(.insetGrouped)
-        .navigationDestination(for: String.self) { taskId in
-            if let task = tasks.first(where: { $0.id == taskId }) {
-                iOSTaskDetailView(task: task)
-            }
-        }
-        .overlay {
-            if filteredTasks.isEmpty {
-                ContentUnavailableView.search(text: searchText)
-            }
-        }
+        .padding(12)
+        .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    // MARK: - Section
+    // MARK: - Task List Section (inside card)
 
     @ViewBuilder
-    private func taskSection(_ title: String, tasks: [CRMTask], color: Color, icon: String) -> some View {
+    private func taskListSection(_ title: String, tasks: [CRMTask], color: Color, icon: String) -> some View {
         if !tasks.isEmpty {
-            Section {
-                ForEach(tasks) { task in
-                    taskRow(task)
-                }
-            } header: {
+            VStack(alignment: .leading, spacing: 0) {
+                // Section header
                 HStack(spacing: 6) {
                     Image(systemName: icon)
                         .font(.system(size: 10, weight: .semibold))
@@ -339,100 +329,103 @@ struct iOSTasksView: View {
                         .font(.system(size: 11, weight: .bold))
                         .tracking(0.5)
                         .foregroundStyle(color)
-                    Text("(\(tasks.count))")
+                    Text("\(tasks.count)")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+
+                // Task rows
+                ForEach(tasks) { task in
+                    NavigationLink(value: task.id) {
+                        taskRowContent(task)
+                    }
+                    .buttonStyle(.plain)
+                    .swipeActions(edge: .leading) {
+                        Button { toggleComplete(task) } label: {
+                            Label(isCompleted(task) ? "Undo" : "Done",
+                                  systemImage: isCompleted(task) ? "arrow.uturn.backward" : "checkmark")
+                        }
+                        .tint(isCompleted(task) ? .orange : .green)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) { taskToDelete = task } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+
+                    if task.id != tasks.last?.id {
+                        Divider().padding(.leading, 52)
+                    }
                 }
             }
         }
     }
 
-    // MARK: - Task Row
+    // MARK: - Task Row Content
 
-    @Environment(\.colorScheme) private var colorScheme
-
-    private static let dueDateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MMM d"
-        return f
-    }()
-
-    @ViewBuilder
-    private func taskRow(_ task: CRMTask) -> some View {
+    private func taskRowContent(_ task: CRMTask) -> some View {
         let completed = isCompleted(task)
-        NavigationLink(value: task.id) {
-            HStack(spacing: 10) {
-                // Circular checkbox — priority-colored border, green fill when done
-                ZStack {
+        return HStack(spacing: 10) {
+            // Circular checkbox
+            ZStack {
+                Circle()
+                    .stroke(checkboxBorderColor(task), lineWidth: 1.5)
+                    .frame(width: 22, height: 22)
+                if completed {
                     Circle()
-                        .stroke(checkboxBorderColor(task), lineWidth: 1.5)
+                        .fill(Color.green)
                         .frame(width: 22, height: 22)
-                    if completed {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 4) {
+                    Text(task.task ?? "Untitled")
+                        .font(.system(size: 15, weight: .medium))
+                        .strikethrough(completed)
+                        .foregroundStyle(completed ? .tertiary : .primary)
+                        .lineLimit(2)
+                    if let p = task.priority, !completed {
                         Circle()
-                            .fill(Color.green)
-                            .frame(width: 22, height: 22)
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.white)
+                            .fill(priorityColor(p))
+                            .frame(width: 7, height: 7)
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 3) {
-                    // Name + priority dot
-                    HStack(spacing: 4) {
-                        Text(task.task ?? "Untitled")
-                            .font(.system(size: 15, weight: .medium))
-                            .strikethrough(completed)
-                            .foregroundStyle(completed ? .tertiary : .primary)
-                            .lineLimit(2)
-                        if let p = task.priority, !completed {
-                            Circle()
-                                .fill(priorityColor(p))
-                                .frame(width: 7, height: 7)
-                                .accessibilityLabel(priorityAccessibilityLabel(p))
-                        }
+                HStack(spacing: 5) {
+                    if let due = task.dueDate {
+                        Text(Self.dueDateFormatter.string(from: due))
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(isOverdue(task) ? .red : .secondary)
                     }
-
-                    // Date + type badge
-                    HStack(spacing: 5) {
-                        if let due = task.dueDate {
-                            Text(Self.dueDateFormatter.string(from: due))
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(isOverdue(task) ? .red : .secondary)
-                        }
-                        if let type = task.type, !type.isEmpty {
-                            let colors = Self.typeBadgeColors[type]
-                            Text(type)
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(colorScheme == .dark ? (colors?.fgDark ?? .secondary) : (colors?.fg ?? .secondary))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(colors?.bg ?? Color.secondary.opacity(0.22))
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
-                        }
+                    if let type = task.type, !type.isEmpty {
+                        let colors = Self.typeBadgeColors[type]
+                        Text(type)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(colorScheme == .dark ? (colors?.fgDark ?? .secondary) : (colors?.fg ?? .secondary))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(colors?.bg ?? Color.secondary.opacity(0.22))
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
                     }
                 }
             }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.tertiary)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
         .accessibilityLabel(taskAccessibilityLabel(task))
-        .swipeActions(edge: .leading) {
-            Button {
-                toggleComplete(task)
-            } label: {
-                Label(
-                    isCompleted(task) ? "Undo" : "Done",
-                    systemImage: isCompleted(task) ? "arrow.uturn.backward" : "checkmark"
-                )
-            }
-            .tint(isCompleted(task) ? .orange : .green)
-        }
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button(role: .destructive) {
-                taskToDelete = task
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
     }
 
     // MARK: - Actions

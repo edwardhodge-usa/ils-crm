@@ -2,8 +2,9 @@
 import SwiftUI
 import SwiftData
 
-/// iPhone task detail — Form-based layout with inline editing.
-/// Uses the same @Bindable + saveField pattern as macOS TaskDetailView.
+/// iPhone task detail — Form layout matching desktop design language.
+/// Uses uppercase tracked section headers, priority labels with SF Symbols,
+/// and linked record rows with avatars (mirroring macOS RelatedRecordRow).
 struct iOSTaskDetailView: View {
     @Bindable var task: CRMTask
     @Environment(\.modelContext) private var modelContext
@@ -63,6 +64,14 @@ struct iOSTaskDetailView: View {
         }
     }
 
+    /// Uppercase tracked section header matching desktop DetailSection style
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title.uppercased())
+            .font(.system(size: 11, weight: .bold))
+            .tracking(0.5)
+            .foregroundStyle(.secondary)
+    }
+
     // MARK: - Linked Record Labels
 
     private var contactLabels: [String] {
@@ -91,15 +100,18 @@ struct iOSTaskDetailView: View {
             }
 
             // Task name
-            Section("Task") {
+            Section {
                 TextField("Task name", text: Binding(
                     get: { task.task ?? "" },
                     set: { task.task = $0; markModified() }
                 ))
+                .font(.system(size: 15, weight: .medium))
+            } header: {
+                sectionHeader("Task")
             }
 
             // Details
-            Section("Details") {
+            Section {
                 Picker("Priority", selection: Binding(
                     get: { task.priority ?? "" },
                     set: { task.priority = $0.isEmpty ? nil : $0; markModified() }
@@ -132,10 +144,12 @@ struct iOSTaskDetailView: View {
                     Text("Unassigned").tag("")
                     ForEach(assigneeOptions, id: \.self) { Text($0).tag($0) }
                 }
+            } header: {
+                sectionHeader("Details")
             }
 
             // Schedule
-            Section("Schedule") {
+            Section {
                 DatePicker(
                     "Due Date",
                     selection: Binding(
@@ -150,10 +164,12 @@ struct iOSTaskDetailView: View {
                         Text(completed, style: .date)
                     }
                 }
+            } header: {
+                sectionHeader("Schedule")
             }
 
             // Linked Records
-            Section("Linked Records") {
+            Section {
                 linkedRecordRow("Contacts", items: contactLabels) {
                     showingContactsPicker = true
                 }
@@ -166,15 +182,19 @@ struct iOSTaskDetailView: View {
                 linkedRecordRow("Proposals", items: proposalLabels) {
                     showingProposalsPicker = true
                 }
+            } header: {
+                sectionHeader("Linked Records")
             }
 
             // Notes
-            Section("Notes") {
+            Section {
                 TextEditor(text: Binding(
                     get: { task.notes ?? "" },
                     set: { task.notes = $0.isEmpty ? nil : $0; markModified() }
                 ))
                 .frame(minHeight: 100)
+            } header: {
+                sectionHeader("Notes")
             }
 
             // Actions
@@ -238,17 +258,28 @@ struct iOSTaskDetailView: View {
         }
     }
 
-    // MARK: - Linked Record Row
+    // MARK: - Linked Record Row (matches desktop RelatedRecordRow pattern)
 
     @ViewBuilder
     private func linkedRecordRow(_ label: String, items: [String], onAdd: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(label)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
+                if !items.isEmpty {
+                    Text("\(items.count)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.secondary.opacity(0.12))
+                        .clipShape(Capsule())
+                }
                 Spacer()
                 Button { onAdd() } label: {
-                    Image(systemName: "plus.circle")
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Color.accentColor)
                         .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                 }
@@ -256,12 +287,13 @@ struct iOSTaskDetailView: View {
             }
             if !items.isEmpty {
                 ForEach(items, id: \.self) { item in
-                    Text(item)
-                        .font(.subheadline)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.secondary.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    HStack(spacing: 8) {
+                        AvatarView(name: item, avatarSize: .small)
+                        Text(item)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                    }
+                    .padding(.vertical, 2)
                 }
             }
         }
