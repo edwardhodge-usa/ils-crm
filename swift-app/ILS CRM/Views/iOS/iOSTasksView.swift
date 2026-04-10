@@ -156,13 +156,26 @@ struct iOSTasksView: View {
         return .gray
     }
 
-    private func prioritySymbol(_ priority: String?) -> String {
-        guard let p = priority else { return "circle" }
-        if p.localizedCaseInsensitiveContains("high")   { return "exclamationmark.circle.fill" }
-        if p.localizedCaseInsensitiveContains("medium") { return "minus.circle.fill" }
-        if p.localizedCaseInsensitiveContains("low")    { return "arrow.down.circle.fill" }
-        return "circle"
+    private func checkboxBorderColor(_ task: CRMTask) -> Color {
+        if isCompleted(task) { return .green }
+        return priorityColor(task.priority) == .gray ? Color(white: 0.5) : priorityColor(task.priority)
     }
+
+    /// Per-type badge colors matching the desktop app (bg at 22% opacity, distinct fg per light/dark)
+    private static let typeBadgeColors: [String: (bg: Color, fg: Color, fgDark: Color)] = [
+        "Schedule Meeting":     (Color(red: 0.188, green: 0.690, blue: 0.780).opacity(0.22), Color(red: 0.055, green: 0.478, blue: 0.553), Color(red: 0.251, green: 0.796, blue: 0.878)),
+        "Send Qualifications":  (Color(red: 0.0, green: 0.478, blue: 1.0).opacity(0.22), Color(red: 0.0, green: 0.333, blue: 0.702), Color(red: 0.251, green: 0.612, blue: 1.0)),
+        "Follow-up Email":      (Color(red: 0.686, green: 0.322, blue: 0.871).opacity(0.22), Color(red: 0.537, green: 0.267, blue: 0.671), Color(red: 0.749, green: 0.353, blue: 0.949)),
+        "Follow-up Call":       (Color(red: 0.204, green: 0.780, blue: 0.349).opacity(0.22), Color(red: 0.141, green: 0.541, blue: 0.239), Color(red: 0.188, green: 0.820, blue: 0.345)),
+        "Other":                (Color(red: 0.557, green: 0.557, blue: 0.576).opacity(0.22), Color(red: 0.388, green: 0.388, blue: 0.400), Color(red: 0.596, green: 0.596, blue: 0.616)),
+        "Presentation Deck":    (Color(red: 1.0, green: 0.584, blue: 0.0).opacity(0.22), Color(red: 0.788, green: 0.204, blue: 0.0), Color(red: 1.0, green: 0.624, blue: 0.039)),
+        "Research":             (Color(red: 1.0, green: 0.176, blue: 0.333).opacity(0.22), Color(red: 0.827, green: 0.0, blue: 0.278), Color(red: 1.0, green: 0.216, blue: 0.373)),
+        "Administrative":       (Color(red: 0.345, green: 0.337, blue: 0.839).opacity(0.22), Color(red: 0.212, green: 0.204, blue: 0.639), Color(red: 0.369, green: 0.361, blue: 0.902)),
+        "Send Proposal":        (Color(red: 0.196, green: 0.678, blue: 0.902).opacity(0.22), Color(red: 0.0, green: 0.443, blue: 0.643), Color(red: 0.392, green: 0.824, blue: 1.0)),
+        "Internal Review":      (Color(red: 0.635, green: 0.518, blue: 0.369).opacity(0.22), Color(red: 0.486, green: 0.396, blue: 0.271), Color(red: 0.675, green: 0.557, blue: 0.408)),
+        "Project":              (Color(red: 0.0, green: 0.780, blue: 0.745).opacity(0.22), Color(red: 0.047, green: 0.506, blue: 0.482), Color(red: 0.388, green: 0.902, blue: 0.886)),
+        "Travel":               (Color(red: 1.0, green: 0.231, blue: 0.188).opacity(0.22), Color(red: 0.839, green: 0.0, blue: 0.082), Color(red: 1.0, green: 0.271, blue: 0.227)),
+    ]
 
     private func priorityAccessibilityLabel(_ priority: String?) -> String {
         guard let p = priority else { return "No priority" }
@@ -318,42 +331,83 @@ struct iOSTasksView: View {
                     taskRow(task)
                 }
             } header: {
-                Label(title, systemImage: icon)
-                    .foregroundStyle(color)
+                HStack(spacing: 6) {
+                    Image(systemName: icon)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(color)
+                    Text(title.uppercased())
+                        .font(.system(size: 11, weight: .bold))
+                        .tracking(0.5)
+                        .foregroundStyle(color)
+                    Text("(\(tasks.count))")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
 
     // MARK: - Task Row
 
+    @Environment(\.colorScheme) private var colorScheme
+
+    private static let dueDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return f
+    }()
+
     @ViewBuilder
     private func taskRow(_ task: CRMTask) -> some View {
+        let completed = isCompleted(task)
         NavigationLink(value: task.id) {
-            HStack(spacing: 12) {
-                // Priority indicator
-                Image(systemName: prioritySymbol(task.priority))
-                    .foregroundStyle(priorityColor(task.priority))
-                    .imageScale(.small)
+            HStack(spacing: 10) {
+                // Circular checkbox — priority-colored border, green fill when done
+                ZStack {
+                    Circle()
+                        .stroke(checkboxBorderColor(task), lineWidth: 1.5)
+                        .frame(width: 22, height: 22)
+                    if completed {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 22, height: 22)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(task.task ?? "Untitled")
-                        .font(.body)
-                        .strikethrough(isCompleted(task))
-                        .foregroundStyle(isCompleted(task) ? .secondary : .primary)
-                        .lineLimit(2)
+                    // Name + priority dot
+                    HStack(spacing: 4) {
+                        Text(task.task ?? "Untitled")
+                            .font(.system(size: 15, weight: .medium))
+                            .strikethrough(completed)
+                            .foregroundStyle(completed ? .tertiary : .primary)
+                            .lineLimit(2)
+                        if let p = task.priority, !completed {
+                            Circle()
+                                .fill(priorityColor(p))
+                                .frame(width: 7, height: 7)
+                                .accessibilityLabel(priorityAccessibilityLabel(p))
+                        }
+                    }
 
-                    HStack(spacing: 6) {
+                    // Date + type badge
+                    HStack(spacing: 5) {
                         if let due = task.dueDate {
-                            Text(due, style: .date)
-                                .font(.caption)
+                            Text(Self.dueDateFormatter.string(from: due))
+                                .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(isOverdue(task) ? .red : .secondary)
                         }
                         if let type = task.type, !type.isEmpty {
+                            let colors = Self.typeBadgeColors[type]
                             Text(type)
-                                .font(.caption2.weight(.semibold))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(colorScheme == .dark ? (colors?.fgDark ?? .secondary) : (colors?.fg ?? .secondary))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Color.secondary.opacity(0.15))
+                                .background(colors?.bg ?? Color.secondary.opacity(0.22))
                                 .clipShape(RoundedRectangle(cornerRadius: 4))
                         }
                     }
