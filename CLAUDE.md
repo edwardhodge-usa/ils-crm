@@ -111,8 +111,11 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - **2026-04-07** — SyncEngine must replace local_ IDs in linked fields (companiesIds, relatedCrmContactIds) after push assigns real Airtable IDs — otherwise dangling references
 - **2026-04-09** — XcodeGen `platformFilter: macos` on SPM deps silently ignored for multi-destination targets — must manually patch pbxproj with `platformFilters = (macos, )` on Sparkle entries after each `xcodegen generate`
 - **2026-04-09** — iOS Simulator Keychain requires code signing — build without `CODE_SIGNING_ALLOWED=NO` or get errSecMissingEntitlement (-34018)
-- **2026-04-09** — iOS 26 Liquid Glass tab bar floats over content — ScrollView needs explicit bottom padding (~120pt) to ensure all content is reachable
+- **2026-04-09** — iOS 26 Liquid Glass tab bar floats over content — List handles safe area automatically; ScrollView needs manual bottom padding
 - **2026-04-09** — Universal target: ALL Swift files compile for both macOS and iOS — wrap platform-specific code in `#if os()`, use PlatformHelpers for cross-platform APIs
+- **2026-04-10** — macOS-first apps extended to iOS MUST add `UILaunchScreen` (empty dict) to Info.plist — without it, iOS renders in legacy compatibility mode with black bars (non-edge-to-edge window). Also add `UISupportedInterfaceOrientations`.
+- **2026-04-10** — iOS layout debugging: check Info.plist keys FIRST, then project config, then SwiftUI code. SwiftUI `.ignoresSafeArea()` and UIKit appearance hacks cannot fix missing plist keys.
+- **2026-04-10** — LinkedRecordPicker: use `#if os(macOS)` for `.frame(width:height:)` and inline TextField search; iOS uses `.presentationDetents([.medium, .large])` and `.searchable()`
 
 ### UI / HIG
 - `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements
