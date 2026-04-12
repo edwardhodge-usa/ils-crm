@@ -38,7 +38,9 @@ struct iOSCompaniesView: View {
             }
         case "newest":
             return base.sorted {
-                ($0.airtableModifiedAt ?? .distantPast) > ($1.airtableModifiedAt ?? .distantPast)
+                let a = $0.localModifiedAt ?? $0.createdDate ?? .distantPast
+                let b = $1.localModifiedAt ?? $1.createdDate ?? .distantPast
+                return a > b
             }
         default:
             return base.sorted { ($0.companyName ?? "") < ($1.companyName ?? "") }
@@ -108,6 +110,7 @@ struct iOSCompaniesView: View {
                 }
             }
             .listStyle(.plain)
+            .id(sortBy)
             .listSectionSpacing(4)
             .background(NeonTheme.background)
             .scrollContentBackground(.hidden)
@@ -191,7 +194,9 @@ struct iOSCompaniesView: View {
             ForEach(["name", "type", "newest"], id: \.self) { option in
                 let label = option == "name" ? "Name" : option == "type" ? "Type" : "Newest"
                 let isSelected = sortBy == option
-                Button { sortBy = option } label: {
+                Button {
+                    sortBy = option
+                } label: {
                     Text(label)
                         .font(.system(size: 12, weight: .semibold))
                         .padding(.horizontal, 12)
@@ -205,7 +210,9 @@ struct iOSCompaniesView: View {
                                 Capsule().stroke(NeonTheme.cardBorderGlow, lineWidth: 1)
                             }
                         }
+                        .contentShape(Capsule())
                 }
+                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 16)
@@ -459,68 +466,62 @@ struct iOSCompanyFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    @State private var companyName = ""
-    @State private var companyType = ""
-    @State private var industry = ""
-    @State private var website = ""
-    @State private var notes = ""
+    @State private var form = CompanyFormState()
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                NeonCard(header: "Company") {
-                    TextField("Company Name", text: $companyName)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(NeonTheme.textPrimary)
-                }
-
-                NeonCard(header: "Details") {
-                    VStack(spacing: 10) {
-                        NeonTextField(placeholder: "Type", text: $companyType)
-                        NeonTextField(placeholder: "Industry", text: $industry)
-                        NeonTextField(placeholder: "Website", text: $website)
-                    }
-                }
-
-                NeonCard(header: "Notes") {
-                    TextEditor(text: $notes)
-                        .frame(minHeight: 80)
-                        .scrollContentBackground(.hidden)
-                        .foregroundStyle(NeonTheme.textPrimary)
-                }
+        Form {
+            Section("Company") {
+                TextField("Company Name", text: $form.companyName)
             }
-            .padding(.top, 8)
-            .padding(.bottom, 32)
+
+            Section("Details") {
+                TextField("Type", text: $form.companyType)
+                TextField("Industry", text: $form.industry)
+                TextField("Website", text: $form.website)
+                    .textInputAutocapitalization(.never)
+                    .keyboardType(.URL)
+                    .autocorrectionDisabled()
+            }
+
+            Section("Notes") {
+                TextEditor(text: $form.notes)
+                    .frame(minHeight: 80)
+            }
         }
-        .background(NeonTheme.background)
         .scrollContentBackground(.hidden)
+        .background(NeonTheme.background)
         .navigationTitle("New Company")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
-                    .foregroundStyle(NeonTheme.textSecondary)
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { save() }
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? NeonTheme.textTertiary : NeonTheme.cyan)
-                    .disabled(companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(form.companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
     }
 
     private func save() {
-        let name = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = form.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
         let newCompany = Company(id: "local_\(UUID().uuidString)", companyName: name, isPendingPush: true)
-        newCompany.companyType = companyType.isEmpty ? nil : companyType
-        newCompany.industry = industry.isEmpty ? nil : industry
-        newCompany.website = website.isEmpty ? nil : website
-        newCompany.notes = notes.isEmpty ? nil : notes
+        newCompany.companyType = form.companyType.isEmpty ? nil : form.companyType
+        newCompany.industry = form.industry.isEmpty ? nil : form.industry
+        newCompany.website = form.website.isEmpty ? nil : form.website
+        newCompany.notes = form.notes.isEmpty ? nil : form.notes
         newCompany.localModifiedAt = Date()
         modelContext.insert(newCompany)
         dismiss()
     }
+}
+
+private struct CompanyFormState {
+    var companyName = ""
+    var companyType = ""
+    var industry = ""
+    var website = ""
+    var notes = ""
 }
 #endif
