@@ -2,8 +2,7 @@
 import SwiftUI
 import SwiftData
 
-/// iPhone settings — native Form layout matching desktop design language.
-/// Section headers use uppercase tracked text consistent with macOS SettingsView.
+/// iPhone settings — dark neon bento design.
 struct iOSSettingsView: View {
     @Environment(SyncEngine.self) private var syncEngine
     @AppStorage("syncIntervalSeconds") private var syncInterval: Double = 60
@@ -24,126 +23,224 @@ struct iOSSettingsView: View {
     ]
 
     var body: some View {
-        Form {
-            // Airtable Connection
-            Section {
-                HStack {
-                    if showApiKey {
-                        TextField("API Key", text: $apiKey)
-                            .textContentType(.password)
+        ScrollView {
+            VStack(spacing: 16) {
+                // Airtable Connection
+                NeonCard(header: "Airtable Connection") {
+                    VStack(spacing: 12) {
+                        HStack {
+                            Group {
+                                if showApiKey {
+                                    TextField("API Key", text: $apiKey)
+                                        .textContentType(.password)
+                                        .autocorrectionDisabled()
+                                } else {
+                                    SecureField("API Key", text: $apiKey)
+                                }
+                            }
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(NeonTheme.background)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(NeonTheme.cardBorderGlow, lineWidth: 1)
+                            )
+
+                            Button {
+                                showApiKey.toggle()
+                            } label: {
+                                Image(systemName: showApiKey ? "eye.slash" : "eye")
+                                    .foregroundStyle(NeonTheme.cyan)
+                                    .frame(minWidth: 44, minHeight: 44)
+                            }
+                            .accessibilityLabel(showApiKey ? "Hide API key" : "Show API key")
+                        }
+
+                        if !keychainSource.isEmpty {
+                            Text(keychainSource)
+                                .font(.system(size: 12))
+                                .foregroundStyle(NeonTheme.textSecondary)
+                        }
+
+                        if !saveConfirmation.isEmpty {
+                            HStack(spacing: 6) {
+                                Image(systemName: saveIsError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                                Text(saveConfirmation)
+                            }
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(saveIsError ? NeonTheme.neonRed : NeonTheme.neonGreen)
+                        }
+
+                        Button {
+                            guard !apiKey.isEmpty else { return }
+                            do {
+                                try KeychainService.save(value: apiKey)
+                                saveConfirmation = "API Key saved to Keychain"
+                                saveIsError = false
+                                keychainSource = "Saved to Keychain"
+                                hapticTrigger.toggle()
+                                Task {
+                                    try? await Task.sleep(for: .seconds(3))
+                                    saveConfirmation = ""
+                                }
+                            } catch {
+                                saveConfirmation = "Save failed: \(error.localizedDescription)"
+                                saveIsError = true
+                            }
+                        } label: {
+                            Text("Save Connection")
+                                .font(.system(size: 14, weight: .bold))
+                                .frame(maxWidth: .infinity)
+                                .frame(minHeight: 44)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(apiKey.isEmpty ? NeonTheme.cardSurfaceElevated : NeonTheme.cyan.opacity(0.15))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                                .stroke(apiKey.isEmpty ? NeonTheme.cardBorder : NeonTheme.cyan.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
+                                .foregroundStyle(apiKey.isEmpty ? NeonTheme.textTertiary : NeonTheme.cyan)
+                        }
+                        .disabled(apiKey.isEmpty)
+
+                        TextField("Base ID", text: $baseId)
                             .autocorrectionDisabled()
-                    } else {
-                        SecureField("API Key", text: $apiKey)
+                            .foregroundStyle(NeonTheme.textPrimary)
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(NeonTheme.background)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(NeonTheme.cardBorderGlow, lineWidth: 1)
+                            )
                     }
-                    Button {
-                        showApiKey.toggle()
-                    } label: {
-                        Image(systemName: showApiKey ? "eye.slash" : "eye")
-                    }
-                    .accessibilityLabel(showApiKey ? "Hide API key" : "Show API key")
                 }
 
-                if !keychainSource.isEmpty {
-                    Text(keychainSource)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                if !saveConfirmation.isEmpty {
-                    Label(saveConfirmation, systemImage: saveIsError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(saveIsError ? .red : .green)
-                }
-
-                Button("Save Connection") {
-                    guard !apiKey.isEmpty else { return }
-                    do {
-                        try KeychainService.save(value: apiKey)
-                        saveConfirmation = "API Key saved to Keychain"
-                        saveIsError = false
-                        keychainSource = "Saved to Keychain"
-                        hapticTrigger.toggle()
-                        Task {
-                            try? await Task.sleep(for: .seconds(3))
-                            saveConfirmation = ""
+                // Sync
+                NeonCard(header: "Sync") {
+                    VStack(spacing: 10) {
+                        HStack {
+                            Text("Interval")
+                                .foregroundStyle(NeonTheme.textSecondary)
+                            Spacer()
+                            Picker("", selection: $syncInterval) {
+                                ForEach(intervalOptions, id: \.1) { option in
+                                    Text(option.0).tag(option.1)
+                                }
+                            }
+                            .tint(NeonTheme.cyan)
                         }
-                    } catch {
-                        saveConfirmation = "Save failed: \(error.localizedDescription)"
-                        saveIsError = true
+                        .frame(minHeight: 32)
+
+                        NeonDivider()
+
+                        HStack {
+                            Text("Status")
+                                .foregroundStyle(NeonTheme.textSecondary)
+                            Spacer()
+                            if syncEngine.isSyncing {
+                                HStack(spacing: 6) {
+                                    ProgressView()
+                                        .tint(NeonTheme.cyan)
+                                        .controlSize(.small)
+                                    Text("Syncing...")
+                                        .foregroundStyle(NeonTheme.cyan)
+                                }
+                            } else if let lastSync = syncEngine.lastSyncDate {
+                                Text(lastSync, style: .relative)
+                                    .foregroundStyle(NeonTheme.neonGreen)
+                            } else {
+                                Text("Never synced")
+                                    .foregroundStyle(NeonTheme.textTertiary)
+                            }
+                        }
+                        .frame(minHeight: 32)
+
+                        NeonDivider()
+
+                        Button {
+                            Task { await syncEngine.forceSync() }
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                Text("Force Sync")
+                                    .font(.system(size: 14, weight: .semibold))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 44)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(NeonTheme.electricBlue.opacity(0.12))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .stroke(NeonTheme.electricBlue.opacity(0.25), lineWidth: 1)
+                                    )
+                            )
+                            .foregroundStyle(NeonTheme.electricBlue)
+                        }
+                        .disabled(syncEngine.isSyncing)
+
+                        if let error = syncEngine.syncError {
+                            HStack(spacing: 6) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                Text(error)
+                            }
+                            .font(.system(size: 12))
+                            .foregroundStyle(NeonTheme.neonRed)
+                        }
                     }
                 }
-                .disabled(apiKey.isEmpty)
 
-                TextField("Base ID", text: $baseId)
-                    .autocorrectionDisabled()
-            } header: {
-                sectionHeader("Airtable Connection")
-            }
-
-            // Sync
-            Section {
-                Picker("Sync Interval", selection: $syncInterval) {
-                    ForEach(intervalOptions, id: \.1) { option in
-                        Text(option.0).tag(option.1)
-                    }
-                }
-
-                LabeledContent("Status") {
-                    if syncEngine.isSyncing {
+                // License
+                NeonCard(header: "License") {
+                    HStack {
+                        Text("Status")
+                            .foregroundStyle(NeonTheme.textSecondary)
+                        Spacer()
                         HStack(spacing: 6) {
-                            ProgressView()
-                                .controlSize(.small)
-                            Text("Syncing…")
-                                .foregroundStyle(.secondary)
+                            Image(systemName: "checkmark.seal.fill")
+                                .foregroundStyle(NeonTheme.neonGreen)
+                                .shadow(color: NeonTheme.neonGreen.opacity(0.5), radius: 4)
+                            Text("Active")
+                                .foregroundStyle(NeonTheme.neonGreen)
                         }
-                    } else if let lastSync = syncEngine.lastSyncDate {
-                        Text(lastSync, style: .relative)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("Never synced")
-                            .foregroundStyle(.secondary)
+                    }
+                    .frame(minHeight: 32)
+                }
+
+                // About
+                NeonCard(header: "About") {
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("Version")
+                                .foregroundStyle(NeonTheme.textSecondary)
+                            Spacer()
+                            Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "--")
+                                .foregroundStyle(NeonTheme.textPrimary)
+                        }
+                        .frame(minHeight: 28)
+                        NeonDivider()
+                        HStack {
+                            Text("Build")
+                                .foregroundStyle(NeonTheme.textSecondary)
+                            Spacer()
+                            Text(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "--")
+                                .foregroundStyle(NeonTheme.textPrimary)
+                        }
+                        .frame(minHeight: 28)
                     }
                 }
-
-                Button {
-                    Task { await syncEngine.forceSync() }
-                } label: {
-                    Text("Force Sync")
-                }
-                .disabled(syncEngine.isSyncing)
-                .sensoryFeedback(.impact, trigger: syncEngine.isSyncing)
-
-                if let error = syncEngine.syncError {
-                    Label(error, systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                }
-            } header: {
-                sectionHeader("Sync")
             }
-
-            // License
-            Section {
-                LabeledContent("Status") {
-                    Label("Active", systemImage: "checkmark.seal.fill")
-                        .foregroundStyle(.green)
-                }
-            } header: {
-                sectionHeader("License")
-            }
-
-            // About
-            Section {
-                LabeledContent("Version") {
-                    Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
-                }
-                LabeledContent("Build") {
-                    Text(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—")
-                }
-            } header: {
-                sectionHeader("About")
-            }
+            .padding(.top, 8)
+            .padding(.bottom, 32)
         }
+        .background(NeonTheme.background)
+        .scrollContentBackground(.hidden)
         .sensoryFeedback(.success, trigger: hapticTrigger)
         .navigationTitle("Settings")
         .onAppear {
@@ -152,16 +249,6 @@ struct iOSSettingsView: View {
                 keychainSource = "Shared via iCloud Keychain"
             }
         }
-    }
-
-    // MARK: - Design Language
-
-    /// Uppercase tracked section header matching desktop DetailSection style
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title.uppercased())
-            .font(.system(size: 11, weight: .bold))
-            .tracking(0.5)
-            .foregroundStyle(.secondary)
     }
 }
 #endif

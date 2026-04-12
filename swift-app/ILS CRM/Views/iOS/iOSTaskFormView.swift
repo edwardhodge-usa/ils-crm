@@ -2,8 +2,7 @@
 import SwiftUI
 import SwiftData
 
-/// iPhone task creation form — presented as a sheet from the "+" button.
-/// Mirrors the macOS TaskFormView but uses iOS-native Form styling.
+/// iPhone task creation form — dark neon bento design.
 struct iOSTaskFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -21,7 +20,7 @@ struct iOSTaskFormView: View {
     @State private var saveHaptic = false
 
     private let statusOptions = ["To Do", "In Progress", "Waiting", "Completed"]
-    private let priorityOptions = ["🔴 High", "🟡 Medium", "🟢 Low"]
+    private let priorityOptions = ["High", "Medium", "Low"]
     private let typeOptions = [
         "Schedule Meeting", "Send Qualifications", "Follow-up Email",
         "Follow-up Call", "Other", "Presentation Deck", "Research",
@@ -42,69 +41,96 @@ struct iOSTaskFormView: View {
     }
 
     var body: some View {
-        Form {
-            Section("Task") {
-                TextField("Task name", text: $taskName)
-            }
-
-            Section("Details") {
-                Picker("Status", selection: $status) {
-                    ForEach(statusOptions, id: \.self) { Text($0).tag($0) }
+        ScrollView {
+            VStack(spacing: 16) {
+                NeonCard(header: "Task") {
+                    TextField("Task name", text: $taskName)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(NeonTheme.textPrimary)
                 }
-                Picker("Priority", selection: $priority) {
-                    Text("None").tag("")
-                    ForEach(priorityOptions, id: \.self) { option in
-                        priorityLabel(option).tag(option)
+
+                NeonCard(header: "Details") {
+                    VStack(spacing: 0) {
+                        neonPicker("Status", selection: $status) {
+                            ForEach(statusOptions, id: \.self) { Text($0).tag($0) }
+                        }
+                        NeonDivider()
+
+                        neonPicker("Priority", selection: $priority) {
+                            Text("None").tag("")
+                            ForEach(priorityOptions, id: \.self) { Text($0).tag($0) }
+                        }
+                        NeonDivider()
+
+                        neonPicker("Type", selection: $type) {
+                            Text("None").tag("")
+                            ForEach(typeOptions, id: \.self) { Text($0).tag($0) }
+                        }
+                        NeonDivider()
+
+                        neonPicker("Assigned To", selection: $assignedTo) {
+                            Text("Unassigned").tag("")
+                            ForEach(assigneeOptions, id: \.self) { Text($0).tag($0) }
+                        }
                     }
                 }
-                Picker("Type", selection: $type) {
-                    Text("None").tag("")
-                    ForEach(typeOptions, id: \.self) { Text($0).tag($0) }
-                }
-                Picker("Assigned To", selection: $assignedTo) {
-                    Text("Unassigned").tag("")
-                    ForEach(assigneeOptions, id: \.self) { Text($0).tag($0) }
-                }
-            }
 
-            Section("Schedule") {
-                Toggle("Due Date", isOn: $hasDueDate)
-                if hasDueDate {
-                    DatePicker("Due", selection: $dueDate, displayedComponents: .date)
+                NeonCard(header: "Schedule") {
+                    VStack(spacing: 8) {
+                        Toggle("Due Date", isOn: $hasDueDate)
+                            .tint(NeonTheme.cyan)
+                            .foregroundStyle(NeonTheme.textPrimary)
+                        if hasDueDate {
+                            DatePicker("Due", selection: $dueDate, displayedComponents: .date)
+                                .foregroundStyle(NeonTheme.textPrimary)
+                        }
+                    }
+                }
+
+                NeonCard(header: "Notes") {
+                    TextEditor(text: $notes)
+                        .frame(minHeight: 80)
+                        .scrollContentBackground(.hidden)
+                        .foregroundStyle(NeonTheme.textPrimary)
                 }
             }
-
-            Section("Notes") {
-                TextEditor(text: $notes)
-                    .frame(minHeight: 80)
-            }
+            .padding(.top, 8)
+            .padding(.bottom, 32)
         }
+        .background(NeonTheme.background)
+        .scrollContentBackground(.hidden)
         .sensoryFeedback(.success, trigger: saveHaptic)
         .navigationTitle("New Task")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
+                    .foregroundStyle(NeonTheme.textSecondary)
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { save(); saveHaptic.toggle() }
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(taskName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? NeonTheme.textTertiary : NeonTheme.cyan)
                     .disabled(taskName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
     }
 
-    @ViewBuilder
-    private func priorityLabel(_ raw: String) -> some View {
-        if raw.contains("High") {
-            Label("High", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red)
-        } else if raw.contains("Medium") {
-            Label("Medium", systemImage: "minus.circle.fill").foregroundStyle(.orange)
-        } else if raw.contains("Low") {
-            Label("Low", systemImage: "arrow.down.circle.fill").foregroundStyle(.green)
-        } else {
-            Text(raw)
+    // MARK: - Picker Helper
+
+    private func neonPicker<SelectionValue: Hashable, Content: View>(
+        _ label: String,
+        selection: Binding<SelectionValue>,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        Picker(label, selection: selection) {
+            content()
         }
+        .foregroundStyle(NeonTheme.textPrimary)
+        .frame(minHeight: 32)
     }
+
+    // MARK: - Save
 
     private func save() {
         let name = taskName.trimmingCharacters(in: .whitespacesAndNewlines)

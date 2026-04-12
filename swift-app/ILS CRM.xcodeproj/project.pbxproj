@@ -25,7 +25,7 @@
 		32A37AC7A71BCA3C59781505 /* PortalLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */; };
 		35C3F4BEF1740DA2C7220139 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668D676CC891E3198DACD13B /* TaskDetailView.swift */; };
 		36EBBB07DE34F8F950564A28 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AEF7B9304DFAE44834536F /* ProjectDetailView.swift */; };
-		38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; platformFilters = (macos, ); productRef = 4FAD464BE3689BD2B1578A74 /* Sparkle */; };
+		38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4FAD464BE3689BD2B1578A74 /* Sparkle */; platformFilters = (macos, ); };
 		38AC88CA3F769FD350136A46 /* Proposal+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */; };
 		3B9FF2F195EB914F5F66299A /* Company+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */; };
 		3BA9C65768304F0629CA653C /* PortalLog+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */; };
@@ -49,6 +49,7 @@
 		5883B6127874396EA5FFAFA9 /* AirtableCRUDTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1AB4AC70FDF9110FCC9AC88 /* AirtableCRUDTests.swift */; };
 		5C43F54A5B574A7B450EA2A7 /* ImportedContactDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80AAFC4F81B96A6478FEDDBA /* ImportedContactDetailView.swift */; };
 		5E3277207BAB0C745FF8D7F7 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A161B8DCBD0CDF39AAA10C /* SharedComponents.swift */; };
+		658C2CB62500CF27A14D2613 /* iOSContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CB5E3E355D02DA192DFBF5 /* iOSContactsView.swift */; };
 		65C3E1A6C84B7EDD12D1DB4B /* ImportedContact.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7890DD79DA9A6657609855 /* ImportedContact.swift */; };
 		732B91B8A241E2C88186FD07 /* EditableAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A09B51751718308565E912A8 /* EditableAvatarView.swift */; };
 		7476753DF05C0CD03C7076FA /* Specialty+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABE86523821B3FCDB6E53E5 /* Specialty+Airtable.swift */; };
@@ -61,6 +62,7 @@
 		9249063E8DC1713631C37A1E /* CRMTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89C658F412AEC8BC5883E5EA /* CRMTask.swift */; };
 		9352236A6AD9AE0E2128BF50 /* ContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 931ED47893850975AFBC12A0 /* ContactsView.swift */; };
 		94CC5A9D200156BA3D214F91 /* DetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D57C205199B792B326959B6 /* DetailComponents.swift */; };
+		9B4186CD4291B5DBA471BE0D /* iOSCompaniesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C847C132CA2DCF079D443545 /* iOSCompaniesView.swift */; };
 		9E2C3E2D220949F82F056435 /* EmailScanState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B893E899F8978EB8138240BE /* EmailScanState.swift */; };
 		9F0DE1571922F0514486806B /* TaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F502ADB5929B8F24523FF64E /* TaskFormView.swift */; };
 		A5EDD61CAEB53E69ABD6F598 /* GmailSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE328CDB7778A8F47EAA9F53 /* GmailSettingsSection.swift */; };
@@ -76,6 +78,7 @@
 		BC02322F46633F5E380D68DC /* ILS_CRM_UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C64BA68513C875444438907A /* ILS_CRM_UITests.swift */; };
 		BCC0A608A777C24598E3D7DA /* AirtableConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B1B436042A8E098AF0ABA6 /* AirtableConfig.swift */; };
 		BDC869DCC6C1DE44DDD76F31 /* GmailOAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 076BABE0F288BDC4F616814D /* GmailOAuthService.swift */; };
+		BEED2CC256AB9DDD4CC3CDA6 /* NeonComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E68D5043BE22F9B14CBFD85 /* NeonComponents.swift */; };
 		C12FCA7AF480E16E345D349E /* EmailScanRule+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F95308B83FB85C8EA4E85002 /* EmailScanRule+Airtable.swift */; };
 		C459EDE201B5326CB856C837 /* InteractionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D68C7F1FA49E86B89C127B6 /* InteractionDetailView.swift */; };
 		C552F943C9D54741C708C379 /* PortalAccessRecord+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AE64E65874DA7EEAD56BA2C /* PortalAccessRecord+Airtable.swift */; };
@@ -148,6 +151,7 @@
 		58CE9F45A1B999C143E2F3AA /* OfflineLockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineLockView.swift; sourceTree = "<group>"; };
 		5CE5BF78A83434AD89F1FFCD /* LinkedRecordPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedRecordPicker.swift; sourceTree = "<group>"; };
 		5E0C38FCC1781130B2EA6A71 /* RevokedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevokedView.swift; sourceTree = "<group>"; };
+		61CB5E3E355D02DA192DFBF5 /* iOSContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSContactsView.swift; sourceTree = "<group>"; };
 		644D3A1C5342DEBB127507D3 /* EmailScanEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailScanEngine.swift; sourceTree = "<group>"; };
 		649C44D1AA43D3C6B31DC0B2 /* Company.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Company.swift; sourceTree = "<group>"; };
 		65576474EA39607893CC6541 /* ILS CRM Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ILS CRM Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -164,6 +168,7 @@
 		7C8D1B1FEA4C806594AAE1EA /* Contact+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Contact+Airtable.swift"; sourceTree = "<group>"; };
 		7D1B5E5FF33E83DA5A5378A5 /* GmailAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GmailAPIClient.swift; sourceTree = "<group>"; };
 		7D57C205199B792B326959B6 /* DetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailComponents.swift; sourceTree = "<group>"; };
+		7E68D5043BE22F9B14CBFD85 /* NeonComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeonComponents.swift; sourceTree = "<group>"; };
 		80AAFC4F81B96A6478FEDDBA /* ImportedContactDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedContactDetailView.swift; sourceTree = "<group>"; };
 		85950CF9B09800B62F3CDD4D /* iOSTaskFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSTaskFormView.swift; sourceTree = "<group>"; };
 		89C658F412AEC8BC5883E5EA /* CRMTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRMTask.swift; sourceTree = "<group>"; };
@@ -195,6 +200,7 @@
 		C59EBB89A28F4676116D8A6D /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
 		C64BA68513C875444438907A /* ILS_CRM_UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ILS_CRM_UITests.swift; sourceTree = "<group>"; };
 		C6F940D1601214B19B51F716 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
+		C847C132CA2DCF079D443545 /* iOSCompaniesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSCompaniesView.swift; sourceTree = "<group>"; };
 		C97328204D6403F055134FEC /* EmailScanState+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EmailScanState+Airtable.swift"; sourceTree = "<group>"; };
 		CDA67E7B40071D4AE31F92F9 /* ClientPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientPage.swift; sourceTree = "<group>"; };
 		D062D8686378D6EEA73166F2 /* EmailUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailUtils.swift; sourceTree = "<group>"; };
@@ -466,11 +472,14 @@
 		C3D389AD805912322F1761C7 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				C847C132CA2DCF079D443545 /* iOSCompaniesView.swift */,
+				61CB5E3E355D02DA192DFBF5 /* iOSContactsView.swift */,
 				FC11BC24156F91A74A9D5038 /* iOSContentView.swift */,
 				F0601ACB05655FA5DD47D538 /* iOSSettingsView.swift */,
 				9A75252E01322E065A8492CA /* iOSTaskDetailView.swift */,
 				85950CF9B09800B62F3CDD4D /* iOSTaskFormView.swift */,
 				0AA4CE6B7DD263E94CF89FE4 /* iOSTasksView.swift */,
+				7E68D5043BE22F9B14CBFD85 /* NeonComponents.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -696,6 +705,7 @@
 				30901135097226C483D1DEB2 /* LicenseService.swift in Sources */,
 				C5B5C50392B5F43A15EE4217 /* LinkedRecordPicker.swift in Sources */,
 				74C73EA268010F1DCB9DDB41 /* LinkedRecordResolver.swift in Sources */,
+				BEED2CC256AB9DDD4CC3CDA6 /* NeonComponents.swift in Sources */,
 				0754912CF7D6E72BBF046CEC /* OfflineLockView.swift in Sources */,
 				FB6619F611CA54671C544752 /* Opportunity+Airtable.swift in Sources */,
 				024D905AD69C70469BB2802B /* Opportunity.swift in Sources */,
@@ -727,6 +737,8 @@
 				35C3F4BEF1740DA2C7220139 /* TaskDetailView.swift in Sources */,
 				9F0DE1571922F0514486806B /* TaskFormView.swift in Sources */,
 				141E801CD0E7D895A261D4AD /* TasksView.swift in Sources */,
+				9B4186CD4291B5DBA471BE0D /* iOSCompaniesView.swift in Sources */,
+				658C2CB62500CF27A14D2613 /* iOSContactsView.swift in Sources */,
 				F62D67B452DA861BCB0A1585 /* iOSContentView.swift in Sources */,
 				A9BE2148A3ECC502D2CF2691 /* iOSSettingsView.swift in Sources */,
 				D410C3B2749F903DB6078C21 /* iOSTaskDetailView.swift in Sources */,
@@ -1059,7 +1071,6 @@
 		4FAD464BE3689BD2B1578A74 /* Sparkle */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 309EFC05ECD2925FCB1802DF /* XCRemoteSwiftPackageReference "Sparkle" */;
-			platformFilters = (macos, );
 			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */

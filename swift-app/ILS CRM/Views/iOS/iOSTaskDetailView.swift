@@ -2,14 +2,11 @@
 import SwiftUI
 import SwiftData
 
-/// iPhone task detail — Form layout matching desktop design language.
-/// Uses uppercase tracked section headers, priority labels with SF Symbols,
-/// and linked record rows with avatars (mirroring macOS RelatedRecordRow).
+/// iPhone task detail — dark neon bento design.
 struct iOSTaskDetailView: View {
     @Bindable var task: CRMTask
     @Environment(\.modelContext) private var modelContext
     @Environment(SyncEngine.self) private var syncEngine
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var showDeleteConfirm = false
     @State private var completionHaptic = false
@@ -21,7 +18,7 @@ struct iOSTaskDetailView: View {
     // MARK: - Options
 
     private let statusOptions = ["To Do", "In Progress", "Waiting", "Completed", "Cancelled"]
-    private let priorityOptions = ["🔴 High", "🟡 Medium", "🟢 Low"]
+    private let priorityOptions = ["High", "Medium", "Low"]
     private let typeOptions = [
         "Schedule Meeting", "Send Qualifications", "Follow-up Email",
         "Follow-up Call", "Other", "Presentation Deck", "Research",
@@ -42,34 +39,12 @@ struct iOSTaskDetailView: View {
 
     private var isOverdue: Bool {
         guard let due = task.dueDate else { return false }
-        let complete = task.status?.localizedCaseInsensitiveContains("complet") ?? false
-        return Calendar.current.startOfDay(for: due) < Calendar.current.startOfDay(for: Date()) && !complete
+        return Calendar.current.startOfDay(for: due) < Calendar.current.startOfDay(for: Date()) && !isComplete
     }
 
     private func markModified() {
         task.localModifiedAt = Date()
         task.isPendingPush = true
-    }
-
-    @ViewBuilder
-    private func priorityLabel(_ raw: String) -> some View {
-        if raw.contains("High") {
-            Label("High", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red)
-        } else if raw.contains("Medium") {
-            Label("Medium", systemImage: "minus.circle.fill").foregroundStyle(.orange)
-        } else if raw.contains("Low") {
-            Label("Low", systemImage: "arrow.down.circle.fill").foregroundStyle(.green)
-        } else {
-            Text(raw)
-        }
-    }
-
-    /// Uppercase tracked section header matching desktop DetailSection style
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title.uppercased())
-            .font(.system(size: 11, weight: .bold))
-            .tracking(0.5)
-            .foregroundStyle(.secondary)
     }
 
     // MARK: - Linked Record Labels
@@ -90,135 +65,160 @@ struct iOSTaskDetailView: View {
     // MARK: - Body
 
     var body: some View {
-        Form {
-            // Overdue banner
-            if isOverdue {
-                Section {
-                    Label("This task is overdue", systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
-                }
-            }
-
-            // Task name
-            Section {
-                TextField("Task name", text: Binding(
-                    get: { task.task ?? "" },
-                    set: { task.task = $0; markModified() }
-                ))
-                .font(.system(size: 15, weight: .medium))
-            } header: {
-                sectionHeader("Task")
-            }
-
-            // Details
-            Section {
-                Picker("Priority", selection: Binding(
-                    get: { task.priority ?? "" },
-                    set: { task.priority = $0.isEmpty ? nil : $0; markModified() }
-                )) {
-                    Text("None").tag("")
-                    ForEach(priorityOptions, id: \.self) { option in
-                        priorityLabel(option).tag(option)
+        ScrollView {
+            VStack(spacing: 16) {
+                // Overdue banner
+                if isOverdue {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(NeonTheme.neonRed)
+                            .shadow(color: NeonTheme.neonRed.opacity(0.5), radius: 4)
+                        Text("This task is overdue")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(NeonTheme.neonRed)
                     }
-                }
-
-                Picker("Type", selection: Binding(
-                    get: { task.type ?? "" },
-                    set: { task.type = $0.isEmpty ? nil : $0; markModified() }
-                )) {
-                    Text("None").tag("")
-                    ForEach(typeOptions, id: \.self) { Text($0).tag($0) }
-                }
-
-                Picker("Status", selection: Binding(
-                    get: { task.status ?? "To Do" },
-                    set: { task.status = $0; markModified() }
-                )) {
-                    ForEach(statusOptions, id: \.self) { Text($0).tag($0) }
-                }
-
-                Picker("Assigned To", selection: Binding(
-                    get: { task.assignedTo ?? "" },
-                    set: { task.assignedTo = $0.isEmpty ? nil : $0; markModified() }
-                )) {
-                    Text("Unassigned").tag("")
-                    ForEach(assigneeOptions, id: \.self) { Text($0).tag($0) }
-                }
-            } header: {
-                sectionHeader("Details")
-            }
-
-            // Schedule
-            Section {
-                DatePicker(
-                    "Due Date",
-                    selection: Binding(
-                        get: { task.dueDate ?? Date() },
-                        set: { task.dueDate = $0; markModified() }
-                    ),
-                    displayedComponents: .date
-                )
-
-                if isComplete, let completed = task.completedDate {
-                    LabeledContent("Completed") {
-                        Text(completed, style: .date)
-                    }
-                }
-            } header: {
-                sectionHeader("Schedule")
-            }
-
-            // Linked Records
-            Section {
-                linkedRecordRow("Contacts", items: contactLabels) {
-                    showingContactsPicker = true
-                }
-                linkedRecordRow("Opportunities", items: opportunityLabels) {
-                    showingOpportunitiesPicker = true
-                }
-                linkedRecordRow("Projects", items: projectLabels) {
-                    showingProjectsPicker = true
-                }
-                linkedRecordRow("Proposals", items: proposalLabels) {
-                    showingProposalsPicker = true
-                }
-            } header: {
-                sectionHeader("Linked Records")
-            }
-
-            // Notes
-            Section {
-                TextEditor(text: Binding(
-                    get: { task.notes ?? "" },
-                    set: { task.notes = $0.isEmpty ? nil : $0; markModified() }
-                ))
-                .frame(minHeight: 100)
-            } header: {
-                sectionHeader("Notes")
-            }
-
-            // Actions
-            Section {
-                Button {
-                    let wasCompleted = isComplete
-                    task.status = wasCompleted ? "To Do" : "Completed"
-                    task.completedDate = wasCompleted ? nil : Date()
-                    markModified()
-                    completionHaptic.toggle()
-                } label: {
-                    Label(
-                        isComplete ? "Mark Incomplete" : "Mark Complete",
-                        systemImage: isComplete ? "arrow.uturn.backward.circle" : "checkmark.circle"
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: 44)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(NeonTheme.neonRed.opacity(0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(NeonTheme.neonRed.opacity(0.25), lineWidth: 1)
+                            )
                     )
+                    .padding(.horizontal, 16)
                 }
 
-                Button(role: .destructive) {
-                    showDeleteConfirm = true
-                } label: {
-                    Label("Delete Task", systemImage: "trash")
+                // Task name
+                NeonCard(header: "Task") {
+                    TextField("Task name", text: Binding(
+                        get: { task.task ?? "" },
+                        set: { task.task = $0; markModified() }
+                    ))
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(NeonTheme.textPrimary)
+                }
+
+                // Details
+                NeonCard(header: "Details") {
+                    VStack(spacing: 0) {
+                        neonPicker("Priority", selection: Binding(
+                            get: { task.priority ?? "" },
+                            set: { task.priority = $0.isEmpty ? nil : $0; markModified() }
+                        )) {
+                            Text("None").tag("")
+                            ForEach(priorityOptions, id: \.self) { Text($0).tag($0) }
+                        }
+                        NeonDivider()
+
+                        neonPicker("Type", selection: Binding(
+                            get: { task.type ?? "" },
+                            set: { task.type = $0.isEmpty ? nil : $0; markModified() }
+                        )) {
+                            Text("None").tag("")
+                            ForEach(typeOptions, id: \.self) { Text($0).tag($0) }
+                        }
+                        NeonDivider()
+
+                        neonPicker("Status", selection: Binding(
+                            get: { task.status ?? "To Do" },
+                            set: { task.status = $0; markModified() }
+                        )) {
+                            ForEach(statusOptions, id: \.self) { Text($0).tag($0) }
+                        }
+                        NeonDivider()
+
+                        neonPicker("Assigned To", selection: Binding(
+                            get: { task.assignedTo ?? "" },
+                            set: { task.assignedTo = $0.isEmpty ? nil : $0; markModified() }
+                        )) {
+                            Text("Unassigned").tag("")
+                            ForEach(assigneeOptions, id: \.self) { Text($0).tag($0) }
+                        }
+                    }
+                }
+
+                // Schedule
+                NeonCard(header: "Schedule") {
+                    VStack(spacing: 0) {
+                        DatePicker(
+                            "Due Date",
+                            selection: Binding(
+                                get: { task.dueDate ?? Date() },
+                                set: { task.dueDate = $0; markModified() }
+                            ),
+                            displayedComponents: .date
+                        )
+                        .foregroundStyle(NeonTheme.textPrimary)
+
+                        if isComplete, let completed = task.completedDate {
+                            NeonDivider()
+                            HStack {
+                                Text("Completed")
+                                    .foregroundStyle(NeonTheme.textSecondary)
+                                Spacer()
+                                Text(completed, style: .date)
+                                    .foregroundStyle(NeonTheme.neonGreen)
+                            }
+                            .frame(minHeight: 32)
+                        }
+                    }
+                }
+
+                // Linked Records
+                NeonCard(header: "Linked Records") {
+                    VStack(spacing: 8) {
+                        neonLinkedRow("Contacts", items: contactLabels) {
+                            showingContactsPicker = true
+                        }
+                        neonLinkedRow("Opportunities", items: opportunityLabels) {
+                            showingOpportunitiesPicker = true
+                        }
+                        neonLinkedRow("Projects", items: projectLabels) {
+                            showingProjectsPicker = true
+                        }
+                        neonLinkedRow("Proposals", items: proposalLabels) {
+                            showingProposalsPicker = true
+                        }
+                    }
+                }
+
+                // Notes
+                NeonCard(header: "Notes") {
+                    TextEditor(text: Binding(
+                        get: { task.notes ?? "" },
+                        set: { task.notes = $0.isEmpty ? nil : $0; markModified() }
+                    ))
+                    .frame(minHeight: 100)
+                    .scrollContentBackground(.hidden)
+                    .foregroundStyle(NeonTheme.textPrimary)
+                }
+
+                // Actions
+                VStack(spacing: 10) {
+                    NeonActionButton(
+                        title: isComplete ? "Mark Incomplete" : "Mark Complete",
+                        icon: isComplete ? "arrow.uturn.backward.circle" : "checkmark.circle.fill",
+                        color: NeonTheme.neonGreen
+                    ) {
+                        let wasCompleted = isComplete
+                        task.status = wasCompleted ? "To Do" : "Completed"
+                        task.completedDate = wasCompleted ? nil : Date()
+                        markModified()
+                        completionHaptic.toggle()
+                    }
+
+                    NeonDestructiveButton(title: "Delete Task", icon: "trash") {
+                        showDeleteConfirm = true
+                    }
                 }
             }
+            .padding(.top, 8)
+            .padding(.bottom, 32)
         }
+        .background(NeonTheme.background)
+        .scrollContentBackground(.hidden)
         .sensoryFeedback(.success, trigger: completionHaptic)
         .sensoryFeedback(.warning, trigger: showDeleteConfirm)
         .navigationTitle(task.task ?? "Task")
@@ -258,28 +258,43 @@ struct iOSTaskDetailView: View {
         }
     }
 
-    // MARK: - Linked Record Row (matches desktop RelatedRecordRow pattern)
+    // MARK: - Picker Helper
+
+    private func neonPicker<SelectionValue: Hashable, Content: View>(
+        _ label: String,
+        selection: Binding<SelectionValue>,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        Picker(label, selection: selection) {
+            content()
+        }
+        .foregroundStyle(NeonTheme.textPrimary)
+        .frame(minHeight: 32)
+    }
+
+    // MARK: - Linked Record Row
 
     @ViewBuilder
-    private func linkedRecordRow(_ label: String, items: [String], onAdd: @escaping () -> Void) -> some View {
+    private func neonLinkedRow(_ label: String, items: [String], onAdd: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(label)
-                    .foregroundStyle(.primary)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(NeonTheme.textPrimary)
                 if !items.isEmpty {
                     Text("\(items.count)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(NeonTheme.cyan)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Color.secondary.opacity(0.12))
+                        .background(NeonTheme.cyan.opacity(0.12))
                         .clipShape(Capsule())
                 }
                 Spacer()
                 Button { onAdd() } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color.accentColor)
+                    Image(systemName: "plus.circle")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(NeonTheme.cyan)
                         .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                 }
@@ -290,10 +305,10 @@ struct iOSTaskDetailView: View {
                     HStack(spacing: 8) {
                         AvatarView(name: item, avatarSize: .small)
                         Text(item)
-                            .font(.subheadline)
-                            .foregroundStyle(.primary)
+                            .font(.system(size: 14))
+                            .foregroundStyle(NeonTheme.textPrimary)
                     }
-                    .padding(.vertical, 2)
+                    .frame(minHeight: 32)
                 }
             }
         }

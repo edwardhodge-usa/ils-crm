@@ -2,8 +2,7 @@
 import SwiftUI
 import SwiftData
 
-/// Root view for iPhone — TabView with Tasks and Settings.
-/// Future phases add Contacts, Companies, Pipeline tabs.
+/// Root view for iPhone — dark neon bento theme.
 struct iOSContentView: View {
     @Environment(SyncEngine.self) private var syncEngine
 
@@ -13,6 +12,14 @@ struct iOSContentView: View {
                 .tabItem {
                     Label("Tasks", systemImage: "checklist")
                 }
+            iOSCompaniesView()
+                .tabItem {
+                    Label("Companies", systemImage: "building.2")
+                }
+            iOSContactsView()
+                .tabItem {
+                    Label("Contacts", systemImage: "person.2")
+                }
             NavigationStack {
                 iOSSettingsView()
             }
@@ -20,7 +27,9 @@ struct iOSContentView: View {
                 Label("Settings", systemImage: "gear")
             }
         }
-        .tint(.accentColor)
+        .tint(NeonTheme.cyan)
+        .preferredColorScheme(.dark)
+        .background(NeonTheme.background.ignoresSafeArea())
         .task {
             let interval = UserDefaults.standard.double(forKey: "syncIntervalSeconds")
             syncEngine.startPolling(intervalSeconds: interval > 0 ? interval : AirtableConfig.defaultSyncIntervalSeconds)

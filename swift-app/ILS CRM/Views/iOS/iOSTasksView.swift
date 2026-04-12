@@ -2,19 +2,28 @@
 import SwiftUI
 import SwiftData
 
-/// iPhone task list — Apple Reminders-style design.
-/// Full-screen grouped background, bento summary cards, sectioned task lists.
+/// iPhone task list — dark neon bento design.
 struct iOSTasksView: View {
     @Query(sort: \CRMTask.dueDate) private var tasks: [CRMTask]
     @Environment(\.modelContext) private var modelContext
     @Environment(SyncEngine.self) private var syncEngine
-    @Environment(\.colorScheme) private var colorScheme
 
     @State private var searchText = ""
     @State private var sortOrder: TaskSortOrder = .dueDate
+    @State private var selectedFilter: String = "All"
     @State private var showNewTask = false
     @State private var completionHaptic = false
     @State private var taskToDelete: CRMTask?
+
+    private static let filterOptions: [(name: String, color: Color)] = [
+        ("All", NeonTheme.cyan),
+        ("Overdue", NeonTheme.neonRed),
+        ("Today", NeonTheme.electricBlue),
+        ("Scheduled", NeonTheme.neonPurple),
+        ("Waiting", NeonTheme.neonYellow),
+        ("No Date", NeonTheme.textSecondary),
+        ("Completed", NeonTheme.neonGreen),
+    ]
 
     // MARK: - Date Helpers
 
@@ -22,8 +31,7 @@ struct iOSTasksView: View {
 
     private func isOverdue(_ task: CRMTask) -> Bool {
         guard let due = task.dueDate else { return false }
-        let isComplete = task.status?.localizedCaseInsensitiveContains("complet") ?? false
-        return Calendar.current.startOfDay(for: due) < today && !isComplete
+        return Calendar.current.startOfDay(for: due) < today && !isCompleted(task)
     }
 
     private func isToday(_ task: CRMTask) -> Bool {
@@ -61,6 +69,9 @@ struct iOSTasksView: View {
     private var scheduledTasks: [CRMTask] {
         sortTasks(tasks.filter { isScheduled($0) && !isWaiting($0) && matchesSearch($0) })
     }
+    private var completedTasks: [CRMTask] {
+        sortTasks(tasks.filter { isCompleted($0) && matchesSearch($0) })
+    }
 
     private func matchesSearch(_ task: CRMTask) -> Bool {
         if searchText.isEmpty { return true }
@@ -68,15 +79,33 @@ struct iOSTasksView: View {
                (task.notes?.localizedCaseInsensitiveContains(searchText) ?? false)
     }
 
+    private var isFilterActive: Bool { selectedFilter != "All" }
+
     // MARK: - Counts
 
     private var activeCount: Int { tasks.filter { !isCompleted($0) }.count }
     private var overdueCount: Int { tasks.filter { isOverdue($0) }.count }
     private var todayCount: Int { tasks.filter { isToday($0) && !isOverdue($0) && !isCompleted($0) }.count }
     private var scheduledCount: Int { tasks.filter { isScheduled($0) && !isWaiting($0) }.count }
+    private var completedCount: Int { tasks.filter { isCompleted($0) }.count }
+    private var waitingCount: Int { tasks.filter { isWaiting($0) && !isOverdue($0) && !isToday($0) }.count }
+    private var noDateCount: Int { tasks.filter { $0.dueDate == nil && !isCompleted($0) && !isWaiting($0) }.count }
     private var hasAnyTasks: Bool {
         !overdueTasks.isEmpty || !todayTasks.isEmpty || !waitingTasks.isEmpty ||
         !noDateTasks.isEmpty || !scheduledTasks.isEmpty
+    }
+
+    private func filterCount(_ name: String) -> Int {
+        switch name {
+        case "All": return activeCount
+        case "Overdue": return overdueCount
+        case "Today": return todayCount
+        case "Scheduled": return scheduledCount
+        case "Waiting": return waitingCount
+        case "No Date": return noDateCount
+        case "Completed": return completedCount
+        default: return 0
+        }
     }
 
     // MARK: - Sort
@@ -119,49 +148,31 @@ struct iOSTasksView: View {
     }
 
     private func priorityColor(_ priority: String?) -> Color {
-        guard let p = priority else { return .gray }
-        if p.localizedCaseInsensitiveContains("high")   { return .red }
-        if p.localizedCaseInsensitiveContains("medium") { return .orange }
-        if p.localizedCaseInsensitiveContains("low")    { return .green }
-        return .gray
+        guard let p = priority else { return NeonTheme.textTertiary }
+        if p.localizedCaseInsensitiveContains("high")   { return NeonTheme.neonRed }
+        if p.localizedCaseInsensitiveContains("medium") { return NeonTheme.neonOrange }
+        if p.localizedCaseInsensitiveContains("low")    { return NeonTheme.neonGreen }
+        return NeonTheme.textTertiary
     }
 
     private func checkboxBorderColor(_ task: CRMTask) -> Color {
-        if isCompleted(task) { return .green }
-        return priorityColor(task.priority) == .gray ? Color(white: 0.5) : priorityColor(task.priority)
+        if isCompleted(task) { return NeonTheme.neonGreen }
+        return priorityColor(task.priority) == NeonTheme.textTertiary ? Color.white.opacity(0.3) : priorityColor(task.priority)
     }
 
-    private func priorityAccessibilityLabel(_ priority: String?) -> String {
-        guard let p = priority else { return "No priority" }
-        if p.localizedCaseInsensitiveContains("high")   { return "High priority" }
-        if p.localizedCaseInsensitiveContains("medium") { return "Medium priority" }
-        if p.localizedCaseInsensitiveContains("low")    { return "Low priority" }
-        return "No priority"
-    }
-
-    private func taskAccessibilityLabel(_ task: CRMTask) -> String {
-        var parts: [String] = [task.task ?? "Untitled", priorityAccessibilityLabel(task.priority)]
-        if isOverdue(task) { parts.append("Overdue") }
-        if let due = task.dueDate { parts.append("Due \(Self.dueDateFormatter.string(from: due))") }
-        if let type = task.type, !type.isEmpty { parts.append(type) }
-        if isCompleted(task) { parts.append("Completed") }
-        return parts.joined(separator: ", ")
-    }
-
-    /// Per-type badge colors matching desktop
-    private static let typeBadgeColors: [String: (bg: Color, fg: Color, fgDark: Color)] = [
-        "Schedule Meeting":     (Color(red: 0.188, green: 0.690, blue: 0.780).opacity(0.22), Color(red: 0.055, green: 0.478, blue: 0.553), Color(red: 0.251, green: 0.796, blue: 0.878)),
-        "Send Qualifications":  (Color(red: 0.0, green: 0.478, blue: 1.0).opacity(0.22), Color(red: 0.0, green: 0.333, blue: 0.702), Color(red: 0.251, green: 0.612, blue: 1.0)),
-        "Follow-up Email":      (Color(red: 0.686, green: 0.322, blue: 0.871).opacity(0.22), Color(red: 0.537, green: 0.267, blue: 0.671), Color(red: 0.749, green: 0.353, blue: 0.949)),
-        "Follow-up Call":       (Color(red: 0.204, green: 0.780, blue: 0.349).opacity(0.22), Color(red: 0.141, green: 0.541, blue: 0.239), Color(red: 0.188, green: 0.820, blue: 0.345)),
-        "Other":                (Color(red: 0.557, green: 0.557, blue: 0.576).opacity(0.22), Color(red: 0.388, green: 0.388, blue: 0.400), Color(red: 0.596, green: 0.596, blue: 0.616)),
-        "Presentation Deck":    (Color(red: 1.0, green: 0.584, blue: 0.0).opacity(0.22), Color(red: 0.788, green: 0.204, blue: 0.0), Color(red: 1.0, green: 0.624, blue: 0.039)),
-        "Research":             (Color(red: 1.0, green: 0.176, blue: 0.333).opacity(0.22), Color(red: 0.827, green: 0.0, blue: 0.278), Color(red: 1.0, green: 0.216, blue: 0.373)),
-        "Administrative":       (Color(red: 0.345, green: 0.337, blue: 0.839).opacity(0.22), Color(red: 0.212, green: 0.204, blue: 0.639), Color(red: 0.369, green: 0.361, blue: 0.902)),
-        "Send Proposal":        (Color(red: 0.196, green: 0.678, blue: 0.902).opacity(0.22), Color(red: 0.0, green: 0.443, blue: 0.643), Color(red: 0.392, green: 0.824, blue: 1.0)),
-        "Internal Review":      (Color(red: 0.635, green: 0.518, blue: 0.369).opacity(0.22), Color(red: 0.486, green: 0.396, blue: 0.271), Color(red: 0.675, green: 0.557, blue: 0.408)),
-        "Project":              (Color(red: 0.0, green: 0.780, blue: 0.745).opacity(0.22), Color(red: 0.047, green: 0.506, blue: 0.482), Color(red: 0.388, green: 0.902, blue: 0.886)),
-        "Travel":               (Color(red: 1.0, green: 0.231, blue: 0.188).opacity(0.22), Color(red: 0.839, green: 0.0, blue: 0.082), Color(red: 1.0, green: 0.271, blue: 0.227)),
+    private static let typeBadgeColors: [String: (bg: Color, glow: Color)] = [
+        "Schedule Meeting":     (NeonTheme.cyan.opacity(0.15),           NeonTheme.cyan),
+        "Send Qualifications":  (NeonTheme.electricBlue.opacity(0.15),   NeonTheme.electricBlue),
+        "Follow-up Email":      (NeonTheme.neonPurple.opacity(0.15),     NeonTheme.neonPurple),
+        "Follow-up Call":       (NeonTheme.neonGreen.opacity(0.15),      NeonTheme.neonGreen),
+        "Other":                (Color.white.opacity(0.08),              Color.white.opacity(0.5)),
+        "Presentation Deck":    (NeonTheme.neonOrange.opacity(0.15),     NeonTheme.neonOrange),
+        "Research":             (NeonTheme.neonRed.opacity(0.15),        NeonTheme.neonRed),
+        "Administrative":       (NeonTheme.electricBlue.opacity(0.12),   NeonTheme.electricBlue),
+        "Send Proposal":        (NeonTheme.cyan.opacity(0.12),           NeonTheme.cyan),
+        "Internal Review":      (NeonTheme.neonYellow.opacity(0.12),     NeonTheme.neonYellow),
+        "Project":              (NeonTheme.neonGreen.opacity(0.12),      NeonTheme.neonGreen),
+        "Travel":               (NeonTheme.magenta.opacity(0.15),        NeonTheme.magenta),
     ]
 
     private static let dueDateFormatter: DateFormatter = {
@@ -174,140 +185,216 @@ struct iOSTasksView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                // Bento summary cards — Reminders-style 2x2 grid
-                Section {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        bentoCard(count: activeCount, label: "All", color: .gray, icon: "tray.fill")
-                        bentoCard(count: overdueCount, label: "Overdue", color: .red, icon: "exclamationmark.circle.fill")
-                        bentoCard(count: todayCount, label: "Today", color: .blue, icon: "calendar.circle.fill")
-                        bentoCard(count: scheduledCount, label: "Scheduled", color: .purple, icon: "calendar.badge.clock")
-                    }
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .listRowBackground(Color.clear)
-                }
-
-                // Task sections
-                taskSection("Overdue", tasks: overdueTasks, color: .red, icon: "exclamationmark.triangle.fill")
-                taskSection("Today", tasks: todayTasks, color: .orange, icon: "sun.max.fill")
-                taskSection("Waiting", tasks: waitingTasks, color: .yellow, icon: "hourglass")
-                taskSection("No Date", tasks: noDateTasks, color: .secondary, icon: "calendar.badge.minus")
-                taskSection("Scheduled", tasks: scheduledTasks, color: .blue, icon: "calendar")
-
-                // Empty state
-                if !hasAnyTasks {
-                    Section {
-                        VStack(spacing: 12) {
-                            Image(systemName: "checklist")
-                                .font(.system(size: 32))
-                                .foregroundStyle(.tertiary)
-                            Text("No Tasks")
-                                .font(.system(size: 15, weight: .semibold))
-                            Text("All caught up!")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
-                            Button {
-                                showNewTask = true
+            listContent
+                .background(NeonTheme.background)
+                .scrollContentBackground(.hidden)
+                .navigationTitle("Tasks")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        HStack(spacing: 4) {
+                            Menu {
+                                Picker("Sort", selection: $sortOrder) {
+                                    ForEach(TaskSortOrder.allCases, id: \.self) { order in
+                                        Text(order.rawValue).tag(order)
+                                    }
+                                }
                             } label: {
-                                Text("New Task")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 8)
-                                    .background(Color.accentColor)
-                                    .foregroundStyle(.white)
-                                    .clipShape(Capsule())
+                                Image(systemName: "arrow.up.arrow.down")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(NeonTheme.cyan)
                             }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                    }
-                }
-            }
-            .listStyle(.insetGrouped)
-            .navigationTitle("Tasks")
-            .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, prompt: "Search tasks")
-            .refreshable {
-                await syncEngine.forceSync()
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Menu {
-                        Picker("Sort", selection: $sortOrder) {
-                            ForEach(TaskSortOrder.allCases, id: \.self) { order in
-                                Text(order.rawValue).tag(order)
+                            .accessibilityLabel("Sort tasks")
+                            Button { showNewTask = true } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 22))
+                                    .foregroundStyle(NeonTheme.cyan)
                             }
+                            .accessibilityLabel("Add new task")
                         }
-                    } label: {
-                        Image(systemName: "arrow.up.arrow.down")
-                    }
-                    .accessibilityLabel("Sort tasks")
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showNewTask = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityLabel("Add new task")
-                }
-            }
-            .sheet(isPresented: $showNewTask) {
-                NavigationStack {
-                    iOSTaskFormView()
-                }
-            }
-            .sensoryFeedback(.success, trigger: completionHaptic)
-            .confirmationDialog("Delete this task?", isPresented: Binding(
-                get: { taskToDelete != nil },
-                set: { if !$0 { taskToDelete = nil } }
-            ), titleVisibility: .visible) {
-                Button("Delete", role: .destructive) {
-                    if let task = taskToDelete {
-                        deleteTask(task)
-                        taskToDelete = nil
                     }
                 }
-                Button("Cancel", role: .cancel) { taskToDelete = nil }
-            } message: {
-                Text("This action cannot be undone.")
-            }
-            .navigationDestination(for: String.self) { taskId in
-                if let task = tasks.first(where: { $0.id == taskId }) {
-                    iOSTaskDetailView(task: task)
+                .refreshable {
+                    await syncEngine.forceSync()
                 }
-            }
+                .sheet(isPresented: $showNewTask) {
+                    NavigationStack {
+                        iOSTaskFormView()
+                    }
+                }
+                .sensoryFeedback(.success, trigger: completionHaptic)
+                .confirmationDialog("Delete this task?", isPresented: Binding(
+                    get: { taskToDelete != nil },
+                    set: { if !$0 { taskToDelete = nil } }
+                ), titleVisibility: .visible) {
+                    Button("Delete", role: .destructive) {
+                        if let task = taskToDelete {
+                            deleteTask(task)
+                            taskToDelete = nil
+                        }
+                    }
+                    Button("Cancel", role: .cancel) { taskToDelete = nil }
+                } message: {
+                    Text("This action cannot be undone.")
+                }
+                .navigationDestination(for: String.self) { taskId in
+                    if let task = tasks.first(where: { $0.id == taskId }) {
+                        iOSTaskDetailView(task: task)
+                    }
+                }
         }
     }
 
-    // MARK: - Bento Card (Reminders-style)
+    // MARK: - List Content (supports swipe actions)
 
-    private func bentoCard(count: Int, label: String, color: Color, icon: String) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Image(systemName: icon)
-                    .font(.system(size: 22))
-                    .foregroundStyle(.white)
-                    .frame(width: 32, height: 32)
-                    .background(color.gradient)
-                    .clipShape(Circle())
-                Spacer()
-                Text(label)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.secondary)
+    private var listContent: some View {
+        List {
+            // Search + summary + filter chips
+            Section {
+                // Search
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(NeonTheme.textTertiary)
+                    TextField("Search tasks", text: $searchText)
+                        .font(.system(size: 15))
+                        .foregroundStyle(NeonTheme.textPrimary)
+                }
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(NeonTheme.cardSurface)
+                )
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+
+                if !tasks.isEmpty {
+                    summaryStrip
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    filterChips
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
             }
-            Spacer()
+
+            // Task sections
+            if !isFilterActive || selectedFilter == "Overdue" {
+                taskSection("Overdue", tasks: overdueTasks, color: NeonTheme.neonRed, icon: "exclamationmark.triangle.fill")
+            }
+            if !isFilterActive || selectedFilter == "Today" {
+                taskSection("Today", tasks: todayTasks, color: NeonTheme.neonOrange, icon: "sun.max.fill")
+            }
+            if !isFilterActive || selectedFilter == "Waiting" {
+                taskSection("Waiting", tasks: waitingTasks, color: NeonTheme.neonYellow, icon: "hourglass")
+            }
+            if !isFilterActive || selectedFilter == "No Date" {
+                taskSection("No Date", tasks: noDateTasks, color: NeonTheme.textSecondary, icon: "calendar.badge.minus")
+            }
+            if !isFilterActive || selectedFilter == "Scheduled" {
+                taskSection("Scheduled", tasks: scheduledTasks, color: NeonTheme.electricBlue, icon: "calendar")
+            }
+            if selectedFilter == "All" || selectedFilter == "Completed" {
+                taskSection("Completed", tasks: completedTasks, color: NeonTheme.neonGreen, icon: "checkmark.circle.fill")
+            }
+
+            // Empty state
+            if !hasAnyTasks && selectedFilter == "All" {
+                emptyState
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+            }
+        }
+        .listStyle(.plain)
+        .listSectionSpacing(4)
+    }
+
+    // MARK: - Summary Strip (horizontal scroll)
+
+    private var summaryStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                neonSummaryChip(count: activeCount, label: "All", color: NeonTheme.cyan, icon: "tray.fill")
+                neonSummaryChip(count: overdueCount, label: "Overdue", color: NeonTheme.neonRed, icon: "exclamationmark.circle.fill")
+                neonSummaryChip(count: todayCount, label: "Today", color: NeonTheme.electricBlue, icon: "calendar.circle.fill")
+                neonSummaryChip(count: scheduledCount, label: "Scheduled", color: NeonTheme.neonPurple, icon: "calendar.badge.clock")
+                neonSummaryChip(count: waitingCount, label: "Waiting", color: NeonTheme.neonYellow, icon: "hourglass")
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+
+    private func neonSummaryChip(count: Int, label: String, color: Color, icon: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(color)
+                .shadow(color: color.opacity(0.5), radius: 4)
             Text("\(count)")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(color)
+            Text(label)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(NeonTheme.textSecondary)
+                .textCase(.uppercase)
+                .tracking(0.3)
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(NeonTheme.cardSurface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(color.opacity(0.15), lineWidth: 1)
+        )
     }
 
-    // MARK: - Section
+    // MARK: - Filter Chips
+
+    private var filterChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(Self.filterOptions, id: \.name) { option in
+                    let isSelected = selectedFilter == option.name
+                    let count = filterCount(option.name)
+                    Button {
+                        selectedFilter = isSelected ? "All" : option.name
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(option.name)
+                                .font(.system(size: 13, weight: .semibold))
+                            if count > 0 {
+                                Text("\(count)")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(isSelected ? .black.opacity(0.6) : option.color)
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 36)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(isSelected ? option.color : NeonTheme.cardSurface)
+                        )
+                        .foregroundStyle(isSelected ? .black : NeonTheme.textPrimary)
+                        .overlay {
+                            if !isSelected {
+                                Capsule(style: .continuous)
+                                    .stroke(option.color.opacity(0.25), lineWidth: 1)
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+
+    // MARK: - Task Section (List-based for swipe actions)
 
     @ViewBuilder
     private func taskSection(_ title: String, tasks: [CRMTask], color: Color, icon: String) -> some View {
@@ -315,93 +402,127 @@ struct iOSTasksView: View {
             Section {
                 ForEach(tasks) { task in
                     taskRow(task)
+                        .swipeActions(edge: .leading) {
+                            Button { toggleComplete(task) } label: {
+                                Label(isCompleted(task) ? "Undo" : "Done",
+                                      systemImage: isCompleted(task) ? "arrow.uturn.backward" : "checkmark")
+                            }
+                            .tint(isCompleted(task) ? .orange : .green)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) { taskToDelete = task } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        .listRowBackground(NeonTheme.cardSurface)
+                        .listRowSeparator(.hidden)
                 }
             } header: {
                 HStack(spacing: 6) {
                     Image(systemName: icon)
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(color)
+                        .shadow(color: color.opacity(0.5), radius: 4)
                     Text(title.uppercased())
                         .font(.system(size: 11, weight: .bold))
-                        .tracking(0.5)
+                        .tracking(0.8)
                         .foregroundStyle(color)
-                    Text("(\(tasks.count))")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                    Text("\(tasks.count)")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(NeonTheme.textTertiary)
+                    Spacer()
                 }
+                .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
             }
         }
     }
 
     // MARK: - Task Row
 
-    @ViewBuilder
     private func taskRow(_ task: CRMTask) -> some View {
         let completed = isCompleted(task)
-        NavigationLink(value: task.id) {
-            HStack(spacing: 10) {
-                // Circular checkbox
+        return NavigationLink(value: task.id) {
+            HStack(spacing: 12) {
+                // Checkbox
                 ZStack {
                     Circle()
-                        .stroke(checkboxBorderColor(task), lineWidth: 1.5)
+                        .stroke(checkboxBorderColor(task).opacity(completed ? 1 : 0.6), lineWidth: 1.5)
                         .frame(width: 22, height: 22)
                     if completed {
                         Circle()
-                            .fill(Color.green)
+                            .fill(NeonTheme.neonGreen)
                             .frame(width: 22, height: 22)
+                            .shadow(color: NeonTheme.neonGreen.opacity(0.5), radius: 4)
                         Image(systemName: "checkmark")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.black)
                     }
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 5) {
                         Text(task.task ?? "Untitled")
                             .font(.system(size: 15, weight: .medium))
                             .strikethrough(completed)
-                            .foregroundStyle(completed ? .tertiary : .primary)
+                            .foregroundStyle(completed ? NeonTheme.textTertiary : NeonTheme.textPrimary)
                             .lineLimit(2)
                         if let p = task.priority, !completed {
                             Circle()
                                 .fill(priorityColor(p))
-                                .frame(width: 7, height: 7)
+                                .frame(width: 6, height: 6)
+                                .shadow(color: priorityColor(p).opacity(0.6), radius: 3)
                         }
                     }
 
-                    HStack(spacing: 5) {
+                    HStack(spacing: 6) {
                         if let due = task.dueDate {
                             Text(Self.dueDateFormatter.string(from: due))
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(isOverdue(task) ? .red : .secondary)
+                                .foregroundStyle(isOverdue(task) ? NeonTheme.neonRed : NeonTheme.textSecondary)
                         }
                         if let type = task.type, !type.isEmpty {
                             let colors = Self.typeBadgeColors[type]
                             Text(type)
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(colorScheme == .dark ? (colors?.fgDark ?? .secondary) : (colors?.fg ?? .secondary))
-                                .padding(.horizontal, 6)
+                                .font(.system(size: 10, weight: .bold))
+                                .tracking(0.3)
+                                .foregroundStyle(colors?.glow ?? NeonTheme.textSecondary)
+                                .padding(.horizontal, 7)
                                 .padding(.vertical, 2)
-                                .background(colors?.bg ?? Color.secondary.opacity(0.22))
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                        .fill(colors?.bg ?? Color.white.opacity(0.06))
+                                )
                         }
                     }
                 }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(NeonTheme.textTertiary)
             }
+            .frame(minHeight: 44)
         }
-        .accessibilityLabel(taskAccessibilityLabel(task))
-        .swipeActions(edge: .leading) {
-            Button { toggleComplete(task) } label: {
-                Label(isCompleted(task) ? "Undo" : "Done",
-                      systemImage: isCompleted(task) ? "arrow.uturn.backward" : "checkmark")
-            }
-            .tint(isCompleted(task) ? .orange : .green)
+    }
+
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "checklist")
+                .font(.system(size: 36, weight: .thin))
+                .foregroundStyle(NeonTheme.cyan.opacity(0.4))
+                .shadow(color: NeonTheme.cyan.opacity(0.2), radius: 12)
+            Text("No Tasks")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(NeonTheme.textPrimary)
+            Text("Tap + to create a task")
+                .font(.system(size: 13))
+                .foregroundStyle(NeonTheme.textSecondary)
         }
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button(role: .destructive) { taskToDelete = task } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
     }
 
     // MARK: - Actions
