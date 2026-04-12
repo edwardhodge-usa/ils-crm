@@ -31,6 +31,11 @@ struct iOSContentView: View {
         .preferredColorScheme(.dark)
         .background(NeonTheme.background.ignoresSafeArea())
         .task {
+            // Auto-configure sync from Keychain on launch (matches macOS ContentView behavior)
+            if let storedKey = KeychainService.read() {
+                let baseId = UserDefaults.standard.string(forKey: "airtable_base_id") ?? AirtableConfig.baseId
+                syncEngine.configure(apiKey: storedKey, baseId: baseId)
+            }
             let interval = UserDefaults.standard.double(forKey: "syncIntervalSeconds")
             syncEngine.startPolling(intervalSeconds: interval > 0 ? interval : AirtableConfig.defaultSyncIntervalSeconds)
         }

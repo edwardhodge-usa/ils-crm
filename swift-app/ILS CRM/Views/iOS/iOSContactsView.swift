@@ -223,10 +223,6 @@ struct iOSContactsView: View {
             if let cat = contact.categorization.first, !cat.isEmpty {
                 NeonPillBadge(text: cat, color: categorizationColor(cat))
             }
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(NeonTheme.textTertiary)
         }
         .frame(minHeight: 44)
     }

@@ -265,10 +265,16 @@ struct iOSTaskDetailView: View {
         selection: Binding<SelectionValue>,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        Picker(label, selection: selection) {
-            content()
+        HStack {
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(NeonTheme.textSecondary)
+            Spacer()
+            Picker("", selection: selection) {
+                content()
+            }
+            .tint(NeonTheme.cyan)
         }
-        .foregroundStyle(NeonTheme.textPrimary)
         .frame(minHeight: 32)
     }
 

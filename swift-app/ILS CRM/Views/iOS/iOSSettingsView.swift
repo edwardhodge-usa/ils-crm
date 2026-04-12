@@ -77,6 +77,9 @@ struct iOSSettingsView: View {
                             guard !apiKey.isEmpty else { return }
                             do {
                                 try KeychainService.save(value: apiKey)
+                                // Persist Base ID and configure sync engine
+                                UserDefaults.standard.set(baseId, forKey: "airtable_base_id")
+                                syncEngine.configure(apiKey: apiKey, baseId: baseId)
                                 saveConfirmation = "API Key saved to Keychain"
                                 saveIsError = false
                                 keychainSource = "Saved to Keychain"
@@ -246,7 +249,11 @@ struct iOSSettingsView: View {
         .onAppear {
             if let stored = KeychainService.read() {
                 apiKey = stored
-                keychainSource = "Shared via iCloud Keychain"
+                keychainSource = "Saved to Keychain"
+                // Auto-configure sync engine if key exists
+                let savedBaseId = UserDefaults.standard.string(forKey: "airtable_base_id") ?? AirtableConfig.baseId
+                baseId = savedBaseId
+                syncEngine.configure(apiKey: stored, baseId: savedBaseId)
             }
         }
     }

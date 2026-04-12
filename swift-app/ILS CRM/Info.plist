@@ -30,5 +30,13 @@
 	<string>TEYI9o0zD1tc95dmkSIyvCN17FtqT0kXPo3F+pSHatw=</string>
 	<key>SUScheduledCheckInterval</key>
 	<integer>14400</integer>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
 </dict>
 </plist>

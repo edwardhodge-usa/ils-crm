@@ -251,9 +251,6 @@ struct iOSCompaniesView: View {
                 }
             }
 
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(NeonTheme.textTertiary)
         }
         .frame(minHeight: 44)
     }
