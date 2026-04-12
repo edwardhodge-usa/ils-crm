@@ -10,6 +10,7 @@ struct iOSTasksView: View {
 
     @State private var searchText = ""
     @State private var sortOrder: TaskSortOrder = .dueDate
+    @State private var sortAscending = true
     @State private var selectedFilter: String = "All"
     @State private var showNewTask = false
     @State private var completionHaptic = false
@@ -81,6 +82,26 @@ struct iOSTasksView: View {
 
     private var isFilterActive: Bool { selectedFilter != "All" }
 
+    /// Group by status sections only for due-date sort; flatten for all other sorts.
+    private var useGroupedLayout: Bool { sortOrder == .dueDate }
+
+    /// All non-completed tasks matching search + filter, sorted by current sort order.
+    private var flatSortedTasks: [CRMTask] {
+        var result = tasks.filter { matchesSearch($0) }
+        if isFilterActive {
+            switch selectedFilter {
+            case "Overdue":   result = result.filter { isOverdue($0) }
+            case "Today":     result = result.filter { isToday($0) && !isOverdue($0) && !isCompleted($0) }
+            case "Scheduled": result = result.filter { isScheduled($0) && !isWaiting($0) }
+            case "Waiting":   result = result.filter { isWaiting($0) && !isOverdue($0) && !isToday($0) }
+            case "No Date":   result = result.filter { $0.dueDate == nil && !isCompleted($0) && !isWaiting($0) }
+            case "Completed": result = result.filter { isCompleted($0) }
+            default: break
+            }
+        }
+        return sortTasks(result)
+    }
+
     // MARK: - Counts
 
     private var activeCount: Int { tasks.filter { !isCompleted($0) }.count }
@@ -111,9 +132,10 @@ struct iOSTasksView: View {
     // MARK: - Sort
 
     private func sortTasks(_ tasks: [CRMTask]) -> [CRMTask] {
+        let sorted: [CRMTask]
         switch sortOrder {
         case .dueDate:
-            return tasks.sorted { a, b in
+            sorted = tasks.sorted { a, b in
                 switch (a.dueDate, b.dueDate) {
                 case (nil, nil): return false
                 case (nil, _):   return false
@@ -122,21 +144,19 @@ struct iOSTasksView: View {
                 }
             }
         case .nameAZ:
-            return tasks.sorted { ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedAscending }
+            sorted = tasks.sorted { ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedAscending }
         case .nameZA:
-            return tasks.sorted { ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedDescending }
+            sorted = tasks.sorted { ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedDescending }
         case .priorityHighLow:
-            return tasks.sorted { priorityRank($0.priority) < priorityRank($1.priority) }
+            sorted = tasks.sorted { priorityRank($0.priority) < priorityRank($1.priority) }
         case .dateCreated:
-            return tasks.sorted { a, b in
-                switch (a.airtableModifiedAt, b.airtableModifiedAt) {
-                case (nil, nil): return false
-                case (nil, _):   return false
-                case (_, nil):   return true
-                case let (ad?, bd?): return ad > bd
-                }
+            sorted = tasks.sorted { a, b in
+                let aDate = a.localModifiedAt ?? a.airtableModifiedAt ?? .distantPast
+                let bDate = b.localModifiedAt ?? b.airtableModifiedAt ?? .distantPast
+                return aDate > bDate
             }
         }
+        return sortAscending ? sorted : sorted.reversed()
     }
 
     private func priorityRank(_ priority: String?) -> Int {
@@ -194,6 +214,13 @@ struct iOSTasksView: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         HStack(spacing: 4) {
+                            Button { sortAscending.toggle() } label: {
+                                Image(systemName: sortAscending ? "arrow.up" : "arrow.down")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(NeonTheme.neonOrange)
+                                    .frame(minWidth: 32, minHeight: 36)
+                            }
+                            .accessibilityLabel(sortAscending ? "Sort descending" : "Sort ascending")
                             Menu {
                                 Picker("Sort", selection: $sortOrder) {
                                     ForEach(TaskSortOrder.allCases, id: \.self) { order in
@@ -281,31 +308,60 @@ struct iOSTasksView: View {
                 }
             }
 
-            // Task sections
-            if !isFilterActive || selectedFilter == "Overdue" {
-                taskSection("Overdue", tasks: overdueTasks, color: NeonTheme.neonRed, icon: "exclamationmark.triangle.fill")
-            }
-            if !isFilterActive || selectedFilter == "Today" {
-                taskSection("Today", tasks: todayTasks, color: NeonTheme.neonOrange, icon: "sun.max.fill")
-            }
-            if !isFilterActive || selectedFilter == "Waiting" {
-                taskSection("Waiting", tasks: waitingTasks, color: NeonTheme.neonYellow, icon: "hourglass")
-            }
-            if !isFilterActive || selectedFilter == "No Date" {
-                taskSection("No Date", tasks: noDateTasks, color: NeonTheme.textSecondary, icon: "calendar.badge.minus")
-            }
-            if !isFilterActive || selectedFilter == "Scheduled" {
-                taskSection("Scheduled", tasks: scheduledTasks, color: NeonTheme.electricBlue, icon: "calendar")
-            }
-            if selectedFilter == "All" || selectedFilter == "Completed" {
-                taskSection("Completed", tasks: completedTasks, color: NeonTheme.neonGreen, icon: "checkmark.circle.fill")
-            }
+            if useGroupedLayout {
+                // Grouped by status sections (due date sort)
+                if !isFilterActive || selectedFilter == "Overdue" {
+                    taskSection("Overdue", tasks: overdueTasks, color: NeonTheme.neonRed, icon: "exclamationmark.triangle.fill")
+                }
+                if !isFilterActive || selectedFilter == "Today" {
+                    taskSection("Today", tasks: todayTasks, color: NeonTheme.neonOrange, icon: "sun.max.fill")
+                }
+                if !isFilterActive || selectedFilter == "Waiting" {
+                    taskSection("Waiting", tasks: waitingTasks, color: NeonTheme.neonYellow, icon: "hourglass")
+                }
+                if !isFilterActive || selectedFilter == "No Date" {
+                    taskSection("No Date", tasks: noDateTasks, color: NeonTheme.textSecondary, icon: "calendar.badge.minus")
+                }
+                if !isFilterActive || selectedFilter == "Scheduled" {
+                    taskSection("Scheduled", tasks: scheduledTasks, color: NeonTheme.electricBlue, icon: "calendar")
+                }
+                if selectedFilter == "All" || selectedFilter == "Completed" {
+                    taskSection("Completed", tasks: completedTasks, color: NeonTheme.neonGreen, icon: "checkmark.circle.fill")
+                }
 
-            // Empty state
-            if !hasAnyTasks && selectedFilter == "All" {
-                emptyState
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
+                // Empty state
+                if !hasAnyTasks && selectedFilter == "All" {
+                    emptyState
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
+            } else {
+                // Flat sorted list (name, priority, created sorts)
+                if flatSortedTasks.isEmpty {
+                    emptyState
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                } else {
+                    Section {
+                        ForEach(flatSortedTasks) { task in
+                            taskRow(task)
+                                .swipeActions(edge: .leading) {
+                                    Button { toggleComplete(task) } label: {
+                                        Label(isCompleted(task) ? "Undo" : "Done",
+                                              systemImage: isCompleted(task) ? "arrow.uturn.backward" : "checkmark")
+                                    }
+                                    .tint(isCompleted(task) ? .orange : .green)
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(role: .destructive) { taskToDelete = task } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                                .listRowBackground(NeonTheme.cardSurface)
+                                .listRowSeparator(.hidden)
+                        }
+                    }
+                }
             }
         }
         .listStyle(.plain)

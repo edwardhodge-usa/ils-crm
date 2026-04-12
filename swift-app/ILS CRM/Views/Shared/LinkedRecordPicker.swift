@@ -39,20 +39,22 @@ struct LinkedRecordPicker: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                #if os(macOS)
-                VStack(spacing: 0) {
+            VStack(spacing: 0) {
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.secondary)
                     TextField("Search...", text: $searchText)
-                        .textFieldStyle(.roundedBorder)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                    Divider()
-                    entityList
+                        .textFieldStyle(.plain)
                 }
-                #else
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(.systemGray6))
+                )
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                Divider()
                 entityList
-                    .searchable(text: $searchText, prompt: "Search...")
-                #endif
             }
             .navigationTitle(title)
             .toolbar {
