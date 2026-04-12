@@ -116,6 +116,11 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - **2026-04-10** — macOS-first apps extended to iOS MUST add `UILaunchScreen` (empty dict) to Info.plist — without it, iOS renders in legacy compatibility mode with black bars (non-edge-to-edge window). Also add `UISupportedInterfaceOrientations`.
 - **2026-04-10** — iOS layout debugging: check Info.plist keys FIRST, then project config, then SwiftUI code. SwiftUI `.ignoresSafeArea()` and UIKit appearance hacks cannot fix missing plist keys.
 - **2026-04-10** — LinkedRecordPicker: use `#if os(macOS)` for `.frame(width:height:)` and inline TextField search; iOS uses `.presentationDetents([.medium, .large])` and `.searchable()`
+- **2026-04-13** — iOS 26 beta: Picker menu presentation fails inside `.sheet()` — use `.pickerStyle(.navigationLink)` as workaround
+- **2026-04-13** — iOS 26 beta: `.searchable()` hides toolbar buttons in sheets — use inline search TextField instead
+- **2026-04-13** — iOS 26 beta: global `.tint()` on TabView overrides swipe action destructive role color — use `UITabBar.appearance().tintColor` instead
+- **2026-04-13** — Form sheets: bundle all `@State` fields in a single struct to prevent SwiftUI resetting individual values during parent re-renders from `@Query` updates
+- **2026-04-13** — Company converter never sets `airtableModifiedAt` — "Newest" sort uses `createdDate` as fallback
 
 ### UI / HIG
 - `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements
