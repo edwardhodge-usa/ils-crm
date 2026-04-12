@@ -49,7 +49,11 @@ struct LinkedRecordPicker: View {
                 .padding(10)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        #if os(macOS)
+                        .fill(Color(NSColor.controlBackgroundColor))
+                        #else
                         .fill(Color(.systemGray6))
+                        #endif
                 )
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
