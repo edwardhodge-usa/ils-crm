@@ -7,17 +7,7 @@ struct iOSTaskFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    @Query private var allTasks: [CRMTask]
-
-    @State private var taskName = ""
-    @State private var status = "To Do"
-    @State private var priority = ""
-    @State private var type = ""
-    @State private var assignedTo = ""
-    @State private var dueDate = Date()
-    @State private var hasDueDate = false
-    @State private var notes = ""
-    @State private var saveHaptic = false
+    @State private var formState = TaskFormState()
 
     private let statusOptions = ["To Do", "In Progress", "Waiting", "Completed"]
     private let priorityOptions = ["High", "Medium", "Low"]
@@ -27,134 +17,111 @@ struct iOSTaskFormView: View {
         "Administrative", "Send Proposal", "Internal Review", "Project", "Travel"
     ]
 
-    private var assigneeOptions: [String] {
-        Array(Set(allTasks.compactMap { $0.assignedTo }.filter { !$0.isEmpty })).sorted()
-    }
-
-    private var collaboratorMap: [String: String] {
-        Dictionary(
-            allTasks
-                .filter { $0.assignedTo != nil && $0.assignedToData != nil }
-                .map { ($0.assignedTo!, $0.assignedToData!) },
-            uniquingKeysWith: { _, last in last }
-        )
-    }
+    @State private var cachedAssignees: [String] = []
+    @State private var cachedCollaboratorMap: [String: String] = [:]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                NeonCard(header: "Task") {
-                    TextField("Task name", text: $taskName)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(NeonTheme.textPrimary)
+        Form {
+            Section("Task") {
+                TextField("Task name", text: $formState.taskName)
+            }
+
+            Section("Details") {
+                Picker("Status", selection: $formState.status) {
+                    ForEach(statusOptions, id: \.self) { Text($0).tag($0) }
                 }
+                .pickerStyle(.navigationLink)
 
-                NeonCard(header: "Details") {
-                    VStack(spacing: 0) {
-                        neonPicker("Status", selection: $status) {
-                            ForEach(statusOptions, id: \.self) { Text($0).tag($0) }
-                        }
-                        NeonDivider()
-
-                        neonPicker("Priority", selection: $priority) {
-                            Text("None").tag("")
-                            ForEach(priorityOptions, id: \.self) { Text($0).tag($0) }
-                        }
-                        NeonDivider()
-
-                        neonPicker("Type", selection: $type) {
-                            Text("None").tag("")
-                            ForEach(typeOptions, id: \.self) { Text($0).tag($0) }
-                        }
-                        NeonDivider()
-
-                        neonPicker("Assigned To", selection: $assignedTo) {
-                            Text("Unassigned").tag("")
-                            ForEach(assigneeOptions, id: \.self) { Text($0).tag($0) }
-                        }
-                    }
+                Picker("Priority", selection: $formState.priority) {
+                    Text("None").tag("")
+                    ForEach(priorityOptions, id: \.self) { Text($0).tag($0) }
                 }
+                .pickerStyle(.navigationLink)
 
-                NeonCard(header: "Schedule") {
-                    VStack(spacing: 8) {
-                        Toggle("Due Date", isOn: $hasDueDate)
-                            .tint(NeonTheme.cyan)
-                            .foregroundStyle(NeonTheme.textPrimary)
-                        if hasDueDate {
-                            DatePicker("Due", selection: $dueDate, displayedComponents: .date)
-                                .foregroundStyle(NeonTheme.textPrimary)
-                        }
-                    }
+                Picker("Type", selection: $formState.type) {
+                    Text("None").tag("")
+                    ForEach(typeOptions, id: \.self) { Text($0).tag($0) }
                 }
+                .pickerStyle(.navigationLink)
 
-                NeonCard(header: "Notes") {
-                    TextEditor(text: $notes)
-                        .frame(minHeight: 80)
-                        .scrollContentBackground(.hidden)
-                        .foregroundStyle(NeonTheme.textPrimary)
+                Picker("Assigned To", selection: $formState.assignedTo) {
+                    Text("Unassigned").tag("")
+                    ForEach(cachedAssignees, id: \.self) { Text($0).tag($0) }
+                }
+                .pickerStyle(.navigationLink)
+            }
+
+            Section("Schedule") {
+                Toggle("Due Date", isOn: $formState.hasDueDate)
+                if formState.hasDueDate {
+                    DatePicker("Due", selection: $formState.dueDate, displayedComponents: .date)
                 }
             }
-            .padding(.top, 8)
-            .padding(.bottom, 32)
+
+            Section("Notes") {
+                TextEditor(text: $formState.notes)
+                    .frame(minHeight: 80)
+            }
         }
-        .background(NeonTheme.background)
-        .scrollContentBackground(.hidden)
-        .sensoryFeedback(.success, trigger: saveHaptic)
         .navigationTitle("New Task")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
-                    .foregroundStyle(NeonTheme.textSecondary)
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { save(); saveHaptic.toggle() }
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(taskName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? NeonTheme.textTertiary : NeonTheme.cyan)
-                    .disabled(taskName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Button("Save") { save() }
+                    .disabled(formState.taskName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
-    }
-
-    // MARK: - Picker Helper
-
-    private func neonPicker<SelectionValue: Hashable, Content: View>(
-        _ label: String,
-        selection: Binding<SelectionValue>,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        Picker(label, selection: selection) {
-            content()
+        .onAppear {
+            let descriptor = FetchDescriptor<CRMTask>()
+            let allTasks = (try? modelContext.fetch(descriptor)) ?? []
+            cachedAssignees = Array(Set(allTasks.compactMap(\.assignedTo).filter { !$0.isEmpty })).sorted()
+            cachedCollaboratorMap = Dictionary(
+                allTasks
+                    .filter { $0.assignedTo != nil && $0.assignedToData != nil }
+                    .map { ($0.assignedTo!, $0.assignedToData!) },
+                uniquingKeysWith: { _, last in last }
+            )
         }
-        .foregroundStyle(NeonTheme.textPrimary)
-        .frame(minHeight: 32)
     }
-
-    // MARK: - Save
 
     private func save() {
-        let name = taskName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = formState.taskName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
 
-        let resolvedAssignedTo = assignedTo.isEmpty ? nil : assignedTo
-        let resolvedAssignedToData = resolvedAssignedTo.flatMap { collaboratorMap[$0] }
+        let resolvedAssignedTo = formState.assignedTo.isEmpty ? nil : formState.assignedTo
+        let resolvedAssignedToData = resolvedAssignedTo.flatMap { cachedCollaboratorMap[$0] }
 
         let newTask = CRMTask(
             id: "local_\(UUID().uuidString)",
             task: name,
             isPendingPush: true
         )
-        newTask.status = status
-        newTask.priority = priority.isEmpty ? nil : priority
-        newTask.type = type.isEmpty ? nil : type
+        newTask.status = formState.status
+        newTask.priority = formState.priority.isEmpty ? nil : formState.priority
+        newTask.type = formState.type.isEmpty ? nil : formState.type
         newTask.assignedTo = resolvedAssignedTo
         newTask.assignedToData = resolvedAssignedToData
-        newTask.dueDate = hasDueDate ? dueDate : nil
-        newTask.notes = notes.isEmpty ? nil : notes
+        newTask.dueDate = formState.hasDueDate ? formState.dueDate : nil
+        newTask.notes = formState.notes.isEmpty ? nil : formState.notes
         newTask.localModifiedAt = Date()
         modelContext.insert(newTask)
 
         dismiss()
     }
+}
+
+/// Holds all form fields in a single @State to prevent SwiftUI from resetting individual values.
+private struct TaskFormState {
+    var taskName = ""
+    var status = "To Do"
+    var priority = ""
+    var type = ""
+    var assignedTo = ""
+    var dueDate = Date()
+    var hasDueDate = false
+    var notes = ""
 }
 #endif
