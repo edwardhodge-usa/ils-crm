@@ -27,7 +27,9 @@ struct iOSContentView: View {
                 Label("Settings", systemImage: "gear")
             }
         }
-        .tint(NeonTheme.cyan)
+        .onAppear {
+            UITabBar.appearance().tintColor = UIColor(NeonTheme.cyan)
+        }
         .preferredColorScheme(.dark)
         .background(NeonTheme.background.ignoresSafeArea())
         .task {
