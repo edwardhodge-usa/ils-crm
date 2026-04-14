@@ -121,6 +121,11 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - **2026-04-13** — iOS 26 beta: global `.tint()` on TabView overrides swipe action destructive role color — use `UITabBar.appearance().tintColor` instead
 - **2026-04-13** — Form sheets: bundle all `@State` fields in a single struct to prevent SwiftUI resetting individual values during parent re-renders from `@Query` updates
 - **2026-04-13** — Company converter never sets `airtableModifiedAt` — "Newest" sort uses `createdDate` as fallback
+- **2026-04-14** — XcodeGen overwrites Info.plist on every `xcodegen generate` — iOS-specific keys (UILaunchScreen, UISupportedInterfaceOrientations, CFBundleIconName) MUST go in project.yml `info.properties`, not directly in Info.plist
+- **2026-04-14** — TestFlight archive: use `CODE_SIGN_IDENTITY=` (empty) for archive step, then `xcodebuild -exportArchive` with `method=app-store-connect` + `signingStyle=automatic` handles distribution signing. No Apple Distribution cert needed beforehand — auto-created on first export
+- **2026-04-14** — `Apple Development` iOS signing requires registered physical devices in developer portal — fails with "Your team has no devices" if none registered. App Store distribution signing has no device requirement
+- **2026-04-14** — iOS App Store icon requirements: must have Assets.xcassets with AppIcon.appiconset (13 sizes), CFBundleIconName=AppIcon in Info.plist, all 4 orientations in UISupportedInterfaceOrientations (+ ~ipad variant)
+- **2026-04-14** — Release config `CODE_SIGN_IDENTITY: "Developer ID Application"` conflicts with `CODE_SIGN_STYLE=Automatic` — override with empty `CODE_SIGN_IDENTITY=` on xcodebuild command line for TestFlight builds
 
 ### UI / HIG
 - `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements
