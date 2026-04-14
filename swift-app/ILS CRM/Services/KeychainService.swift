@@ -8,7 +8,27 @@ import Security
 enum KeychainService {
     static let service = "ils-crm-airtable"
     static let apiKeyAccount = "airtable-pat"
+    #if os(macOS)
     static let accessGroup = "8RHA62T6FQ.com.imaginelabstudios.shared"
+    #endif
+
+    // MARK: - Base Query
+
+    /// Builds a base Keychain query with platform-appropriate attributes.
+    /// macOS: uses shared access group + iCloud sync for cross-device sharing.
+    /// iOS: uses app's default keychain group (no shared group or sync).
+    private static func baseQuery(for key: String) -> [String: Any] {
+        var query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key,
+        ]
+        #if os(macOS)
+        query[kSecAttrAccessGroup as String] = accessGroup
+        query[kSecAttrSynchronizable as String] = kSecAttrSynchronizableAny
+        #endif
+        return query
+    }
 
     // MARK: - Save
 
@@ -17,24 +37,14 @@ enum KeychainService {
             throw KeychainError.encodingFailed
         }
 
-        let deleteQuery: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecAttrAccessGroup as String: accessGroup,
-            kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
-        ]
-        SecItemDelete(deleteQuery as CFDictionary)
+        SecItemDelete(baseQuery(for: key) as CFDictionary)
 
-        let addQuery: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecAttrAccessGroup as String: accessGroup,
-            kSecAttrSynchronizable as String: true,
-            kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked,
-        ]
+        var addQuery = baseQuery(for: key)
+        addQuery[kSecValueData as String] = data
+        addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlocked
+        #if os(macOS)
+        addQuery[kSecAttrSynchronizable as String] = true
+        #endif
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
         guard status == errSecSuccess else {
@@ -45,15 +55,9 @@ enum KeychainService {
     // MARK: - Read
 
     static func read(key: String = apiKeyAccount) -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecAttrAccessGroup as String: accessGroup,
-            kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
+        var query = baseQuery(for: key)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -70,14 +74,7 @@ enum KeychainService {
     // MARK: - Delete
 
     static func delete(key: String = apiKeyAccount) {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecAttrAccessGroup as String: accessGroup,
-            kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
-        ]
-        SecItemDelete(query as CFDictionary)
+        SecItemDelete(baseQuery(for: key) as CFDictionary)
     }
 
     // MARK: - Migration

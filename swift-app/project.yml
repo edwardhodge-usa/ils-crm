@@ -69,23 +69,24 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.imaginelabstudios.ils-crm
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
         MARKETING_VERSION: "1.4.0"
-        CURRENT_PROJECT_VERSION: 18
+        CURRENT_PROJECT_VERSION: 19
         GENERATE_INFOPLIST_FILE: NO
         DEVELOPMENT_TEAM: "8RHA62T6FQ"
+        "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": "ILS CRM/ILS CRM.entitlements"
+        "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": "ILS CRM/ILS CRM iOS.entitlements"
+        "CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]": "ILS CRM/ILS CRM iOS.entitlements"
       configs:
         Debug:
           CODE_SIGN_IDENTITY: "Apple Development"
           CODE_SIGN_STYLE: Automatic
           CODE_SIGNING_REQUIRED: YES
           CODE_SIGNING_ALLOWED: YES
-          CODE_SIGN_ENTITLEMENTS: "ILS CRM/ILS CRM.entitlements"
         Release:
           CODE_SIGN_IDENTITY: "Developer ID Application: Imaginelab Studios (8RHA62T6FQ)"
           CODE_SIGN_STYLE: Manual
           CODE_SIGNING_REQUIRED: YES
           CODE_SIGNING_ALLOWED: YES
           ENABLE_HARDENED_RUNTIME: YES
-          CODE_SIGN_ENTITLEMENTS: "ILS CRM/ILS CRM.entitlements"
   ILS CRM UITests:
     type: bundle.ui-testing
     platform: macOS

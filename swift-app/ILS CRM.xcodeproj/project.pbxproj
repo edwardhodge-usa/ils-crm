@@ -209,6 +209,7 @@
 		D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Company+Airtable.swift"; sourceTree = "<group>"; };
 		D16508BB0F462650F6DA3D4D /* PipelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineView.swift; sourceTree = "<group>"; };
 		D766042D9087DFD6757ACB42 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		DDE9055973A1EBB0A158FA3B /* ILS CRM iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ILS CRM iOS.entitlements"; sourceTree = "<group>"; };
 		DE314248FE2D8796FC6CF433 /* Project.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
 		DFFDA42D74F4FFE80986174F /* GrantAccessSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrantAccessSheet.swift; sourceTree = "<group>"; };
 		E0AD484B882AECF1ABE3213F /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
@@ -305,6 +306,7 @@
 			isa = PBXGroup;
 			children = (
 				1D79A18DA5B69A3631FCE00A /* Assets.xcassets */,
+				DDE9055973A1EBB0A158FA3B /* ILS CRM iOS.entitlements */,
 				094525C470C3BD376958467D /* ILS CRM.entitlements */,
 				93139863B859A2E429AC26CE /* ILSCRMApp.swift */,
 				AC5CD50B3294A213BF296FBD /* Info.plist */,
@@ -784,10 +786,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
-				CODE_SIGN_ENTITLEMENTS = "ILS CRM/ILS CRM.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "ILS CRM/ILS CRM iOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = "ILS CRM/ILS CRM iOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "ILS CRM/ILS CRM.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = 8RHA62T6FQ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "ILS CRM/Info.plist";
@@ -990,10 +994,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
-				CODE_SIGN_ENTITLEMENTS = "ILS CRM/ILS CRM.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "ILS CRM/ILS CRM iOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = "ILS CRM/ILS CRM iOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "ILS CRM/ILS CRM.entitlements";
 				CODE_SIGN_IDENTITY = "Developer ID Application: Imaginelab Studios (8RHA62T6FQ)";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = 8RHA62T6FQ;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
