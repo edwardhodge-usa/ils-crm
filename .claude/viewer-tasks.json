@@ -1,0 +1,61 @@
+{
+  "sections": [
+    {
+      "title": "iOS Tasks Rollout",
+      "status": "complete",
+      "icon": "green",
+      "items": [
+        { "text": "Platform compatibility (PlatformHelpers, NSWorkspace, controlBackgroundColor)", "done": true },
+        { "text": "EditableAvatarView guarded for macOS", "done": true },
+        { "text": "Remaining iOS build errors fixed", "done": true },
+        { "text": "Shared Keychain access group + migration", "done": true },
+        { "text": "Entitlements + project.yml updated", "done": true },
+        { "text": "iOSContentView (TabView root)", "done": true },
+        { "text": "iOSTasksView (grouped list, search, swipe)", "done": true },
+        { "text": "iOSTaskDetailView (inline editing, linked records)", "done": true },
+        { "text": "iOSTaskFormView (task creation)", "done": true },
+        { "text": "iOSSettingsView (API key, sync, theme)", "done": true },
+        { "text": "ILSCRMApp iOS routing", "done": true },
+        { "text": "iOS Simulator build + launch verified", "done": true }
+      ]
+    },
+    {
+      "title": "iOS HIG Audit",
+      "status": "complete",
+      "icon": "green",
+      "items": [
+        { "text": "17 HIG violations fixed (a11y, haptics, emoji, Form, delete confirm)", "done": true },
+        { "text": "Desktop design alignment (checkboxes, type badges, section headers)", "done": true },
+        { "text": "Reminders-style bento summary cards", "done": true },
+        { "text": "UILaunchScreen fix for edge-to-edge rendering", "done": true },
+        { "text": "LinkedRecordPicker platform-conditional (frame, search, fonts)", "done": true }
+      ]
+    },
+    {
+      "title": "TestFlight Setup (2026-04-14)",
+      "status": "complete",
+      "icon": "green",
+      "items": [
+        { "text": "Create App Store Connect record for ILS CRM iOS", "done": true },
+        { "text": "iOS app icon asset catalog (13 sizes)", "done": true },
+        { "text": "Archive + upload build 18 to TestFlight", "done": true },
+        { "text": "Fix Keychain -34018 (platform-conditional entitlements)", "done": true },
+        { "text": "Fix sync lock (iOS sandbox /tmp/ inaccessible)", "done": true },
+        { "text": "Fix keyboard dismiss on Save", "done": true },
+        { "text": "Add ITSAppUsesNonExemptEncryption=false", "done": true },
+        { "text": "Build 21 uploaded — all fixes shipped", "done": true }
+      ]
+    },
+    {
+      "title": "Next Session — Device Testing",
+      "status": "active",
+      "icon": "yellow",
+      "items": [
+        { "text": "Verify sync completes on device (build 21)", "done": false },
+        { "text": "Test Contact create form on device", "done": false },
+        { "text": "Test all tabs with real data on device", "done": false },
+        { "text": "Decide iOS display name (ILS CRM vs ILS CRM+)", "done": false }
+      ]
+    }
+  ]
+}
