@@ -23,7 +23,9 @@ final class SyncEngine {
     // MARK: - Private
 
     private static let logger = Logger(subsystem: "com.ils-crm", category: "sync")
+    #if os(macOS)
     private static let lockFilePath = "/tmp/ils-crm-sync.lock"
+    #endif
 
     private let modelContainer: ModelContainer
     private var service: AirtableService?
@@ -76,7 +78,11 @@ final class SyncEngine {
     /// Acquires the `/tmp/ils-crm-sync.lock` file to prevent simultaneous sync
     /// from both the Electron and Swift apps against the same Airtable base.
     /// Returns `true` if the lock was acquired, `false` if another app holds it.
+    /// iOS: always returns true — no cross-app sync conflict possible (sandboxed).
     private func acquireSyncLock() -> Bool {
+        #if os(iOS)
+        return true
+        #else
         // Check for stale lock first
         if FileManager.default.fileExists(atPath: Self.lockFilePath) {
             if let attrs = try? FileManager.default.attributesOfItem(atPath: Self.lockFilePath),
@@ -98,11 +104,14 @@ final class SyncEngine {
         }
         Darwin.close(fd)
         return true
+        #endif
     }
 
     /// Releases the cross-app sync lock by deleting the lock file.
     private func releaseSyncLock() {
+        #if os(macOS)
         try? FileManager.default.removeItem(atPath: Self.lockFilePath)
+        #endif
     }
 
     // MARK: - Sync

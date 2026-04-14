@@ -75,6 +75,7 @@ struct iOSSettingsView: View {
 
                         Button {
                             guard !apiKey.isEmpty else { return }
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             do {
                                 try KeychainService.save(value: apiKey)
                                 // Persist Base ID and configure sync engine
