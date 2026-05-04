@@ -8,10 +8,9 @@ import SwiftData
 /// - `crmTask: nil`      → create mode (new CRMTask with local_ prefix ID)
 /// - `crmTask: existing` → edit mode (updates in place)
 struct TaskFormView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    @Query private var allTasks: [CRMTask]
+    let modelContext: ModelContext
 
     let crmTask: CRMTask?  // nil = create, non-nil = edit
     let initialAssignee: String?
@@ -31,13 +30,17 @@ struct TaskFormView: View {
 
     /// Unique assignee names extracted from all existing tasks
     private var assigneeOptions: [String] {
-        Array(Set(allTasks.compactMap { $0.assignedTo }.filter { !$0.isEmpty })).sorted()
+        let descriptor = FetchDescriptor<CRMTask>()
+        let allTasks = (try? modelContext.fetch(descriptor)) ?? []
+        return Array(Set(allTasks.compactMap { $0.assignedTo }.filter { !$0.isEmpty })).sorted()
     }
 
     /// Maps display name → full collaborator JSON string from existing tasks.
     /// Same approach as Electron's `buildCollaboratorMap(records, fieldName)`.
     private var collaboratorMap: [String: String] {
-        Dictionary(
+        let descriptor = FetchDescriptor<CRMTask>()
+        let allTasks = (try? modelContext.fetch(descriptor)) ?? []
+        return Dictionary(
             allTasks
                 .filter { $0.assignedTo != nil && $0.assignedToData != nil }
                 .map { ($0.assignedTo!, $0.assignedToData!) },
@@ -45,7 +48,8 @@ struct TaskFormView: View {
         )
     }
 
-    init(crmTask: CRMTask? = nil, initialAssignee: String? = nil) {
+    init(modelContext: ModelContext, crmTask: CRMTask? = nil, initialAssignee: String? = nil) {
+        self.modelContext = modelContext
         self.crmTask = crmTask
         self.initialAssignee = initialAssignee
     }

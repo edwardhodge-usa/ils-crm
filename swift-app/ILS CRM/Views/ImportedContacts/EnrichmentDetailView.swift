@@ -5,15 +5,19 @@ import SwiftData
 /// with Accept/Dismiss actions.
 struct EnrichmentDetailView: View {
     let item: EnrichmentQueueItem
-
-    @Environment(\.modelContext) private var modelContext
-    @Query private var allContacts: [Contact]
+    let modelContext: ModelContext
 
     // MARK: - Computed
 
     private var linkedContact: Contact? {
         guard let firstId = item.contactIds.first else { return nil }
-        return allContacts.first(where: { $0.id == firstId })
+        let predicate = #Predicate<Contact> { contact in
+            contact.id == firstId
+        }
+        var descriptor = FetchDescriptor<Contact>(predicate: predicate)
+        descriptor.fetchLimit = 1
+
+        return try? modelContext.fetch(descriptor).first
     }
 
     private var confidenceColor: Color {

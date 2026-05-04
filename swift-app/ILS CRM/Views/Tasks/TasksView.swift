@@ -22,10 +22,8 @@ enum TaskSortOrder: String, CaseIterable, CustomStringConvertible {
 /// Column 2 (380pt) — Task list: grouped into Overdue / Today / Waiting On / No Date sections
 /// Column 3 (flex)  — Inline TaskDetailView or empty state
 struct TasksView: View {
-
-    @Query(sort: \CRMTask.dueDate) private var tasks: [CRMTask]
-    @Query private var projects: [Project]
-    @Environment(\.modelContext) private var modelContext
+    let modelContext: ModelContext
+    let syncEngine: SyncEngine
     @Environment(\.colorScheme) private var colorScheme
 
     // Column 1 — Assignee filter
@@ -52,6 +50,17 @@ struct TasksView: View {
 
     // Sheet
     @State private var showNewTask = false
+
+    private var tasks: [CRMTask] {
+        var descriptor = FetchDescriptor<CRMTask>()
+        descriptor.sortBy = [SortDescriptor(\CRMTask.dueDate)]
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    private var projects: [Project] {
+        let descriptor = FetchDescriptor<Project>()
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
 
     // MARK: - Constants
 
@@ -130,7 +139,7 @@ struct TasksView: View {
     // MARK: - Unique Assignees
 
     private var sortedAssignees: [String] {
-        Array(Set(tasks.compactMap(\.assignedTo))).sorted()
+        Array(Set(tasks.compactMap { $0.assignedTo })).sorted()
     }
 
     // MARK: - Assignee-filtered tasks (Column 1 gate)
@@ -271,7 +280,7 @@ struct TasksView: View {
         }
         .sheet(isPresented: $showNewTask) {
             NavigationStack {
-                TaskFormView(crmTask: nil)
+                TaskFormView(modelContext: modelContext, crmTask: nil)
             }
             .frame(minWidth: 450, minHeight: 500)
         }
@@ -715,7 +724,7 @@ struct TasksView: View {
     private var detailColumn: some View {
         Group {
             if let task = selectedTask {
-                TaskDetailView(task: task)
+                TaskDetailView(task: task, modelContext: modelContext, syncEngine: syncEngine)
                     .id(task.id)
             } else {
                 EmptyStateView(

@@ -549,7 +549,7 @@ struct ImportedContactsView: View {
     private var detailColumn: some View {
         Group {
             if let enrichment = selectedEnrichment {
-                EnrichmentDetailView(item: enrichment)
+                EnrichmentDetailView(item: enrichment, modelContext: modelContext)
                     .id(enrichment.id)
             } else if let contact = selectedContact {
                 ImportedContactDetailView(

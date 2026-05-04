@@ -11,8 +11,8 @@ import SwiftData
 /// Redesigned with BentoHeroCard + BentoGrid layout.
 struct TaskDetailView: View {
     @Bindable var task: CRMTask
-    @Environment(\.modelContext) private var modelContext
-    @Environment(SyncEngine.self) private var syncEngine
+    let modelContext: ModelContext
+    let syncEngine: SyncEngine
 
     @State private var showDeleteConfirm = false
     @State private var showingOpportunitiesPicker = false
@@ -24,7 +24,7 @@ struct TaskDetailView: View {
     private var assigneeOptions: [String] {
         let descriptor = FetchDescriptor<CRMTask>()
         let allTasks = (try? modelContext.fetch(descriptor)) ?? []
-        return Array(Set(allTasks.compactMap(\.assignedTo))).sorted()
+        return Array(Set(allTasks.compactMap { $0.assignedTo })).sorted()
     }
 
     private static let isoFormatter: ISO8601DateFormatter = {
@@ -42,8 +42,10 @@ struct TaskDetailView: View {
 
     // MARK: - Init
 
-    init(task: CRMTask) {
+    init(task: CRMTask, modelContext: ModelContext, syncEngine: SyncEngine) {
         self.task = task
+        self.modelContext = modelContext
+        self.syncEngine = syncEngine
     }
 
     // MARK: - Helpers

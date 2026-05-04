@@ -90,6 +90,7 @@ struct ContentView: View {
     @State private var sidebarSearchText = ""
     @State private var showCommandPalette = false
     @AppStorage("appearanceMode") private var appearanceMode = "system"
+    @Environment(\.modelContext) private var modelContext
     @Environment(SyncEngine.self) private var syncEngine
 
     /// Computed selection derived from persisted raw value.
@@ -314,7 +315,7 @@ struct ContentView: View {
         case .pipeline:
             PipelineView()
         case .tasks:
-            TasksView()
+            TasksView(modelContext: modelContext, syncEngine: syncEngine)
         case .proposals:
             ProposalsView()
         case .projects:
