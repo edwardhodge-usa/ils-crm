@@ -47,14 +47,39 @@
       ]
     },
     {
-      "title": "Next Session — Device Testing",
-      "status": "active",
-      "icon": "yellow",
+      "title": "Preferred Rates — Wave 1 (Sync Layer)",
+      "status": "complete",
+      "icon": "green",
       "items": [
-        { "text": "Verify sync completes on device (build 21)", "done": false },
-        { "text": "Test Contact create form on device", "done": false },
-        { "text": "Test all tabs with real data on device", "done": false },
-        { "text": "Decide iOS display name (ILS CRM vs ILS CRM+)", "done": false }
+        {"text": "Task 1: field-maps.ts + sync-engine.ts — RATE_CARD + PERSON_RATES constants, register tables", "done": true},
+        {"text": "Task 2: converters.ts — RATE_CARD_MAPPINGS + PERSON_RATES_MAPPINGS, register in allTables", "done": true}
+      ]
+    },
+    {
+      "title": "Preferred Rates — Wave 2 (IPC + Preload)",
+      "status": "complete",
+      "icon": "green",
+      "items": [
+        {"text": "Task 3: register.ts + preload.ts — rateCard read-only + personRates CRUD handlers + bridge", "done": true}
+      ]
+    },
+    {
+      "title": "Preferred Rates — Wave 3 (Contact 360 UI)",
+      "status": "complete",
+      "icon": "green",
+      "items": [
+        {"text": "Task 4: Contact360Page — Preferred Rates bento section (list + add/edit form + delete)", "done": true}
+      ]
+    },
+    {
+      "title": "Verification",
+      "status": "active",
+      "icon": "blue",
+      "items": [
+        {"text": "npx tsc --noEmit exits 0", "done": true},
+        {"text": "Full sync pulls rate_card + person_rates without errors", "done": false},
+        {"text": "Kevin McBee Contact 360 shows both Person Rates", "done": false},
+        {"text": "Add Rate form creates in Airtable + list updates without reload", "done": false}
       ]
     }
   ]

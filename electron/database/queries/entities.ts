@@ -11,6 +11,7 @@ const VALID_TABLES = new Set([
   'projects', 'interactions', 'imported_contacts', 'specialties',
   'portal_access', 'portal_logs', 'client_pages',
   'email_scan_rules', 'email_scan_state', 'enrichment_queue',
+  'rate_card', 'person_rates',
   'settings', 'sync_status',
 ])
 

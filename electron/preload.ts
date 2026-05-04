@@ -105,6 +105,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Interactions (full CRUD)
   interactions: makeCrudBridge('interactions'),
   specialties: makeReadOnlyBridge('specialties'),
+  rateCard: makeReadOnlyBridge('rateCard'),
+  personRates: makeCrudBridge('personRates'),
   portalLogs: {
     getAll: () => ipcRenderer.invoke('portalLogs:getAll'),
     delete: (id: string) => ipcRenderer.invoke('portalLogs:delete', id),

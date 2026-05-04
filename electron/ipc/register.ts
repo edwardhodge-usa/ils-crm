@@ -147,6 +147,8 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
   // Interactions (full CRUD)
   registerEntityCrud('interactions', 'interactions', getMainWindow)
   registerReadOnly('specialties', 'specialties')
+  registerReadOnly('rateCard', 'rate_card')
+  registerEntityCrud('personRates', 'person_rates', getMainWindow)
   registerReadOnly('portalLogs', 'portal_logs')
 
   ipcMain.handle('portalLogs:delete', async (_e, id: string) => {
