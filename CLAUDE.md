@@ -84,7 +84,7 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - Company excluded from enrichment comparison — text-vs-linked-record matching produces constant false diffs (same 3NF problem)
 - Phone normalization for comparison: strip non-digits except leading +, 10 bare digits → prepend +1
 - Enrichment dedup: query enrichment_queue for existing Pending row with same contact+field+value before writing
-- SwiftData `#Predicate` crashes on macOS 26.4 beta (25E5233c) — use fetch-all + in-memory `.filter {}` as workaround. TODO: revert when fixed
+- SwiftData `#Predicate` with generic `T: PersistentModel` won't resolve at compile time — use fetch-all + `.filter {}` for generic push functions (SyncEngine). Use `#Predicate<ConcreteType>` for non-generic point fetches (e.g. lookup by ID)
 - `useEntityList` refreshes on `sync-complete` events. IPC approve/dismiss/reject handlers must NOT send fake `sync:progress` events — they trigger a `sync-complete` cascade that remounts UI and resets form state. Let the component's explicit `reload()` handle it. `deleteRemoteRecord` must handle `local_` prefix IDs (skip Airtable, SQLite only)
 - Airtable singleSelect: always fetch live schema for valid options before writing. 'Ready' doesn't exist on Onboarding Status (valid: Approved, Rejected, Needs Info, Duplicate, Review)
 - Gmail API returns ALL messages in mailbox including imported/forwarded mail from other accounts. Use `after:YYYY/MM/DD` query param to scope scans

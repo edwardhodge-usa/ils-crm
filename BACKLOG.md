@@ -6,6 +6,8 @@
 ---
 
 ## Bugs — Electron
+- [x] ~~P1: Partner/Vendor (and all inline-edited) fields lost on sidebar navigation~~ — `refreshRecord` was unconditionally overwriting pending local edits with stale Airtable data. Fixed: skip upsert if `_pending_push=1`. Fixed 2026-05-04
+- [x] Partner Vendor and quals don't save when inputing in the contacts edit fields
 
 - [x] ~~**#4** Kanban small-window layout~~ — columns now flex 140-220px with responsive reflow (fixed 2026-03-20)
 - [x] ~~**#5** Kanban click vs drag~~ — delay-based drag activation (200ms) lets clicks pass through (fixed 2026-03-20)
@@ -17,7 +19,7 @@
 ## Bugs — Swift
 
 - [x] ~~**S1** SwiftData store crash on schema change~~ — auto-deletes stale store and retries; data re-syncs from Airtable (fixed 2026-03-20)
-- [ ] **S2** SwiftData @Query runtime crash (macOS 26.4 beta) — app crashes after extended use when SwiftData asserts inside Form/ScrollView @Query evaluation. Apple OS bug, no code fix possible. Waiting for macOS 26.4 final release
+- [x] ~~**S2** SwiftData @Query runtime crash (macOS 26.4 beta)~~ — Apple OS bug resolved in macOS 26.4 final. Build clean on macOS 26.5 / Xcode 26.4.1. Verified 2026-05-04
 
 ## Feature Requests
 
@@ -27,6 +29,7 @@
 - [ ] **#17** Task detail view — redesign as bento box layout (matching Contact 360 pattern)
 
 ## Todo — Infrastructure
+- [ ] P1: Approved inported contact from Popl. did not populate in contacts card
 
 - [x] ~~Apple Developer signing + notarization pipeline~~ (completed 2026-03-19)
 - [x] ~~Sparkle auto-update integration~~ (completed 2026-03-19)

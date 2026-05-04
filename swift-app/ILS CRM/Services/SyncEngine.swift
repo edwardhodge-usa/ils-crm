@@ -224,7 +224,6 @@ final class SyncEngine {
     /// (id starts with "local_") and updates, sends to Airtable, then clears the flag.
     @MainActor
     private func pushRecords<T: AirtableConvertible>(_ type: T.Type, service: AirtableService, context: ModelContext) async throws {
-        // TODO: Revert to #Predicate when SwiftData crash is fixed (macOS 26.4 beta, 25E5233c)
         let pending = try context.fetch(FetchDescriptor<T>()).filter { $0.isPendingPush }
 
         guard !pending.isEmpty else { return }

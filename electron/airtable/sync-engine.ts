@@ -404,7 +404,11 @@ export async function refreshRecord(
     const record = await fetchRecord(tableId, id, { apiKey: config.apiKey, baseId: config.baseId })
     const local = converter.fromAirtable(record)
     local._airtable_modified_at = new Date().toISOString()
-    upsert(tableName, id, local)
+    // Don't overwrite a pending local edit — let the push cycle win
+    const existing = getById(tableName, id)
+    if (!existing || (existing._pending_push as number) !== 1) {
+      upsert(tableName, id, local)
+    }
     const fresh = getById(tableName, id)
     return { success: true, data: fresh ?? local }
   } catch (error) {

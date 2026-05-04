@@ -429,8 +429,6 @@ final class EmailScanEngine {
     ) async throws -> Int {
         let context = modelContainer.mainContext
 
-        // Load existing contacts for dedup -- fetch all + filter in memory
-        // (SwiftData #Predicate crash workaround on macOS 26.4 beta)
         let existingContacts = (try? context.fetch(FetchDescriptor<Contact>())) ?? []
         let existingEmails = Set(existingContacts.compactMap { contact -> String? in
             guard let email = contact.email, !email.isEmpty else { return nil }

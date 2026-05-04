@@ -6,8 +6,6 @@ import SwiftData
 ///
 /// NOTE: Uses @Binding isPresented instead of @Environment(\.dismiss) per
 /// project lesson: dismiss is unreliable in macOS sheets.
-/// NOTE: Uses fetch-all + in-memory .filter{} instead of #Predicate per
-/// project lesson: #Predicate crashes on macOS 26.4 beta.
 struct CommandPaletteView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var isPresented: Bool

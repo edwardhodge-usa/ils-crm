@@ -307,8 +307,8 @@ struct PipelineView: View {
     /// Returns `true` if the move succeeded.
     @discardableResult
     private func moveOpportunity(id: String, toStage stage: String) -> Bool {
-        // Fetch all + filter — avoids SwiftData #Predicate crash on macOS 26.4 beta
-        guard let opportunity = try? modelContext.fetch(FetchDescriptor<Opportunity>()).first(where: { $0.id == id }) else {
+        let pred = #Predicate<Opportunity> { $0.id == id }
+        guard let opportunity = try? modelContext.fetch(FetchDescriptor<Opportunity>(predicate: pred)).first else {
             return false
         }
 
