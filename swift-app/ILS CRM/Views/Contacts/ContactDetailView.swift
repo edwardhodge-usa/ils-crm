@@ -162,9 +162,7 @@ struct ContactDetailView: View {
                     partnerVendorCell
                 }
 
-                if !contactPersonRates.isEmpty {
-                    preferredRatesCell
-                }
+                preferredRatesCell
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
