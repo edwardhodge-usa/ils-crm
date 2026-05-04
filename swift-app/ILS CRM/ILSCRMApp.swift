@@ -38,6 +38,8 @@ struct ILSCRMApp: App {
             EmailScanRule.self,
             EmailScanState.self,
             EnrichmentQueueItem.self,
+            RateCard.self,
+            PersonRate.self,
         ])
 
         let config = ModelConfiguration(
