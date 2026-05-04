@@ -230,7 +230,8 @@ extension Contact: AirtableConvertible {
         b.setDate(F.reviewCompletionDate, reviewCompletionDate)
         // Single Selects
         b.set(F.qualificationStatus, qualificationStatus)
-        b.set(F.leadSource, leadSource)
+        // leadSource: "Email Intelligence" is an internal tag, not a valid Airtable option
+        b.set(F.leadSource, leadSource == "Email Intelligence" ? nil : leadSource)
         b.set(F.industry, industry)
         b.set(F.importSource, importSource)
         b.set(F.onboardingStatus, onboardingStatus)
