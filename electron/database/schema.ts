@@ -495,6 +495,54 @@ export function createSchema(db: SqlJsDatabase): void {
     )
   `)
 
+  // ─── Rate Card (read-only) ────────────────────────────
+  db.run(`
+    CREATE TABLE IF NOT EXISTS rate_card (
+      id TEXT PRIMARY KEY,
+      role TEXT,
+      standard_hourly REAL,
+      standard_day REAL,
+      retainer_hourly REAL,
+      retainer_day REAL,
+      remote_day_rate REAL,
+      weekly_rate REAL,
+      day_rate_hours REAL,
+      active INTEGER DEFAULT 1,
+      sort_order REAL,
+      notes TEXT,
+      contact_ids TEXT,
+      person_rates_ids TEXT,
+      _airtable_modified_at TEXT,
+      _local_modified_at TEXT,
+      _pending_push INTEGER DEFAULT 0
+    )
+  `)
+
+  // ─── Person Rates (full CRUD) ─────────────────────────
+  db.run(`
+    CREATE TABLE IF NOT EXISTS person_rates (
+      id TEXT PRIMARY KEY,
+      label TEXT,
+      agreed_hourly REAL,
+      agreed_day_rate REAL,
+      agreed_remote_day_rate REAL,
+      agreed_retainer_hourly REAL,
+      agreed_retainer_day REAL,
+      agreed_weekly REAL,
+      agreed_annual_salary REAL,
+      effective_date TEXT,
+      expiry_date TEXT,
+      status TEXT,
+      contract_reference TEXT,
+      notes TEXT,
+      contact_ids TEXT,
+      role_ids TEXT,
+      _airtable_modified_at TEXT,
+      _local_modified_at TEXT,
+      _pending_push INTEGER DEFAULT 0
+    )
+  `)
+
   // ─── Sync Metadata ────────────────────────────────────
   db.run(`
     CREATE TABLE IF NOT EXISTS sync_status (
