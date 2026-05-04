@@ -234,12 +234,11 @@ extension Contact: AirtableConvertible {
         b.set(F.industry, industry)
         b.set(F.importSource, importSource)
         b.set(F.onboardingStatus, onboardingStatus)
-        // Categorization is multipleSelects in Airtable — send full array
-        if !categorization.isEmpty {
-            b.setMultiSelect(F.categorization, categorization)
-        } else {
-            b.setMultiSelect(F.categorization, [])
-        }
+        // Categorization: filter to valid Contacts table options only
+        // "Email Intelligence" is an ImportedContacts classification — not valid here
+        let validCategorization = ["Client", "Prospect", "Partner", "Consultant", "Talent"]
+        let filteredCategorization = categorization.filter { validCategorization.contains($0) }
+        b.setMultiSelect(F.categorization, filteredCategorization)
         b.set(F.qualityRating, qualityRating)
         b.set(F.reliabilityRating, reliabilityRating)
         b.set(F.partnerStatus, partnerStatus)

@@ -20,6 +20,11 @@
 
 - [x] ~~**S1** SwiftData store crash on schema change~~ — auto-deletes stale store and retries; data re-syncs from Airtable (fixed 2026-03-20)
 - [x] ~~**S2** SwiftData @Query runtime crash (macOS 26.4 beta)~~ — Apple OS bug resolved in macOS 26.4 final. Build clean on macOS 26.5 / Xcode 26.4.1. Verified 2026-05-04
+- [x] ~~**S16** Swift sync 422 INVALID_MULTIPLE_CHOICE_OPTIONS on Contact push~~ — `categorization` field was including `"Email Intelligence"` (an ImportedContacts-only value). Fixed: filter to valid Contacts options before push in `Contact+Airtable.swift`. Fixed 2026-05-04
+- [x] ~~**S17** EnrichmentDetailView compiler placeholder~~ — `@Environment(\<#Root#>.modelContext)` unfilled placeholder caused build failure. Fixed to `\.modelContext`. Fixed 2026-05-04
+- [ ] **S18** Xcode GUI build (Cmd+R) fails while CLI build succeeds — likely stale provisioning profile in Xcode's cache. Needs fresh profile download + DerivedData nuke. CLI workaround: `xcodebuild build -scheme "ILS CRM" -destination 'platform=macOS'` 📅 2026-05-04
+- [ ] **S19** Verify full sync completes end-to-end — confirm RateCard + PersonRate tables pull cleanly, and Kevin McBee's Person Rates appear in Contact 360 after sync 📅 2026-05-04
+- [ ] **S20** Sparkle pbxproj platformFilters patch lost on every `xcodegen generate` — `platformFilters = (macos, )` must be manually re-applied to Sparkle PBXBuildFile entry after each XcodeGen run. Consider scripting as a post-generate hook 📅 2026-05-04
 
 ## Feature Requests
 
@@ -27,6 +32,11 @@
 - [x] ~~**#8** Task detail view with linked contact/company display~~ — already implemented (verified 2026-03-20)
 - [x] ~~**#16** Task create form — Assigned To picker + collaborator write-back~~ — picker populated from existing assignees, collaborator JSON stored for Airtable push (completed 2026-03-20)
 - [ ] **#17** Task detail view — redesign as bento box layout (matching Contact 360 pattern)
+
+## Bugs — Electron (continued)
+- [x] ~~**E7** Electron sync: `imported_contacts` missing `classification_source` column~~ — added to CREATE TABLE + `fieldAuditMigrations` in schema.ts. Fixed 2026-05-04
+- [x] ~~**E8** Electron sync: `contacts` missing `last_enrichment_check` column~~ — same migration pattern. Fixed 2026-05-04
+- [x] ~~**E9** Electron enrichment_queue 422 — 20 `local_` dismissed records PATCH'd to Airtable~~ — `pushTable` now skips `local_` prefix IDs; dismissed orphans deleted from SQLite. Fixed 2026-05-04
 
 ## Todo — Infrastructure
 - [x] ~~P1: Approved imported contact from Popl did not populate in contacts card~~ — `createRecord` returned `data` not `id` so `related_crm_contact_ids` wrote `[null]`; contacts list had no reload signal. Fixed: `contactResult.data`, dispatch `sync-complete` after approve. Fixed 2026-05-04
@@ -82,13 +92,13 @@
 ### Layer 1 — Sync (Electron + Swift)
 - [ ] **PR-1** Electron: add `rate_card` to TABLES, field-maps, converters, sync engine, IPC handlers (read-only) 📅 2026-05-04
 - [ ] **PR-2** Electron: add `person_rates` to TABLES, field-maps, converters, sync engine, IPC handlers (full CRUD) 📅 2026-05-04
-- [ ] **PR-3** Swift: add `RateCard` SwiftData model + AirtableService sync (read-only) 📅 2026-05-04
-- [ ] **PR-4** Swift: add `PersonRate` SwiftData model + AirtableService sync (full CRUD) 📅 2026-05-04
+- [x] ~~**PR-3** Swift: add `RateCard` SwiftData model + AirtableService sync (read-only)~~ — `RateCard.swift` + `RateCard+Airtable.swift` + SyncEngine wired. Fixed 2026-05-04
+- [x] ~~**PR-4** Swift: add `PersonRate` SwiftData model + AirtableService sync (full CRUD)~~ — `PersonRate.swift` + `PersonRate+Airtable.swift` + SyncEngine wired. Fixed 2026-05-04
 
 ### Layer 2 — UI: Add Rates to Any Contact
 - [ ] **PR-5** Electron: Contact 360 → Person Rates section — list agreed rates per role, inline Add/Edit form (role picker from Rate Card, rate fields) 📅 2026-05-04
 - [ ] **PR-6** Electron: Rate Card view (new) — list all roles with standard rates; show which contacts have Person Rates for each role 📅 2026-05-04
-- [ ] **PR-7** Swift: Contact detail → Person Rates section — view agreed rates, sheet form to add/edit (role picker + rate fields) 📅 2026-05-04
+- [x] ~~**PR-7** Swift: Contact detail → Person Rates section~~ — `preferredRatesCell` bento section added to ContactDetailView; always visible with "No preferred rates on file" empty state. Confirmed via screenshot 2026-05-04
 
 ### Layer 3 — Auto-Population in Proposals & Budgets
 - [ ] **PR-8** Electron: proposal/budget role row — when a named contact is assigned, resolve their Person Rate and pre-fill agreed amounts (fall back to Rate Card standard if no Person Rate exists) 📅 2026-05-04
