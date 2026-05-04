@@ -70,6 +70,7 @@ export function createSchema(db: SqlJsDatabase): void {
       projects_partner_vendor_ids TEXT,
       portal_access_ids TEXT,
       last_interaction_date TEXT,
+      last_enrichment_check TEXT,
       contact_photo_url TEXT,
       _airtable_modified_at TEXT,
       _local_modified_at TEXT,
@@ -295,6 +296,7 @@ export function createSchema(db: SqlJsDatabase): void {
       discovered_via TEXT,
       suggested_company_name TEXT,
       suggested_company_ids TEXT,
+      classification_source TEXT,
       _airtable_modified_at TEXT,
       _local_modified_at TEXT,
       _pending_push INTEGER DEFAULT 0
@@ -405,6 +407,8 @@ export function createSchema(db: SqlJsDatabase): void {
     'ALTER TABLE imported_contacts ADD COLUMN discovered_via TEXT',
     'ALTER TABLE imported_contacts ADD COLUMN suggested_company_name TEXT',
     'ALTER TABLE imported_contacts ADD COLUMN suggested_company_ids TEXT',
+    'ALTER TABLE imported_contacts ADD COLUMN classification_source TEXT',
+    'ALTER TABLE contacts ADD COLUMN last_enrichment_check TEXT',
   ]
   for (const sql of fieldAuditMigrations) {
     try { db.run(sql) } catch { /* column already exists */ }
