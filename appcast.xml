@@ -5,6 +5,28 @@
         <description>ILS CRM+ macOS App Updates</description>
         <language>en</language>
         <item>
+            <title>Version 1.5.0</title>
+            <sparkle:version>22</sparkle:version>
+            <sparkle:shortVersionString>1.5.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <pubDate>Mon, 05 May 2026 00:00:00 +0000</pubDate>
+            <description><![CDATA[
+                <ul>
+                    <li>Rate Cards + Person Rates now sync from Airtable (previously missing from schema)</li>
+                    <li>Fixed sync 422 error on contacts tagged "Email Intelligence"</li>
+                    <li>Fixed Enrichment detail view broken in Xcode 26 beta</li>
+                    <li>Tech debt cleanup: deduplicated formatters, fixed duplicate-key crash, eliminated dead code</li>
+                    <li>Tasks + Enrichment views refactored to explicit ModelContext (more reliable under @Query macro)</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/edwardhodge-usa/ils-crm/releases/download/v1.5.0/ILS-CRM-1.5.0-arm64.dmg"
+                length="4785675"
+                type="application/octet-stream"
+                sparkle:edSignature="QWjfxnhWKrpFjSMUp6Gwn+mM5d/aCiy33l8Jv446xucaGswKEinatahNk+NfN1a370D9mvXYW/cCMXWyLSa9Dw=="
+            />
+        </item>
+        <item>
             <title>Version 1.3.1</title>
             <sparkle:version>14</sparkle:version>
             <sparkle:shortVersionString>1.3.1</sparkle:shortVersionString>
