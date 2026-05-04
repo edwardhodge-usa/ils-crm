@@ -258,6 +258,15 @@ async function pushTable(
   const toUpdate: Array<{ id: string; fields: Record<string, unknown> }> = []
 
   for (const record of pending) {
+    if ((record.id as string).startsWith('local_')) {
+      // Never synced to Airtable — nothing to PATCH. Clean up dismissed/rejected records;
+      // leave others (they would need a POST, not PATCH — not yet implemented).
+      const status = (record.status ?? record.onboarding_status ?? '') as string
+      if (['Dismissed', 'Rejected', 'dismissed', 'rejected'].includes(status)) {
+        deleteRecord(tableName, record.id as string)
+      }
+      continue
+    }
     const fields = converter.toAirtable(record)
     toUpdate.push({ id: record.id as string, fields })
   }
