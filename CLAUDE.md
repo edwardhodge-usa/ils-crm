@@ -126,6 +126,8 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 - **2026-04-14** — `Apple Development` iOS signing requires registered physical devices in developer portal — fails with "Your team has no devices" if none registered. App Store distribution signing has no device requirement
 - **2026-04-14** — iOS App Store icon requirements: must have Assets.xcassets with AppIcon.appiconset (13 sizes), CFBundleIconName=AppIcon in Info.plist, all 4 orientations in UISupportedInterfaceOrientations (+ ~ipad variant)
 - **2026-04-14** — Release config `CODE_SIGN_IDENTITY: "Developer ID Application"` conflicts with `CODE_SIGN_STYLE=Automatic` — override with empty `CODE_SIGN_IDENTITY=` on xcodebuild command line for TestFlight builds
+- **2026-05-04** — Contacts `categorization` field must be filtered before Airtable push — `"Email Intelligence"` is an ImportedContacts-only classification, not a valid Contacts multiselect option. Filter to `["Client","Prospect","Partner","Consultant","Talent"]` in `Contact+Airtable.swift toAirtableFields()`
+- **2026-05-04** — SQLite schema migrations need two entries for every new column: (1) the `CREATE TABLE` block for fresh installs, and (2) an `ALTER TABLE ADD COLUMN` entry in `fieldAuditMigrations` for existing DBs — missing either one causes column-not-found errors on different install paths
 
 ### UI / HIG
 - `cursor-pointer` is a HIG violation on macOS — use `cursor-default` on all interactive elements
