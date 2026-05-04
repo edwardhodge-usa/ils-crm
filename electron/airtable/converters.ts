@@ -7,6 +7,7 @@ import {
   INTERACTIONS, IMPORTED_CONTACTS, COMPANIES, SPECIALTIES,
   PORTAL_ACCESS, PORTAL_LOGS, CLIENT_PAGES,
   EMAIL_SCAN_RULES, EMAIL_SCAN_STATE, ENRICHMENT_QUEUE,
+  RATE_CARD, PERSON_RATES,
 } from './field-maps'
 import type { AirtableRecord } from './client'
 
@@ -557,6 +558,44 @@ const ENRICHMENT_QUEUE_MAPPINGS: FieldMapping[] = [
   { local: 'contact_ids', airtable: ENRICHMENT_QUEUE.contact, type: 'linked' },
 ]
 
+// ─── Rate Card ───────────────────────────────────────────────
+
+const RATE_CARD_MAPPINGS: FieldMapping[] = [
+  { local: 'role',              airtable: RATE_CARD.role,              type: 'text' },
+  { local: 'standard_hourly',   airtable: RATE_CARD.standardHourly,    type: 'number' },
+  { local: 'standard_day',      airtable: RATE_CARD.standardDay,       type: 'number' },
+  { local: 'retainer_hourly',   airtable: RATE_CARD.retainerHourly,    type: 'number' },
+  { local: 'retainer_day',      airtable: RATE_CARD.retainerDay,       type: 'number' },
+  { local: 'remote_day_rate',   airtable: RATE_CARD.remoteDayRate,     type: 'number' },
+  { local: 'weekly_rate',       airtable: RATE_CARD.weeklyRate,        type: 'number' },
+  { local: 'day_rate_hours',    airtable: RATE_CARD.dayRateHours,      type: 'number' },
+  { local: 'active',            airtable: RATE_CARD.active,            type: 'checkbox' },
+  { local: 'sort_order',        airtable: RATE_CARD.sortOrder,         type: 'number' },
+  { local: 'notes',             airtable: RATE_CARD.notes,             type: 'text' },
+  { local: 'contact_ids',       airtable: RATE_CARD.contact,           type: 'linked' },
+  { local: 'person_rates_ids',  airtable: RATE_CARD.personRates,       type: 'linked' },
+]
+
+// ─── Person Rates ─────────────────────────────────────────────
+
+const PERSON_RATES_MAPPINGS: FieldMapping[] = [
+  { local: 'label',                  airtable: PERSON_RATES.label,                type: 'text' },
+  { local: 'agreed_hourly',          airtable: PERSON_RATES.agreedHourly,         type: 'number' },
+  { local: 'agreed_day_rate',        airtable: PERSON_RATES.agreedDayRate,        type: 'number' },
+  { local: 'agreed_remote_day_rate', airtable: PERSON_RATES.agreedRemoteDayRate,  type: 'number' },
+  { local: 'agreed_retainer_hourly', airtable: PERSON_RATES.agreedRetainerHourly, type: 'number' },
+  { local: 'agreed_retainer_day',    airtable: PERSON_RATES.agreedRetainerDay,    type: 'number' },
+  { local: 'agreed_weekly',          airtable: PERSON_RATES.agreedWeekly,         type: 'number' },
+  { local: 'agreed_annual_salary',   airtable: PERSON_RATES.agreedAnnualSalary,   type: 'number' },
+  { local: 'effective_date',         airtable: PERSON_RATES.effectiveDate,        type: 'text' },
+  { local: 'expiry_date',            airtable: PERSON_RATES.expiryDate,           type: 'text' },
+  { local: 'status',                 airtable: PERSON_RATES.status,               type: 'singleSelect' },
+  { local: 'contract_reference',     airtable: PERSON_RATES.contractReference,    type: 'text' },
+  { local: 'notes',                  airtable: PERSON_RATES.notes,                type: 'text' },
+  { local: 'contact_ids',            airtable: PERSON_RATES.contact,              type: 'linked' },
+  { local: 'role_ids',               airtable: PERSON_RATES.role,                 type: 'linked' },
+]
+
 // ─── Exported converter map ──────────────────────────────────
 
 export const TABLE_CONVERTERS: Record<string, {
@@ -581,6 +620,8 @@ const allTables: Array<[string, FieldMapping[]]> = [
   ['email_scan_rules', EMAIL_SCAN_RULES_MAPPINGS],
   ['email_scan_state', EMAIL_SCAN_STATE_MAPPINGS],
   ['enrichment_queue', ENRICHMENT_QUEUE_MAPPINGS],
+  ['rate_card', RATE_CARD_MAPPINGS],
+  ['person_rates', PERSON_RATES_MAPPINGS],
 ]
 
 for (const [name, mappings] of allTables) {
