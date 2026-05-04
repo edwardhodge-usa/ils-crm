@@ -29,7 +29,7 @@
 - [ ] **#17** Task detail view — redesign as bento box layout (matching Contact 360 pattern)
 
 ## Todo — Infrastructure
-- [ ] P1: Approved inported contact from Popl. did not populate in contacts card
+- [x] ~~P1: Approved imported contact from Popl did not populate in contacts card~~ — `createRecord` returned `data` not `id` so `related_crm_contact_ids` wrote `[null]`; contacts list had no reload signal. Fixed: `contactResult.data`, dispatch `sync-complete` after approve. Fixed 2026-05-04
 
 - [x] ~~Apple Developer signing + notarization pipeline~~ (completed 2026-03-19)
 - [x] ~~Sparkle auto-update integration~~ (completed 2026-03-19)

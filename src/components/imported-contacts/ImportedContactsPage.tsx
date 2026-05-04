@@ -1262,6 +1262,8 @@ export default function ImportedContactsPage() {
           ...(fields.company_id ? { company_id: fields.company_id } : {}),
           ...(fields.create_company_name ? { create_company_name: fields.create_company_name } : {}),
         })
+        // Signal all entity lists to re-fetch so the new contact appears immediately
+        window.dispatchEvent(new Event('sync-complete'))
       }
     }
     setAction(null)

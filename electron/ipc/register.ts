@@ -251,10 +251,10 @@ export function registerAllHandlers(getMainWindow: () => BrowserWindow | null) {
       // 5. Update imported contact status to Approved (only if contact was created)
       await updateRecord('imported_contacts', id, {
         onboarding_status: 'Approved',
-        related_crm_contact_ids: JSON.stringify([contactResult.id]),
+        related_crm_contact_ids: JSON.stringify([contactResult.data]),
       })
 
-      return { success: true, contactId: contactResult.id }
+      return { success: true, contactId: contactResult.data }
     } catch (error) {
       console.error(`[IPC] importedContacts:approve(${id}) failed:`, String(error))
       return { success: false, error: String(error) }
