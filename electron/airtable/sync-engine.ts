@@ -114,12 +114,14 @@ const TABLE_NAME_TO_ID: Record<string, string> = {
   email_scan_rules: TABLES.emailScanRules,
   email_scan_state: TABLES.emailScanState,
   enrichment_queue: TABLES.enrichmentQueue,
+  rate_card: TABLES.rateCard,
+  person_rates: TABLES.personRates,
 }
 
 // Tables that are read-only (no push)
 // Note: interactions is NOT read-only — the app supports full CRUD
 // Note: enrichment_queue is NOT read-only — the app supports full CRUD for review/approve workflow
-const READ_ONLY_TABLES = new Set(['specialties', 'portal_logs', 'email_scan_rules', 'email_scan_state'])
+const READ_ONLY_TABLES = new Set(['specialties', 'portal_logs', 'email_scan_rules', 'email_scan_state', 'rate_card'])
 
 // Sync order: pull frequently-changing tables first
 const SYNC_ORDER = [
@@ -127,6 +129,7 @@ const SYNC_ORDER = [
   'projects', 'interactions', 'imported_contacts', 'specialties',
   'portal_access', 'portal_logs', 'client_pages',
   'email_scan_rules', 'email_scan_state', 'enrichment_queue',
+  'rate_card', 'person_rates',
 ]
 
 // ─── Denormalize company names onto contacts ───────────────

@@ -19,6 +19,8 @@ export const TABLES = {
   emailScanRules: 'tblU4KmCS24s36r1L',
   emailScanState: 'tblLxTKPq10pyu4Tc',
   enrichmentQueue: 'tbliKcirq0FuQloJH',
+  rateCard: 'tblayIzbtJobsKvNe',
+  personRates: 'tblx4FLX4QBwocggm',
 } as const
 
 // ─── Contacts (57 fields) ────────────────────────────────────
@@ -467,6 +469,48 @@ export const ENRICHMENT_QUEUE = {
   contact: 'fldw3AfIZ6WUbMnw0',
 } as const
 
+// ─── Rate Card (17 fields) ───────────────────────────────────
+
+export const RATE_CARD = {
+  role:              'fld0uPj94enOSXPGY',
+  contact:           'fldIztDRYXc8ZdeXQ',
+  internalBaseRate:  'fld4WaWdykhuBFtAB',
+  standardHourly:    'fldUxknmv6AjeCT8Z',
+  standardDay:       'flduKbbtO4P0gmuYm',
+  retainerHourly:    'fldGIBlOMzq7br1hx',
+  retainerDay:       'fldZZOf9RBfWjLdjV',
+  dayRateHours:      'fldkItVfiAuFr3nM9',
+  active:            'fldVbepnZgSZWsGmF',
+  sortOrder:         'fldUeC4YTfs2WRUUR',
+  notes:             'fldGsHbfMb6xbdmXx',
+  markupPct:         'fldAwSMr1u4uwQiTn',
+  fractionalPremium: 'fldDcMr43Dr2iDXis',
+  discountPct:       'fldYcbD8uA53vOlQd',
+  remoteDayRate:     'fld91PHPDmrK5trxh',
+  weeklyRate:        'fldCX0DhJDQh9w4ez',
+  personRates:       'fldTLQxOn60iV9mPz',
+} as const
+
+// ─── Person Rates (15 fields) ────────────────────────────────
+
+export const PERSON_RATES = {
+  label:                'fld5a05LBh8RnFmKt',
+  agreedHourly:         'fld00Y55wWAKn1ipD',
+  agreedDayRate:        'fldrCMFxEhMvGyw6i',
+  agreedRemoteDayRate:  'fldbvT9QwSvzuDbQR',
+  agreedRetainerHourly: 'fldYN6jFDMNv72gGX',
+  agreedRetainerDay:    'fldAZhxX0lGTqKIEp',
+  agreedWeekly:         'fldtnlrZSDmFY7orx',
+  agreedAnnualSalary:   'fldiLrW8TxSZq3nrZ',
+  effectiveDate:        'fldKrHU5YRZhPGQKE',
+  expiryDate:           'fldNGXvJcXhMR2MSM',
+  status:               'fldtR5hAIYTO6kx5I',
+  contractReference:    'fldwpSljCyzcRsUPo',
+  notes:                'fld7XMDeERJ6PV5QK',
+  contact:              'fldTZJIHLOq8eKvbn',
+  role:                 'fldex5lq6sayq6h86',
+} as const
+
 // ─── Primary field IDs (for display name resolution) ─────────
 
 export const PRIMARY_FIELDS: Record<string, string> = {
@@ -485,4 +529,6 @@ export const PRIMARY_FIELDS: Record<string, string> = {
   [TABLES.emailScanRules]: EMAIL_SCAN_RULES.ruleName,
   [TABLES.emailScanState]: EMAIL_SCAN_STATE.userEmail,
   [TABLES.enrichmentQueue]: ENRICHMENT_QUEUE.fieldName,
+  [TABLES.rateCard]: RATE_CARD.role,
+  [TABLES.personRates]: PERSON_RATES.label,
 }
