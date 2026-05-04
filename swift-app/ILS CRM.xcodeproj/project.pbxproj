@@ -15,7 +15,10 @@
 		0C68B6CED4D625996A04FCE6 /* EnrichmentQueueItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49C40EDA92AF620E53721593 /* EnrichmentQueueItem.swift */; };
 		0CD91819A7E31B4616F65628 /* GmailAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D1B5E5FF33E83DA5A5378A5 /* GmailAPIClient.swift */; };
 		106ADEB53369675C780A9283 /* ClientPage+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316C309AD146E8B39E732EC0 /* ClientPage+Airtable.swift */; };
+		12B674423FA4BD14D8822048 /* PersonRate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A03C236DE53FBBF03AFC9BBE /* PersonRate.swift */; };
 		141E801CD0E7D895A261D4AD /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F940D1601214B19B51F716 /* TasksView.swift */; };
+		1AC67D7ECC317A8F317D05C0 /* RateCard+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A81701527DF8CABEDA5E3DF /* RateCard+Airtable.swift */; };
+		1ACD9F21CEC2A2C241E970A0 /* PersonRate+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171BB5B858B9B2AF671B147F /* PersonRate+Airtable.swift */; };
 		1ACFC5383147C9326C6B6113 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */; };
 		1CCC821E974F9883EC7189C9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1D79A18DA5B69A3631FCE00A /* Assets.xcassets */; };
 		1E022A0BD2BA8760C00B2ED4 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE314248FE2D8796FC6CF433 /* Project.swift */; };
@@ -26,7 +29,7 @@
 		32A37AC7A71BCA3C59781505 /* PortalLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */; };
 		35C3F4BEF1740DA2C7220139 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668D676CC891E3198DACD13B /* TaskDetailView.swift */; };
 		36EBBB07DE34F8F950564A28 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AEF7B9304DFAE44834536F /* ProjectDetailView.swift */; };
-		38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; platformFilters = (macos, ); productRef = 4FAD464BE3689BD2B1578A74 /* Sparkle */; };
+		38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4FAD464BE3689BD2B1578A74 /* Sparkle */; };
 		38AC88CA3F769FD350136A46 /* Proposal+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */; };
 		3B9FF2F195EB914F5F66299A /* Company+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */; };
 		3BA9C65768304F0629CA653C /* PortalLog+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */; };
@@ -92,6 +95,7 @@
 		D456DB1C39A4368CBFC3FD11 /* CRMTask+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4004166840F7FE3EEA205D /* CRMTask+Airtable.swift */; };
 		D6E02ADF58BE1D2947790F72 /* EmailRulesEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE6980BAD6222D0345E524CD /* EmailRulesEngine.swift */; };
 		D8293516902E4DDAAFF8E29A /* iOSTaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85950CF9B09800B62F3CDD4D /* iOSTaskFormView.swift */; };
+		D94151C0E0062D7BDA9D7ABF /* RateCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC219544CB05E05EE4243BB /* RateCard.swift */; };
 		DA660DAB95967BFA6D23BFD6 /* PortalAccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F65F8E51ACDA30BB96E73 /* PortalAccessView.swift */; };
 		DF15F7ABE93D042D8A704882 /* PipelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D16508BB0F462650F6DA3D4D /* PipelineView.swift */; };
 		E37235068B78D011C6790273 /* Company.swift in Sources */ = {isa = PBXBuildFile; fileRef = 649C44D1AA43D3C6B31DC0B2 /* Company.swift */; };
@@ -131,6 +135,8 @@
 		0D61957FDC2F8FA3F91FE036 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		115F65F8E51ACDA30BB96E73 /* PortalAccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalAccessView.swift; sourceTree = "<group>"; };
 		1251BF67D5DE50CE8268415C /* Interaction+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Interaction+Airtable.swift"; sourceTree = "<group>"; };
+		171BB5B858B9B2AF671B147F /* PersonRate+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PersonRate+Airtable.swift"; sourceTree = "<group>"; };
+		1A81701527DF8CABEDA5E3DF /* RateCard+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RateCard+Airtable.swift"; sourceTree = "<group>"; };
 		1D79A18DA5B69A3631FCE00A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		20E951223991FB76B8FAB891 /* ProposalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProposalsView.swift; sourceTree = "<group>"; };
 		2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PortalLog+Airtable.swift"; sourceTree = "<group>"; };
@@ -185,6 +191,7 @@
 		96F0EDB8CA3140A4F57B090F /* PlatformHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelpers.swift; sourceTree = "<group>"; };
 		99535FE1159A16F2D4297A81 /* ContactDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactDetailView.swift; sourceTree = "<group>"; };
 		9A75252E01322E065A8492CA /* iOSTaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSTaskDetailView.swift; sourceTree = "<group>"; };
+		A03C236DE53FBBF03AFC9BBE /* PersonRate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonRate.swift; sourceTree = "<group>"; };
 		A09B51751718308565E912A8 /* EditableAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableAvatarView.swift; sourceTree = "<group>"; };
 		A1A161B8DCBD0CDF39AAA10C /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
 		A49F9AFC3A3BFE5B1C86EAC7 /* ImportedContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedContactsView.swift; sourceTree = "<group>"; };
@@ -205,6 +212,7 @@
 		C847C132CA2DCF079D443545 /* iOSCompaniesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSCompaniesView.swift; sourceTree = "<group>"; };
 		C97328204D6403F055134FEC /* EmailScanState+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EmailScanState+Airtable.swift"; sourceTree = "<group>"; };
 		CDA67E7B40071D4AE31F92F9 /* ClientPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientPage.swift; sourceTree = "<group>"; };
+		CEC219544CB05E05EE4243BB /* RateCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RateCard.swift; sourceTree = "<group>"; };
 		D062D8686378D6EEA73166F2 /* EmailUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailUtils.swift; sourceTree = "<group>"; };
 		D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Company+Airtable.swift"; sourceTree = "<group>"; };
 		D16508BB0F462650F6DA3D4D /* PipelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineView.swift; sourceTree = "<group>"; };
@@ -260,10 +268,12 @@
 				7B7890DD79DA9A6657609855 /* ImportedContact.swift */,
 				68503FBF62BB4C58531F734C /* Interaction.swift */,
 				AD5AC5FD0C4B654A1AC21455 /* Opportunity.swift */,
+				A03C236DE53FBBF03AFC9BBE /* PersonRate.swift */,
 				48DD1C12C88BD4E268591904 /* PortalAccessRecord.swift */,
 				96E233D4EA498B4D591789D1 /* PortalLog.swift */,
 				DE314248FE2D8796FC6CF433 /* Project.swift */,
 				B6A17675D518A087D5687C46 /* Proposal.swift */,
+				CEC219544CB05E05EE4243BB /* RateCard.swift */,
 				A85AC6A57D105A7C7B62A7BD /* Specialty.swift */,
 				16EC5F4258AC125E81A84077 /* Converters */,
 			);
@@ -284,10 +294,12 @@
 				91E7DA8774A3960554DDDB99 /* ImportedContact+Airtable.swift */,
 				1251BF67D5DE50CE8268415C /* Interaction+Airtable.swift */,
 				794C572B0816746F1F6DD1EF /* Opportunity+Airtable.swift */,
+				171BB5B858B9B2AF671B147F /* PersonRate+Airtable.swift */,
 				4AE64E65874DA7EEAD56BA2C /* PortalAccessRecord+Airtable.swift */,
 				2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */,
 				71C07D862A21FBBB8121DAE0 /* Project+Airtable.swift */,
 				52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */,
+				1A81701527DF8CABEDA5E3DF /* RateCard+Airtable.swift */,
 				6ABE86523821B3FCDB6E53E5 /* Specialty+Airtable.swift */,
 			);
 			path = Converters;
@@ -727,6 +739,8 @@
 				FB6619F611CA54671C544752 /* Opportunity+Airtable.swift in Sources */,
 				024D905AD69C70469BB2802B /* Opportunity.swift in Sources */,
 				A733A762B04063FAE09B39D4 /* OpportunityDetailView.swift in Sources */,
+				1ACD9F21CEC2A2C241E970A0 /* PersonRate+Airtable.swift in Sources */,
+				12B674423FA4BD14D8822048 /* PersonRate.swift in Sources */,
 				DF15F7ABE93D042D8A704882 /* PipelineView.swift in Sources */,
 				4995EE71A952D25C4D9CDFC7 /* PlatformHelpers.swift in Sources */,
 				8022F098EA4F19DB36D03C07 /* PortalAccessDetailView.swift in Sources */,
@@ -744,6 +758,8 @@
 				D419FF8EC2A4CE310A6A5FD8 /* Proposal.swift in Sources */,
 				79162B82F57DC14B8BC4262A /* ProposalDetailView.swift in Sources */,
 				577D8DAFD2F517D9CB1FBE10 /* ProposalsView.swift in Sources */,
+				1AC67D7ECC317A8F317D05C0 /* RateCard+Airtable.swift in Sources */,
+				D94151C0E0062D7BDA9D7ABF /* RateCard.swift in Sources */,
 				F63F2BF32F6391A2F68CAA66 /* RevokedView.swift in Sources */,
 				43DC7BE3CE7479FF375655DA /* SettingsView.swift in Sources */,
 				5E3277207BAB0C745FF8D7F7 /* SharedComponents.swift in Sources */,
@@ -1092,7 +1108,6 @@
 		4FAD464BE3689BD2B1578A74 /* Sparkle */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 309EFC05ECD2925FCB1802DF /* XCRemoteSwiftPackageReference "Sparkle" */;
-			platformFilters = (macos, );
 			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */

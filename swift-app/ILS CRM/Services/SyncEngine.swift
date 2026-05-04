@@ -214,6 +214,8 @@ final class SyncEngine {
                 try await pushRecords(ClientPage.self, service: service, context: context)
             case AirtableConfig.Tables.enrichmentQueue:
                 try await pushRecords(EnrichmentQueueItem.self, service: service, context: context)
+            case AirtableConfig.Tables.personRates:
+                try await pushRecords(PersonRate.self, service: service, context: context)
             default:
                 break
             }
@@ -370,6 +372,10 @@ final class SyncEngine {
             try await pullRecords(EmailScanState.self, service: service, context: context)
         case AirtableConfig.Tables.enrichmentQueue:
             try await pullRecords(EnrichmentQueueItem.self, service: service, context: context)
+        case AirtableConfig.Tables.rateCard:
+            try await pullRecords(RateCard.self, service: service, context: context)
+        case AirtableConfig.Tables.personRates:
+            try await pullRecords(PersonRate.self, service: service, context: context)
         default:
             Self.logger.warning("Unknown table ID: \(tableId)")
         }

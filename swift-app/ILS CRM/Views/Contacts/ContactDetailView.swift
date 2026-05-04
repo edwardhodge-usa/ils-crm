@@ -8,6 +8,8 @@ struct ContactDetailView: View {
     @Query private var opportunities: [Opportunity]
     @Query private var companies: [Company]
     @Query private var contacts: [Contact]
+    @Query private var personRates: [PersonRate]
+    @Query private var rateCards: [RateCard]
 
     @State private var showEditContact = false
     @State private var showDeleteConfirm = false
@@ -138,6 +140,15 @@ struct ContactDetailView: View {
             !reliabilityRating.isEmpty
     }
 
+    private var contactPersonRates: [PersonRate] {
+        personRates.filter { $0.contactIds.contains(contact.id) }
+    }
+
+    private func rateCard(for personRate: PersonRate) -> RateCard? {
+        guard let roleId = personRate.roleIds.first else { return nil }
+        return rateCards.first { $0.id == roleId }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
@@ -149,6 +160,10 @@ struct ContactDetailView: View {
 
                 if hasPartnerData {
                     partnerVendorCell
+                }
+
+                if !contactPersonRates.isEmpty {
+                    preferredRatesCell
                 }
             }
             .padding(.horizontal, 16)
@@ -561,6 +576,85 @@ struct ContactDetailView: View {
                 }
             }
         }
+    }
+
+    private var preferredRatesCell: some View {
+        BentoCell(title: "Preferred Rates") {
+            if contactPersonRates.isEmpty {
+                Text("No preferred rates on file")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(contactPersonRates, id: \.id) { rate in
+                        preferredRateRow(rate)
+                    }
+                }
+            }
+        }
+    }
+
+    private func preferredRateRow(_ rate: PersonRate) -> some View {
+        let card = rateCard(for: rate)
+        let roleName = card?.role ?? rate.label ?? "Unknown Role"
+        let hourly = rate.agreedHourly
+        let dayRate = rate.agreedDayRate
+
+        return HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(roleName)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
+
+                HStack(spacing: 8) {
+                    if let hourly {
+                        Text(formatCurrency(hourly) + "/hr")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    if let dayRate {
+                        Text(formatCurrency(dayRate) + "/day")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    if hourly == nil && dayRate == nil {
+                        Text("No rates set")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let status = rate.status, !status.isEmpty {
+                Text(status)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(statusColor(status))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(statusColor(status).opacity(0.12))
+                    .clipShape(Capsule())
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func statusColor(_ status: String) -> Color {
+        switch status.lowercased() {
+        case "active": return .green
+        case "expired": return .red
+        case "pending": return .orange
+        default: return .secondary
+        }
+    }
+
+    private func formatCurrency(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencySymbol = "$"
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))"
     }
 
     private var partnerVendorCell: some View {

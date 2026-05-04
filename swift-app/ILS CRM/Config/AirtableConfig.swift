@@ -35,14 +35,19 @@ enum AirtableConfig {
         static let emailScanRules = "tblU4KmCS24s36r1L"
         static let emailScanState = "tblLxTKPq10pyu4Tc"
         static let enrichmentQueue = "tbliKcirq0FuQloJH"
+        // Preferred Rates
+        static let rateCard = "tblayIzbtJobsKvNe"
+        static let personRates = "tblx4FLX4QBwocggm"
     }
 
     /// Sync order — matches Electron: push pending first, then pull in this order.
     /// 200ms stagger between tables to avoid Airtable rate limits (5 req/sec).
     static let syncOrder: [String] = [
         Tables.specialties,
+        Tables.rateCard,
         Tables.companies,
         Tables.contacts,
+        Tables.personRates,
         Tables.opportunities,
         Tables.projects,
         Tables.proposals,
@@ -60,6 +65,7 @@ enum AirtableConfig {
     /// Tables that are read-only (no push to Airtable)
     static let readOnlyTables: Set<String> = [
         Tables.specialties,
+        Tables.rateCard,
         Tables.portalLogs,
         Tables.emailScanRules,
         Tables.emailScanState,
