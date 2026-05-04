@@ -62,6 +62,8 @@ interface ElectronAPI {
     dismiss: (id: string) => Promise<{ success: boolean; error?: string }>
   }
   specialties: ReadOnlyEntityAPI
+  personRates: EntityAPI
+  rateCard: ReadOnlyEntityAPI
   portalAccess: EntityAPI
   clientPages: EntityAPI
   portalLogs: ReadOnlyEntityAPI & {

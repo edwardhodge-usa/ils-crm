@@ -114,6 +114,16 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
   const [showLinkedInInput, setShowLinkedInInput] = useState(false)
   const [companiesData, setCompaniesData] = useState<Record<string, unknown>[]>([])
 
+  // Preferred Rates state
+  const [addingRate, setAddingRate] = useState(false)
+  const [editingRateId, setEditingRateId] = useState<string | null>(null)
+  const [rateForm, setRateForm] = useState<{
+    roleId: string; agreedHourly: string; agreedDay: string; agreedWeekly: string;
+    status: string; effectiveDate: string; notes: string;
+  }>({ roleId: '', agreedHourly: '', agreedDay: '', agreedWeekly: '', status: 'Active', effectiveDate: '', notes: '' })
+  const [rateSaving, setRateSaving] = useState(false)
+  const [rateError, setRateError] = useState<string | null>(null)
+
   useEffect(() => {
     window.electronAPI.companies.getAll().then(res => {
       if (res.success && res.data) setCompaniesData(res.data as Record<string, unknown>[])
@@ -209,11 +219,13 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
       }
 
       // Load linked records for tabs
-      const [opps, tasks, proposals, interactions] = await Promise.all([
+      const [opps, tasks, proposals, interactions, personRatesRes, rateCardRes] = await Promise.all([
         window.electronAPI.opportunities.getAll(),
         window.electronAPI.tasks.getAll(),
         window.electronAPI.proposals.getAll(),
         window.electronAPI.interactions.getAll(),
+        window.electronAPI.personRates.getAll(),
+        window.electronAPI.rateCard.getAll(),
       ])
 
       if (cancelled) return
@@ -242,6 +254,15 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
         linked.interactions = (interactions.data as Record<string, unknown>[]).filter(i =>
           containsId(i.contacts_ids, id!)
         )
+      }
+
+      if (personRatesRes.success && personRatesRes.data) {
+        linked.personRates = (personRatesRes.data as Record<string, unknown>[]).filter(r =>
+          containsId(r.contact_ids, id!)
+        )
+      }
+      if (rateCardRes.success && rateCardRes.data) {
+        linked.rateCardRoles = rateCardRes.data as Record<string, unknown>[]
       }
 
       setLinkedData(linked)
@@ -951,6 +972,277 @@ export default function Contact360Page({ contactId, onDeleted }: Contact360Props
               )}
             </div>
           )}
+
+          {/* ── Preferred Rates ── */}
+          {(() => {
+            const personRates = linkedData.personRates || []
+            const rateCardRoles = (linkedData.rateCardRoles || [])
+              .filter(r => r.active)
+              .sort((a, b) => ((a.sort_order as number) || 0) - ((b.sort_order as number) || 0))
+
+            function resolveRoleName(roleIds: unknown): string {
+              try {
+                const ids = JSON.parse(roleIds as string || '[]') as string[]
+                const match = rateCardRoles.find(r => r.id === ids[0])
+                return (match?.role as string) || '—'
+              } catch { return '—' }
+            }
+
+            async function saveRate() {
+              if (!rateForm.roleId) { setRateError('Please select a role'); return }
+              setRateSaving(true)
+              setRateError(null)
+              const fields: Record<string, unknown> = {
+                contact_ids: JSON.stringify([id]),
+                role_ids: JSON.stringify([rateForm.roleId]),
+                status: rateForm.status,
+              }
+              if (rateForm.agreedHourly) fields.agreed_hourly = parseFloat(rateForm.agreedHourly)
+              if (rateForm.agreedDay) fields.agreed_day_rate = parseFloat(rateForm.agreedDay)
+              if (rateForm.agreedWeekly) fields.agreed_weekly = parseFloat(rateForm.agreedWeekly)
+              if (rateForm.effectiveDate) fields.effective_date = rateForm.effectiveDate
+              if (rateForm.notes) fields.notes = rateForm.notes
+
+              let res
+              if (editingRateId) {
+                res = await window.electronAPI.personRates.update(editingRateId, fields)
+              } else {
+                res = await window.electronAPI.personRates.create(fields)
+              }
+              setRateSaving(false)
+              if (res.success) {
+                const [pr, rc] = await Promise.all([
+                  window.electronAPI.personRates.getAll(),
+                  window.electronAPI.rateCard.getAll(),
+                ])
+                setLinkedData(prev => ({
+                  ...prev,
+                  personRates: pr.success && pr.data
+                    ? (pr.data as Record<string, unknown>[]).filter(r => containsId(r.contact_ids, id!))
+                    : prev.personRates,
+                  rateCardRoles: rc.success && rc.data ? rc.data as Record<string, unknown>[] : prev.rateCardRoles,
+                }))
+                setAddingRate(false)
+                setEditingRateId(null)
+                setRateForm({ roleId: '', agreedHourly: '', agreedDay: '', agreedWeekly: '', status: 'Active', effectiveDate: '', notes: '' })
+              } else {
+                setRateError('Save failed — please try again')
+              }
+            }
+
+            function startEdit(rate: Record<string, unknown>) {
+              let roleId = ''
+              try { roleId = (JSON.parse(rate.role_ids as string || '[]') as string[])[0] || '' } catch {}
+              setRateForm({
+                roleId,
+                agreedHourly: rate.agreed_hourly != null ? String(rate.agreed_hourly) : '',
+                agreedDay: rate.agreed_day_rate != null ? String(rate.agreed_day_rate) : '',
+                agreedWeekly: rate.agreed_weekly != null ? String(rate.agreed_weekly) : '',
+                status: (rate.status as string) || 'Active',
+                effectiveDate: (rate.effective_date as string) || '',
+                notes: (rate.notes as string) || '',
+              })
+              setEditingRateId(rate.id as string)
+              setAddingRate(false)
+            }
+
+            function statusBadge(status: string) {
+              const s = (status || '').toLowerCase()
+              if (s === 'active') return { text: '#30d158', bg: 'rgba(48,209,88,0.15)', label: 'Active' }
+              if (s === 'pending') return { text: '#ffd60a', bg: 'rgba(255,214,10,0.15)', label: 'Pending' }
+              return { text: 'var(--text-tertiary)', bg: 'var(--bg-secondary)', label: status || 'Expired' }
+            }
+
+            const showForm = addingRate || editingRateId !== null
+
+            return (
+              <div style={{ marginTop: 20, marginBottom: 4 }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>
+                    Preferred Rates
+                  </div>
+                  {!showForm && (
+                    <button
+                      onClick={() => { setAddingRate(true); setEditingRateId(null); setRateForm({ roleId: '', agreedHourly: '', agreedDay: '', agreedWeekly: '', status: 'Active', effectiveDate: '', notes: '' }); setRateError(null) }}
+                      style={{ fontSize: 12, fontWeight: 500, padding: '3px 10px', borderRadius: 6, border: 'none', background: 'var(--color-accent)', color: 'var(--text-on-accent, #fff)', cursor: 'default', fontFamily: 'inherit' }}
+                    >
+                      + Add Rate
+                    </button>
+                  )}
+                </div>
+
+                {/* Inline form */}
+                {showForm && (
+                  <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, padding: '12px 14px', marginBottom: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>
+                      {editingRateId ? 'Edit Rate' : 'Add Rate'}
+                    </div>
+
+                    {/* Role picker */}
+                    <div style={{ marginBottom: 8 }}>
+                      <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>Role *</label>
+                      <select
+                        value={rateForm.roleId}
+                        onChange={e => setRateForm(f => ({ ...f, roleId: e.target.value }))}
+                        style={{ width: '100%', fontSize: 13, padding: '5px 8px', borderRadius: 6, border: '1px solid var(--separator)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'inherit', cursor: 'default' }}
+                      >
+                        <option value="">Select a role…</option>
+                        {rateCardRoles.map(r => (
+                          <option key={r.id as string} value={r.id as string}>{r.role as string}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Rate fields row */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
+                      {[
+                        { label: 'Agreed Hourly ($)', field: 'agreedHourly' as const, placeholder: '0.00' },
+                        { label: 'Agreed Day Rate ($)', field: 'agreedDay' as const, placeholder: '0.00' },
+                        { label: 'Agreed Weekly ($)', field: 'agreedWeekly' as const, placeholder: '0.00' },
+                      ].map(({ label, field, placeholder }) => (
+                        <div key={field}>
+                          <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>{label}</label>
+                          <input
+                            type="number"
+                            placeholder={placeholder}
+                            value={rateForm[field]}
+                            onChange={e => setRateForm(f => ({ ...f, [field]: e.target.value }))}
+                            style={{ width: '100%', fontSize: 13, padding: '5px 8px', borderRadius: 6, border: '1px solid var(--separator)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Status + Effective Date */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                      <div>
+                        <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>Status</label>
+                        <select
+                          value={rateForm.status}
+                          onChange={e => setRateForm(f => ({ ...f, status: e.target.value }))}
+                          style={{ width: '100%', fontSize: 13, padding: '5px 8px', borderRadius: 6, border: '1px solid var(--separator)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'inherit', cursor: 'default' }}
+                        >
+                          <option>Active</option>
+                          <option>Pending</option>
+                          <option>Expired</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>Effective Date</label>
+                        <input
+                          type="date"
+                          value={rateForm.effectiveDate}
+                          onChange={e => setRateForm(f => ({ ...f, effectiveDate: e.target.value }))}
+                          style={{ width: '100%', fontSize: 13, padding: '5px 8px', borderRadius: 6, border: '1px solid var(--separator)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Notes */}
+                    <div style={{ marginBottom: 10 }}>
+                      <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 3 }}>Notes</label>
+                      <textarea
+                        value={rateForm.notes}
+                        onChange={e => setRateForm(f => ({ ...f, notes: e.target.value }))}
+                        rows={2}
+                        style={{ width: '100%', fontSize: 13, padding: '5px 8px', borderRadius: 6, border: '1px solid var(--separator)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'inherit', resize: 'none', boxSizing: 'border-box' }}
+                      />
+                    </div>
+
+                    {rateError && <div style={{ fontSize: 12, color: 'var(--color-red)', marginBottom: 8 }}>{rateError}</div>}
+
+                    {/* Save / Cancel */}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={saveRate}
+                        disabled={rateSaving}
+                        style={{ fontSize: 13, fontWeight: 500, padding: '6px 14px', borderRadius: 7, border: 'none', background: 'var(--color-accent)', color: 'var(--text-on-accent, #fff)', cursor: 'default', fontFamily: 'inherit', opacity: rateSaving ? 0.6 : 1 }}
+                      >
+                        {rateSaving ? 'Saving…' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => { setAddingRate(false); setEditingRateId(null); setRateError(null) }}
+                        style={{ fontSize: 13, fontWeight: 400, padding: '6px 14px', borderRadius: 7, border: '1px solid var(--separator)', background: 'none', color: 'var(--text-secondary)', cursor: 'default', fontFamily: 'inherit' }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Rate list */}
+                {personRates.length === 0 && !showForm ? (
+                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '10px 0' }}>
+                    No preferred rates on file. Add one to override the standard Rate Card for this person.
+                  </div>
+                ) : (
+                  personRates.map(rate => {
+                    const badge = statusBadge(rate.status as string)
+                    const roleName = resolveRoleName(rate.role_ids)
+                    const isEditing = editingRateId === (rate.id as string)
+
+                    if (isEditing) return null
+
+                    return (
+                      <div key={rate.id as string} style={{
+                        background: 'var(--bg-secondary)', borderRadius: 8,
+                        padding: '10px 12px', marginBottom: 8,
+                        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10,
+                      }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+                            {roleName}
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                            {rate.agreed_hourly != null && (
+                              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>${Number(rate.agreed_hourly).toLocaleString()}/hr</span>
+                            )}
+                            {rate.agreed_day_rate != null && (
+                              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>${Number(rate.agreed_day_rate).toLocaleString()}/day</span>
+                            )}
+                            {rate.agreed_weekly != null && (
+                              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>${Number(rate.agreed_weekly).toLocaleString()}/wk</span>
+                            )}
+                            <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: badge.bg, color: badge.text }}>
+                              {badge.label}
+                            </span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                          <button
+                            onClick={() => startEdit(rate)}
+                            title="Edit"
+                            style={{ fontSize: 13, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'default', padding: '2px 4px', fontFamily: 'inherit' }}
+                            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                          >
+                            ✎
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!window.confirm(`Delete rate for ${roleName}?`)) return
+                              await window.electronAPI.personRates.delete(rate.id as string)
+                              setLinkedData(prev => ({
+                                ...prev,
+                                personRates: (prev.personRates || []).filter(r => r.id !== rate.id),
+                              }))
+                            }}
+                            title="Delete"
+                            style={{ fontSize: 13, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'default', padding: '2px 4px', fontFamily: 'inherit' }}
+                            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-red)'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            )
+          })()}
 
           {/* Delete Contact — bottom of right column */}
           <div style={{ marginTop: 24, textAlign: 'center', paddingBottom: 16 }}>
