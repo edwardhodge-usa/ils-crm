@@ -38,13 +38,12 @@ final class GmailOAuthService: NSObject {
     private static let logger = Logger(subsystem: "com.ils-crm", category: "GmailOAuth")
 
     // Keychain keys — stored under the same service as other app secrets.
-    // nonisolated(unsafe) so these constants can be read from any actor context.
-    nonisolated(unsafe) static let accessTokenKey = "gmail-access-token"
-    nonisolated(unsafe) static let refreshTokenKey = "gmail-refresh-token"
-    nonisolated(unsafe) static let tokenExpiryKey = "gmail-token-expiry"
-    nonisolated(unsafe) static let emailKey = "gmail-email"
-    nonisolated(unsafe) static let clientIdKey = "gmail-client-id"
-    nonisolated(unsafe) static let clientSecretKey = "gmail-client-secret"
+    static let accessTokenKey = "gmail-access-token"
+    static let refreshTokenKey = "gmail-refresh-token"
+    static let tokenExpiryKey = "gmail-token-expiry"
+    static let emailKey = "gmail-email"
+    static let clientIdKey = "gmail-client-id"
+    static let clientSecretKey = "gmail-client-secret"
 
     private static let scope = "https://www.googleapis.com/auth/gmail.readonly"
     private static let authEndpoint = "https://accounts.google.com/o/oauth2/v2/auth"
