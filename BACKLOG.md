@@ -68,13 +68,31 @@
 
 ## Todo — Data Architecture
 
-- [ ] **3NF Migration** — deprecate text Company field (`fldTwuGnEhbQfZhP3`) on Contacts. Replace with linked Companies field (`fldYXDUc9YKKsGTBt`). 66/69 contacts have both, 2 need Company records created. See vault `apps/ils-crm.md` for full migration steps
+- [x] ~~**3NF Migration**~~ — text Company field already deleted from Airtable; code (denormalization) complete since 2026-04-04. Data cleanup 2026-05-04: created 7 new Company records (Pixels+Atoms, Nolan Heimann, BRC Imagination Arts, Sony UK, Path Entertainment Group, Tricoastal Scapes, TDAC International) and linked all 13 unlinked contacts. 14 freelancers/talent left intentionally unlinked.
 - [ ] No Opportunity → Rate Card link — when a deal is won, the quoted rates aren't captured. Need per-deal rate snapshot
 - [ ] No Proposal → Rate Card link — Proposals table doesn't link to which Rate Card roles were included
 - [ ] Contract milestones unstructured — Opportunities "Contract Milestones" is freeform text, needs structured data for milestone-based invoicing
 - [ ] Revenue share not in Airtable — Laura's 50% net profit share is only in the vault, not queryable
 - [ ] "Standard Hourly" in Rate Card is actually the discount rate (10% external discount baked in) — rename or add "Full Rate" field. **Must be done manually in Airtable UI** (API can't rename fields)
 - [ ] No retainer vs standard rate selection logic — need "Is Retainer Client" flag on Companies or inference from Engagement Type
+
+## Feature — Preferred Rates System (Person Rates)
+> Any contact can have negotiated preferred rates. When a named person is assigned to a role in a proposal or budget, their agreed rates auto-populate instead of Rate Card standard. Resolution rule: `max(standard_rate, agreed_rate)`.
+
+### Layer 1 — Sync (Electron + Swift)
+- [ ] **PR-1** Electron: add `rate_card` to TABLES, field-maps, converters, sync engine, IPC handlers (read-only) 📅 2026-05-04
+- [ ] **PR-2** Electron: add `person_rates` to TABLES, field-maps, converters, sync engine, IPC handlers (full CRUD) 📅 2026-05-04
+- [ ] **PR-3** Swift: add `RateCard` SwiftData model + AirtableService sync (read-only) 📅 2026-05-04
+- [ ] **PR-4** Swift: add `PersonRate` SwiftData model + AirtableService sync (full CRUD) 📅 2026-05-04
+
+### Layer 2 — UI: Add Rates to Any Contact
+- [ ] **PR-5** Electron: Contact 360 → Person Rates section — list agreed rates per role, inline Add/Edit form (role picker from Rate Card, rate fields) 📅 2026-05-04
+- [ ] **PR-6** Electron: Rate Card view (new) — list all roles with standard rates; show which contacts have Person Rates for each role 📅 2026-05-04
+- [ ] **PR-7** Swift: Contact detail → Person Rates section — view agreed rates, sheet form to add/edit (role picker + rate fields) 📅 2026-05-04
+
+### Layer 3 — Auto-Population in Proposals & Budgets
+- [ ] **PR-8** Electron: proposal/budget role row — when a named contact is assigned, resolve their Person Rate and pre-fill agreed amounts (fall back to Rate Card standard if no Person Rate exists) 📅 2026-05-04
+- [ ] **PR-9** Swift: same resolution logic as PR-8, applied wherever roles are displayed with rates 📅 2026-05-04
 - [x] ~~"Writer Senior" vs "Senior Writer" duplicate in Rate Card~~ — deactivated "Writer Senior" (rec2PSnVf6xizBKmz), kept "Senior Writer" as canonical. 0 Person Rates references. (fixed 2026-03-28)
 
 ## Todo — Manual Cleanup
