@@ -451,7 +451,6 @@ struct EditableFieldRow: View {
             get: {
                 guard let value else { return Date() }
                 return Self.isoFormatter.date(from: value)
-                    ?? Self.isoFormatter.date(from: value)
                     ?? Date()
             },
             set: { newDate in

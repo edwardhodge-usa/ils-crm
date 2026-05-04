@@ -56,6 +56,11 @@ final class EmailScanEngine {
     private static let lockFilePath = "/tmp/ils-crm-sync.lock"
     private static let batchSize = 50
     private static let maxBodyFetchCandidates = 200
+    private static let candidateDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
 
     private var pollingTask: Task<Void, Never>?
 
@@ -205,6 +210,7 @@ final class EmailScanEngine {
                 messageIds = try await gmailClient.listHistory(startHistoryId: historyId)
             } catch GmailError.historyExpired {
                 Self.logger.warning("History expired -- falling back to full scan")
+                progress = ScanProgress()
                 releaseScanLock()
                 await scanFull()
                 return
@@ -692,17 +698,14 @@ final class EmailScanEngine {
         for i in 0..<candidates.count {
             let candidate = candidates[i].candidate
 
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd"
-
             let meta = CandidateMetadata(
                 email: candidate.email,
                 threadCount: candidate.threadCount,
                 fromCount: candidate.fromCount,
                 toCount: candidate.toCount,
                 ccCount: candidate.ccCount,
-                firstSeen: dateFormatter.string(from: candidate.firstSeenDate),
-                lastSeen: dateFormatter.string(from: candidate.lastSeenDate)
+                firstSeen: Self.candidateDateFormatter.string(from: candidate.firstSeenDate),
+                lastSeen: Self.candidateDateFormatter.string(from: candidate.lastSeenDate)
             )
 
             var classification: ClaudeClassification?

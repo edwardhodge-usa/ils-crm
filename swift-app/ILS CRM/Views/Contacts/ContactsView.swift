@@ -40,18 +40,24 @@ struct ContactsView: View {
 
     /// Company ID → company name lookup built from the Companies query.
     private var companyNameById: [String: String] {
-        Dictionary(uniqueKeysWithValues: companies.compactMap { c in
-            guard let name = c.companyName else { return nil }
-            return (c.id, name)
-        })
+        Dictionary(
+            companies.compactMap { c -> (String, String)? in
+                guard let name = c.companyName else { return nil }
+                return (c.id, name)
+            },
+            uniquingKeysWith: { _, last in last }
+        )
     }
 
     /// Specialty ID → name lookup.
     private var specialtyNameById: [String: String] {
-        Dictionary(uniqueKeysWithValues: specialties.compactMap { s in
-            guard let name = s.specialty, !name.isEmpty else { return nil }
-            return (s.id, name)
-        })
+        Dictionary(
+            specialties.compactMap { s -> (String, String)? in
+                guard let name = s.specialty, !name.isEmpty else { return nil }
+                return (s.id, name)
+            },
+            uniquingKeysWith: { _, last in last }
+        )
     }
 
     private var filteredContacts: [Contact] {

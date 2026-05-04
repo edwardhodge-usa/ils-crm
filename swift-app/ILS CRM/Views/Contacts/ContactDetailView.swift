@@ -607,12 +607,12 @@ struct ContactDetailView: View {
 
                 HStack(spacing: 8) {
                     if let hourly {
-                        Text(formatCurrency(hourly) + "/hr")
+                        Text(formattedCurrency(hourly) + "/hr")
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                     }
                     if let dayRate {
-                        Text(formatCurrency(dayRate) + "/day")
+                        Text(formattedCurrency(dayRate) + "/day")
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                     }
@@ -645,14 +645,6 @@ struct ContactDetailView: View {
         case "pending": return .orange
         default: return .secondary
         }
-    }
-
-    private func formatCurrency(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencySymbol = "$"
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))"
     }
 
     private var partnerVendorCell: some View {

@@ -128,6 +128,14 @@ struct PortalAccessView: View {
                         recordRow(record)
                     }
                     .buttonStyle(.plain)
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            if selectedRecord?.id == record.id { selectedRecord = nil }
+                            revokeAccess(record)
+                        } label: {
+                            Label("Revoke", systemImage: "xmark.circle")
+                        }
+                    }
                 }
             }
             .listStyle(.inset)
@@ -663,13 +671,11 @@ struct PortalAccessView: View {
 
             Spacer()
 
-            Toggle("", isOn: .constant(isOn))
-                .toggleStyle(.switch)
-                .labelsHidden()
-                .disabled(true)
+            Circle()
+                .fill(isOn ? Color.green : Color.secondary.opacity(0.35))
+                .frame(width: 10, height: 10)
         }
         .frame(minHeight: 30)
-        .opacity(0.85)
     }
 
     private func portalPageBinding(_ page: ClientPage, keyPath: ReferenceWritableKeyPath<ClientPage, Bool>) -> Binding<Bool> {
@@ -783,6 +789,14 @@ struct PortalAccessView: View {
                         byClientRow(record)
                     }
                     .buttonStyle(.plain)
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            if selectedRecord?.id == record.id { selectedRecord = nil }
+                            revokeAccess(record)
+                        } label: {
+                            Label("Revoke", systemImage: "xmark.circle")
+                        }
+                    }
                 }
             }
             .listStyle(.inset)

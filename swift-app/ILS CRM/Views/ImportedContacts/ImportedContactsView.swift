@@ -64,8 +64,10 @@ struct ImportedContactsView: View {
     }
 
     /// Source-filtered contacts
-    private var sourceFilteredContacts: [ImportedContact] {
-        switch sourceFilter {
+    private var sourceFilteredContacts: [ImportedContact] { contacts(for: sourceFilter) }
+
+    private func contacts(for filter: ImportedContactSourceFilter) -> [ImportedContact] {
+        switch filter {
         case .all:
             return activeContacts
         case .email:
@@ -95,17 +97,9 @@ struct ImportedContactsView: View {
         return sortContacts(result)
     }
 
-    /// Counts for source filter tabs
+    /// Counts for source filter tabs — always in sync with sourceFilteredContacts.
     private func sourceCount(_ filter: ImportedContactSourceFilter) -> Int {
-        switch filter {
-        case .all: return activeContacts.count
-        case .email: return activeContacts.filter { ($0.source ?? "").lowercased().contains("email") }.count
-        case .contacts:
-            return activeContacts.filter {
-                let source = ($0.source ?? "").lowercased()
-                return !source.contains("email") && !source.isEmpty
-            }.count
-        }
+        contacts(for: filter).count
     }
 
     /// Whether a contact is an enrichment row (already in CRM)
