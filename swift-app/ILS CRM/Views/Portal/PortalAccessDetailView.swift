@@ -76,7 +76,7 @@ struct PortalAccessDetailView: View {
 
     private var portalPageURL: String? {
         guard let addr = record.pageAddress, !addr.isEmpty else { return nil }
-        return "https://imaginelabstudios.com/ils-clients/\(addr)"
+        return FramerPortalConfig.pageURL(for: addr)?.absoluteString
     }
 
     // MARK: - Body

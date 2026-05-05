@@ -65,8 +65,10 @@ struct CompaniesView: View {
             }
         case "newest":
             return base.sorted {
-                let a = $0.airtableModifiedAt ?? $0.localModifiedAt ?? .distantPast
-                let b = $1.airtableModifiedAt ?? $1.localModifiedAt ?? .distantPast
+                // Converter never sets airtableModifiedAt for Company — fall through
+                // to localModifiedAt then createdDate (matches iOS behavior).
+                let a = $0.airtableModifiedAt ?? $0.localModifiedAt ?? $0.createdDate ?? .distantPast
+                let b = $1.airtableModifiedAt ?? $1.localModifiedAt ?? $1.createdDate ?? .distantPast
                 return a > b
             }
         default: // "name"

@@ -39,6 +39,7 @@ struct TasksView: View {
 
     // Sort
     @AppStorage("sort-tasks") private var sortOrder: TaskSortOrder = .dueDate
+    @AppStorage("sort-tasks-ascending") private var sortAscending: Bool = true
 
     // Section expand/collapse state (persisted)
     @AppStorage("tasks-section-overdue-expanded") private var overdueExpanded = true
@@ -526,6 +527,14 @@ struct TasksView: View {
                     options: TaskSortOrder.allCases,
                     selection: $sortOrder
                 )
+                Button {
+                    sortAscending.toggle()
+                } label: {
+                    Image(systemName: sortAscending ? "arrow.up" : "arrow.down")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.borderless)
+                .help(sortAscending ? "Ascending — click for descending" : "Descending — click for ascending")
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
@@ -767,10 +776,12 @@ struct TasksView: View {
     }
 
     /// Sort an array of tasks according to the current `sortOrder`.
+    /// `sortAscending == false` reverses the result (rows with nil dates stay last).
     private func sortTasks(_ tasks: [CRMTask]) -> [CRMTask] {
+        let sorted: [CRMTask]
         switch sortOrder {
         case .dueDate:
-            return tasks.sorted { a, b in
+            sorted = tasks.sorted { a, b in
                 switch (a.dueDate, b.dueDate) {
                 case (nil, nil): return false
                 case (nil, _):   return false   // nil dates last
@@ -779,19 +790,19 @@ struct TasksView: View {
                 }
             }
         case .nameAZ:
-            return tasks.sorted {
+            sorted = tasks.sorted {
                 ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedAscending
             }
         case .nameZA:
-            return tasks.sorted {
+            sorted = tasks.sorted {
                 ($0.task ?? "").localizedCaseInsensitiveCompare($1.task ?? "") == .orderedDescending
             }
         case .priorityHighLow:
-            return tasks.sorted {
+            sorted = tasks.sorted {
                 priorityRank(for: $0.priority) < priorityRank(for: $1.priority)
             }
         case .dateCreated:
-            return tasks.sorted { a, b in
+            sorted = tasks.sorted { a, b in
                 switch (a.airtableModifiedAt, b.airtableModifiedAt) {
                 case (nil, nil): return false
                 case (nil, _):   return false   // nil dates last
@@ -800,5 +811,6 @@ struct TasksView: View {
                 }
             }
         }
+        return sortAscending ? sorted : sorted.reversed()
     }
 }

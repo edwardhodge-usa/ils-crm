@@ -808,6 +808,9 @@ export default function TasksPage() {
   const [sortBy, setSortBy] = useState<'date' | 'priority' | 'alpha' | 'alphaDesc' | 'created'>(
     () => (localStorage.getItem('tasks-sort') as 'date' | 'priority' | 'alpha' | 'alphaDesc' | 'created') || 'date'
   )
+  const [sortAscending, setSortAscending] = useState<boolean>(
+    () => localStorage.getItem('tasks-sort-ascending') !== 'false'
+  )
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
     try { return JSON.parse(localStorage.getItem('tasks-collapsed') || '{}') } catch { return {} }
   })
@@ -921,7 +924,10 @@ export default function TasksPage() {
 
   // Sort filtered tasks for priority/alpha modes
   const sortedTasks = useMemo(() => {
-    if (sortBy === 'date') return filteredTasks // date mode uses section grouping instead
+    if (sortBy === 'date') {
+      // date mode uses section grouping instead; reverse only when descending
+      return sortAscending ? filteredTasks : [...filteredTasks].reverse()
+    }
     const sorted = [...filteredTasks]
     if (sortBy === 'priority') {
       const priorityOrder: Record<string, number> = { 'High': 0, 'Medium': 1, 'Low': 2 }
@@ -940,8 +946,8 @@ export default function TasksPage() {
       // Airtable record IDs (rec + base32 timestamp) are chronologically sortable
       sorted.sort((a, b) => b.id.localeCompare(a.id))
     }
-    return sorted
-  }, [filteredTasks, sortBy])
+    return sortAscending ? sorted : sorted.reverse()
+  }, [filteredTasks, sortBy, sortAscending])
 
   // Group filtered tasks into sections (only for "all" view with date sort)
   const showSections = activeCategory === 'all' && sortBy === 'date'
@@ -1115,6 +1121,31 @@ export default function TasksPage() {
               <option value="alphaDesc">Name Z-A</option>
               <option value="created">Created</option>
             </select>
+            <button
+              type="button"
+              onClick={() => {
+                const next = !sortAscending
+                setSortAscending(next)
+                localStorage.setItem('tasks-sort-ascending', String(next))
+              }}
+              title={sortAscending ? 'Ascending — click for descending' : 'Descending — click for ascending'}
+              style={{
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--separator)',
+                borderRadius: 6,
+                fontSize: 11,
+                color: 'var(--text-secondary)',
+                padding: '3px 6px',
+                cursor: 'default',
+                outline: 'none',
+                fontFamily: 'inherit',
+                flexShrink: 0,
+                marginLeft: 4,
+                lineHeight: 1,
+              }}
+            >
+              {sortAscending ? '↑' : '↓'}
+            </button>
           </div>
           <button
             onClick={handleNewTask}

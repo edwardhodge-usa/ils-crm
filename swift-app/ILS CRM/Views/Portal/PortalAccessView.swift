@@ -473,7 +473,7 @@ struct PortalAccessView: View {
 
     private func pageURLBar(pageAddress: String) -> some View {
         HStack(spacing: 10) {
-            Text("imaginelabstudios.com/ils-clients/\(pageAddress)")
+            Text(FramerPortalConfig.displayURL(for: pageAddress))
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -694,9 +694,9 @@ struct PortalAccessView: View {
     }
 
     private func openPortalPage(_ pageAddress: String) {
-        let encoded = pageAddress.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? pageAddress
-        guard let url = URL(string: "https://imaginelabstudios.com/ils-clients/\(encoded)"),
-              url.scheme == "https", url.host == "imaginelabstudios.com" else { return }
+        guard let url = FramerPortalConfig.pageURL(for: pageAddress),
+              url.scheme == "https",
+              url.host == FramerPortalConfig.allowedHost else { return }
         openURL(url)
     }
 
@@ -850,13 +850,43 @@ struct PortalAccessView: View {
     }
 
     /// Subtitle for By Client row: "Company · N sections".
+    ///
+    /// `contactCompanyLookup` travels Contact → Companies (a linked field that
+    /// itself holds record IDs), so the lookup returns one or more `recXXXXX`
+    /// strings rather than display names. Resolve them locally via
+    /// `LinkedRecordResolver` so the user sees company names.
     private func byClientSubtitle(for record: PortalAccessRecord) -> String {
-        let company = record.contactCompanyLookup ?? ""
         let count = sectionCount(for: record.pageAddress)
+        let sectionsLabel = "\(count) section\(count == 1 ? "" : "s")"
+        let company = resolvedCompanyName(for: record)
         if company.isEmpty {
-            return "\(count) section\(count == 1 ? "" : "s")"
+            return sectionsLabel
         }
-        return "\(company) \u{00B7} \(count) section\(count == 1 ? "" : "s")"
+        return "\(company) \u{00B7} \(sectionsLabel)"
+    }
+
+    /// Resolve `contactCompanyLookup` to display names. Handles three cases:
+    /// 1. nil / empty → ""
+    /// 2. Comma-joined record IDs (Airtable lookup of a linked field) → resolve via Companies
+    /// 3. Plain text already a name → pass through unchanged
+    private func resolvedCompanyName(for record: PortalAccessRecord) -> String {
+        guard let raw = record.contactCompanyLookup?.trimmingCharacters(in: .whitespaces),
+              !raw.isEmpty else { return "" }
+
+        let parts = raw.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+        let recordIDs = parts.filter { $0.hasPrefix("rec") && $0.count > 3 }
+
+        // No record-ID-shaped tokens → assume already-resolved text, pass through.
+        guard !recordIDs.isEmpty else { return raw }
+
+        let resolver = LinkedRecordResolver(context: modelContext)
+        let names = resolver.resolveCompanies(ids: recordIDs)
+        if names.isEmpty {
+            // Resolver couldn't match (records not synced yet) — fall back to raw
+            // so we don't show empty subtitle, but raw IDs is the documented bug.
+            return ""
+        }
+        return names.joined(separator: ", ")
     }
 
     // MARK: - Record Row

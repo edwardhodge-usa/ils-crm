@@ -65,6 +65,7 @@
 		9249063E8DC1713631C37A1E /* CRMTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89C658F412AEC8BC5883E5EA /* CRMTask.swift */; };
 		9352236A6AD9AE0E2128BF50 /* ContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 931ED47893850975AFBC12A0 /* ContactsView.swift */; };
 		94CC5A9D200156BA3D214F91 /* DetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D57C205199B792B326959B6 /* DetailComponents.swift */; };
+		9A8B5FAA0C93B6B10BE7E223 /* FramerPortalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6187F873C392DF8C3DF4BA8 /* FramerPortalConfig.swift */; };
 		9B4186CD4291B5DBA471BE0D /* iOSCompaniesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C847C132CA2DCF079D443545 /* iOSCompaniesView.swift */; };
 		9E2C3E2D220949F82F056435 /* EmailScanState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B893E899F8978EB8138240BE /* EmailScanState.swift */; };
 		9F0DE1571922F0514486806B /* TaskFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F502ADB5929B8F24523FF64E /* TaskFormView.swift */; };
@@ -206,6 +207,7 @@
 		B893E899F8978EB8138240BE /* EmailScanState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailScanState.swift; sourceTree = "<group>"; };
 		BE6980BAD6222D0345E524CD /* EmailRulesEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailRulesEngine.swift; sourceTree = "<group>"; };
 		C59EBB89A28F4676116D8A6D /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
+		C6187F873C392DF8C3DF4BA8 /* FramerPortalConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FramerPortalConfig.swift; sourceTree = "<group>"; };
 		C64BA68513C875444438907A /* ILS_CRM_UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ILS_CRM_UITests.swift; sourceTree = "<group>"; };
 		C6F940D1601214B19B51F716 /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
 		C847C132CA2DCF079D443545 /* iOSCompaniesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSCompaniesView.swift; sourceTree = "<group>"; };
@@ -522,6 +524,7 @@
 			isa = PBXGroup;
 			children = (
 				52B1B436042A8E098AF0ABA6 /* AirtableConfig.swift */,
+				C6187F873C392DF8C3DF4BA8 /* FramerPortalConfig.swift */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -701,6 +704,7 @@
 				226634A2BA1D580839C9183F /* EnrichmentQueueItem+Airtable.swift in Sources */,
 				0C68B6CED4D625996A04FCE6 /* EnrichmentQueueItem.swift in Sources */,
 				CAF50B0278F5C4463A0040BB /* FramerHealthService.swift in Sources */,
+				9A8B5FAA0C93B6B10BE7E223 /* FramerPortalConfig.swift in Sources */,
 				0CD91819A7E31B4616F65628 /* GmailAPIClient.swift in Sources */,
 				BDC869DCC6C1DE44DDD76F31 /* GmailOAuthService.swift in Sources */,
 				A5EDD61CAEB53E69ABD6F598 /* GmailSettingsSection.swift in Sources */,

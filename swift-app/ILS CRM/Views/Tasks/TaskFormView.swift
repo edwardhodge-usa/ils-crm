@@ -17,16 +17,23 @@ struct TaskFormView: View {
 
     // MARK: - Form State
 
-    @State private var taskName: String = ""
-    @State private var status: String = "To Do"
-    @State private var priority: String = ""
-    @State private var type: String = ""
-    @State private var assignedTo: String = ""
-    @State private var dueDate: Date = Date()
-    @State private var hasDueDate: Bool = false
-    @State private var completedDate: Date = Date()
-    @State private var hasCompletedDate: Bool = false
-    @State private var notes: String = ""
+    /// Bundled state. SwiftUI re-evaluates ancestors on @Query change; bundling
+    /// prevents per-field @State resets when the parent (TasksView) refreshes
+    /// during a sync. Same pattern as iOS TaskFormView (see project memory:
+    /// "Form sheets: bundle all @State fields in a single struct").
+    private struct FormState {
+        var taskName: String = ""
+        var status: String = "To Do"
+        var priority: String = ""
+        var type: String = ""
+        var assignedTo: String = ""
+        var dueDate: Date = Date()
+        var hasDueDate: Bool = false
+        var completedDate: Date = Date()
+        var hasCompletedDate: Bool = false
+        var notes: String = ""
+    }
+    @State private var form = FormState()
 
     /// Unique assignee names extracted from all existing tasks
     private var assigneeOptions: [String] {
@@ -71,31 +78,31 @@ struct TaskFormView: View {
     var body: some View {
         Form {
             Section("Task") {
-                TextField("Task name", text: $taskName)
+                TextField("Task name", text: $form.taskName)
             }
 
             Section("Details") {
-                Picker("Status", selection: $status) {
+                Picker("Status", selection: $form.status) {
                     ForEach(statusOptions, id: \.self) { option in
                         Text(option).tag(option)
                     }
                 }
 
-                Picker("Priority", selection: $priority) {
+                Picker("Priority", selection: $form.priority) {
                     Text("None").tag("")
                     ForEach(priorityOptions, id: \.self) { option in
                         Text(option).tag(option)
                     }
                 }
 
-                Picker("Type", selection: $type) {
+                Picker("Type", selection: $form.type) {
                     Text("None").tag("")
                     ForEach(typeOptions, id: \.self) { option in
                         Text(option).tag(option)
                     }
                 }
 
-                Picker("Assigned To", selection: $assignedTo) {
+                Picker("Assigned To", selection: $form.assignedTo) {
                     Text("Unassigned").tag("")
                     ForEach(assigneeOptions, id: \.self) { name in
                         Text(name).tag(name)
@@ -104,21 +111,21 @@ struct TaskFormView: View {
             }
 
             Section("Schedule") {
-                Toggle("Due Date", isOn: $hasDueDate)
-                if hasDueDate {
-                    DatePicker("Due", selection: $dueDate, displayedComponents: .date)
+                Toggle("Due Date", isOn: $form.hasDueDate)
+                if form.hasDueDate {
+                    DatePicker("Due", selection: $form.dueDate, displayedComponents: .date)
                 }
 
-                if status == "Completed" {
-                    Toggle("Completed Date", isOn: $hasCompletedDate)
-                    if hasCompletedDate {
-                        DatePicker("Completed", selection: $completedDate, displayedComponents: .date)
+                if form.status == "Completed" {
+                    Toggle("Completed Date", isOn: $form.hasCompletedDate)
+                    if form.hasCompletedDate {
+                        DatePicker("Completed", selection: $form.completedDate, displayedComponents: .date)
                     }
                 }
             }
 
             Section("Notes") {
-                TextEditor(text: $notes)
+                TextEditor(text: $form.notes)
                     .frame(minHeight: 100)
             }
         }
@@ -130,7 +137,7 @@ struct TaskFormView: View {
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { save() }
-                    .disabled(taskName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(form.taskName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
         .onAppear { loadExistingTask() }
@@ -140,46 +147,46 @@ struct TaskFormView: View {
 
     private func loadExistingTask() {
         if let task = crmTask {
-            taskName   = task.task ?? ""
-            status     = task.status   ?? "To Do"
-            priority   = task.priority ?? ""
-            type       = task.type     ?? ""
-            assignedTo = task.assignedTo ?? ""
-            notes      = task.notes    ?? ""
+            form.taskName   = task.task ?? ""
+            form.status     = task.status   ?? "To Do"
+            form.priority   = task.priority ?? ""
+            form.type       = task.type     ?? ""
+            form.assignedTo = task.assignedTo ?? ""
+            form.notes      = task.notes    ?? ""
 
             if let due = task.dueDate {
-                dueDate    = due
-                hasDueDate = true
+                form.dueDate    = due
+                form.hasDueDate = true
             }
             if let completed = task.completedDate {
-                completedDate    = completed
-                hasCompletedDate = true
+                form.completedDate    = completed
+                form.hasCompletedDate = true
             }
         } else if let initial = initialAssignee, !initial.isEmpty {
-            assignedTo = initial
+            form.assignedTo = initial
         }
     }
 
     // MARK: - Save
 
     private func save() {
-        let name = taskName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = form.taskName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
 
         // Resolve collaborator data from picker selection
-        let resolvedAssignedTo = assignedTo.isEmpty ? nil : assignedTo
+        let resolvedAssignedTo = form.assignedTo.isEmpty ? nil : form.assignedTo
         let resolvedAssignedToData = resolvedAssignedTo.flatMap { collaboratorMap[$0] }
 
         if let task = crmTask {
             task.task          = name
-            task.status        = status
-            task.priority      = priority.isEmpty  ? nil : priority
-            task.type          = type.isEmpty      ? nil : type
+            task.status        = form.status
+            task.priority      = form.priority.isEmpty  ? nil : form.priority
+            task.type          = form.type.isEmpty      ? nil : form.type
             task.assignedTo    = resolvedAssignedTo
             task.assignedToData = resolvedAssignedToData
-            task.dueDate       = hasDueDate        ? dueDate : nil
-            task.completedDate = (status == "Completed" && hasCompletedDate) ? completedDate : nil
-            task.notes         = notes.isEmpty     ? nil : notes
+            task.dueDate       = form.hasDueDate        ? form.dueDate : nil
+            task.completedDate = (form.status == "Completed" && form.hasCompletedDate) ? form.completedDate : nil
+            task.notes         = form.notes.isEmpty     ? nil : form.notes
             task.localModifiedAt = Date()
             task.isPendingPush = true
         } else {
@@ -188,14 +195,14 @@ struct TaskFormView: View {
                 task: name,
                 isPendingPush: true
             )
-            newTask.status        = status
-            newTask.priority      = priority.isEmpty  ? nil : priority
-            newTask.type          = type.isEmpty      ? nil : type
+            newTask.status        = form.status
+            newTask.priority      = form.priority.isEmpty  ? nil : form.priority
+            newTask.type          = form.type.isEmpty      ? nil : form.type
             newTask.assignedTo    = resolvedAssignedTo
             newTask.assignedToData = resolvedAssignedToData
-            newTask.dueDate       = hasDueDate        ? dueDate : nil
-            newTask.completedDate = (status == "Completed" && hasCompletedDate) ? completedDate : nil
-            newTask.notes         = notes.isEmpty     ? nil : notes
+            newTask.dueDate       = form.hasDueDate        ? form.dueDate : nil
+            newTask.completedDate = (form.status == "Completed" && form.hasCompletedDate) ? form.completedDate : nil
+            newTask.notes         = form.notes.isEmpty     ? nil : form.notes
             newTask.localModifiedAt = Date()
             modelContext.insert(newTask)
         }

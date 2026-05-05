@@ -4,8 +4,21 @@ import type { Rule, RuleResult, EmailCandidate } from './types'
 
 // ─── Default Rules ──────────────────────────────────────────
 
-const NOREPLY_PATTERNS = ['noreply@', 'no-reply@', 'donotreply@', 'do-not-reply@', 'mailer-daemon@']
-const GROUP_PREFIXES = ['info@', 'sales@', 'support@', 'hello@', 'team@', 'admin@', 'billing@', 'accounts@', 'contact@', 'help@', 'feedback@']
+const NOREPLY_PATTERNS = [
+  'noreply@', 'no-reply@', 'donotreply@', 'do-not-reply@', 'mailer-daemon@',
+  'noreply-', 'no-reply-', 'auto-reply@', 'autoreply@', 'auto-confirm@', 'automated@',
+  'bounce@', 'bounces@', 'postmaster@', 'abuse@', 'unsubscribe@',
+]
+const GROUP_PREFIXES = [
+  'info@', 'sales@', 'support@', 'hello@', 'team@', 'admin@',
+  'billing@', 'accounts@', 'contact@', 'help@', 'feedback@',
+  // transactional / service prefixes that produce one-way email
+  'notification@', 'notifications@', 'alert@', 'alerts@',
+  'update@', 'updates@', 'news@', 'newsletter@', 'newsletters@', 'marketing@',
+  'service@', 'services@', 'system@', 'inbox@', 'mailbox@',
+  'pkginfo@', 'tracking@', 'shipment@', 'orders@', 'order@', 'receipts@', 'receipt@',
+  'invoice@', 'invoices@', 'statements@', 'statement@',
+]
 const BULK_DOMAINS = ['mailchimp.com', 'sendgrid.net', 'constantcontact.com', 'hubspot.com', 'mailgun.com', 'amazonaws.com', 'mandrillapp.com']
 const SOCIAL_DOMAINS = ['linkedin.com', 'facebookmail.com', 'twitter.com', 'github.com', 'slack.com', 'notion.so']
 

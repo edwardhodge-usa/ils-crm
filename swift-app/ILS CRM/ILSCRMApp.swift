@@ -132,6 +132,7 @@ struct ILSCRMApp: App {
         Settings {
             SettingsView()
                 .environment(syncEngine)
+                .environment(appStateManager)
         }
         .modelContainer(container)
         #endif

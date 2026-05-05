@@ -29,7 +29,16 @@ struct CompanyDetailView: View {
     // MARK: - Derived data
 
     private var linkedContacts: [Contact] {
-        allContacts.filter { company.contactsIds.contains($0.id) }
+        // Read from the contact side of the link, not company.contactsIds.
+        // Airtable bidirectional links populate the reverse side server-side, so
+        // company.contactsIds doesn't reflect a newly-pushed contact until the
+        // next full sync pull. Filtering allContacts by companiesIds picks up
+        // local creations immediately and stays consistent after sync.
+        let local = allContacts.filter { $0.companiesIds.contains(company.id) }
+        if !local.isEmpty { return local }
+        // Fallback for the (rare) case where the company side has IDs but the
+        // contact side hasn't synced yet — e.g. an Airtable-side relink.
+        return allContacts.filter { company.contactsIds.contains($0.id) }
     }
 
     private var openOpportunities: [Opportunity] {

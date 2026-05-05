@@ -1,8 +1,8 @@
 # Session State
 
-**Last updated:** 2026-05-05 13:00
-**Goal:** ✅ DONE — Migrated macOS distribution from Developer ID + Sparkle to Mac App Store TestFlight (private/internal)
-**Plan:** `.claude/PLAN.md` — TestFlight macOS Migration (v1.5.1) — all waves complete
+**Last updated:** 2026-05-05 (resume)
+**Goal:** ✅ DONE — Backlog cleanup plan executed; ILS CRM macOS live on TestFlight via v1.5.1.
+**Plan:** archived to `.claude/plans-archive/2026-05-05-backlog-cleanup.md` — backlog rewritten, print()→Logger landed in commit `1cdfd35`, "Discovered By" Airtable field flagged 🎯 next as a USER ACTION.
 
 ## Current Task
 **What:** v1.5.1 build 24 live on TestFlight, both verified end-to-end (license unlock, sync, UI, Preferred Rates).
@@ -32,7 +32,15 @@ git rebase --continue   # or --abort if the rebase is no longer wanted
 Files involved: `People/Sofia Traversone.md`, `Projects/Disney Theatrical - Live Events Pitch.md`, `Projects/Longevity - Phase 2 RFP.md`.
 
 ## Next Step
-Routine work — `/resume` for any project. ILS CRM macOS is shipped via TestFlight; future Swift releases now: bump version → archive → upload via the same xcodebuild flow (see CLAUDE.md "Swift (macOS + iOS) — Mac App Store TestFlight"). Apple processing for repeat uploads is fast (~5-30 min, no additional review needed).
+**Backlog cleanup wave 2 complete (2026-05-05).** 9 of 15 P2/P3 items shipped this session — all S-tier and M-tier code-only items closed. Swift macOS + Electron TS both compile clean.
+
+Remaining 6 items each have a real prerequisite blocking immediate code:
+1. **🎯 USER ACTION (~5 min):** add "Discovered By" Collaborator field to Enrichment Queue (Airtable UI). Same again for the 3 enrichment-provenance fields (Source Email Subject / From / Snippet).
+2. **Mockup needed:** Task detail bento redesign (P2 L) and Client Portal activity bento (P2 M) — per CLAUDE.md UI Redesign Process, build mockup HTML first.
+3. **Live data needed:** Email Intel Claude classification audit (P2 M) — open the app, run scanner, audit 50 latest Imported Contacts.
+4. **Architectural plan needed:** Optimistic UI (P2 L) — cross-cutting rewrite of SyncEngine + all CRUD paths in both apps. Worth its own /plan session.
+
+Future Swift releases: bump version → archive → upload via xcodebuild flow (see CLAUDE.md "Swift (macOS + iOS) — Mac App Store TestFlight").
 
 ## Decay Warnings
 None.

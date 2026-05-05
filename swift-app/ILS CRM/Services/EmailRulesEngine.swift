@@ -37,11 +37,19 @@ enum EmailRulesEngine {
 
     private static let noreplyPatterns = [
         "noreply@", "no-reply@", "donotreply@", "do-not-reply@", "mailer-daemon@",
+        "noreply-", "no-reply-", "auto-reply@", "autoreply@", "auto-confirm@", "automated@",
+        "bounce@", "bounces@", "postmaster@", "abuse@", "unsubscribe@",
     ]
 
     private static let groupPrefixes = [
         "info@", "sales@", "support@", "hello@", "team@", "admin@",
         "billing@", "accounts@", "contact@", "help@", "feedback@",
+        // transactional / service prefixes that produce one-way email
+        "notification@", "notifications@", "alert@", "alerts@",
+        "update@", "updates@", "news@", "newsletter@", "newsletters@", "marketing@",
+        "service@", "services@", "system@", "inbox@", "mailbox@",
+        "pkginfo@", "tracking@", "shipment@", "orders@", "order@", "receipts@", "receipt@",
+        "invoice@", "invoices@", "statements@", "statement@",
     ]
 
     private static let bulkDomains = [

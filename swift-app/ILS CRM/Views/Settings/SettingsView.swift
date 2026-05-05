@@ -9,11 +9,13 @@ struct SettingsView: View {
     @AppStorage("sync_interval_seconds") private var syncInterval: Double = AirtableConfig.defaultSyncIntervalSeconds
     @AppStorage("user_email") private var userEmail = ""
     @AppStorage("appearanceMode") private var appearanceMode = "system"
+    @AppStorage(FramerPortalConfig.storageKey) private var framerPortalBaseURL: String = FramerPortalConfig.defaultBaseURL
     @State private var apiKey = ""
     @State private var licensePAT = ""
     @State private var showSaveConfirmation = false
 
     @Environment(SyncEngine.self) private var syncEngine
+    @Environment(AppStateManager.self) private var appStateManager
 
     var body: some View {
         Form {
@@ -100,6 +102,16 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Client Portal") {
+                TextField("Framer Base URL", text: $framerPortalBaseURL)
+                    .textFieldStyle(.roundedBorder)
+                    .help("Base URL for Framer-hosted client portal pages (e.g. https://imaginelabstudios.com/ils-clients)")
+                    .autocorrectionDisabled()
+                Text("Page URLs become \(FramerPortalConfig.displayURL(for: "<page-slug>"))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             GmailSettingsSection()
         }
         .formStyle(.grouped)
@@ -135,6 +147,7 @@ struct SettingsView: View {
         Task {
             do {
                 try await LicenseService.shared.savePAT(licensePAT)
+                await appStateManager.performLicenseCheck()
                 withAnimation { showSaveConfirmation = true }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     withAnimation { showSaveConfirmation = false }
