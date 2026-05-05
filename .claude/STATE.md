@@ -1,50 +1,38 @@
 # Session State
 
-**Last updated:** 2026-05-05 12:10
-**Goal:** Migrate macOS distribution from Developer ID + Sparkle to Mac App Store TestFlight (private/internal)
-**Plan:** `.claude/PLAN.md` — TestFlight macOS Migration (v1.5.1)
+**Last updated:** 2026-05-05 13:00
+**Goal:** ✅ DONE — Migrated macOS distribution from Developer ID + Sparkle to Mac App Store TestFlight (private/internal)
+**Plan:** `.claude/PLAN.md` — TestFlight macOS Migration (v1.5.1) — all waves complete
 
 ## Current Task
-**What:** Wave 2-4 (code prep) complete. Awaiting Wave 1 (App Store Connect web UI) before Wave 5 (archive + upload).
-**Status:** In progress
+**What:** v1.5.1 build 24 live on TestFlight, both verified end-to-end (license unlock, sync, UI, Preferred Rates).
+**Status:** Completed
+**Versions:** Electron v3.6.0 / Swift v1.5.1 (build 24, Mac App Store TestFlight)
+**Commits pushed:** `25cd211` (migration) + `4850f4c` (icon fix) on origin/main
 
-## Completed
-- ✅ Diagnosed v1.5.0 launch failure: AMFI -413 — `keychain-access-groups` entitlement requires provisioning profile, Developer ID Manual config has none
-- ✅ Confirmed ILS Expense Lab does NOT depend on shared keychain group (was dead architecture under Developer ID)
-- ✅ Decided: Mac App Store TestFlight cutover (resolves AMFI cleanly via App Store distribution profile)
-- ✅ Removed Sparkle SPM dep + Info.plist keys from `swift-app/project.yml`
-- ✅ Bumped to v1.5.1, build 23
-- ✅ Replaced Release config: Developer ID Manual → Apple Distribution Automatic (covers both iOS + macOS distribution; resolves prior iOS TestFlight `CODE_SIGN_IDENTITY=` empty-override hack)
-- ✅ Wrapped Sparkle code with `#if os(macOS) && canImport(Sparkle)` in `ILSCRMApp.swift` (5 blocks)
-- ✅ Added `com.apple.security.app-sandbox = true` to `ILS CRM.entitlements`
-- ✅ Added runtime `APP_SANDBOX_CONTAINER_ID` check in `SyncEngine.swift` + `EmailScanEngine.swift` to bypass `/tmp/` lock when sandboxed
-- ✅ `xcodegen generate` clean
-- ✅ Debug compile clean — verified by apple-platform-build-tools subagent
+## Verified ✓
+- ✅ App launches under sandbox (no AMFI -413 — App Store profile authorizes keychain-access-groups)
+- ✅ Native macOS NavigationSplitView (full sidebar, bento layout, Cmd+1-0)
+- ✅ Sync pulls 624 records across 17 tables in ~15s, no `/tmp/` lock contention
+- ✅ Kevin McBee Contact 360 → Preferred Rates renders both rates ($150/hr Art Director, $130/hr Show Set Associate) — closes lingering S19 verification from prior session
+- ✅ "Check for Updates…" menu absent (Sparkle excluded via `#if canImport(Sparkle)`)
+- ✅ App display name "ILS CRM" (was "ILS CRM+")
 
-## Open: Wave 1 — User-driven (App Store Connect web UI)
-1. Add macOS platform to existing iOS app record in App Store Connect → My Apps → ILS CRM → "+" → macOS. Bundle ID: `com.imaginelabstudios.ils-crm`.
-2. Configure internal TestFlight group with Ed + 2nd user.
+## Pre-existing bugs surfaced (backlogged, NOT today's regressions)
+- **P2:** Portal Access "By Client" subtitle shows raw record IDs instead of company names (`PortalAccessView.swift:854` — `record.contactCompanyLookup` field). Same as Electron bug #14 in PARITY.md.
+- **P3:** License lock screen — `saveLicensePAT()` saves PAT but doesn't auto-trigger `performLicenseCheck()` → user must quit + relaunch to unlock. Settings.swift:134.
 
-## Open: Wave 5 — After Wave 1
-- Open `swift-app/ILS CRM.xcodeproj` in Xcode → Signing & Capabilities tab → confirm "Apple Distribution" profile auto-downloads (needs Wave 1 done).
-- Archive scheme "ILS CRM" with Release config → Window > Organizer → Distribute App → App Store Connect → Upload.
-- Submit for TestFlight review (24-48h first time).
+## Open: Vault git rebase needs resolution (NOT this session)
+The Obsidian vault is mid-interactive-rebase from a prior session. My memory commit `36bb3db` landed on the rebase HEAD. Cortex DB has the lessons (3 updated, 175 facts, 1 new pattern synced). When ready, run:
+```bash
+cd "/Users/EdwardHodge_1/Obsidian/ImagineLab"
+git status      # see what conflicts remain
+git rebase --continue   # or --abort if the rebase is no longer wanted
+```
+Files involved: `People/Sofia Traversone.md`, `Projects/Disney Theatrical - Live Events Pitch.md`, `Projects/Longevity - Phase 2 RFP.md`.
 
-## Open: Wave 6-7
-- Both users install via TestFlight on first approval; re-enter Airtable PAT, Anthropic key, Gmail OAuth, license email
-- Verify Kevin McBee Person Rates render in Contact 360 (closes lingering S19)
-- Update CLAUDE.md, PARITY.md, vault memory + Cortex
-- `/close` to commit
+## Next Step
+Routine work — `/resume` for any project. ILS CRM macOS is shipped via TestFlight; future Swift releases now: bump version → archive → upload via the same xcodebuild flow (see CLAUDE.md "Swift (macOS + iOS) — Mac App Store TestFlight"). Apple processing for repeat uploads is fast (~5-30 min, no additional review needed).
 
-## Key Files Modified
-- `swift-app/project.yml` — Sparkle dep removed, Apple Distribution + Automatic, v1.5.1/23
-- `swift-app/ILS CRM/ILS CRM.entitlements` — `app-sandbox = true` added
-- `swift-app/ILS CRM/ILSCRMApp.swift` — Sparkle blocks now `#if canImport(Sparkle)`
-- `swift-app/ILS CRM/Services/SyncEngine.swift` — sandbox-aware sync lock
-- `swift-app/ILS CRM/Services/EmailScanEngine.swift` — sandbox-aware scan lock
-
-## Lessons (capture at /close)
-- **AMFI -413 root cause:** `keychain-access-groups` entitlement requires either App Store distribution profile OR Developer ID profile — NOT compatible with Developer ID + Manual signing without an embedded profile. macOS 26.x tightened enforcement; same entitlement worked on earlier OS versions.
-- **`Apple Distribution` + Automatic is unified for iOS + macOS** distribution — replaces the `CODE_SIGN_IDENTITY=` empty override hack used in iOS TestFlight builds since v1.4.0.
-- **Sandbox detection at runtime:** `ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"]` — works in any signing context, no compile-time flag needed.
-- **Sparkle preservation pattern:** `#if canImport(Sparkle)` lets Sparkle code stay in source. Re-enable for a Developer ID build by adding the SPM dep back to project.yml + restoring Info.plist `SU*` keys.
+## Decay Warnings
+None.

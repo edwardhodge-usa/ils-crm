@@ -1,5 +1,8 @@
 import SwiftUI
 import SwiftData
+import OSLog
+
+private let log = Logger(subsystem: "com.ils-crm", category: "gmail-settings")
 
 /// Gmail settings section — extracted for use in SettingsView.
 ///
@@ -74,7 +77,7 @@ struct GmailSettingsSection: View {
                             do {
                                 try await oAuthService.connect()
                             } catch {
-                                print("[GmailSettings] Connect failed: \(error.localizedDescription)")
+                                log.error("Connect failed: \(error.localizedDescription, privacy: .public)")
                             }
                         }
                     }
@@ -222,7 +225,7 @@ struct GmailSettingsSection: View {
             try KeychainService.save(key: ClaudeClient.anthropicApiKeyAccount, value: anthropicApiKey)
             keyValidationResult = nil
         } catch {
-            print("[GmailSettings] Failed to save Anthropic key: \(error.localizedDescription)")
+            log.error("Failed to save Anthropic key: \(error.localizedDescription, privacy: .public)")
         }
     }
 

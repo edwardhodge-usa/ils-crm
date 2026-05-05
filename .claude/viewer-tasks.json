@@ -1,85 +1,34 @@
 {
   "sections": [
     {
-      "title": "iOS Tasks Rollout",
+      "title": "Wave 1 — Verification",
       "status": "complete",
       "icon": "green",
       "items": [
-        { "text": "Platform compatibility (PlatformHelpers, NSWorkspace, controlBackgroundColor)", "done": true },
-        { "text": "EditableAvatarView guarded for macOS", "done": true },
-        { "text": "Remaining iOS build errors fixed", "done": true },
-        { "text": "Shared Keychain access group + migration", "done": true },
-        { "text": "Entitlements + project.yml updated", "done": true },
-        { "text": "iOSContentView (TabView root)", "done": true },
-        { "text": "iOSTasksView (grouped list, search, swipe)", "done": true },
-        { "text": "iOSTaskDetailView (inline editing, linked records)", "done": true },
-        { "text": "iOSTaskFormView (task creation)", "done": true },
-        { "text": "iOSSettingsView (API key, sync, theme)", "done": true },
-        { "text": "ILSCRMApp iOS routing", "done": true },
-        { "text": "iOS Simulator build + launch verified", "done": true }
+        {"text": "Verify SwiftData @Query crash status (SyncEngine.swift:216)", "done": true},
+        {"text": "Verify Email Intelligence Phase 2 classifier pipeline post-v3.6.0", "done": true},
+        {"text": "Count print() sites in GmailSettingsSection.swift (found: 2)", "done": true},
+        {"text": "Locate canonical home for Data Architecture items (Backlogs/project_ils-accounting-automation.md)", "done": true}
       ]
     },
     {
-      "title": "iOS HIG Audit",
+      "title": "Wave 2 — Execution",
       "status": "complete",
       "icon": "green",
       "items": [
-        { "text": "17 HIG violations fixed (a11y, haptics, emoji, Form, delete confirm)", "done": true },
-        { "text": "Desktop design alignment (checkboxes, type badges, section headers)", "done": true },
-        { "text": "Reminders-style bento summary cards", "done": true },
-        { "text": "UILaunchScreen fix for edge-to-edge rendering", "done": true },
-        { "text": "LinkedRecordPicker platform-conditional (frame, search, fonts)", "done": true }
+        {"text": "Task 1: Rewrite ILS CRM backlog (single file, all 9 findings resolved)", "done": true},
+        {"text": "Task 2: Migrate 2 print() calls to Logger in GmailSettingsSection.swift", "done": true},
+        {"text": "Task 3 [USER]: Add Discovered By collaborator field in Airtable Enrichment Queue table", "done": false}
       ]
     },
     {
-      "title": "TestFlight Setup (2026-04-14)",
+      "title": "Final",
       "status": "complete",
       "icon": "green",
       "items": [
-        { "text": "Create App Store Connect record for ILS CRM iOS", "done": true },
-        { "text": "iOS app icon asset catalog (13 sizes)", "done": true },
-        { "text": "Archive + upload build 18 to TestFlight", "done": true },
-        { "text": "Fix Keychain -34018 (platform-conditional entitlements)", "done": true },
-        { "text": "Fix sync lock (iOS sandbox /tmp/ inaccessible)", "done": true },
-        { "text": "Fix keyboard dismiss on Save", "done": true },
-        { "text": "Add ITSAppUsesNonExemptEncryption=false", "done": true },
-        { "text": "Build 21 uploaded — all fixes shipped", "done": true }
-      ]
-    },
-    {
-      "title": "Preferred Rates — Wave 1 (Sync Layer)",
-      "status": "complete",
-      "icon": "green",
-      "items": [
-        {"text": "Task 1: field-maps.ts + sync-engine.ts — RATE_CARD + PERSON_RATES constants, register tables", "done": true},
-        {"text": "Task 2: converters.ts — RATE_CARD_MAPPINGS + PERSON_RATES_MAPPINGS, register in allTables", "done": true}
-      ]
-    },
-    {
-      "title": "Preferred Rates — Wave 2 (IPC + Preload)",
-      "status": "complete",
-      "icon": "green",
-      "items": [
-        {"text": "Task 3: register.ts + preload.ts — rateCard read-only + personRates CRUD handlers + bridge", "done": true}
-      ]
-    },
-    {
-      "title": "Preferred Rates — Wave 3 (Contact 360 UI)",
-      "status": "complete",
-      "icon": "green",
-      "items": [
-        {"text": "Task 4: Contact360Page — Preferred Rates bento section (list + add/edit form + delete)", "done": true}
-      ]
-    },
-    {
-      "title": "Verification",
-      "status": "active",
-      "icon": "blue",
-      "items": [
-        {"text": "npx tsc --noEmit exits 0", "done": true},
-        {"text": "Full sync pulls rate_card + person_rates without errors", "done": false},
-        {"text": "Kevin McBee Contact 360 shows both Person Rates", "done": false},
-        {"text": "Add Rate form creates in Airtable + list updates without reload", "done": false}
+        {"text": "Verify backlog against 9 verification goals", "done": true},
+        {"text": "Verify swift build clean after Logger migration (xcodebuild macOS — pass)", "done": true},
+        {"text": "Commit + push", "done": false}
       ]
     }
   ]
