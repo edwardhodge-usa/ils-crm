@@ -780,8 +780,17 @@ final class EmailScanEngine {
 
     // MARK: - Scan Lock
 
+    /// True when running inside an App Sandbox container. Sandboxed apps can't
+    /// access /tmp/; in-memory `isScanning` guard already prevents re-entry.
+    private static var isSandboxed: Bool {
+        ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
+    }
+
     /// Acquires a file-based lock to prevent concurrent scans.
+    /// Sandbox: bypasses the file lock — `isScanning` flag handles same-process re-entry.
     private func acquireScanLock() -> Bool {
+        if Self.isSandboxed { return true }
+
         if FileManager.default.fileExists(atPath: Self.lockFilePath) {
             if let attrs = try? FileManager.default.attributesOfItem(atPath: Self.lockFilePath),
                let modified = attrs[.modificationDate] as? Date,
@@ -805,6 +814,7 @@ final class EmailScanEngine {
 
     /// Releases the scan lock file.
     private func releaseScanLock() {
+        if Self.isSandboxed { return }
         try? FileManager.default.removeItem(atPath: Self.lockFilePath)
     }
 }

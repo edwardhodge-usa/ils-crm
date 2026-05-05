@@ -151,12 +151,51 @@ Key relationships: Contacts → Companies (fldYXDUc9YKKsGTBt), Contacts → Spec
 
 ## Deployment Process
 
+### Electron (unchanged)
+
 1. Bump version in `package.json`
 2. `rm -rf dist dist-electron node_modules/.vite && npm run package` (builds to `/tmp/ils-crm-release/`)
 3. Rename: `for f in ILS\ CRM-*; do mv "$f" "${f//ILS CRM/ILS-CRM}"; done`
 4. Fix yml: `sed -i '' 's/ILS CRM/ILS-CRM/g' latest-mac.yml`
 5. `gh release create v<version>` with renamed assets + latest-mac.yml
 6. Copy DMGs to deployment folder, archive old versions
+
+### Swift (macOS + iOS) — Mac App Store TestFlight (v1.5.1+)
+
+Both platforms ship through TestFlight. Internal-only, never public.
+
+1. Bump `MARKETING_VERSION` + `CURRENT_PROJECT_VERSION` in `swift-app/project.yml`
+2. `cd swift-app && xcodegen generate`
+3. Open `ILS CRM.xcodeproj` in Xcode → Product → Archive (Release config, Apple Distribution + Automatic)
+4. Window → Organizer → Distribute App → App Store Connect → Upload
+5. Wait for "Processing" → "Ready to Test" in App Store Connect (TestFlight tab)
+6. First macOS submission needs ~24-48h Apple review. Subsequent uploads usually 1-4h.
+7. Testers install via TestFlight app — auto-update via App Store going forward (no Sparkle).
+
+### Developer ID rebuild (legacy/recovery)
+
+Use only if you ever need a non-App-Store build (e.g., distributing outside the team's TestFlight access). Sparkle code is preserved via `#if canImport(Sparkle)` guards.
+
+To rebuild:
+1. Add Sparkle SPM dep back to `swift-app/project.yml`:
+   ```yaml
+   packages:
+     Sparkle:
+       url: https://github.com/sparkle-project/Sparkle
+       from: "2.6.0"
+   ```
+2. Add Sparkle to the target's `dependencies` (with `platformFilter: macos`).
+3. Restore Sparkle keys to `info.properties` (`SUFeedURL`, `SUPublicEDKey`, `SUEnableAutomaticChecks`, `SUScheduledCheckInterval`).
+4. Switch macOS Release config back to:
+   ```yaml
+   CODE_SIGN_IDENTITY: "Developer ID Application: Imaginelab Studios (8RHA62T6FQ)"
+   CODE_SIGN_STYLE: Manual
+   ```
+5. Remove `com.apple.security.app-sandbox` from `ILS CRM.entitlements`. **Do NOT keep `keychain-access-groups`** unless you also have a Developer ID provisioning profile that authorizes it (otherwise AMFI -413).
+6. Run the existing notarization pipeline (xcodebuild archive → re-sign Sparkle XPC services → DMG → notarytool submit → stapler staple → sign_update for Sparkle).
+7. Update `appcast.xml` with the new Ed25519-signed entry.
+
+The Ed25519 Sparkle private key remains in macOS Keychain ("Sparkle Ed25519 Private Key"). The `appcast.xml` and historical Developer ID releases stay on GitHub Releases.
 
 ## Memory
 

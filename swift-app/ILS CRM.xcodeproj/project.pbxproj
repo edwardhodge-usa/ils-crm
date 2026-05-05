@@ -29,7 +29,6 @@
 		32A37AC7A71BCA3C59781505 /* PortalLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FE20CAB9B28C725C9A7AFD /* PortalLogsView.swift */; };
 		35C3F4BEF1740DA2C7220139 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668D676CC891E3198DACD13B /* TaskDetailView.swift */; };
 		36EBBB07DE34F8F950564A28 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AEF7B9304DFAE44834536F /* ProjectDetailView.swift */; };
-		38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4FAD464BE3689BD2B1578A74 /* Sparkle */; };
 		38AC88CA3F769FD350136A46 /* Proposal+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D0ECF95266B0099FA8C004 /* Proposal+Airtable.swift */; };
 		3B9FF2F195EB914F5F66299A /* Company+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BF49F209CD2BD1A81E13CB /* Company+Airtable.swift */; };
 		3BA9C65768304F0629CA653C /* PortalLog+Airtable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2332EC94CCF5578B28B91245 /* PortalLog+Airtable.swift */; };
@@ -233,17 +232,6 @@
 		F95308B83FB85C8EA4E85002 /* EmailScanRule+Airtable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EmailScanRule+Airtable.swift"; sourceTree = "<group>"; };
 		FC11BC24156F91A74A9D5038 /* iOSContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		66448CAF0B986AC24BCA9C94 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				38A05390BF949F9C2B88C263 /* Sparkle in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		019076240016EF80C491DA72 /* Settings */ = {
@@ -558,7 +546,6 @@
 			buildPhases = (
 				AA2416BA9F42A3A943184DCB /* Sources */,
 				2F0D69DEA0CD6F7868F4C23C /* Resources */,
-				66448CAF0B986AC24BCA9C94 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -566,7 +553,6 @@
 			);
 			name = "ILS CRM";
 			packageProductDependencies = (
-				4FAD464BE3689BD2B1578A74 /* Sparkle */,
 			);
 			productName = "ILS CRM";
 			productReference = F314F3062428983FA086B791 /* ILS CRM.app */;
@@ -619,6 +605,7 @@
 				TargetAttributes = {
 					4CDF06EFDDA8A408714299C4 = {
 						DevelopmentTeam = 8RHA62T6FQ;
+						ProvisioningStyle = Automatic;
 					};
 					5D233A71CBAC41879B6B78EC = {
 						TestTargetID = 4CDF06EFDDA8A408714299C4;
@@ -634,9 +621,6 @@
 			);
 			mainGroup = 4A56914B3E3FFF4331958871;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-				309EFC05ECD2925FCB1802DF /* XCRemoteSwiftPackageReference "Sparkle" */,
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AE72CAFF765D498C5278F9CE /* Products */;
 			projectDirPath = "";
@@ -807,12 +791,12 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "ILS CRM/ILS CRM.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 23;
 				DEVELOPMENT_TEAM = 8RHA62T6FQ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "ILS CRM/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MARKETING_VERSION = 1.5.0;
+				MARKETING_VERSION = 1.5.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.imaginelabstudios.ils-crm";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -1013,15 +997,15 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "ILS CRM/ILS CRM iOS.entitlements";
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = "ILS CRM/ILS CRM iOS.entitlements";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "ILS CRM/ILS CRM.entitlements";
-				CODE_SIGN_IDENTITY = "Developer ID Application: Imaginelab Studios (8RHA62T6FQ)";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 22;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 23;
 				DEVELOPMENT_TEAM = 8RHA62T6FQ;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "ILS CRM/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MARKETING_VERSION = 1.5.0;
+				MARKETING_VERSION = 1.5.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.imaginelabstudios.ils-crm";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -1092,25 +1076,6 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		309EFC05ECD2925FCB1802DF /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.6.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		4FAD464BE3689BD2B1578A74 /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 309EFC05ECD2925FCB1802DF /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C559CE298287DA202E635C77 /* Project object */;
 }

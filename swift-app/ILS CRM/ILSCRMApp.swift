@@ -1,6 +1,6 @@
 import SwiftUI
 import SwiftData
-#if os(macOS)
+#if os(macOS) && canImport(Sparkle)
 import Sparkle
 #endif
 
@@ -17,7 +17,7 @@ struct ILSCRMApp: App {
     @State private var syncEngine: SyncEngine
     @State private var appStateManager = AppStateManager()
 
-    #if os(macOS)
+    #if os(macOS) && canImport(Sparkle)
     private let updaterController: SPUStandardUpdaterController
     #endif
 
@@ -74,7 +74,7 @@ struct ILSCRMApp: App {
 
         KeychainService.migrateToSharedGroupIfNeeded()
 
-        #if os(macOS)
+        #if os(macOS) && canImport(Sparkle)
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,
@@ -117,9 +117,11 @@ struct ILSCRMApp: App {
         #endif
         #if os(macOS)
         .commands {
+            #if canImport(Sparkle)
             CommandGroup(after: .appInfo) {
                 CheckForUpdatesView(updater: updaterController.updater)
             }
+            #endif
             NavigationCommands()
             NewRecordCommand()
             SidebarCommands()
@@ -196,7 +198,7 @@ struct NewRecordCommand: Commands {
     }
 }
 
-#if os(macOS)
+#if os(macOS) && canImport(Sparkle)
 struct CheckForUpdatesView: View {
     @ObservedObject private var checkForUpdatesViewModel: CheckForUpdatesViewModel
 

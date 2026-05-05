@@ -11,10 +11,10 @@ settings:
     SWIFT_VERSION: "5"
     SWIFT_STRICT_CONCURRENCY: targeted
 
-packages:
-  Sparkle:
-    url: https://github.com/sparkle-project/Sparkle
-    from: "2.6.0"
+# Sparkle dependency intentionally omitted — macOS distribution is Mac App Store
+# TestFlight (sandboxed, App-Store-managed updates).
+# To rebuild as Developer ID outside the App Store, see CLAUDE.md
+# → "Developer ID rebuild (legacy/recovery)".
 
 schemes:
   ILS CRM:
@@ -43,12 +43,8 @@ targets:
       properties:
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
-        CFBundleDisplayName: "ILS CRM+"
+        CFBundleDisplayName: "ILS CRM"
         LSApplicationCategoryType: "public.app-category.business"
-        SUFeedURL: "https://raw.githubusercontent.com/edwardhodge-usa/ils-crm/main/appcast.xml"
-        SUPublicEDKey: "TEYI9o0zD1tc95dmkSIyvCN17FtqT0kXPo3F+pSHatw="
-        SUEnableAutomaticChecks: true
-        SUScheduledCheckInterval: 14400
         ITSAppUsesNonExemptEncryption: false
         CFBundleIconName: AppIcon
         UILaunchScreen: {}
@@ -62,15 +58,12 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-    dependencies:
-      - package: Sparkle
-        platformFilter: macos
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.imaginelabstudios.ils-crm
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
-        MARKETING_VERSION: "1.5.0"
-        CURRENT_PROJECT_VERSION: 22
+        MARKETING_VERSION: "1.5.1"
+        CURRENT_PROJECT_VERSION: 23
         GENERATE_INFOPLIST_FILE: NO
         DEVELOPMENT_TEAM: "8RHA62T6FQ"
         "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": "ILS CRM/ILS CRM.entitlements"
@@ -83,8 +76,16 @@ targets:
           CODE_SIGNING_REQUIRED: YES
           CODE_SIGNING_ALLOWED: YES
         Release:
-          CODE_SIGN_IDENTITY: "Developer ID Application: Imaginelab Studios (8RHA62T6FQ)"
-          CODE_SIGN_STYLE: Manual
+          # Mac App Store / TestFlight + iOS TestFlight share this config.
+          # CODE_SIGN_IDENTITY is intentionally "Apple Development" — Xcode's
+          # automatic signing transparently substitutes "Apple Distribution" at
+          # archive time. Pinning to "Apple Distribution" here conflicts with
+          # CODE_SIGN_STYLE=Automatic and breaks both `build` and `archive`.
+          # Automatic signing fetches the App Store distribution profile, which
+          # authorizes keychain-access-groups — Developer ID Manual could not,
+          # causing AMFI -413 launch failures in v1.5.0.
+          CODE_SIGN_IDENTITY: "Apple Development"
+          CODE_SIGN_STYLE: Automatic
           CODE_SIGNING_REQUIRED: YES
           CODE_SIGNING_ALLOWED: YES
           ENABLE_HARDENED_RUNTIME: YES

@@ -75,14 +75,21 @@ final class SyncEngine {
 
     // MARK: - Cross-App Sync Lock
 
+    /// True when running inside an App Sandbox container (Mac App Store / iOS).
+    /// Sandboxed apps can't access /tmp/, and there is no cross-app conflict to guard.
+    private static var isSandboxed: Bool {
+        ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
+    }
+
     /// Acquires the `/tmp/ils-crm-sync.lock` file to prevent simultaneous sync
-    /// from both the Electron and Swift apps against the same Airtable base.
-    /// Returns `true` if the lock was acquired, `false` if another app holds it.
-    /// iOS: always returns true — no cross-app sync conflict possible (sandboxed).
+    /// from the Electron and Developer-ID Swift app against the same Airtable base.
+    /// Sandbox (App Store / iOS): always returns true — no cross-app sync possible.
     private func acquireSyncLock() -> Bool {
         #if os(iOS)
         return true
         #else
+        if Self.isSandboxed { return true }
+
         // Check for stale lock first
         if FileManager.default.fileExists(atPath: Self.lockFilePath) {
             if let attrs = try? FileManager.default.attributesOfItem(atPath: Self.lockFilePath),
@@ -110,6 +117,7 @@ final class SyncEngine {
     /// Releases the cross-app sync lock by deleting the lock file.
     private func releaseSyncLock() {
         #if os(macOS)
+        if Self.isSandboxed { return }
         try? FileManager.default.removeItem(atPath: Self.lockFilePath)
         #endif
     }
