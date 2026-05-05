@@ -9,6 +9,7 @@
     "dev": "vite",
     "build": "vite build && electron-builder --dir",
     "package": "tsc && vite build && electron-builder --mac --config.directories.output=/tmp/ils-crm-release",
+    "package:fix-yml": "node scripts/regenerate-latest-mac-yml.js",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
