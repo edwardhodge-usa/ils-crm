@@ -255,6 +255,9 @@ function EnrichmentDetail({ item, crmContacts, onAccept, onDismiss }: Enrichment
   const suggestedValue = (item.suggested_value as string | null) ?? ''
   const confidence = (item.confidence_score as number | null) ?? 0
   const sourceDate = item.source_email_date as string | null
+  const sourceSubject = item.source_email_subject as string | null
+  const sourceFrom = item.source_email_from as string | null
+  const sourceSnippet = item.source_email_snippet as string | null
   const status = (item.status as string | null) ?? 'Pending'
   const confC = confidenceColor(confidence)
 
@@ -414,6 +417,37 @@ function EnrichmentDetail({ item, crmContacts, onAccept, onDismiss }: Enrichment
             </div>
           </div>
         </div>
+
+        {/* Source Email — provenance */}
+        {(sourceSubject || sourceFrom || sourceSnippet) && (
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--separator)' }}>
+            <SectionLabel>Source Email</SectionLabel>
+            <div style={{
+              padding: '12px 14px', borderRadius: 10,
+              background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+              border: '1px solid var(--separator)',
+            }}>
+              {sourceFrom && (
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                  <span style={{ fontWeight: 600 }}>From: </span>{sourceFrom}
+                </div>
+              )}
+              {sourceSubject && (
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+                  {sourceSubject}
+                </div>
+              )}
+              {sourceSnippet && (
+                <div style={{
+                  fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.45,
+                  whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                }}>
+                  {sourceSnippet}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Metadata */}
         <div style={{ padding: '14px 20px' }}>

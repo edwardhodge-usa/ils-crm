@@ -18,6 +18,13 @@ final class EnrichmentQueueItem {
     var confidenceScore: Double?       // fldApRf3M38HZdf8D
     var contactIds: [String]           // fldw3AfIZ6WUbMnw0 → Imported Contacts (linked record IDs)
 
+    // Source email provenance — populated by Electron scanner; read-only on Swift.
+    var sourceEmailSubject: String?    // fldB9YiGiXV24wazb
+    var sourceEmailFrom: String?       // fldQ6NmkWYkHubaKh
+    var sourceEmailSnippet: String?    // fldCBoaFjVHCBaXRp
+    /// Display name of the user who triggered the scan (resolved from collaborator JSON).
+    var discoveredBy: String?          // fldtEMkqcUGs6GlKX (singleCollaborator)
+
     // Sync Metadata
     var airtableModifiedAt: Date?
     var localModifiedAt: Date?

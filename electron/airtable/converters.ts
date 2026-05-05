@@ -556,6 +556,10 @@ const ENRICHMENT_QUEUE_MAPPINGS: FieldMapping[] = [
   { local: 'status', airtable: ENRICHMENT_QUEUE.status, type: 'singleSelect' },
   { local: 'confidence_score', airtable: ENRICHMENT_QUEUE.confidenceScore, type: 'number' },
   { local: 'contact_ids', airtable: ENRICHMENT_QUEUE.contact, type: 'linked' },
+  { local: 'source_email_subject', airtable: ENRICHMENT_QUEUE.sourceEmailSubject, type: 'text' },
+  { local: 'source_email_from', airtable: ENRICHMENT_QUEUE.sourceEmailFrom, type: 'text' },
+  { local: 'source_email_snippet', airtable: ENRICHMENT_QUEUE.sourceEmailSnippet, type: 'text' },
+  { local: 'discovered_by', airtable: ENRICHMENT_QUEUE.discoveredBy, type: 'collaborator' },
 ]
 
 // ─── Rate Card ───────────────────────────────────────────────

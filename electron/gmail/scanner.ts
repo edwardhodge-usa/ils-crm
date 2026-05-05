@@ -334,6 +334,11 @@ function writeEnrichmentDiffs(
   classification: import('./claude-client').ClaudeClassification,
   candidate: EmailCandidate,
   discoveredBy: string,
+  source?: {
+    subject: string | null
+    fromHeader: string | null
+    bodySnippet: string | null
+  },
 ): void {
   let existingContact: Record<string, unknown> | null = null
   try {
@@ -382,6 +387,11 @@ function writeEnrichmentDiffs(
       status: 'Pending',
       confidence_score: classification.confidence,
       contact_ids: JSON.stringify([contactId]),
+      source_email_subject: source?.subject ?? null,
+      source_email_from: source?.fromHeader ?? null,
+      // Cap snippet at 300 chars to keep Airtable cell readable; matches field
+      // description in the schema (Source Email Snippet, ~300 chars).
+      source_email_snippet: source?.bodySnippet ? source.bodySnippet.slice(0, 300) : null,
       _pending_push: 1,
     })
 
@@ -453,6 +463,8 @@ async function enrichKnownContacts(
       const searchResult = await client.searchMessages(`from:${candidate.email}`, 5)
       let bestBody: string | null = null
       let bestScore = -Infinity
+      let bestSubject: string | null = null
+      let bestFromHeader: string | null = null
 
       for (let j = 0; j < searchResult.messages.length; j++) {
         const fullMsg = await client.getMessageFull(searchResult.messages[j].id)
@@ -464,6 +476,10 @@ async function enrichKnownContacts(
         if (score > bestScore) {
           bestScore = score
           bestBody = guardedBody
+          bestSubject = fullMsg.subject ?? null
+          const fromName = fullMsg.from?.name ?? null
+          const fromAddr = fullMsg.from?.email ?? null
+          bestFromHeader = fromName && fromAddr ? `${fromName} <${fromAddr}>` : (fromAddr ?? fromName)
         }
       }
 
@@ -478,7 +494,11 @@ async function enrichKnownContacts(
       }
 
       if (classification) {
-        writeEnrichmentDiffs(contactId, classification, candidate, discoveredBy)
+        writeEnrichmentDiffs(contactId, classification, candidate, discoveredBy, {
+          subject: bestSubject,
+          fromHeader: bestFromHeader,
+          bodySnippet: bestBody,
+        })
       }
 
       // Update last_enrichment_check on contact

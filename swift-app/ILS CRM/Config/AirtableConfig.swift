@@ -107,6 +107,10 @@ enum AirtableConfig {
         static let status = "fldybd6l0RMMV70qR"
         static let confidenceScore = "fldApRf3M38HZdf8D"
         static let contact = "fldw3AfIZ6WUbMnw0"          // link to Imported Contacts
+        static let sourceEmailSubject = "fldB9YiGiXV24wazb"
+        static let sourceEmailFrom = "fldQ6NmkWYkHubaKh"
+        static let sourceEmailSnippet = "fldCBoaFjVHCBaXRp"
+        static let discoveredBy = "fldtEMkqcUGs6GlKX"     // singleCollaborator
     }
 
     /// Imported Contacts — Email Intelligence field IDs (added to existing table)

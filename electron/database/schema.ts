@@ -409,6 +409,11 @@ export function createSchema(db: SqlJsDatabase): void {
     'ALTER TABLE imported_contacts ADD COLUMN suggested_company_ids TEXT',
     'ALTER TABLE imported_contacts ADD COLUMN classification_source TEXT',
     'ALTER TABLE contacts ADD COLUMN last_enrichment_check TEXT',
+    // Enrichment Queue source-email provenance + discovered-by (v3.6.2)
+    'ALTER TABLE enrichment_queue ADD COLUMN source_email_subject TEXT',
+    'ALTER TABLE enrichment_queue ADD COLUMN source_email_from TEXT',
+    'ALTER TABLE enrichment_queue ADD COLUMN source_email_snippet TEXT',
+    'ALTER TABLE enrichment_queue ADD COLUMN discovered_by TEXT',
   ]
   for (const sql of fieldAuditMigrations) {
     try { db.run(sql) } catch { /* column already exists */ }
@@ -493,6 +498,10 @@ export function createSchema(db: SqlJsDatabase): void {
       status TEXT,
       confidence_score REAL,
       contact_ids TEXT,
+      source_email_subject TEXT,
+      source_email_from TEXT,
+      source_email_snippet TEXT,
+      discovered_by TEXT,
       _airtable_modified_at TEXT,
       _local_modified_at TEXT,
       _pending_push INTEGER DEFAULT 0

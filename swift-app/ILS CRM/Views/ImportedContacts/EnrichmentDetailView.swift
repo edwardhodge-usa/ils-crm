@@ -42,6 +42,10 @@ struct EnrichmentDetailView: View {
                 diffCard
                 detailsCard
 
+                if hasSourceEmailContext {
+                    sourceEmailCard
+                }
+
                 if let contact = linkedContact {
                     linkedContactCard(contact)
                 }
@@ -256,6 +260,69 @@ struct EnrichmentDetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 6)
+    }
+
+    // MARK: - Source Email Card
+
+    private var hasSourceEmailContext: Bool {
+        let parts: [String?] = [item.sourceEmailFrom, item.sourceEmailSubject, item.sourceEmailSnippet, item.discoveredBy]
+        return parts.contains { ($0?.isEmpty == false) }
+    }
+
+    private var sourceEmailCard: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "envelope")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.orange)
+                    Text("SOURCE EMAIL")
+                        .font(.system(size: 11, weight: .bold))
+                        .tracking(0.5)
+                        .foregroundStyle(.orange)
+                    Spacer()
+                    if let by = item.discoveredBy, !by.isEmpty {
+                        Text("via \(by)")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if let from = item.sourceEmailFrom, !from.isEmpty {
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text("From:")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                        Text(from)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                    }
+                }
+
+                if let subject = item.sourceEmailSubject, !subject.isEmpty {
+                    Text(subject)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                }
+
+                if let snippet = item.sourceEmailSnippet, !snippet.isEmpty {
+                    Text(snippet)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(6)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(4)
+        }
+        .backgroundStyle(Color.orange.opacity(0.04))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(Color.orange.opacity(0.2), lineWidth: 1)
+        }
     }
 
     // MARK: - Linked Contact Card

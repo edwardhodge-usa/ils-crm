@@ -9,7 +9,12 @@ private enum F {
     static let status = "fldybd6l0RMMV70qR"
     static let confidenceScore = "fldApRf3M38HZdf8D"
     static let contact = "fldw3AfIZ6WUbMnw0"
+    static let sourceEmailSubject = "fldB9YiGiXV24wazb"
+    static let sourceEmailFrom = "fldQ6NmkWYkHubaKh"
+    static let sourceEmailSnippet = "fldCBoaFjVHCBaXRp"
+    static let discoveredBy = "fldtEMkqcUGs6GlKX"
 }
+
 
 extension EnrichmentQueueItem: AirtableConvertible {
     static let airtableTableId = AirtableConfig.Tables.enrichmentQueue
@@ -24,6 +29,10 @@ extension EnrichmentQueueItem: AirtableConvertible {
         model.status = f.string(for: F.status)
         model.confidenceScore = f.double(for: F.confidenceScore)
         model.contactIds = f.stringArray(for: F.contact)
+        model.sourceEmailSubject = f.string(for: F.sourceEmailSubject)
+        model.sourceEmailFrom = f.string(for: F.sourceEmailFrom)
+        model.sourceEmailSnippet = f.string(for: F.sourceEmailSnippet)
+        model.discoveredBy = f.collaboratorName(for: F.discoveredBy)
         return model
     }
 
@@ -36,6 +45,10 @@ extension EnrichmentQueueItem: AirtableConvertible {
         existing.status = f.string(for: F.status)
         existing.confidenceScore = f.double(for: F.confidenceScore)
         existing.contactIds = f.stringArray(for: F.contact)
+        existing.sourceEmailSubject = f.string(for: F.sourceEmailSubject)
+        existing.sourceEmailFrom = f.string(for: F.sourceEmailFrom)
+        existing.sourceEmailSnippet = f.string(for: F.sourceEmailSnippet)
+        existing.discoveredBy = f.collaboratorName(for: F.discoveredBy)
         existing.isPendingPush = false
     }
 

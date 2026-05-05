@@ -457,7 +457,7 @@ export const EMAIL_SCAN_STATE = {
   totalProcessed: 'fldljrn2FA8yLrrzb',
 } as const
 
-// ─── Enrichment Queue (7 fields) ─────────────────────────────
+// ─── Enrichment Queue (11 fields) ────────────────────────────
 
 export const ENRICHMENT_QUEUE = {
   fieldName: 'fldoUsfLV43KF0n0U', // primary
@@ -467,6 +467,10 @@ export const ENRICHMENT_QUEUE = {
   status: 'fldybd6l0RMMV70qR',
   confidenceScore: 'fldApRf3M38HZdf8D',
   contact: 'fldw3AfIZ6WUbMnw0',
+  sourceEmailSubject: 'fldB9YiGiXV24wazb',
+  sourceEmailFrom: 'fldQ6NmkWYkHubaKh',
+  sourceEmailSnippet: 'fldCBoaFjVHCBaXRp',
+  discoveredBy: 'fldtEMkqcUGs6GlKX',
 } as const
 
 // ─── Rate Card (17 fields) ───────────────────────────────────
